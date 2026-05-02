@@ -1,0 +1,12 @@
+location,testCode,testName,testType,department,serviceGroup,serviceCharge,floor,description,categoryApplicability,packageTests,precaution,remarks,serviceTime,source,tatReport
+Lab A,LT001,Complete Blood Count,Generic,Main Branch,FIx,500,1st Floor,Basic blood test,General,"LT0012,LT004",Fasting not required,Routine test,2 hrs,Internal,24 hrs
+Lab B,LT002,Full Body Checkup,Package,Main Branch,SIx,2500,Ground Floor,Full health package,Adult,"LT001,LT003",12 hrs fasting required,Premium package,6 hrs,External,48 hrs
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,,,,  ,,,,,,,,,,,

@@ -1,0 +1,168 @@
+/* ========== Doctor Dropdown Custom Styles ========== */
+
+.doctor-dropdown-wrapper {
+    width: 100%;
+}
+
+.doctor-dropdown-wrapper .MuiAutocomplete-root {
+    width: 100%;
+}
+
+.doctor-dropdown-wrapper .MuiOutlinedInput-root {
+    background: #fff;
+    border-radius: 6px;
+    font-size: 13px;
+    padding: 2px 8px !important;
+    min-height: 38px;
+}
+
+.doctor-dropdown-wrapper .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline {
+    border-color: #d0d5dd;
+}
+
+.doctor-dropdown-wrapper .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+    border-color: #f59e0b;
+}
+
+.doctor-dropdown-wrapper .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-color: #f59e0b;
+    border-width: 2px;
+}
+
+/* ===== Each Doctor Option Row ===== */
+.doctor-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 8px 4px;
+    gap: 16px;
+}
+
+.doctor-option-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex-shrink: 1;
+}
+
+.doctor-option-title {
+    font-size: 11px;
+    font-style: italic;
+    color: #9ca3af;
+    letter-spacing: 0.3px;
+}
+
+.doctor-option-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #1f2937;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.doctor-option-degrees {
+    font-weight: 400;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+/* ===== Right Side Info Tags ===== */
+.doctor-option-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.doctor-info-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10.5px;
+    color: #4b5563;
+    background: #f3f4f6;
+    padding: 2px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+    border: 1px solid #e5e7eb;
+}
+
+.doctor-info-tag .tag-label {
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.doctor-info-tag .tag-value {
+    color: #374151;
+}
+
+/* Availability indicator */
+.doctor-availability {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10.5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.doctor-availability.available {
+    color: #059669;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+}
+
+.doctor-availability.unavailable {
+    color: #dc2626;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+}
+
+.doctor-availability-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.available .doctor-availability-dot {
+    background: #059669;
+}
+
+.unavailable .doctor-availability-dot {
+    background: #dc2626;
+}
+
+/* ===== Popper / Listbox ===== */
+.doctor-dropdown-popper .MuiAutocomplete-listbox {
+    padding: 4px;
+    max-height: 350px;
+}
+
+.doctor-dropdown-popper .MuiAutocomplete-option {
+    border-radius: 6px;
+    margin-bottom: 2px;
+    padding: 4px 8px !important;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.doctor-dropdown-popper .MuiAutocomplete-option:hover {
+    background: #fffbeb !important;
+}
+
+.doctor-dropdown-popper .MuiAutocomplete-option[aria-selected="true"] {
+    background: #fef3c7 !important;
+}
+
+.doctor-dropdown-popper .MuiAutocomplete-paper {
+    border-radius: 8px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    border: 1px solid #e5e7eb;
+}

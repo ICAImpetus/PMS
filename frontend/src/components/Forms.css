@@ -1,0 +1,632 @@
+:root {
+  /* Core Color Palette */
+  --primary: #2563eb;
+  /* Professional Blue */
+  --primary-hover: #1d4ed8;
+  --primary-light: #ffffff;
+  --secondary: #64748b;
+  /* Slate Gray */
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+
+  /* Backgrounds & Borders */
+  --bg-app: #ffffff;
+  /* Neutral Slate-Gray Tint */
+  --bg-card: #ffffff;
+  --border-color: #e5e7eb;
+  --border-focus: #3b82f6;
+
+  /* Typography */
+  --text-main: #1e293b;
+  --text-muted: #94a3b8;
+
+  /* Dimensions */
+  --header-height: 50px;
+  --footer-height: 60px;
+  --input-height: 32px;
+  --radius: 8px;
+}
+
+
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  overflow: hidden;
+  /* Prevent body scroll, use app container */
+}
+
+.executive-form-app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  width: 100%;
+  background-color: var(--bg-color);
+}
+
+/* =========================================
+   2. STICKY HEADER
+   ========================================= */
+
+.form-header {
+  min-height: 48px;
+  height: auto;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  z-index: 100;
+  flex-shrink: 0;
+}
+
+.header-top {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.branch-display-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--primary-light);
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid #eeeeee;
+  width: fit-content;
+}
+
+.hospital-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.branch-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--secondary);
+}
+
+.loading-overlay-simple {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.loading-overlay-simple p {
+  background: var(--primary);
+  color: white;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin: 0;
+}
+
+.form-header h1 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1e293b !important;
+  margin: 0;
+  letter-spacing: -0.01em;
+  flex-shrink: 0;
+}
+
+/* Header Toggle Switch (Inbound/Outbound) */
+.form-toggle-container {
+  display: flex !important;
+  visibility: visible !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  padding: 5px;
+  border-radius: var(--radius);
+  gap: 7px;
+  min-width: 200px;
+  justify-content: center;
+}
+
+.toggle-btn {
+  padding: 8px 24px;
+  border: none;
+  background: transparent;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+  color: var(--text-main);
+}
+
+.toggle-btn.active {
+  background: var(--primary) !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* =========================================
+   3. SCROLLABLE FORM CONTAINER
+   ========================================= */
+
+.form-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 15px;
+  width: 100%;
+  max-width: 100%;
+  /* Ensures full width usage */
+  scroll-behavior: smooth;
+}
+
+.all-sections-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 100%;
+  /* Allow sections to stretch */
+}
+
+/* =========================================
+   4. CARD SECTIONS
+   ========================================= */
+
+.section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  margin-bottom: 12px;
+}
+
+.section:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.section h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eeeeee;
+}
+
+/* Sub-sections (Used for specific purpose details) */
+.sub-section {
+  background: #ffffff;
+  border: 1px solid #eeeeee;
+  border-radius: var(--radius);
+  padding: 8px;
+  margin-top: 8px;
+  border-left: 3px solid var(--primary);
+}
+
+/* =========================================
+   5. THE 3-COLUMN GRID SYSTEM
+   ========================================= */
+
+.input-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  /* Back to 3 columns for better spacing */
+  gap: 16px;
+  margin-bottom: 12px;
+  align-items: end;
+}
+
+.input-row-2-stretched {
+  grid-template-columns: 1fr 2fr;
+}
+
+.input-group.stretched {
+  grid-column: span 2;
+}
+
+.input-row-4-col {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 12px;
+  align-items: end;
+}
+
+.full-width-row {
+  grid-template-columns: 1fr;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.input-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 4px;
+}
+
+.required::after {
+  content: "*";
+  color: var(--danger);
+  margin-left: 4px;
+  font-size: 1.1em;
+}
+
+.input-field,
+.select-field,
+.textarea-field {
+  width: 100%;
+  height: var(--input-height);
+  padding: 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  color: var(--text-main);
+  background-color: #fff;
+  transition: all 0.2s ease;
+}
+
+/* Focus States */
+.input-field:focus,
+.select-field:focus,
+.textarea-field:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Textarea Specifics */
+.textarea-field {
+  height: auto;
+  min-height: 80px;
+  padding: 12px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+/* Span Logic: Make textarea take 2 columns or full width for better UX */
+.textarea-field-container {
+  grid-column: span 3;
+}
+
+
+/* Generic container for button groups */
+.caller-type-buttons,
+.gender-buttons,
+.callback-buttons,
+.connected-buttons,
+.ambulance-buttons,
+.rating-buttons {
+  display: flex;
+  gap: 4px;
+  background: #ffffff;
+  padding: 2px;
+  border-radius: var(--radius);
+  width: fit-content;
+  border: 1px solid #eeeeee;
+}
+
+/* Base style for all selection buttons */
+.caller-btn,
+.gender-btn,
+.callback-btn,
+.connected-btn,
+.ambulance-btn,
+.rating-btn {
+  height: 28px;
+  padding: 0 12px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Click/Mousedown State - Prevent any color flash */
+.caller-btn:active,
+.gender-btn:active,
+.callback-btn:active,
+.connected-btn:active,
+.ambulance-btn:active,
+.rating-btn:active,
+.toggle-btn:active {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.caller-btn.active:active,
+.gender-btn.active:active,
+.callback-btn.active:active,
+.connected-btn.active:active,
+.ambulance-btn.active:active,
+.rating-btn.active:active,
+.toggle-btn.active:active {
+  background-color: #ffffff !important;
+}
+
+/* Hover State */
+.caller-btn:hover,
+.gender-btn:hover,
+.callback-btn:hover,
+.connected-btn:hover,
+.ambulance-btn:hover,
+.rating-btn:hover {
+  background-color: #ffffff;
+  border-color: #94a3b8;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Active/Selected State - Enhanced Visual Feedback */
+.caller-btn.active,
+.gender-btn.active,
+.callback-btn.active,
+.connected-btn.active,
+.ambulance-btn.active,
+.rating-btn.active {
+  background-color: #ffffff !important;
+  color: var(--primary) !important;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Special styling for gender buttons */
+.gender-buttons {
+  gap: 4px;
+}
+
+.gender-btn {
+  min-width: 100px;
+}
+
+/* Special styling for call status buttons */
+.connected-buttons {
+  gap: 4px;
+}
+
+.caller-btn {
+  min-width: 80px;
+}
+
+/* Rating Buttons (Small squares) */
+.rating-buttons .rating-btn {
+  flex: 0 0 44px;
+  /* Fixed square size */
+  width: 44px;
+  padding: 0;
+  aspect-ratio: 1;
+}
+
+/* Active state overlay - removed dark tint */
+.caller-btn.active::after,
+.gender-btn.active::after,
+.connected-btn.active::after,
+.callback-btn.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+/* Add checkmark for active state */
+.caller-btn.active::before,
+.gender-btn.active::before,
+.connected-btn.active::before,
+.callback-btn.active::before {
+  content: '✓';
+  position: absolute;
+  top: 2px;
+  right: 6px;
+  font-size: 12px;
+  color: var(--primary);
+  font-weight: bold;
+  z-index: 1;
+}
+
+/* =========================================
+   8. STICKY FOOTER ACTIONS
+   ========================================= */
+
+.button-group {
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  height: var(--footer-height);
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 25px;
+  gap: 12px;
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.02);
+  z-index: 50;
+  margin-top: auto;
+  /* Pushes to bottom if content is short */
+}
+
+.btn {
+  height: 38px;
+  padding: 0 24px;
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-submit {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border: none;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+
+.btn-submit:hover {
+  background-color: #1d4ed8 !important;
+  transform: translateY(-1px);
+}
+
+.btn-clear {
+  background-color: #ffffff !important;
+  color: #ef4444 !important;
+  border: 1px solid #ef4444 !important;
+}
+
+.btn-clear:hover {
+  background-color: #fef2f2 !important;
+}
+
+/* =========================================
+   9. UTILITIES & ANIMATIONS
+   ========================================= */
+
+/* Fade in animation for dynamic sections */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sub-section,
+.feedback-questions {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Scrollbar Beautification */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #ffffff;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 5px;
+  border: 2px solid #ffffff;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* =========================================
+   10. RESPONSIVE DESIGN
+   ========================================= */
+
+/* Large Tablets / Small Laptops */
+@media (max-width: 1280px) {
+  .input-row {
+    grid-template-columns: repeat(2, 1fr);
+    /* Drop to 2 columns */
+  }
+
+  .textarea-field-container {
+    grid-column: span 2;
+  }
+}
+
+/* Tablets & Mobile */
+@media (max-width: 768px) {
+  .form-header {
+    flex-direction: column;
+    height: auto;
+    padding: 15px 20px;
+    gap: 15px;
+    align-items: flex-start;
+  }
+
+  .form-container {
+    padding: 15px 20px;
+  }
+
+  .input-row {
+    grid-template-columns: 1fr;
+    /* Drop to 1 column stack */
+    gap: 16px;
+  }
+
+  .textarea-field-container {
+    grid-column: span 1;
+  }
+
+  .button-group {
+    padding: 15px 20px;
+    height: auto;
+    flex-direction: column-reverse;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  /* Stack buttons on mobile */
+  .caller-type-buttons,
+  .gender-buttons,
+  .callback-buttons,
+  .connected-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.global-date-range {
+  padding: 5px;
+  background-color: white;
+  border: 1px solid lightgrey;
+  border-radius: 7px;
+}

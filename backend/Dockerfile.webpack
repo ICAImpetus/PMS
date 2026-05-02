@@ -1,0 +1,19 @@
+# Production-only Dockerfile for pre-built application
+FROM node:18-alpine AS production
+
+WORKDIR /app
+
+# Copy package.json for production dependencies only
+COPY package*.json ./
+
+# Install only production dependencies (for externalized modules)
+RUN npm ci --only=production && npm cache clean --force
+
+# Copy the pre-built bundle (expects dist folder to exist locally)
+COPY dist/server.bundle.js ./
+
+# Expose port
+EXPOSE 5000
+
+# Start the application
+CMD ["node", "server.bundle.js"]

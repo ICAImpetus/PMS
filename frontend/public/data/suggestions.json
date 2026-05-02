@@ -1,0 +1,21 @@
+{
+    "treatableAreas": [
+        "Cardiology",
+        "Neurology",
+        "Oncology"
+    ],
+    "surgeries": [
+        "CABG",
+        "Brain Surgery",
+        "Chemo"
+    ],
+    "service_types": [
+        "Inpatient",
+        "Outpatient",
+        "Emergency"
+    ],
+    "floor_department":[
+        "1st Floor",
+        "2nd Floor"
+    ]
+}

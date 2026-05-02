@@ -1,0 +1,62 @@
+.app {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.content {
+  flex: 1; /* Take the remaining space correctly */
+  min-width: 0; /* Important for flex items to prevent overflow */
+  background-color: #f4f6f8;
+  height: 100%;
+}
+
+/* Global: Disable browser tap/click highlight */
+* {
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Global: Prevent any yellowish active state on buttons */
+button:active,
+a:active,
+input:active {
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Fix Chrome Autofill Yellow Background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px rgb(192, 182, 182) inset !important;
+  -webkit-text-fill-color: #1e293b !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #e0e0e0;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* --- Global Fix for UI Dropdowns --- */
+/* Prevent dropdowns from being too long */
+.MuiMenu-paper {
+  max-height: 300px !important;
+  overflow-y: auto !important;
+}

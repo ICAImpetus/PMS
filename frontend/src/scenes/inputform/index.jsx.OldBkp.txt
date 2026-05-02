@@ -1,0 +1,287 @@
+// import React, { useState } from 'react';
+// import {
+//     TextField,
+//     Button,
+//     Box,
+//     FormControl,
+//     FormControlLabel,
+//     FormHelperText,
+//     FormLabel,
+//     Radio,
+//     RadioGroup,
+//     Select,
+//     MenuItem,
+//     InputLabel
+// } from '@mui/material';
+// import Header from '../../components/Header';
+
+// const managers = ['Manager 1', 'Manager 2', 'Manager 3'];
+// const patientStatuses = ['Admitted', 'Discharged'];
+// const paymentCategories = ['Insurance', 'Self-Pay'];
+
+// const Inputform = () => {
+//     const [selectedManager, setSelectedManager] = useState('');
+//     const [callerType, setCallerType] = useState('');
+//     const [patientName, setPatientName] = useState('');
+//     const [showPatientDetails, setShowPatientDetails] = useState(false);
+//     const [formValues, setFormValues] = useState({
+//         patientGender: '',
+//         patientAge: '',
+//         patientContact: '',
+//         patientStatus: '',
+//         paymentCategory: '',
+//         typeOfIllness: '',
+//         reference: ''
+//     });
+//     const [showFields, setShowFields] = useState(false);
+//     const [errors, setErrors] = useState({});
+
+//     const handleManagerChange = (event) => {
+//         setSelectedManager(event.target.value);
+//     };
+
+//     const handleCallerTypeChange = (event) => {
+//         setCallerType(event.target.value);
+//     };
+
+//     const handlePatientNameChange = (event) => {
+//         setPatientName(event.target.value);
+//     };
+
+//     const handleFieldChange = (event) => {
+//         const { name, value } = event.target;
+//         setFormValues({ ...formValues, [name]: value });
+//     };
+
+//     const handleNext = () => {
+//         const newErrors = {
+//             manager: !selectedManager,
+//             callerType: !callerType,
+//         };
+//         setErrors(newErrors);
+
+//         if (!newErrors.manager && !newErrors.callerType) {
+//             if (callerType === 'Patient Attendant' && patientName) {
+//                 setShowPatientDetails(true);
+//             } else if (callerType === 'Patient') {
+//                 setShowFields(true);
+//             }
+//         }
+//     };
+
+//     const handlePatientDetailsNext = () => {
+//         const newErrors = {
+//             patientGender: !formValues.patientGender,
+//             patientAge: !formValues.patientAge,
+//             patientContact: !formValues.patientContact,
+//             patientStatus: !formValues.patientStatus,
+//             paymentCategory: !formValues.paymentCategory,
+//             typeOfIllness: !formValues.typeOfIllness,
+//             reference: !formValues.reference,
+//         };
+//         setErrors(newErrors);
+
+//         const hasError = Object.values(newErrors).some(error => error);
+
+//         if (!hasError) {
+//             setShowFields(true);
+//         }
+//     };
+
+//     const handleSubmit = (event) => {
+//         event.preventDefault();
+//         // Handle form submission logic
+//         console.log('Form submitted', { selectedManager, callerType, patientName, ...formValues });
+//     };
+
+//     return (
+//         <Box m="20px">
+//             <Header title="INPUT FORM" subtitle="Create a new Input form" />
+//             {!showFields ? (
+//                 <>
+//                     <FormControl component="fieldset" error={!!errors.manager}>
+//                         <FormLabel component="legend">Select Manager</FormLabel>
+//                         <RadioGroup name="manager" value={selectedManager} onChange={handleManagerChange}>
+//                             {managers.map((manager) => (
+//                                 <FormControlLabel
+//                                     key={manager}
+//                                     value={manager}
+//                                     control={<Radio />}
+//                                     label={manager}
+//                                 />
+//                             ))}
+//                         </RadioGroup>
+//                         {errors.manager && (
+//                             <FormHelperText error>Please select a manager.</FormHelperText>
+//                         )}
+//                     </FormControl>
+
+//                     <FormControl fullWidth variant="filled" error={!!errors.callerType} sx={{ mt: 2 }}>
+//                         <InputLabel>Caller Type</InputLabel>
+//                         <Select value={callerType} onChange={handleCallerTypeChange}>
+//                             <MenuItem value="Patient">Patient</MenuItem>
+//                             <MenuItem value="Patient Attendant">Patient Attendant</MenuItem>
+//                         </Select>
+//                         {errors.callerType && (
+//                             <FormHelperText error>Please select a caller type.</FormHelperText>
+//                         )}
+//                     </FormControl>
+
+//                     {callerType === 'Patient' && (
+//                         <TextField
+//                             fullWidth
+//                             variant="filled"
+//                             type="text"
+//                             label="Patient Name"
+//                             value={patientName}
+//                             onChange={handlePatientNameChange}
+//                             sx={{ mt: 2 }}
+//                             error={!patientName && !!errors.patientName}
+//                             helperText={!patientName && errors.patientName && "Please enter patient name."}
+//                         />
+//                     )}
+
+//                     <Button variant="contained" onClick={handleNext} sx={{ mt: 2 }}>
+//                         Next
+//                     </Button>
+//                 </>
+//             ) : !showPatientDetails ? (
+//                 <form onSubmit={handleSubmit}>
+//                     <TextField
+//                         fullWidth
+//                         variant="filled"
+//                         type="text"
+//                         label={`Detail for ${selectedManager}`}
+//                         sx={{ mb: 2 }}
+//                     />
+
+//                     {callerType === 'Patient Attendant' && (
+//                         <TextField
+//                             fullWidth
+//                             variant="filled"
+//                             type="text"
+//                             label="Patient Attendant Details"
+//                             sx={{ mb: 2 }}
+//                         />
+//                     )}
+
+//                     <Button type="submit" variant="contained">
+//                         Submit
+//                     </Button>
+//                 </form>
+//             ) : (
+//                 <Box>
+//                     <TextField
+//                         fullWidth
+//                         variant="filled"
+//                         type="text"
+//                         label="Patient Gender"
+//                         name="patientGender"
+//                         value={formValues.patientGender}
+//                         onChange={handleFieldChange}
+//                         error={!!errors.patientGender}
+//                         helperText={errors.patientGender && "Please select patient gender."}
+//                         sx={{ mb: 2 }}
+//                     />
+
+//                     <TextField
+//                         fullWidth
+//                         variant="filled"
+//                         type="text"
+//                         label="Patient Age"
+//                         name="patientAge"
+//                         value={formValues.patientAge}
+//                         onChange={handleFieldChange}
+//                         error={!!errors.patientAge}
+//                         helperText={errors.patientAge && "Please enter patient age."}
+//                         sx={{ mb: 2 }}
+//                     />
+
+//                     <TextField
+//                         fullWidth
+//                         variant="filled"
+//                         type="text"
+//                         label="Patient Contact No"
+//                         name="patientContact"
+//                         value={formValues.patientContact}
+//                         onChange={handleFieldChange}
+//                         error={!!errors.patientContact}
+//                         helperText={errors.patientContact && "Please enter patient contact no."}
+//                         sx={{ mb: 2 }}
+//                     />
+
+//                     <FormControl component="fieldset" error={!!errors.patientStatus} sx={{ mb: 2,mr:10 }}>
+//                         <FormLabel component="legend">Patient Status</FormLabel>
+//                         <RadioGroup name="patientStatus" value={formValues.patientStatus} onChange={handleFieldChange}>
+//                             {patientStatuses.map((status) => (
+//                                 <FormControlLabel
+//                                     key={status}
+//                                     value={status}
+//                                     control={<Radio />}
+//                                     label={status}
+//                                 />
+//                             ))}
+//                         </RadioGroup>
+//                         {errors.patientStatus && (
+//                             <FormHelperText error>Please select patient status.</FormHelperText>
+//                         )}
+//                     </FormControl>
+                    
+
+//                     <FormControl component="fieldset" error={!!errors.paymentCategory} sx={{ mb: 2, ml:10 }}>
+//                         <FormLabel component="legend">Payment Category</FormLabel>
+//                         <RadioGroup name="paymentCategory" value={formValues.paymentCategory} onChange={handleFieldChange}>
+//                             {paymentCategories.map((category) => (
+//                                 <FormControlLabel
+//                                     key={category}
+//                                     value={category}
+//                                     control={<Radio />}
+//                                     label={category}
+//                                 />
+//                             ))}
+//                         </RadioGroup>
+                        
+//                         {errors.paymentCategory && (
+//                             <FormHelperText error>Please select payment category.</FormHelperText>
+//                         )}
+//                     </FormControl>
+
+//                     <TextField
+//                         fullWidth
+//                         variant="filled"
+//                         type="text"
+//                         label="Type of Illness"
+//                         name="typeOfIllness"
+//                         value={formValues.typeOfIllness}
+//                         onChange={handleFieldChange}
+//                         error={!!errors.typeOfIllness}
+//                         helperText={errors.typeOfIllness && "Please enter type of illness."}
+//                         sx={{ mb: 2 }}
+//                     />
+
+//                     <FormControl fullWidth variant="filled" error={!!errors.reference} sx={{ mb: 2 }}>
+//                         <InputLabel>Got Reference From</InputLabel>
+//                         <Select
+//                             name="reference"
+//                             value={formValues.reference}
+//                             onChange={handleFieldChange}
+//                         >
+//                             <MenuItem value="Doctor">Doctor</MenuItem>
+//                             <MenuItem value="Friend">Friend</MenuItem>
+//                             <MenuItem value="Internet">Internet</MenuItem>
+//                         </Select>
+//                         {errors.reference && (
+//                             <FormHelperText error>Please select a reference source.</FormHelperText>
+//                         )}
+//                     </FormControl>
+
+//                     <Button variant="contained" onClick={handlePatientDetailsNext} sx={{ mt: 2 }}>
+//                         Next
+//                     </Button>
+//                 </Box>
+//             )}
+//         </Box>
+//     );
+// };
+
+// export default Inputform;
