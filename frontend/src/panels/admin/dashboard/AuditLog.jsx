@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useContext } from 'react';
 import Chart from 'chart.js/auto';
 import './AdminPages.css';
 import { useApi } from '../../../api/useApi';
@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import moment from 'moment';
 import { Box, CircularProgress, Typography, useTheme } from '@mui/material';
 import { tokens } from '../../../theme';
+import HospitalContext from '../../../contexts/HospitalContexts';
 
 const AuditLogs = () => {
   const theme = useTheme();
@@ -17,7 +18,6 @@ const AuditLogs = () => {
   const { currentUser } = UserContextHook();
   const [filterType, setFilterType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [allLogs, setAllLogs] = useState([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -28,30 +28,15 @@ const AuditLogs = () => {
       currentUser?.createdAt ||
       currentUser?.created_at ||
       currentUser?.createdOn;
-    console.log('createdat', createdAt);
     if (!createdAt) return '';
 
     const parsed = moment(createdAt);
     return parsed.isValid() ? parsed.format('YYYY-MM-DD') : '';
   }, [currentUser]);
 
-  const { request: fetchLogsRequest, loading } = useApi(commonRoutes.getAuditLogs);
 
-  const loadLogs = async () => {
-    try {
-      const res = await fetchLogsRequest();
-      if (res.success) {
-        setAllLogs(res.data || []);
-      }
-    } catch (err) {
-      console.error("Failed to fetch logs:", err);
-      toast.error("Failed to load audit logs");
-    }
-  };
+  const { allLogs, setAllLogs, loading, errors } = useContext(HospitalContext)
 
-  useEffect(() => {
-    loadLogs();
-  }, []);
 
   const handleStartDateChange = (value) => {
     if (!value) return setStartDate('');
@@ -86,7 +71,7 @@ const AuditLogs = () => {
 
   // Filtering Logic
   const filteredLogs = useMemo(() => {
-    return allLogs.filter(log => {
+    return allLogs?.filter(log => {
       const actionTarget = `${log.action || ''}`.toLowerCase();
       const detailsTarget = `${log.customMessage || ''}`.toLowerCase();
       const nameTarget = `${log.name || ''}`.toLowerCase();
@@ -100,7 +85,7 @@ const AuditLogs = () => {
       const matchesFilterType = filterType === 'all' || (log.module || '').toLowerCase().includes(filterType.toLowerCase()) || (log.role || '').toLowerCase().includes(filterType.toLowerCase());
 
       return matchesSearch && matchesStartDate && matchesEndDate && matchesFilterType;
-    });
+    }) || [];
   }, [allLogs, searchTerm, filterType, startDate, endDate]);
 
   // Pagination Logic
@@ -115,17 +100,18 @@ const AuditLogs = () => {
   }, [searchTerm, filterType, startDate, endDate]);
 
   // Statistics Calculation
-  const stats = useMemo(() => {
-    const total = allLogs.length;
-    const critical = allLogs.filter(l => (l.level || '').toLowerCase() === 'error' || (l.level || '').toLowerCase() === 'critical').length;
-    const failedLogins = allLogs.filter(l => (l?.action || '').toLowerCase().includes('failed login')).length;
+  const stats = useMemo(
+    () => {
+      const total = allLogs?.length || [];
+      const critical = allLogs?.filter(l => (l.level || '').toLowerCase() === 'error' || (l.level || '').toLowerCase() === 'critical')?.length || [];
+      const failedLogins = allLogs?.filter(l => (l?.action || '').toLowerCase().includes('failed login'))?.length || [];
 
-    return { total, critical, failedLogins };
-  }, [allLogs]);
+      return { total, critical, failedLogins };
+    }, [allLogs]);
 
   // Recent Security Events (sidebar card)
   const securityEvents = useMemo(() => {
-    return allLogs
+    return allLogs || []
       .filter(l => {
         const action = (l?.action || '').toLowerCase();
         return action.includes('login') || action.includes('password') || action.includes('security') || l.level === 'error';

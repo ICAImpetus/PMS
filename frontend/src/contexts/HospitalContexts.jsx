@@ -53,6 +53,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     const [admins, setAdmins] = React.useState([])
     const [patients, setPatients] = useState([]);
 
+    const [allLogs, setAllLogs] = useState([]);
     const [error, setError] = useState(null);
 
     const [filter, setFilter] = useState(
@@ -103,6 +104,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         request: getPatients,
         error: patientsError,
     } = useApi(commonRoutes.getPatients);
+
+    const { request: fetchLogsRequest, loading: auditLogSystem } = useApi(commonRoutes.getAuditLogs);
+
 
 
 
@@ -324,12 +328,21 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         getPatients
     ]);
 
+
+    const fetchAuditLog = useCallback(async () => {
+        const res = await fetchLogsRequest();
+        if (res.success) {
+            setAllLogs(res.data || []);
+        }
+
+    })
+
     // Initial fetch
-    useEffect(() => {
+    React.useEffect(() => {
         fetchPatients();
     }, [fetchPatients]);
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (isAdmin) {
             fetchHospitals();
         }
@@ -355,6 +368,13 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     React.useEffect(() => {
         fetchDashboard();
     }, [fetchDashboard]);
+
+    React.useEffect(() => {
+        if (isAdmin) {
+            fetchAuditLog();
+        }
+
+    }, [isAdmin, fetchAuditLog]);
 
     // ---------------- LOADING ----------------
 
@@ -433,6 +453,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
         isSuperAdmin,
         role,
+        refetchLogs: fetchAuditLog,
         refetchForms: fetchForms,
         refetchDashboard: fetchDashboard,
         refetchHospitals: fetchHospitals,
