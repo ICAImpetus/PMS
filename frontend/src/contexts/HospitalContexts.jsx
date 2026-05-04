@@ -22,29 +22,44 @@ const filterOptions = [
     { key: "Last 3 Month", value: "last3M" }
 ];
 
+const defaultPagination = {
+    page: 1,
+    totalDocuments: 0,
+    totalPages: 0,
+    limit: 10
+};
+
 export const GlobalHospitalContextProvider = ({ children }) => {
 
     const { currentUser } = UserContextHook();
-
     const role = currentUser?.type?.toLowerCase();
     const isSuperAdmin = role === "superadmin" ? true : false
     const isAdmin = ["superadmin", "admin"].includes(role);
     const isNonAdmin = ["supermanager", "teamleader", "executive"].includes(role);
 
     // ---------------- STATES ----------------
-
     const [hospitals, setHospitals] = useState([]);
+    const [branches, setBranches] = useState([])
     const [branCount, setBranCount] = useState(0);
-    const [selectedHostpital, setSelectedHostpital] = useState(null);
+    const [selectedHostpital, setSelectedHostpital] = useState(
+        isNonAdmin ? currentUser?.hospitals?.[0]?.hospitalId?._id || null : null);
     const [selectedBranch, setSelectedBranch] = useState(null)
-
     const [metrics, setMetrics] = useState({});
     const [analytics, setAnalytics] = useState({});
 
+
     const [pagination, setPagination] = useState({
-        patients: 1,
-        users: 1,
-        forms: 1,
+        patients: { ...defaultPagination },
+        users: { ...defaultPagination },
+        forms: { ...defaultPagination },
+        auditLogs: { ...defaultPagination }
+    });
+
+    const [startDate, setStartDate] = useState({
+        auditLogs: ''
+    });
+    const [endDate, setEndDate] = useState({
+        auditLogs: ''
     });
 
     const [codeAlerts, setCodeAlerts] = useState([]);
@@ -105,41 +120,17 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         error: patientsError,
     } = useApi(commonRoutes.getPatients);
 
-    const { request: fetchLogsRequest, loading: auditLogSystem } = useApi(commonRoutes.getAuditLogs);
-
-
-
-
-    // ---------------- CACHE ----------------
-
-    const hospitalsCache = useRef(null);
-
-    // ---------------- FETCH HOSPITALS ----------------
+    const { request: fetchLogsRequest, loading: auditLogLoading, error: auditLogError } = useApi(commonRoutes.getAuditLogs);
+    const { loading: branchesLoading, request: getBranches, error: branchesError } = useApi(commonRoutes.branchesByRole)
 
     const fetchHospitals = useCallback(async () => {
 
         try {
 
-            // use cache if exists
-            if (hospitalsCache.current) {
-                setHospitals(hospitalsCache.current);
-
-                if (hospitalsCache.current?.length) {
-                    const firstHospital = hospitalsCache.current[0];
-
-                    setSelectedHostpital(firstHospital?._id);
-                    setBranCount(firstHospital?.branchCount || 0);
-                }
-
-                return;
-            }
-
             const res = await getHospitals();
 
             const hospitalData = res?.data || [];
-
-            hospitalsCache.current = hospitalData;
-
+            
             setHospitals(hospitalData);
 
             if (hospitalData?.length) {
@@ -156,6 +147,24 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         }
 
     }, [getHospitals]);
+
+
+    const fetchData = useCallback(async () => {
+        try {
+            const [res] = await Promise.all([
+                getBranches(selectedHostpital),
+            ]);
+
+            setBranches(res?.data || []);
+
+            if (res?.data?.length) {
+                setSelectedBranch(res.data[0]?._id);
+            }
+
+        } catch (err) {
+            console.error("Fetch Error:", err);
+        }
+    }, [selectedHostpital]);
 
     // ---------------- FETCH FORMS ----------------
 
@@ -226,12 +235,13 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     const fetchDashboard = useCallback(async () => {
 
         if (!selectedHostpital) return;
+        if (isNonAdmin && !selectedBranch) return;
 
         try {
 
             const [dashboardRes, alertRes] = await Promise.all([
-                getDashboard(null, selectedHostpital),
-                getCodeAlerts(selectedHostpital)
+                getDashboard(selectedBranch, selectedHostpital),
+                getCodeAlerts(selectedHostpital, selectedBranch)
             ]);
 
             if (dashboardRes?.data) {
@@ -248,6 +258,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
     }, [
         selectedHostpital,
+        selectedBranch,
         getDashboard,
         getCodeAlerts
     ]);
@@ -304,10 +315,10 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
                 setPatients(flattenedData);
 
-                setPagination((prev) => ({
-                    ...prev,
-                    patients: 0,
-                }));
+                // setPagination((prev) => ({
+                //     ...prev,
+                //     patients: 0,
+                // }));
             }
         } catch (err) {
             const errorMsg =
@@ -323,19 +334,33 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     }, [
         selectedHostpital,
         selectedBranch,
-        pagination.patients,
+        pagination.patients?.page,
         isNonAdmin,
         getPatients
     ]);
 
-
     const fetchAuditLog = useCallback(async () => {
-        const res = await fetchLogsRequest();
-        if (res.success) {
-            setAllLogs(res.data || []);
-        }
+        try {
+            const res = await fetchLogsRequest();
 
-    })
+            if (res?.success) {
+                setAllLogs(prev => {
+                    const newData = res.data || [];
+                    return JSON.stringify(prev) === JSON.stringify(newData)
+                        ? prev
+                        : newData;
+                });
+            }
+        } catch (error) {
+            console.error("Audit Log Fetch Error:", error);
+        }
+    }, [fetchLogsRequest]);
+
+    useEffect(() => {
+        if (selectedHostpital && isNonAdmin) {
+            fetchData();
+        }
+    }, [selectedHostpital, isNonAdmin, fetchData]);
 
     // Initial fetch
     React.useEffect(() => {
@@ -343,10 +368,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     }, [fetchPatients]);
 
     React.useEffect(() => {
-        if (isAdmin) {
-            fetchHospitals();
-        }
-    }, [isAdmin, fetchHospitals]);
+        fetchHospitals();
+
+    }, [fetchHospitals]);
 
 
     React.useEffect(() => {
@@ -366,7 +390,13 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     }, [fetchForms]);
 
     React.useEffect(() => {
-        fetchDashboard();
+        if (isNonAdmin && selectedBranch) {
+            fetchDashboard();
+        }
+        else {
+            fetchDashboard();
+        }
+
     }, [fetchDashboard]);
 
     React.useEffect(() => {
@@ -374,7 +404,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             fetchAuditLog();
         }
 
-    }, [isAdmin, fetchAuditLog]);
+    }, [fetchAuditLog]);
 
     // ---------------- LOADING ----------------
 
@@ -383,13 +413,17 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         dashboard: dashError,
         forms: formsError,
         usersError,
-        patientsError
+        patientsError,
+        auditLogError,
+        branchesError
     }), [
         hospitalsError,
         dashError,
         formsError,
         usersError,
-        patientsError
+        branchesError,
+        patientsError,
+        auditLogError
     ]);
     const loading = React.useMemo(() => ({
         hospitals: hospitalsLoading,
@@ -397,7 +431,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         alerts: alertLoading,
         forms: formLoading,
         users: userLoading,
-        patients: patientsLoading,
+        patientsLoading,
+        auditLogLoading,
+        branchesLoading,
 
         isAnyLoading:
             hospitalsLoading ||
@@ -411,7 +447,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         alertLoading,
         formLoading,
         userLoading,
-        patientsLoading
+        patientsLoading,
+        auditLogLoading,
+        branchesLoading
     ]);
 
     // ---------------- CONTEXT VALUE ----------------
@@ -420,6 +458,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         hospitals,
         selectedHostpital,
         branCount,
+
+        startDate,
+        endDate,
 
         metrics,
         analytics,
@@ -430,6 +471,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         codeAlerts,
         forms,
 
+        allLogs,
+
+
         loading,
         errors,
 
@@ -438,14 +482,22 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         formsError,
 
         patients,
-        setPatients,
+
 
         userData,
-        setUserData,
+
 
         admins,
-        setAdmins,
+        branches,
 
+        setBranches,
+
+        setStartDate,
+        setEndDate,
+        setPatients,
+        setUserData,
+        setAllLogs,
+        setAdmins,
         setHospitals,
         setPagination,
         setFilter,
@@ -461,6 +513,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
     }), [
 
+        branches,
+        startDate,
+        endDate,
         hospitals,
         selectedHostpital,
         branCount,

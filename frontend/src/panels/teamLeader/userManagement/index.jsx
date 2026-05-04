@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import { getDataFunc, sendDataApiFunc } from "../../../utils/services";
 import { toast, Toaster } from "react-hot-toast";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
@@ -19,6 +19,7 @@ import DeleteConfirmationModal from "../../../components/DeleteConfirmationModal
 import UpdatePasswordForm from "../../superAdmin/userManagement/UpdatePassword";
 import { useApi } from "../../../api/useApi";
 import { commonRoutes } from "../../../api/apiService";
+import HospitalContext from "../../../contexts/HospitalContexts";
 
 const ScrollableForm = styled(Box)({
   width: "100%",
@@ -30,56 +31,30 @@ const ScrollableForm = styled(Box)({
 function UserManagementTeamLeader() {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const [userData, setUserData] = React.useState([]); // This will hold the filtered list
   const [userUpdateData, setUserUpdateData] = React.useState(null);
   const [open, setOpen] = React.useState(false);
   const [updateOpen, setUpdateOpen] = React.useState(false);
-  const [profile, setProfile] = React.useState(null);
-  const [hospitalId, setHospitalId] = React.useState(null)
   const [openUpdatePasswordModal, setOpenUpdatePasswordModal] =
     React.useState(false);
   const [selectedUserForPasswordUpdate, setSelectedUserForPasswordUpdate] =
-    React.useState(null);
-  const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
-  const [selectedUserForDelete, setSelectedUserForDelete] =
     React.useState(null);
   const [paginationModel, setPaginationModel] = React.useState({
     pageSize: 15,
     page: 0,
   });
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
-  const { currentUser } = UserContextHook();
-  const currentUsername = currentUser?.username;
+
 
   const {
-    request: getAllUsers,
-    loading: userLoading,
-    error: usersError,
-  } = useApi(commonRoutes.getAllUsers);
-  const { request: getMe, error: getMeError, loading: getMeloading } = useApi(commonRoutes.getMe)
-  React.useEffect(() => {
-    const handleGetMe = async () => {
-      const res = await getMe();
-      setProfile(res.data || {});
-      if (res.data?.hospitals?.length) {
-        setHospitalId(res.data?.hospitals[0]?.hospitalId)
-      }
-
-      // setIsShowAction(res?.data?.canDelete);
-      // toast.success(response.message);
-    };
-    handleGetMe()
-  }, [])
-  React.useEffect(() => {
-    const fetchUsers = async () => {
-      const res = await getAllUsers(hospitalId);
-      setUserData(res.data || []);
-      // toast.success(response.message);
-    };
-    if (hospitalId) {
-      fetchUsers();
-    }
-  }, [hospitalId]);
+    loading,
+    selectedHostpital,
+    errors,
+    userData,
+    setUserData,
+    branches,
+    selectedBranch,
+    setSelectedBranch
+  } = useContext(HospitalContext);
 
 
   const handleAddUserModel = () => {
@@ -173,16 +148,15 @@ function UserManagementTeamLeader() {
 
 
   React.useEffect(() => {
-    const error = usersError || getMeError
+    const error = errors?.usersError
     if (error) {
       toast.error(error)
     }
-  }, [usersError, getMeError])
+  }, [errors?.usersError])
 
   return (
     <ScrollableForm>
-
-      {userLoading && (
+      {loading?.userLoading && (
         <Box
           display="flex"
           flexDirection="column"
@@ -199,7 +173,7 @@ function UserManagementTeamLeader() {
           </Typography>
         </Box>
       )}
-      {!userLoading && (
+      {!loading?.userLoading && (
         <>
           <Box
             display="flex"
@@ -248,14 +222,14 @@ function UserManagementTeamLeader() {
                   initialState={null}
                   onClose={() => setOpen(false)}
                   setUserData={setUserData}
-                  hospitalId={hospitalId}
+                  hospitalId={selectedHostpital}
                 />
               ) : updateOpen && userUpdateData ? (
                 <UserFormTeamLeader
                   initialState={userUpdateData}
                   onClose={() => setUpdateOpen(false)}
                   setUserData={setUserData}
-                  hospitalId={hospitalId}
+                  hospitalId={selectedHostpital}
                 />
               ) : null}
             </Box>

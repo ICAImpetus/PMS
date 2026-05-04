@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { getDataFunc, sendDataApiFunc } from "../../../utils/services";
 import { toast, Toaster } from "react-hot-toast";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
@@ -35,6 +35,8 @@ import UpdatePasswordForm from "../../superAdmin/userManagement/UpdatePassword";
 import { commonRoutes } from "../../../api/apiService";
 import { useApi } from "../../../api/useApi";
 import { useLocation } from "react-router-dom";
+import { UserContextHook } from "../../../contexts/UserContexts";
+import HospitalContext from "../../../contexts/HospitalContexts";
 
 const ScrollableForm = styled(Box)({
   width: "100%",
@@ -46,11 +48,8 @@ const ScrollableForm = styled(Box)({
 function UserManagentAdmin() {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const location = useLocation()
-  const [hospitals, sethospitals] = useState([])
-  const [selectedHostpital, setSelectedHostpital] = useState(location?.state?.selectedHospital || null)
-  const [userData, setUserData] = React.useState([]); // For the table
-  const [profile, setProfile] = useState(null)
+  const { currentUser } = UserContextHook()
+  const canDelete = currentUser?.canDelete;
   const [userUpdateData, setUserUpdateData] = React.useState(null);
   const [open, setOpen] = React.useState(false);
   const [isSuperManager, setIsSuperManager] = React.useState(null);
@@ -69,52 +68,16 @@ function UserManagentAdmin() {
   const [searchTerm, setSearchTerm] = React.useState("");
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const { request: getMe, error: getMeError, loading: getMeloading } = useApi(commonRoutes.getMe)
+
   const {
-    request: getAllUsers,
-    loading: userLoading,
-    error: usersError,
-  } = useApi(commonRoutes.getAllUsers);
+    hospitals,
+    loading,
+    selectedHostpital,
+    errors,
+    userData,
+    setSelectedHostpital,
+  } = useContext(HospitalContext);
 
-  const { loading: hospitalsLoading, request: gethospitals, error: hospitalsError } = useApi(commonRoutes.getAllHospital)
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const hospitalRes = await gethospitals();
-
-        const hospitalData = hospitalRes?.data || [];
-        sethospitals(hospitalData);
-
-        // default select first hospital
-        if (hospitalData.length > 0 && !selectedHostpital) {
-          setSelectedHostpital(hospitalData[0]._id);
-        }
-
-      } catch (err) {
-        console.error("Fetch Error:", err);
-      }
-    };
-
-    const handleGetMe = async () => {
-      const res = await getMe();
-      setProfile(res.data || {});
-      // toast.success(response.message);
-    };
-    handleGetMe()
-
-    fetchData();
-  }, []);
-
-  React.useEffect(() => {
-
-    const fetchUsers = async () => {
-      const res = await getAllUsers(selectedHostpital);
-      setUserData(res.data || []);
-      // toast.success(response.message);
-    };
-    if (selectedHostpital) fetchUsers();
-  }, [selectedHostpital]);
 
   useEffect(() => {
     if (userData.length > 0) {
@@ -126,11 +89,11 @@ function UserManagentAdmin() {
   }, [userData])
 
   useEffect(() => {
-    const error = usersError || getMeError;
+    const error = errors?.usersError;
     if (error) {
       toast.error(error || "Internal Server Error");
     }
-  }, [getMeError, usersError]);
+  }, [errors?.usersError]);
   const StyledIconButton = styled(IconButton)(({ bgColor, color }) => ({
     transition: "background-color 0.3s",
     backgroundColor: bgColor, // Initial background color
@@ -200,8 +163,6 @@ function UserManagentAdmin() {
       handleCloseDeleteModal();
     }
   };
-
-  const canDelete = profile?.canDelete;
 
   const columns = [
     {
@@ -296,7 +257,7 @@ function UserManagentAdmin() {
   return (
     <ScrollableForm>
 
-      {userLoading && (
+      {loading?.userLoading && (
         <Box
           display="flex"
           flexDirection="column"
@@ -313,7 +274,7 @@ function UserManagentAdmin() {
           </Typography>
         </Box>
       )}
-      {!userLoading && (
+      {!loading?.userLoading && (
         <>
 
 
@@ -335,7 +296,7 @@ function UserManagentAdmin() {
                 <Select
                   value={selectedHostpital}
                   onChange={(e) => setSelectedHostpital(e.target.value)}
-                  disabled={hospitalsLoading}
+                  disabled={loading?.hospitalsLoading}
                   displayEmpty
                   sx={{
                     borderRadius: 2,
@@ -346,7 +307,7 @@ function UserManagentAdmin() {
                     backgroundColor: "#fff"
                   }}
                 >
-                  {hospitalsLoading ? (
+                  {loading?.hospitalsLoading ? (
                     <MenuItem value="">
                       <CircularProgress size={20} sx={{ mr: 1 }} />
                       Loading...

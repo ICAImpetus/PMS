@@ -52,7 +52,7 @@ const CustomButton = ({ icon, children, sx = {}, ...props }) => {
               mr: { xs: "5px", sm: "10px" },
               display: "flex",
               alignItems: "center",
-            //   color: colors.grey[400],
+              //   color: colors.grey[400],
             }}
           >
             {icon}

@@ -32,146 +32,7 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { commonRoutes } from "../../../api/apiService";
-import { useApi } from "../../../api/useApi";
-import { UserContextHook } from "../../../contexts/UserContexts";
 import HospitalContext from "../../../contexts/HospitalContexts";
-
-// Dummy patient data
-const DUMMY_PATIENTS = [
-    {
-        _id: "1",
-        patientName: "Rajesh Kumar",
-        patientMobile: "+91-9876543210",
-        purpose: "Appointment",
-        formType: "inbound",
-        doctorName: "Dr. Anil Singh",
-        departmentName: "Cardiology",
-        createdAt: new Date(2024, 3, 15, 10, 30),
-        callStatus: "completed",
-    },
-    {
-        _id: "2",
-        patientName: "Priya Sharma",
-        patientMobile: "+91-9876543211",
-        purpose: "Appointment",
-        formType: "outbound",
-        doctorName: "Dr. Meera Patel",
-        departmentName: "Pediatrics",
-        createdAt: new Date(2024, 3, 14, 14, 15),
-        callStatus: "completed",
-    },
-    {
-        _id: "3",
-        patientName: "Amit Verma",
-        patientMobile: "+91-9876543212",
-        purpose: "followup",
-        formType: "inbound",
-        doctorName: "Dr. Rajesh Gupta",
-        departmentName: "General Surgery",
-        createdAt: new Date(2024, 3, 13, 9, 45),
-        callStatus: "dropped",
-    },
-    {
-        _id: "4",
-        patientName: "Neha Singh",
-        patientMobile: "+91-9876543213",
-        purpose: "Appointment",
-        formType: "outbound",
-        doctorName: "Dr. Sanjana Roy",
-        departmentName: "Dermatology",
-        createdAt: new Date(2024, 3, 12, 16, 20),
-        callStatus: "completed",
-    },
-    {
-        _id: "5",
-        patientName: "Vikram Patel",
-        patientMobile: "+91-9876543214",
-        purpose: "followup",
-        formType: "inbound",
-        doctorName: "Dr. Anil Singh",
-        departmentName: "Cardiology",
-        createdAt: new Date(2024, 3, 11, 11, 0),
-        callStatus: "pending",
-    },
-    {
-        _id: "6",
-        patientName: "Ananya Desai",
-        patientMobile: "+91-9876543215",
-        purpose: "Appointment",
-        formType: "inbound",
-        doctorName: "Dr. Meera Patel",
-        departmentName: "Psychiatry",
-        createdAt: new Date(2024, 3, 10, 13, 30),
-        callStatus: "completed",
-    },
-    {
-        _id: "7",
-        patientName: "Suresh Reddy",
-        patientMobile: "+91-9876543216",
-        purpose: "followup",
-        formType: "outbound",
-        doctorName: "Dr. Rajesh Gupta",
-        departmentName: "Orthopedics",
-        createdAt: new Date(2024, 3, 9, 15, 45),
-        callStatus: "completed",
-    },
-    {
-        _id: "8",
-        patientName: "Divya Nair",
-        patientMobile: "+91-9876543217",
-        purpose: "Appointment",
-        formType: "outbound",
-        doctorName: "Dr. Sanjana Roy",
-        departmentName: "Obstetrics",
-        createdAt: new Date(2024, 3, 8, 10, 15),
-        callStatus: "dropped",
-    },
-    {
-        _id: "9",
-        patientName: "Harsh Malhotra",
-        patientMobile: "+91-9876543218",
-        purpose: "Appointment",
-        formType: "inbound",
-        doctorName: "Dr. Anil Singh",
-        departmentName: "Neurology",
-        createdAt: new Date(2024, 3, 7, 12, 0),
-        callStatus: "pending",
-    },
-    {
-        _id: "10",
-        patientName: "Sakshi Kulkarni",
-        patientMobile: "+91-9876543219",
-        purpose: "followup",
-        formType: "inbound",
-        doctorName: "Dr. Meera Patel",
-        departmentName: "ENT",
-        createdAt: new Date(2024, 3, 6, 14, 30),
-        callStatus: "completed",
-    },
-    {
-        _id: "11",
-        patientName: "Ravi Bansal",
-        patientMobile: "+91-9876543220",
-        purpose: "Appointment",
-        formType: "outbound",
-        doctorName: "Dr. Rajesh Gupta",
-        departmentName: "Urology",
-        createdAt: new Date(2024, 3, 5, 16, 0),
-        callStatus: "completed",
-    },
-    {
-        _id: "12",
-        patientName: "Isha Gupta",
-        patientMobile: "+91-9876543221",
-        purpose: "followup",
-        formType: "outbound",
-        doctorName: "Dr. Sanjana Roy",
-        departmentName: "Gastroenterology",
-        createdAt: new Date(2024, 3, 4, 11, 45),
-        callStatus: "dropped",
-    },
-];
 
 export const PatientHistory = () => {
 
@@ -240,7 +101,10 @@ export const PatientHistory = () => {
         setFilteredPatients(filtered);
         setPagination((prev) => ({
             ...prev,
-            patients: 0,
+            patients: {
+                ...prev.patients,
+                page: 0,
+            },
         }));
     }, [patients, searchName, startDate, endDate, formTypeFilter]);
 
@@ -308,8 +172,11 @@ export const PatientHistory = () => {
         setFormTypeFilter(newValue);
         setPagination((prev) => ({
             ...prev,
-            patients: 0,
-        }));
+            patients: {
+                ...prev.patients,
+                page: 0,
+            },
+        }));;
     };
 
     // Calculate counts for each form type
@@ -331,7 +198,10 @@ export const PatientHistory = () => {
     const handleChangePage = (event, newPage) => {
         setPagination((prev) => ({
             ...prev,
-            patients: newPage,
+            patients: {
+                ...prev.patients,
+                page: newPage,
+            },
         }));
     };
 
@@ -339,8 +209,11 @@ export const PatientHistory = () => {
         setRowsPerPage(parseInt(event.target.value, 10));
         setPagination((prev) => ({
             ...prev,
-            patients: 0,
-        }));
+            patients: {
+                ...prev.patients,
+                page: 0,
+            },
+        }));;
     };
 
     // Format date
@@ -612,11 +485,12 @@ export const PatientHistory = () => {
                                 <Button
                                     variant="outlined"
                                     color="primary"
+                                    disabled={loading?.patientsLoading}
                                     startIcon={<RefreshIcon />}
                                     onClick={refreshPatients}
 
                                 >
-                                    Refresh
+                                    {loading?.patientsLoading ? <CircularProgress size={24} /> : "Refresh"}
                                 </Button>
 
                                 <Button

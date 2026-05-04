@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -29,6 +29,7 @@ import { AlertTriangle, Users } from "lucide-react";
 import { useApi } from "../../../api/useApi";
 import { commonRoutes } from "../../../api/apiService";
 import toast from "react-hot-toast";
+import HospitalContext from "../../../contexts/HospitalContexts";
 
 ChartJS.register(
   CategoryScale,
@@ -43,14 +44,6 @@ ChartJS.register(
   Filler,
 );
 
-// --- HELPER FUNCTIONS ---
-const filterOptions = [
-  { key: "Today", value: "today" },
-  { key: "Yesterday", value: "yesterday" },
-  { key: "Last 7 Days", value: "last7" },
-  { key: "Last 30 Days", value: "last30" },
-  { key: "Last 3 Month", value: "last3M" }
-];
 
 const categoryLabels = {
   location: "Location",
@@ -87,130 +80,26 @@ const getChange = (current, prev) => {
 
 
 const Dashboard = () => {
-
-  const [branches, setBranches] = useState([])
-  const [selectedBranch, setSelectedBranch] = useState("");
   const [formsModalOpen, setFormsModalOpen] = useState(false);
-  const [filter, setFilter] = useState(filterOptions[0].value);
-  const [metrics, setMetrics] = useState({});
-  const [page, setPage] = useState(1);
-  const [analytics, setAnalytics] = useState({});
-  const [codeAlerts, setCodeAlerts] = useState([]);
-  const [profile, setProfile] = React.useState(null);
-  const [hospitalId, setHospitalId] = React.useState(null)
-  const [forms, setForms] = useState({
-    today: [],
-    appointments: [],
-    followups: []
-  });
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [categoryType, setCategoryType] = useState("gender");
 
-  const { currentUser } = UserContextHook();
-  // console.log("curre", currentUser);
-  const { loading: dashboardLoading, request: getDashboard, error: dashError } = useApi(commonRoutes.getDashboard)
-  const { loading: branchesLoading, request: getBranches, error: branchesError } = useApi(commonRoutes.getHospitalBranchById)
-  const { loading: alertLoading, request: getCodeAlerts } = useApi(commonRoutes.getCreatedCodeAlerts);
-  const { loading: formLoading, request: getforms, error: formsError } = useApi(commonRoutes.getFilledForms)
-  const { request: getMe, error: getMeError, loading: getMeloading } = useApi(commonRoutes.getMe)
-  React.useEffect(() => {
-    const handleGetMe = async () => {
-      const res = await getMe();
-      setProfile(res.data || {});
-      if (res.data?.hospitals?.length) {
-        setHospitalId(res.data?.hospitals[0]?.hospitalId)
-      }
-
-      // setIsShowAction(res?.data?.canDelete);
-      // toast.success(response.message);
-    };
-    handleGetMe()
-  }, [])
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Parallel API calls (fast)
-        const [res] = await Promise.all([
-          getBranches(hospitalId),
-
-        ]);
-
-        // Hospitals
-        setBranches(res?.data || []);
-
-        if (res?.data?.length) {
-          setSelectedBranch(res?.data[0]?._id)
-        }
 
 
-
-      } catch (err) {
-        console.error("Fetch Error:", err);
-      }
-    };
-
-    if (hospitalId) {
-      fetchData();
-    }
-  }, [hospitalId]);
-
-  useEffect(() => {
-    const fetchforms = async () => {
-      const res = await getforms(filter, page, selectedBranch, hospitalId);
-
-      if (res?.data) {
-        const { metrics, forms } = res.data;
-        setMetrics(metrics);
-
-        setForms(prev => ({
-          today: page === 1
-            ? forms.today
-            : [...prev.today, ...forms.today],
-
-          appointments: page === 1
-            ? forms.appointments
-            : [...prev.appointments, ...forms.appointments],
-
-          followups: page === 1
-            ? forms.followups
-            : [...prev.followups, ...forms.followups],
-        }));
-      }
-    };
-
-    if (hospitalId) {
-      fetchforms();
-    }
-
-  }, [hospitalId, filter, page, selectedBranch]);
-  useEffect(() => {
-
-    const fetchDashboard = async () => {
-
-      const [res, alertRes] = await Promise.all([
-        getDashboard(selectedBranch, hospitalId),
-        getCodeAlerts(hospitalId, selectedBranch)
-      ])
-
-      if (res?.data) {
-        const { analytics } = res.data;
-        setAnalytics(analytics);
-      }
-
-      // Code Alerts
-      setCodeAlerts(alertRes?.data || []);
-
-    };
-
-    if (hospitalId && selectedBranch) {
-
-      fetchDashboard();
-    }
-
-  }, [hospitalId, selectedBranch]);
-
+  const {
+    forms,
+    loading,
+    analytics,
+    page,
+    metrics,
+    errors,
+    codeAlerts,
+    setPage,
+    branches,
+    selectedBranch,
+    setSelectedBranch
+  } = useContext(HospitalContext);
 
   const toggleModal = () => setIsTicketModalOpen(!isTicketModalOpen);
 
@@ -383,10 +272,10 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    const error = dashError || branchesError || formsError
+    const error = errors?.dashError || errors?.branchesError || errors?.formsError
     if (error) toast.error(error)
 
-  }, [dashError, branchesError, formsError])
+  }, [errors?.dashError, errors?.branchesError, errors?.formsError])
 
   const formsDataMap = {
     Forms: forms?.today || [],
@@ -398,7 +287,7 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      {dashboardLoading && (
+      {loading?.dashboardLoading && (
         <div className="loading-overlay-simple">
           <p>Loading DashBoard data...</p>
         </div>
@@ -429,7 +318,7 @@ const Dashboard = () => {
                   labelId="branch-label"
                   value={selectedBranch}
                   onChange={(e) => setSelectedBranch(e.target.value)}
-                  disabled={branchesLoading}
+                  disabled={loading?.branchesLoading}
                   sx={{
                     borderRadius: "8px",
                     backgroundColor: "white",
@@ -1455,7 +1344,7 @@ const Dashboard = () => {
           <FilledFormsComponent
             setFormsModalOpen={setFormsModalOpen}
             formsData={formsData}
-            formsLoading={dashboardLoading}
+            formsLoading={loading?.dashboardLoading}
             formsTypeFilter={formsTypeFilter}
             setFormsTypeFilter={setFormsTypeFilter}
             page={page}

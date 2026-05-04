@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import "./Team.css";
 import SectionLoader from "../../../components/SectionLoader";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -22,6 +22,7 @@ import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import SpeakerNotesIcon from "@mui/icons-material/SpeakerNotes";
 import PhoneMissedIcon from "@mui/icons-material/PhoneMissed";
 import UserIcon from "@mui/icons-material/Person";
+import HospitalContext from "../../../contexts/HospitalContexts";
 
 const filterOptions = [
   { key: "Today", value: "today" },
@@ -33,162 +34,35 @@ const filterOptions = [
 
 const TeamDashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { currentUser } = UserContextHook();
   const [formsTypeFilter, setFormsTypeFilter] = useState("all");
   const [filter, setFilter] = useState(filterOptions[0].value);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
-  const [metrics, setMetrics] = useState({});
-  const [analytics, setAnalytics] = useState({});
-  const [page, setPage] = useState(1);
-  const [branches, setBranches] = useState([])
-  const [codeAlerts, setCodeAlerts] = useState([]);
-  const [selectedBranch, setSelectedBranch] = useState(null)
-  const [profile, setProfile] = React.useState(null);
-  const [hospitalId, setHospitalId] = React.useState(null)
   const [branchFollowups, setBranchFollowups] = useState({ data: [], total: 0, page: 1, limit: 10 });
-  const [userInfo, setUserInfo] = useState({
-    name: "Loading...",
-    type: "Loading...",
-    ID: "",
-    username: "",
-    lastLoginTimeIST: "N/A",
-    baseAccumulatedSeconds: 0,
-    totalLoginTimeFormatted: "00h 00m 00s",
-  });
-  const [forms, setForms] = useState({
-    today: [],
-    appointments: [],
-    followups: []
-  });
-  // Forms
   const [formsModalOpen, setFormsModalOpen] = useState(false)
-  const [selectedPeriod, setSelectedPeriod] = useState("today");
 
   const navigate = useNavigate()
 
 
-  const { loading: dashboardLoading, request: getDashboard, error: dashError } = useApi(commonRoutes.getDashboard)
-  const { loading: branchesLoading, request: getBranches, error: branchesError } = useApi(commonRoutes.branchesByRole)
-  const { loading: alertLoading, request: getCodeAlerts } = useApi(commonRoutes.getCreatedCodeAlerts);
-  const { loading: formLoading, request: getforms, error: formsError } = useApi(commonRoutes.getFilledForms)
-  const { request: getMe, error: getMeError, loading: getMeloading } = useApi(commonRoutes.getMe)
-  React.useEffect(() => {
-    const handleGetMe = async () => {
-      const res = await getMe();
-      setProfile(res.data || {});
-      if (res.data?.hospitals?.length) {
-        setHospitalId(res.data?.hospitals[0]?.hospitalId)
-      }
-
-      // setIsShowAction(res?.data?.canDelete);
-      // toast.success(response.message);
-    };
-    handleGetMe()
-  }, [])
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Parallel API calls (fast)
-        const [res] = await Promise.all([
-          getBranches(hospitalId),
-        ]);
-
-        // Hospitals
-        setBranches(res?.data || []);
-        if (res?.data?.length) {
-          setSelectedBranch(res?.data[0]?._id)
-        }
-
-
-
-      } catch (err) {
-        console.error("Fetch Error:", err);
-      }
-    };
-    if (hospitalId) {
-      fetchData();
-    }
-  }, [hospitalId]);
-  useEffect(() => {
-    const fetchforms = async () => {
-      const res = await getforms(filter, page, selectedBranch, hospitalId);
-
-      if (res?.data) {
-        const { metrics, forms } = res.data;
-        setMetrics(metrics);
-
-        setForms(prev => ({
-          today: page === 1
-            ? forms.today
-            : [...prev.today, ...forms.today],
-
-          appointments: page === 1
-            ? forms.appointments
-            : [...prev.appointments, ...forms.appointments],
-
-          followups: page === 1
-            ? forms.followups
-            : [...prev.followups, ...forms.followups],
-        }));
-      }
-    };
-    if (hospitalId) {
-      fetchforms();
-    }
-
-  }, [hospitalId, filter, page, selectedBranch]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchDashboard = async () => {
-      try {
-        const branchParam = selectedBranch || undefined;
-
-        const [res, alertRes] = await Promise.all([
-          getDashboard(branchParam, hospitalId),
-          getCodeAlerts(hospitalId, selectedBranch),
-        ])
-
-        if (res?.data && isMounted) {
-          const { analytics, branchFollowups } = res.data;
-          setAnalytics(analytics);
-          setBranchFollowups(branchFollowups)
-          setCodeAlerts(alertRes?.data || []);
-        }
-
-      } catch (err) {
-        console.error("Dashboard error", err);
-      }
-    };
-
-    if (hospitalId && selectedBranch) {
-      fetchDashboard();
-    }
-
-
-    return () => {
-      isMounted = false;
-    };
-  }, [hospitalId, selectedBranch]);
+  const {
+    forms,
+    loading,
+    analytics,
+    page,
+    metrics,
+    errors,
+    codeAlerts,
+    setPage,
+    branches,
+    selectedBranch,
+    setSelectedBranch
+  } = useContext(HospitalContext);
 
   const formsDataMap = {
     Forms: forms.today,
     Followups: forms.followups,
     Appointments: forms.appointments
   };
-
   const formsData = formsDataMap[formsModalOpen] || [];
-
-
-  useEffect(() => {
-
-    if (currentUser) {
-      setUserInfo({ ...currentUser })
-    }
-  }, [currentUser])
-  // --- 3. DYNAMIC CHART INITIALIZATION ---
 
   const closeAssignModal = () => {
     setIsModalOpen(false);
@@ -216,12 +90,12 @@ const TeamDashboard = () => {
 
 
   useEffect(() => {
-    const error = dashError || branchesError || formsError
+    const error = errors?.dashError || errors?.branchesError || errors?.formsError
     if (error) toast.error(error)
 
-  }, [dashError, branchesError, formsError])
+  }, [errors?.dashError, errors?.branchesError, errors?.formsError])
 
-  if (dashboardLoading) {
+  if (loading?.dashboardLoading) {
     return (
       <div className="tld-dashboard-content-wrapper">
         <div className="tld-page-header">
@@ -303,10 +177,10 @@ const TeamDashboard = () => {
           id="global-date-range"
           onChange={(e) => setSelectedBranch(e.target.value)}
         >
-          {branches.length === 0 ? (
+          {branches?.length === 0 ? (
             <option disabled>No Branches Assigned</option>
           ) : (
-            branches.map((option) => (
+            branches?.map((option) => (
               <option key={option._id} value={option._id}>
                 {option.name}
               </option>
@@ -357,7 +231,6 @@ const TeamDashboard = () => {
       {/* Profile Modal */}
       {profileModalOpen && (
         <ProfilePopup
-          user={userInfo}
           onClose={() => setProfileModalOpen(false)}
         />
       )}
@@ -572,7 +445,7 @@ const TeamDashboard = () => {
                 <div className="h-pagination-btns">
                   <button
                     className="h-page-btn"
-                    disabled={(bfPage === 1 && hPage === 1) || dashboardLoading}
+                    disabled={(bfPage === 1 && hPage === 1) || loading?.dashboardLoading}
                     onClick={() => {
                       if (hPage > 1) {
                         setHPage(hPage - 1);
@@ -593,7 +466,7 @@ const TeamDashboard = () => {
                     disabled={
                       (((bfPage - 1) * 10) + (hPage * 5) >= (branchFollowups.total || 0)) &&
                       (hPage * 5 >= (branchFollowups.data?.length || 0)) ||
-                      dashboardLoading
+                      loading?.dashboardLoading
                     }
                     onClick={() => {
                       if (hPage < 2 && branchFollowups.data?.length > 5) {
@@ -882,7 +755,7 @@ const TeamDashboard = () => {
           <FilledFormsComponent
             setFormsModalOpen={setFormsModalOpen}
             formsData={formsData}
-            formsLoading={dashboardLoading}
+            formsLoading={loading?.formLoading}
             formsTypeFilter={formsTypeFilter}
             setFormsTypeFilter={setFormsTypeFilter}
             page={page}

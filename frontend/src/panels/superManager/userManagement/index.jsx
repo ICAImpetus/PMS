@@ -1,9 +1,8 @@
-import React, { useEffect } from "react";
-import { getDataFunc, sendDataApiFunc } from "../../../utils/services";
+import React, { useContext, useEffect } from "react";
 import { toast, Toaster } from "react-hot-toast";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
-import { gridClasses, styled } from "@mui/system";
-import { Box, useMediaQuery, useTheme, IconButton, Modal, CircularProgress, Typography } from "@mui/material";
+import { styled } from "@mui/system";
+import { Box, useMediaQuery, MenuItem, useTheme, FormControl, InputLabel, Select, Modal, CircularProgress, Typography } from "@mui/material";
 import { tokens } from "../../../theme";
 import Header from "../../../components/Header";
 import { DataGridStyles } from "../../../utils/DataGridStyles";
@@ -12,8 +11,7 @@ import CustomButton from "../../../components/customComponents/Button";
 import { AddIcon } from "../../../scenes/svgIcons/icons";
 import UserFormSupermanager from "./userForms";
 import UpdatePasswordForm from "../../superAdmin/userManagement/UpdatePassword";
-import { useApi } from "../../../api/useApi";
-import { commonRoutes } from "../../../api/apiService";
+import HospitalContext from "../../../contexts/HospitalContexts";
 
 const ScrollableForm = styled(Box)({
   width: "100%",
@@ -25,78 +23,29 @@ const ScrollableForm = styled(Box)({
 function UserManagementSupermanager() {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const [userData, setUserData] = React.useState([]); // For the table
-  const [allUsers, setAllUsers] = React.useState([]); // For the form dropdowns
   const [userUpdateData, setUserUpdateData] = React.useState(null);
   const [open, setOpen] = React.useState(false);
   const [updateOpen, setUpdateOpen] = React.useState(false);
-  const [profile, setProfile] = React.useState(null);
-  const [hospitalId, setHospitalId] = React.useState(null)
   const [openUpdatePasswordModal, setOpenUpdatePasswordModal] =
     React.useState(false);
   const [selectedUserForPasswordUpdate, setSelectedUserForPasswordUpdate] =
-    React.useState(null);
-  const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
-  const [selectedUserForDelete, setSelectedUserForDelete] =
     React.useState(null);
   const [paginationModel, setPaginationModel] = React.useState({
     pageSize: 15,
     page: 0,
   });
-
-  const { request: getMe, error: getMeError, loading: getMeloading } = useApi(commonRoutes.getMe)
-  const {
-    request: getAllUsers,
-    loading: userLoading,
-    error: usersError,
-  } = useApi(commonRoutes.getAllUsers)
-
-
-
-  React.useEffect(() => {
-    const handleGetMe = async () => {
-      const res = await getMe();
-      setProfile(res.data || {});
-      if (res.data?.hospitals?.length) {
-        setHospitalId(res.data?.hospitals[0]?.hospitalId)
-      }
-
-      // setIsShowAction(res?.data?.canDelete);
-      // toast.success(response.message);
-    };
-    handleGetMe()
-  }, [])
-
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
-  // ---
-  // 2. UPDATED LOGIC TO HANDLE STRING & ARRAY PARENTS
-  // ---
-
-
-  React.useEffect(() => {
-    const fetchUsers = async () => {
-      const res = await getAllUsers(hospitalId);
-      setAllUsers(res.data || []);
-      // toast.success(response.message);
-    };
-    if (hospitalId) {
-      fetchUsers();
-    }
-
-  }, [hospitalId]);
-
-  const StyledIconButton = styled(IconButton)(({ bgColor, color }) => ({
-    backgroundColor: bgColor,
-    color: color,
-    "&:hover": {
-      backgroundColor: bgColor,
-      filter: "brightness(0.9)",
-    },
-    marginLeft: "15px",
-    borderRadius: "8px",
-    padding: "8px",
-  }));
+  const {
+    loading,
+    selectedHostpital,
+    errors,
+    userData,
+    setUserData,
+    branches,
+    selectedBranch,
+    setSelectedBranch
+  } = useContext(HospitalContext);
 
   const handleAddUserModel = () => {
     setOpen(true);
@@ -106,35 +55,6 @@ function UserManagementSupermanager() {
     setOpenUpdatePasswordModal(false);
     setSelectedUserForPasswordUpdate(null);
   };
-
-  const handleCloseDeleteModal = () => {
-    setOpenDeleteModal(false);
-    setSelectedUserForDelete(null);
-  };
-
-  // const handleDeleteUser = async () => {
-  //   if (selectedUserForDelete) {
-  //     try {
-  //       const response = await sendDataApiFunc(
-  //         `deleteUser/${selectedUserForDelete.ID}`,
-  //         {},
-  //         "delete",
-  //       );
-  //       if (response.success) {
-  //         toast.success("User deleted successfully");
-  //         setUserData((prev) =>
-  //           prev.filter((user) => user.ID !== selectedUserForDelete.ID),
-  //         );
-  //       } else {
-  //         toast.error(response.message || "Failed to delete user");
-  //       }
-  //     } catch (error) {
-  //       console.error("Error deleting user:", error);
-  //       toast.error("Error deleting user");
-  //     }
-  //     handleCloseDeleteModal();
-  //   }
-  // };
 
   const columns = [
     { field: "name", headerName: "Name", flex: 1 },
@@ -191,7 +111,7 @@ function UserManagementSupermanager() {
     // },
   ];
 
-  const userDataInTable = allUsers.map((user) => {
+  const userDataInTable = userData?.map((user) => {
     return {
       id: nanoid(),
       ...user,
@@ -199,15 +119,15 @@ function UserManagementSupermanager() {
   });
 
   useEffect(() => {
-    const error = usersError || getMeError
+    const error = errors?.usersError
     if (error) {
       toast.error(error)
     }
-  }, [usersError, getMeError])
+  }, [errors?.usersError])
 
   return (
     <ScrollableForm>
-      {userLoading && (
+      {loading?.userLoading && (
         <Box
           display="flex"
           flexDirection="column"
@@ -224,7 +144,7 @@ function UserManagementSupermanager() {
           </Typography>
         </Box>
       )}
-      {!userLoading && (
+      {!loading?.userLoading && (
         <>
           <Box
             display="flex"
@@ -237,9 +157,63 @@ function UserManagementSupermanager() {
               title="User Management (Super Manager)"
               subtitle={"Manage your Team Leaders and Executives"}
             />
-            <CustomButton icon={<AddIcon />} onClick={handleAddUserModel}>
-              Add Users
-            </CustomButton>
+            <Box sx={{
+              display: 'flex',
+              flexWrap: "wrap",
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <FormControl sx={{ width: "220px" }} size="small">
+                <InputLabel
+                  id="hospital-label"
+                >
+                  Select Branch
+                </InputLabel>
+
+                <Select
+                  labelId="hospital-label"
+                  label="Select Branch"
+                  value={selectedBranch}
+                  onChange={(e) => setSelectedBranch(e.target.value)}
+                  disabled={loading?.branchesLoading}
+                  displayEmpty
+                  sx={{
+                    borderRadius: 2,
+                    backgroundColor: "black",
+                    color: "black",
+
+                  }}
+                >
+                  {/* <MenuItem value="">
+                                    <em>Select Hospital</em>
+                                </MenuItem> */}
+
+                  {loading?.branchesLoading ? (
+                    <MenuItem value="">
+                      <CircularProgress size={20} sx={{ mr: 1 }} />
+                      Loading...
+                    </MenuItem>
+                  ) : branches.length > 0 ? (
+                    branches.map((branch) => (
+                      <MenuItem
+                        key={branch._id}
+                        value={branch._id}
+                      >
+                        {branch.name}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem value="">
+                      No Branch Assigned
+                    </MenuItem>
+                  )}
+                </Select>
+              </FormControl>
+              <CustomButton icon={<AddIcon />} onClick={handleAddUserModel}>
+                Add Users
+              </CustomButton>
+            </Box>
+
           </Box>
           <Box m="4px 0 0 0" height="80vh" sx={DataGridStyles(colors, theme)}>
             <DataGrid
@@ -272,17 +246,17 @@ function UserManagementSupermanager() {
                 <UserFormSupermanager
                   initialState={null}
                   onClose={() => setOpen(false)}
-                  allUsers={allUsers}
-                  setAllUsers={setAllUsers}
-                  hospitalId={hospitalId}
+                  allUsers={userData}
+                  setAllUsers={setUserData}
+                  hospitalId={selectedHostpital}
                 />
               ) : updateOpen && userUpdateData ? (
                 <UserFormSupermanager
                   initialState={userUpdateData}
                   onClose={() => setUpdateOpen(false)}
-                  allUsers={allUsers}
-                  setAllUsers={setAllUsers}
-                  hospitalId={hospitalId}
+                  allUsers={userData}
+                  setAllUsers={setUserData}
+                  hospitalId={selectedHostpital}
                 />
               ) : null}
             </Box>

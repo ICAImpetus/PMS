@@ -20,8 +20,6 @@ const AuditLogs = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
 
   const accountCreationDate = useMemo(() => {
     const createdAt =
@@ -35,11 +33,14 @@ const AuditLogs = () => {
   }, [currentUser]);
 
 
-  const { allLogs, setAllLogs, loading, errors } = useContext(HospitalContext)
+  const { allLogs, setAllLogs, loading, errors, refetchLogs, pagination, setPagination } = useContext(HospitalContext)
 
 
   const handleStartDateChange = (value) => {
-    if (!value) return setStartDate('');
+    if (!value) return setStartDate((prev) => ({
+      ...prev,
+      auditLogs: ""
+    }));;
 
     const selected = moment(value, 'YYYY-MM-DD');
     const created = moment(accountCreationDate, 'YYYY-MM-DD');
@@ -54,7 +55,10 @@ const AuditLogs = () => {
       return;
     }
 
-    setStartDate(value);
+    setStartDate((prev) => ({
+      ...prev,
+      auditLogs: ""
+    }));
   };
 
   const handleEndDateChange = (value) => {
@@ -62,7 +66,7 @@ const AuditLogs = () => {
       toast.error('End date cannot be before your account creation date');
       return;
     }
-    if (value && startDate && moment(value).isBefore(moment(startDate, 'YYYY-MM-DD'))) {
+    if (value && startDate?.auditLogs && moment(value).isBefore(moment(startDate?.auditLogs, 'YYYY-MM-DD'))) {
       toast.error('End date cannot be before the start date');
       return;
     }
@@ -79,7 +83,7 @@ const AuditLogs = () => {
       const matchesSearch = searchTerm === '' || searchTarget.includes(searchTerm.toLowerCase());
 
       const logDate = moment(log.createdAt || log.timestamp || log.date);
-      const matchesStartDate = !startDate || (logDate.isValid() && logDate.isSameOrAfter(moment(startDate).startOf('day')));
+      const matchesStartDate = !startDate?.auditLogs || (logDate.isValid() && logDate.isSameOrAfter(moment(startDate?.auditLogs).startOf('day')));
       const matchesEndDate = !endDate || (logDate.isValid() && logDate.isSameOrBefore(moment(endDate).endOf('day')));
 
       const matchesFilterType = filterType === 'all' || (log.module || '').toLowerCase().includes(filterType.toLowerCase()) || (log.role || '').toLowerCase().includes(filterType.toLowerCase());
@@ -87,17 +91,6 @@ const AuditLogs = () => {
       return matchesSearch && matchesStartDate && matchesEndDate && matchesFilterType;
     }) || [];
   }, [allLogs, searchTerm, filterType, startDate, endDate]);
-
-  // Pagination Logic
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
-  const paginatedLogs = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredLogs.slice(start, start + itemsPerPage);
-  }, [filteredLogs, currentPage, itemsPerPage]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, filterType, startDate, endDate]);
 
   // Statistics Calculation
   const stats = useMemo(
@@ -214,9 +207,9 @@ const AuditLogs = () => {
             <input
               type="date"
               className="date-input"
-              value={startDate}
+              value={startDate?.auditLogs}
               min={accountCreationDate}
-              max={endDate || undefined}
+              max={endDate?.auditLogs || undefined}
               onChange={(e) => handleStartDateChange(e.target.value)}
             />
           </div>
@@ -225,16 +218,25 @@ const AuditLogs = () => {
             <input
               type="date"
               className="date-input"
-              value={endDate}
-              min={startDate || accountCreationDate || undefined}
-              max={endDate || today}
+              value={endDate?.auditLogs}
+              min={endDate?.auditLogs || accountCreationDate || undefined}
+              max={endDate?.auditLogs || today}
               onChange={(e) => handleEndDateChange(e.target.value)}
             />
           </div>
-          {(startDate || endDate) && (
+          {(startDate?.auditLogs || endDate?.auditLogs) && (
             <button
               className="btn btn-small btn-secondary"
-              onClick={() => { setStartDate(''); setEndDate(''); }}
+              onClick={() => {
+                setStartDate((prev) => ({
+                  ...prev,
+                  auditLogs: ""
+                }));
+                setEndDate((prev) => ({
+                  ...prev,
+                  auditLogs: ""
+                }));;
+              }}
               title="Clear Dates"
             >
               ✕
@@ -255,7 +257,7 @@ const AuditLogs = () => {
 
         <div className="btn-group">
           <button className="btn btn-success" onClick={handleExport}>Export CSV</button>
-          <button className="btn btn-secondary" onClick={loadLogs}>Refresh</button>
+          <button className="btn btn-secondary" onClick={refetchLogs}>Refresh</button>
         </div>
       </div>
 
@@ -267,7 +269,7 @@ const AuditLogs = () => {
           </div>
         </div>
         <div className="table-container">
-          {loading && (
+          {loading?.auditLogLoading && (
             <Box
               display="flex"
               flexDirection="column"
@@ -284,7 +286,7 @@ const AuditLogs = () => {
               </Typography>
             </Box>
           )}
-          {!loading && (
+          {!loading?.auditLogLoading && (
             <table>
               <thead>
                 <tr>
@@ -297,7 +299,7 @@ const AuditLogs = () => {
                 </tr>
               </thead>
               <tbody>
-                {paginatedLogs.length > 0 ? paginatedLogs.map(log => (
+                {filteredLogs.length > 0 ? filteredLogs.map(log => (
                   <tr key={log._id}>
                     <td style={{ whiteSpace: 'nowrap' }}>
                       <div style={{ fontWeight: 600 }}>{moment(log.createdAt || log.timestamp).format("DD MMM YYYY")}</div>
@@ -331,20 +333,34 @@ const AuditLogs = () => {
 
         </div>
 
-        {totalPages > 1 && (
+        {10 > 1 && (
           <div className="pagination">
             <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(prev => prev - 1)}
+              disabled={pagination?.auditLogs?.page === 1}
+              onClick={() =>
+                setPagination(prev => ({
+                  ...prev,
+                  auditLogs: {
+                    ...prev.auditLogs,
+                    page: prev.auditLogs.page - 1
+                  }
+                }))
+              }
             >
               &larr; Previous
             </button>
             <span className="page-info">
-              Page {currentPage} of {totalPages}
+              Page {pagination?.auditLogs?.page} of {10}
             </span>
             <button
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(prev => prev + 1)}
+              disabled={pagination?.auditLogs?.page === 10}
+              onClick={() => setPagination(prev => ({
+                ...prev,
+                auditLogs: {
+                  ...prev.auditLogs,
+                  page: prev.auditLogs.page + 1
+                }
+              }))}
             >
               Next &rarr;
             </button>
@@ -380,7 +396,7 @@ const AuditLogs = () => {
         <div className="data-card">
           <h4>Action Distribution</h4>
           <div className="chart-container-sm">
-            {allLogs.length > 0 ? <canvas ref={chartRef}></canvas> : <div style={{ textAlign: 'center', marginTop: '50px' }}>Waiting for data...</div>}
+            {allLogs?.length > 0 ? <canvas ref={chartRef}></canvas> : <div style={{ textAlign: 'center', marginTop: '50px' }}>Waiting for data...</div>}
           </div>
         </div>
 

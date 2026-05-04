@@ -31,104 +31,16 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { commonRoutes } from "../../../api/apiService";
 import { useApi } from "../../../api/useApi";
 
-// Dummy patient detail data - single patient with multiple visits
-const DUMMY_PATIENT = {
-    _id: "1",
-    patientName: "Rajesh Kumar",
-    patientMobile: "+91-9876543210",
-    age: 45,
-    gender: "Male",
-    address: "123 Main Street, New Delhi, India",
-    totalVisits: 8,
-};
-
-// Dummy visits/forms data for the single patient
-const DUMMY_PATIENT_VISITS = [
-    {
-        _id: "v1",
-        purpose: "Appointment",
-        formType: "inbound",
-        doctorName: "Dr. Anil Singh",
-        departmentName: "Cardiology",
-        createdAt: new Date(2024, 3, 15, 10, 30),
-        callStatus: "completed",
-    },
-    {
-        _id: "v2",
-        purpose: "Appointment",
-        formType: "inbound",
-        doctorName: "Dr. Anil Singh",
-        departmentName: "Cardiology",
-        createdAt: new Date(2024, 3, 20, 14, 15),
-        callStatus: "completed",
-    },
-    {
-        _id: "v3",
-        purpose: "followup",
-        formType: "inbound",
-        doctorName: "Dr. Anil Singh",
-        departmentName: "Cardiology",
-        createdAt: new Date(2024, 3, 27, 9, 45),
-        callStatus: "dropped",
-    },
-    {
-        _id: "v4",
-        purpose: "Appointment",
-        formType: "outbound",
-        doctorName: "Dr. Meera Patel",
-        departmentName: "General Medicine",
-        createdAt: new Date(2024, 4, 5, 16, 20),
-        callStatus: "completed",
-    },
-    {
-        _id: "v5",
-        purpose: "followup",
-        formType: "outbound",
-        doctorName: "Dr. Anil Singh",
-        departmentName: "Cardiology",
-        createdAt: new Date(2024, 4, 12, 11, 0),
-        callStatus: "completed",
-    },
-    {
-        _id: "v6",
-        purpose: "Appointment",
-        formType: "inbound",
-        doctorName: "Dr. Rajesh Gupta",
-        departmentName: "Orthopedics",
-        createdAt: new Date(2024, 4, 18, 13, 30),
-        callStatus: "completed",
-    },
-    {
-        _id: "v7",
-        purpose: "followup",
-        formType: "inbound",
-        doctorName: "Dr. Meera Patel",
-        departmentName: "General Medicine",
-        createdAt: new Date(2024, 4, 25, 15, 45),
-        callStatus: "completed",
-    },
-    {
-        _id: "v8",
-        purpose: "Appointment",
-        formType: "outbound",
-        doctorName: "Dr. Sanjana Roy",
-        departmentName: "Dermatology",
-        createdAt: new Date(2024, 5, 2, 10, 15),
-        callStatus: "dropped",
-    },
-];
-
 export const SInglePatientDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const location = useLocation()
     const [patient, setPatient] = useState(location.state?.patient || {});
     const [visits, setVisits] = useState([]);
-    const [filteredVisits, setFilteredVisits] = useState([]);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
-    const [searchDoctor, setSearchDoctor] = useState("");
+    const [searchTerm, setSearchTerm] = useState("");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
     const [formTypeFilter, setFormTypeFilter] = useState("all");
@@ -140,50 +52,52 @@ export const SInglePatientDetails = () => {
         error: patientHistoryError,
     } = useApi(commonRoutes.getSinglePatientsHistory);
 
-    // Filter visits based on search and date filters
-    useEffect(() => {
-        let filtered = [...visits];
+    const filteredVisits = useMemo(() => {
+        let filtered = [...(visits || [])];
+
+        console.log("filtered", filtered);
+
 
         // Search by doctor name or department
-        if (searchDoctor.trim()) {
-            filtered = filtered.filter(
-                (visit) =>
-                    visit.doctorName
-                        ?.toLowerCase()
-                        .includes(searchDoctor.toLowerCase()) ||
-                    visit.departmentName
-                        ?.toLowerCase()
-                        .includes(searchDoctor.toLowerCase())
+        if (searchTerm.trim()) {
+            const search = searchTerm.toLowerCase();
+
+            filtered = filtered.filter((visit) =>
+                visit?.doctor?.name?.toLowerCase().includes(search) ||
+                visit?.department?.name?.toLowerCase().includes(search)
             );
         }
 
         // Filter by date range
         if (startDate || endDate) {
+            const start = startDate ? new Date(startDate) : null;
+            const end = endDate ? new Date(endDate) : null;
+
+            if (end) {
+                end.setHours(23, 59, 59, 999);
+            }
+
             filtered = filtered.filter((visit) => {
-                const visitDate = new Date(visit.createdAt);
-                const start = startDate ? new Date(startDate) : null;
-                const end = endDate ? new Date(endDate) : null;
+                const visitDate = new Date(visit?.createdAt);
 
                 if (start && visitDate < start) return false;
-                if (end) {
-                    end.setHours(23, 59, 59, 999);
-                    if (visitDate > end) return false;
-                }
+                if (end && visitDate > end) return false;
+
                 return true;
             });
         }
 
         // Filter by form type
         if (formTypeFilter !== "all") {
-            filtered = filtered.filter((visit) =>
-                visit.formType?.toLowerCase() === formTypeFilter.toLowerCase()
+            const type = formTypeFilter.toLowerCase();
+
+            filtered = filtered.filter(
+                (visit) => visit?.formType?.toLowerCase() === type
             );
         }
 
-        setFilteredVisits(filtered);
-        setPage(0);
-    }, [searchDoctor, startDate, endDate, formTypeFilter, visits]);
-
+        return filtered;
+    }, [visits, searchTerm, startDate, endDate, formTypeFilter]);
     useEffect(() => {
         const fetchHistory = async () => {
             if (!patient?.hospitalId || !patient?._id) {
@@ -214,16 +128,6 @@ export const SInglePatientDetails = () => {
     };
 
     const counts = calculateCounts();
-
-    // Clear all filters
-    const handleClearFilters = () => {
-        setSearchDoctor("");
-        setStartDate("");
-        setEndDate("");
-        setFormTypeFilter("all");
-        setFilteredVisits(visits);
-        setPage(0);
-    };
 
     // Handle form type tab change
     const handleFormTypeChange = (event, newValue) => {
@@ -420,8 +324,8 @@ export const SInglePatientDetails = () => {
                                 label="Search by Doctor/Department"
                                 variant="outlined"
                                 size="small"
-                                value={searchDoctor}
-                                onChange={(e) => setSearchDoctor(e.target.value)}
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
@@ -491,7 +395,7 @@ export const SInglePatientDetails = () => {
                     </Grid>
 
                     {/* Active Filters Display */}
-                    {(searchDoctor || startDate || endDate) && (
+                    {(searchTerm || startDate || endDate) && (
                         <Box sx={{ mt: 2 }}>
                             <Typography variant="caption" sx={{ color: "#7c8fa3" }}>
                                 Showing {filteredVisits.length} of {visits.length} visit(s)

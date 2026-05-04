@@ -10,11 +10,10 @@ import toast from "react-hot-toast";
 import { UserContextHook } from "../../contexts/UserContexts";
 import LogoutModal from "../../components/LogoutModal";
 
-export const ProfilePopup = ({ user, onClose, handleLogout }) => {
+export const ProfilePopup = ({ onClose, handleLogout }) => {
   const { currentUser, setCurrentUser } = UserContextHook();
   const userType = currentUser?.type;
   const isSuperAdmin = userType === "superadmin";
-  console.log("currentUser", currentUser)
 
 
   // State for modals
@@ -23,10 +22,10 @@ export const ProfilePopup = ({ user, onClose, handleLogout }) => {
 
   // Profile update state
   const [profileForm, setProfileForm] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    username: user?.username || "",
-    type: user?.type || ""
+    name: currentUser?.name || "",
+    email: currentUser?.email || "",
+    username: currentUser?.username || "",
+    type: currentUser?.type || ""
   });
   const { request: updateUser, loading: updateLoading } = useApi(commonRoutes.updateUser);
 

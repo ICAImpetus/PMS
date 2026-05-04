@@ -6,8 +6,6 @@ import IconButton from "@mui/material/IconButton";
 import IosShareOutlinedIcon from '@mui/icons-material/IosShareOutlined';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import { Box, Pagination, TextField } from "@mui/material";
-import { commonRoutes } from "../../api/apiService";
-import { useApi } from "../../api/useApi";
 
 // Filled Forms: available columns for filter & export
 const FORMS_AVAILABLE_COLUMNS = [
@@ -75,7 +73,7 @@ const FilledFormsComponent = ({
   formsTypeFilter,
   setFormsTypeFilter,
   page,
-  setPage,
+  setPagination,
   totalPages,
   formsLoading = false,
 }) => {
@@ -95,7 +93,9 @@ const FilledFormsComponent = ({
   ]);
   const formsColumnFilterRef = useRef(null);
 
-  console.log("forsm", formsData);
+
+  // console.log("formsData", formsData);
+
 
   // useEffect(() => {
 
@@ -226,7 +226,13 @@ const FilledFormsComponent = ({
 
   }, []);
   useEffect(() => {
-    setPage(1);
+    setPagination((prev) => ({
+      ...prev,
+      forms: {
+        ...prev.patients,
+        page: 1,
+      },
+    }));
   }, [searchTerm, formsTypeFilter]);
 
   // useEffect(() => {
@@ -422,7 +428,13 @@ const FilledFormsComponent = ({
           <Pagination
             count={totalPages}
             page={page}
-            onChange={(e, value) => setPage(value)}
+            onChange={(e, value) => setPagination((prev) => ({
+              ...prev,
+              forms: {
+                ...prev.patients,
+                page: value,
+              },
+            }))}
             color="primary"
             size="large"
           />

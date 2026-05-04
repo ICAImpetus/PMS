@@ -5966,10 +5966,7 @@ export const superManagerDashboardService = async (conn, branchId) => {
 
     //  Validate hospitalId
     if (!branchId || !mongoose.isValidObjectId(branchId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Valid branch Id is required",
-      });
+      throw new Error("Valid branch Id is required")
     }
 
     //  Get hospital

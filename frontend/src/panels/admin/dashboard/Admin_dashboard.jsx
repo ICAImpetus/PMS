@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
 
   AlertTriangle,
@@ -46,6 +46,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import SectionLoader from "../../../components/SectionLoader";
 import { UserContextHook } from "../../../contexts/UserContexts";
+import HospitalContext from "../../../contexts/HospitalContexts";
 
 
 // Register ChartJS components
@@ -81,19 +82,6 @@ const getMonthWiseData = (arr, months) => {
 const sum = (arr) => arr.reduce((a, b) => a + b, 0);
 const statusClasses = ["info", "success", "warning"];
 
-const getChange = (current, prev) => {
-  if (!prev) return { value: "-", className: "" };
-
-  const diff = ((current - prev) / prev) * 100;
-
-  if (diff > 0) {
-    return { value: `↑ ${diff.toFixed(0)}%`, className: "text-success" };
-  } else if (diff < 0) {
-    return { value: `↓ ${Math.abs(diff).toFixed(0)}%`, className: "text-danger" };
-  }
-
-  return { value: "0%", className: "" };
-};
 
 
 const AdminDashboard = () => {
@@ -101,102 +89,24 @@ const AdminDashboard = () => {
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [formsModalOpen, setFormsModalOpen] = useState(false);
   const [formsTypeFilter, setFormsTypeFilter] = useState("all");
-  const [hospitals, sethospitals] = useState([])
-  const [branCount, setbranCount] = useState(0)
-  const [filter, setFilter] = React.useState(filterOptions[0]?.value || "");
-  const [metrics, setMetrics] = useState({});
-  const [analytics, setAnalytics] = useState({});
-  const [selectedHostpital, setSelectedHostpital] = useState("");
-  const [page, setPage] = useState(1)
-  const [codeAlerts, setCodeAlerts] = useState([]);
-  const [forms, setForms] = useState({
-    today: [],
-    appointments: [],
-    followups: []
-  });
-
-  const { loading: hospitalsLoading, request: gethospitals, error: hospitalsError } = useApi(commonRoutes.getAllHospital)
-  const { loading: dashboardLoading, request: getDashboard, error: dashError } = useApi(commonRoutes.getDashboard)
-  const { loading: formLoading, request: getforms, error: formsError } = useApi(commonRoutes.getFilledForms)
-  const { loading: alertLoading, request: getCodeAlerts } = useApi(commonRoutes.getCreatedCodeAlerts);
-
   const navigate = useNavigate()
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Parallel API calls (fast)
-        const [hospitalRes] = await Promise.all([
-          gethospitals(),
-        ]);
+  const {
+    hospitals,
+    forms,
+    loading,
+    analytics,
+    page,
+    metrics,
+    selectedHostpital,
+    filter,
+    errors,
+    setPagination,
+    codeAlerts,
+    setFilter,
+    setSelectedHostpital,
+  } = useContext(HospitalContext);
 
-        // Hospitals
-        sethospitals(hospitalRes?.data || []);
-        if (hospitalRes?.data?.length) {
-          setSelectedHostpital(hospitalRes?.data[0]?._id)
-          setbranCount(hospitalRes?.data[0]?.branchCount || 0);
-        }
-
-        // Code Alerts
-
-
-      } catch (err) {
-        console.error("Fetch Error:", err);
-      }
-    };
-
-    fetchData();
-
-  }, []);
-
-  useEffect(() => {
-    if (!selectedHostpital) return;
-    const fetchforms = async () => {
-      const res = await getforms(filter, page, null, selectedHostpital);
-
-      if (res?.data) {
-        const { metrics, forms } = res.data;
-        setMetrics(metrics);
-
-        setForms(prev => ({
-          today: page === 1
-            ? forms.today
-            : [...prev.today, ...forms.today],
-
-          appointments: page === 1
-            ? forms.appointments
-            : [...prev.appointments, ...forms.appointments],
-
-          followups: page === 1
-            ? forms.followups
-            : [...prev.followups, ...forms.followups],
-        }));
-      }
-    };
-
-    fetchforms();
-  }, [filter, page, selectedHostpital]);
-
-
-  useEffect(() => {
-
-    const fetchDashboard = async () => {
-
-      const [res, alertRes] = await Promise.all([
-        getDashboard(null, selectedHostpital),
-        getCodeAlerts(selectedHostpital),
-      ])
-
-      if (res?.data) {
-        const { analytics } = res.data;
-        setAnalytics(analytics);
-      }
-      setCodeAlerts(alertRes?.data || []);
-
-    };
-    if (selectedHostpital) fetchDashboard();
-
-  }, [selectedHostpital]);
   const categoryData =
     analytics?.callCategorization ??
     {
@@ -345,12 +255,12 @@ const AdminDashboard = () => {
   const formsData = formsDataMap[formsModalOpen] || [];
 
   useEffect(() => {
-    const error = dashError || hospitalsError || formsError
+    const error = errors?.dashError || errors?.hospitalsError || errors?.formsError
     if (error) toast.error(error)
 
-  }, [dashError, hospitalsError, formsError])
+  }, [errors?.dashError, errors?.hospitalsError, errors?.formsError])
 
-  if (dashboardLoading) {
+  if (loading?.dashboardLoading) {
     return (
       <div className="tld-dashboard-content-wrapper">
         <div className="tld-page-header">
@@ -386,7 +296,7 @@ const AdminDashboard = () => {
               <Select
                 value={selectedHostpital}
                 onChange={(e) => setSelectedHostpital(e.target.value)}
-                disabled={hospitalsLoading}
+                disabled={loading?.hospitalsLoading}
                 displayEmpty
                 sx={{
                   borderRadius: 2,
@@ -397,7 +307,7 @@ const AdminDashboard = () => {
                   backgroundColor: "#fff"
                 }}
               >
-                {hospitalsLoading ? (
+                {loading?.hospitalsLoading ? (
                   <MenuItem value="">
                     <CircularProgress size={20} sx={{ mr: 1 }} />
                     Loading...
@@ -852,11 +762,11 @@ const AdminDashboard = () => {
           <FilledFormsComponent
             setFormsModalOpen={setFormsModalOpen}
             formsData={formsData}
-            formsLoading={dashboardLoading}
+            formsLoading={loading?.dashboardLoading}
             formsTypeFilter={formsTypeFilter}
             setFormsTypeFilter={setFormsTypeFilter}
             page={page}
-            setPage={setPage}
+            setPagination={setPagination}
             totalPages={metrics?.pagination?.totalPages}
           >
           </FilledFormsComponent>
