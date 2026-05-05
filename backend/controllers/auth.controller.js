@@ -187,7 +187,7 @@ export const userLogin = async (req, res, next) => {
     return res.json({
       success: true,
       message: "Login successful",
-      result: { ...result, token },
+      result,
       token,
     });
   } catch (error) {

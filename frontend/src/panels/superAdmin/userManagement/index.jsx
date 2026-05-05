@@ -89,6 +89,7 @@ function UserManageMent() {
     errors,
     userData,
     setSelectedHostpital,
+    setUserData,
   } = useContext(HospitalContext);
 
 

@@ -35,7 +35,6 @@ const filterOptions = [
 const TeamDashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formsTypeFilter, setFormsTypeFilter] = useState("all");
-  const [filter, setFilter] = useState(filterOptions[0].value);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [branchFollowups, setBranchFollowups] = useState({ data: [], total: 0, page: 1, limit: 10 });
   const [formsModalOpen, setFormsModalOpen] = useState(false)
@@ -47,14 +46,16 @@ const TeamDashboard = () => {
     forms,
     loading,
     analytics,
-    page,
     metrics,
     errors,
     codeAlerts,
-    setPage,
     branches,
     selectedBranch,
-    setSelectedBranch
+    pagination,
+    setSelectedBranch,
+    filter,
+    setFilter,
+    setPagination
   } = useContext(HospitalContext);
 
   const formsDataMap = {
@@ -758,8 +759,8 @@ const TeamDashboard = () => {
             formsLoading={loading?.formLoading}
             formsTypeFilter={formsTypeFilter}
             setFormsTypeFilter={setFormsTypeFilter}
-            page={page}
-            setPage={setPage}
+            pagination={pagination}
+            setPagination={setPagination}
             totalPages={metrics?.pagination?.totalPages}
           >
           </FilledFormsComponent>

@@ -54,6 +54,7 @@ export const PatientHistory = () => {
         patients,
         pagination,
         setPagination,
+        selectedHostpital,
         refreshPatients
     } = useContext(HospitalContext);
 

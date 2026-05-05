@@ -72,7 +72,7 @@ const FilledFormsComponent = ({
   formsData = [],
   formsTypeFilter,
   setFormsTypeFilter,
-  page,
+  pagination,
   setPagination,
   totalPages,
   formsLoading = false,
@@ -161,7 +161,7 @@ const FilledFormsComponent = ({
   //  for pagination 
   const rowParPage = 10
 
-  const paginationData = filteredForms.slice((page - 1) * rowParPage, page * rowParPage)
+  const paginationData = filteredForms.slice((pagination?.forms?.page - 1) * rowParPage, pagination?.forms?.page * rowParPage)
 
   const visibleFormColumns = FORMS_AVAILABLE_COLUMNS.filter((col) =>
     selectedFormColumns.includes(col.key),
@@ -427,7 +427,7 @@ const FilledFormsComponent = ({
         >
           <Pagination
             count={totalPages}
-            page={page}
+            page={pagination?.forms?.page}
             onChange={(e, value) => setPagination((prev) => ({
               ...prev,
               forms: {

@@ -1022,6 +1022,8 @@ export const getBranchesByRole = async (req, res) => {
 
     const BranchModel = getBranchModel(conn);
 
+    console.log("user.branches", user.branches);
+
     const branchIds = user.branches?.map(item => item.branchId) || [];
 
     const branches = await BranchModel.find({

@@ -163,7 +163,7 @@ function UserManagementSupermanager() {
               alignItems: 'center',
               gap: '10px'
             }}>
-              <FormControl sx={{ width: "220px" }} size="small">
+              {/* <FormControl sx={{ width: "220px" }} size="small">
                 <InputLabel
                   id="hospital-label"
                 >
@@ -184,10 +184,6 @@ function UserManagementSupermanager() {
 
                   }}
                 >
-                  {/* <MenuItem value="">
-                                    <em>Select Hospital</em>
-                                </MenuItem> */}
-
                   {loading?.branchesLoading ? (
                     <MenuItem value="">
                       <CircularProgress size={20} sx={{ mr: 1 }} />
@@ -208,7 +204,7 @@ function UserManagementSupermanager() {
                     </MenuItem>
                   )}
                 </Select>
-              </FormControl>
+              </FormControl> */}
               <CustomButton icon={<AddIcon />} onClick={handleAddUserModel}>
                 Add Users
               </CustomButton>

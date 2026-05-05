@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import Chart from "chart.js/auto";
 import "./Executive.css";
@@ -25,212 +25,49 @@ import PhoneCallbackIcon from "@mui/icons-material/PhoneCallback";
 import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate } from "react-router-dom";
 import { ProfilePopup, CodeAnnousementPopup } from "../../../scenes/global/ProfileAndCodeAnnousementPopup";
-import { useApi } from "../../../api/useApi";
-import { commonRoutes } from "../../../api/apiService";
 import toast from "react-hot-toast";
-import { UserContextHook } from "../../../contexts/UserContexts";
 import FilledFormsComponent from "../../../components/customComponents/FilledFormsComponent";
 import { Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
-
-const filterOptions = [
-  { key: "Today", value: "today" },
-  { key: "Yesterday", value: "yesterday" },
-  { key: "Last 7 Days", value: "last7" },
-  { key: "Last 30 Days", value: "last30" },
-  { key: "Last 3 Month", value: "last3M" }
-];
+import HospitalContext from "../../../contexts/HospitalContexts";
 
 const ExecutiveDashboard = () => {
   const navigate = useNavigate();
   const hourlyChartRef = useRef(null);
   const hourlyChartInstance = useRef(null);
   const [loadingId, setLoadingId] = useState(null);
-  const [userInfo, setUserInfo] = useState({
-    name: "Loading...",
-    type: "Loading...",
-    ID: "",
-    username: "",
-    hospitalName: "", // Added this
-    email: "",
-    lastLoginTimeIST: "N/A",
-    // Base time fetched from backend (initial cumulative daily time)
-    baseAccumulatedSeconds: 0,
-    totalLoginTimeFormatted: "00h 00m 00s",
-  });
-
-  // Profile edit modal
   const [modalOpen, setModalOpen] = useState(null);
-
   const [callsModalOpen, setCallsModalOpen] = useState(false);
   const [callsDateFilter, setCallsDateFilter] = useState("today");
   const [callsTab, setCallsTab] = useState("all"); // "all" | "inbound" | "outbound"
   const [formsModalOpen, setFormsModalOpen] = useState(null);
   const [formsTypeFilter, setFormsTypeFilter] = useState("all"); // "all" | "inbound" | "outbound"
-  const [filter, setFilter] = useState(filterOptions[0].value);
-  const [metrics, setMetrics] = useState({});
-  const [analytics, setAnalytics] = useState({});
   const [codeAlertsData, setcodeAlertsData] = useState([]);
-  const [codeAlerts, setCodeAlerts] = useState([]);
-  const [selectedBranch, setSelectedBranch] = useState(null)
-  const [profile, setProfile] = React.useState(null);
-  const [hospitalId, setHospitalId] = React.useState(null)
-  const [forms, setForms] = useState({
-    today: [],
-    appointments: [],
-    followups: []
-  });
   const [branchFollowups, setBranchFollowups] = useState({ data: [], total: 0, page: 1, limit: 10 });
   const [followupsPopupOpen, setFollowupsPopupOpen] = useState(false);
   const [bfPage, setBfPage] = useState(1);
   const [page, setPage] = useState(1);
-  const [branches, setBranches] = useState([])
   const [hPage, setHPage] = useState(1); // Horizontal page (5 items per page)
-  const { currentUser } = UserContextHook();
-
   // Notes states
   const [notes, setNotes] = useState([]);
   const [notesModalOpen, setNotesModalOpen] = useState(false);
   const [newNote, setNewNote] = useState({ heading: '', body: '' });
   const [expandedNote, setExpandedNote] = useState(null);
-
-  const { loading: formLoading, request: getforms, error: formsError } = useApi(commonRoutes.getFilledForms)
-  const { loading: branchesLoading, request: getBranches, error: branchesError } = useApi(commonRoutes.branchesByRole)
-  const { loading: dashboardLoading, request: getDashboard, error: dashError } = useApi(commonRoutes.getDashboard)
-  const { loading: codeAlertLoading, request: getCodeAlert, error: codeAlertError } = useApi(commonRoutes.getCodeAlerts)
-  const { loading: alertLoading, request: getAlerts } =
-    useApi(commonRoutes.getCreatedCodeAlerts);
-  const { loading: toggleLoading, error: toggleError, request: toggleAlertStatus } =
-    useApi(commonRoutes.toggleCodeAlertStatus);
-  const { request: getMe, error: getMeError, loading: getMeloading } = useApi(commonRoutes.getMe)
-
-  useEffect(() => {
-    const error = dashError || toggleError || formsError || getMeError || branchesError;
-    if (error) toast.error(error)
-
-  }, [dashError, formsError, getMeError, branchesError])
-  React.useEffect(() => {
-    const handleGetMe = async () => {
-      const res = await getMe();
-      setProfile(res.data || {});
-      if (res.data?.hospitals?.length && res.data?.branches?.length) {
-        setHospitalId(res.data?.hospitals[0]?.hospitalId)
-      }
-
-      // setIsShowAction(res?.data?.canDelete);
-      // toast.success(response.message);
-    };
-    handleGetMe()
-  }, [])
-
-  useEffect(() => {
-
-    if (currentUser) {
-      setUserInfo({ ...currentUser })
-    }
-  }, [currentUser])
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Parallel API calls (fast)
-        const [res] = await Promise.all([
-          getBranches(hospitalId),
-        ]);
-
-        // Hospitals
-        setBranches(res?.data || []);
-        if (res?.data?.length) {
-          setSelectedBranch(res?.data[0]?._id)
-        }
-
-
-
-      } catch (err) {
-        console.error("Fetch Error:", err);
-      }
-    };
-    if (hospitalId) {
-      fetchData();
-    }
-  }, [hospitalId]);
-
-  useEffect(() => {
-    const fetchforms = async () => {
-      const res = await getforms(filter, page, selectedBranch, hospitalId);
-      console.log(" res.data", res.data);
-
-      if (res?.data) {
-        const { metrics, forms } = res.data;
-        setMetrics(metrics);
-
-        setForms(prev => ({
-          today: page === 1
-            ? forms.today
-            : [...prev.today, ...forms.today],
-
-          appointments: page === 1
-            ? forms.appointments
-            : [...prev.appointments, ...forms.appointments],
-
-          followups: page === 1
-            ? forms.followups
-            : [...prev.followups, ...forms.followups],
-        }));
-
-      }
-    };
-    if (hospitalId && selectedBranch) {
-      fetchforms();
-    }
-
-
-  }, [hospitalId, selectedBranch, filter, page]);
-
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      // Use bfPage only if popup is open or for initial fetch
-      const res = await getDashboard(selectedBranch, hospitalId);
-      if (res?.data) {
-        const { analytics, branchFollowups } = res.data;
-        setAnalytics(analytics)
-        setBranchFollowups(branchFollowups)
-      }
-    };
-    if (hospitalId && selectedBranch) {
-      fetchDashboard();
-    }
-
-  }, [hospitalId, selectedBranch, bfPage]);
-
-  useEffect(() => {
-    setHPage(1);
-  }, [branchFollowups.data]);
-
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Parallel API calls (fast)
-        const [res, alertRes] = await Promise.all([
-          getCodeAlert(hospitalId, selectedBranch),
-          getAlerts(hospitalId, selectedBranch),
-        ]);
-
-
-        setcodeAlertsData(res?.data)
-
-        // Code Alerts
-        setCodeAlerts(alertRes?.data || []);
-
-      } catch (err) {
-        console.error("Fetch Error:", err);
-      }
-    };
-
-    if (hospitalId && selectedBranch) fetchData();
-
-  }, [hospitalId, selectedBranch]);
-  // Existing useEffect for Chart.js initialization
+  const {
+    forms,
+    loading,
+    analytics,
+    metrics,
+    errors,
+    codeAlerts,
+    branches,
+    selectedBranch,
+    pagination,
+    setSelectedBranch,
+    filter,
+    setFilter,
+    setPagination,
+    filterOptions
+  } = useContext(HospitalContext);
 
   useEffect(() => {
     if (hourlyChartRef.current) {
@@ -377,7 +214,7 @@ const ExecutiveDashboard = () => {
   return (
     <div className="executive-dashboard-page">
 
-      {dashboardLoading && (
+      {loading?.dashboardLoading && (
         <div className="loading-overlay-simple">
           <p>Loading DashBoard data...</p>
         </div>
@@ -570,44 +407,6 @@ const ExecutiveDashboard = () => {
           })}
         </div>
       )}
-
-      {/* <div className="executive-login-info"> */}
-      {/* <div className="executive-login-info-item">
-          <div className="executive-login-info-label">
-            <i className="fas fa-sign-in-alt"></i> Last Login
-          </div>
-          <div className="executive-login-info-value">
-            {userInfo.lastLoginTimeIST}
-          </div>
-        </div>
-        <div className="executive-login-info-item">
-          <div className="executive-login-info-label">
-            <i className="fas fa-clock"></i> Total Login Hours
-          </div>
-          <div className="executive-login-info-value">
-            {userInfo.totalLoginTimeFormatted}
-          </div>
-        </div> */}
-      {/* <div className="executive-login-info-item">
-          <div className="executive-login-info-label">
-            <i className="fas fa-coffee"></i> Break Time
-          </div>
-          <div className="executive-login-info-value">45m</div>
-        </div>
-        <div className="executive-login-info-item">
-          <div className="executive-login-info-label">
-            <i className="fas fa-pause-circle"></i> Idle Time
-          </div>
-          <div className="executive-login-info-value">22m</div>
-        </div>
-        <div className="executive-login-info-item">
-          <div className="executive-login-info-label">
-            <i className="fas fa-user-check"></i> Active Time
-          </div>
-          <div className="executive-login-info-value">5h 25m</div>
-        </div> */}
-      {/* </div> */}
-
       <div className="executive-dashboard-section">
         <div className="executive-combined-reporting">
           <div className="bottom-row">
@@ -839,7 +638,7 @@ const ExecutiveDashboard = () => {
                 <div className="h-pagination-btns">
                   <button
                     className="h-page-btn"
-                    disabled={(bfPage === 1 && hPage === 1) || dashboardLoading}
+                    disabled={(bfPage === 1 && hPage === 1) || loading?.dashboardLoading}
                     onClick={() => {
                       if (hPage > 1) {
                         setHPage(hPage - 1);
@@ -860,7 +659,7 @@ const ExecutiveDashboard = () => {
                     disabled={
                       (((bfPage - 1) * 10) + (hPage * 5) >= (branchFollowups.total || 0)) &&
                       (hPage * 5 >= (branchFollowups.data?.length || 0)) ||
-                      dashboardLoading
+                      loading?.dashboardLoading
                     }
                     onClick={() => {
                       if (hPage < 2 && branchFollowups.data?.length > 5) {
@@ -1082,7 +881,6 @@ const ExecutiveDashboard = () => {
 
       {modalOpen === "profile" && (
         <ProfilePopup
-          user={userInfo}
           onClose={() => setModalOpen(null)}
         />
       )}
@@ -1201,7 +999,7 @@ const ExecutiveDashboard = () => {
           <FilledFormsComponent
             setFormsModalOpen={setFormsModalOpen}
             formsData={formsData}
-            formsLoading={dashboardLoading}
+            formsLoading={loading?.dashboardLoading}
             formsTypeFilter={formsTypeFilter}
             setFormsTypeFilter={setFormsTypeFilter}
             page={page}
@@ -1302,7 +1100,7 @@ const ExecutiveDashboard = () => {
                 <div className="pf-pagination-btns">
                   <button
                     className="pf-page-btn"
-                    disabled={bfPage <= 1 || dashboardLoading}
+                    disabled={bfPage <= 1 || loading?.dashboardLoading}
                     onClick={() => setBfPage((p) => p - 1)}
                   >
                     Previous
@@ -1310,7 +1108,7 @@ const ExecutiveDashboard = () => {
                   <span className="pf-page-num">Page {bfPage}</span>
                   <button
                     className="pf-page-btn"
-                    disabled={bfPage * branchFollowups.limit >= branchFollowups.total || dashboardLoading}
+                    disabled={bfPage * branchFollowups.limit >= branchFollowups.total || loading?.dashboardLoading}
                     onClick={() => setBfPage((p) => p + 1)}
                   >
                     Next

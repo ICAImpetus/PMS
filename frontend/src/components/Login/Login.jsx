@@ -53,7 +53,9 @@ export default function Login({ setRefresh }) {
             console.log("data", data);
             const response = await loginRequest(data);
             console.log("currentUser", response);
+            localStorage.setItem("token", response?.token)
             login(response?.result)
+
 
 
         } catch (error) {
@@ -187,7 +189,7 @@ export default function Login({ setRefresh }) {
                     onClick={() => window.location.href = LANDING_PAGE_URL}
                     style={{
                         position: "absolute",
-                        color:'blue',
+                        color: 'blue',
                         top: "12px",
                         left: "12px",
                         fontSize: "12px",

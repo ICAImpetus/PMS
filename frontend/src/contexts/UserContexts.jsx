@@ -6,8 +6,6 @@ import { useNavigate } from "react-router-dom";
 const UserContext = createContext();
 
 export const GlobalUserContextProvider = (props) => {
-
-
   const navigate = useNavigate()
 
   const [currentUser, setCurrentUser] = useState(() => {
@@ -62,6 +60,7 @@ export const GlobalUserContextProvider = (props) => {
       localStorage.setItem("current_user", JSON.stringify(data));
       setCurrentUser(data)
       toast.success("Login Success")
+      navigate("/", { replace: true })
     }
 
 

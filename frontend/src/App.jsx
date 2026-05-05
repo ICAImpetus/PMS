@@ -5,6 +5,7 @@ import Topbar from "./scenes/global/Topbar";
 import Sidebar from "./scenes/global/Sidebar";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { ColorModeContext, useMode } from "./theme";
+import { GlobalHospitalContextProvider } from "./contexts/HospitalContexts";
 import { tokens } from "./theme";
 import Login from "./components/Login/Login";
 import CheckAuthentication from "./authentication/Auth";
@@ -73,10 +74,10 @@ function App() {
   const [isSidebar, setIsSidebar] = useState(true);
   const [toggled, setIsToggled] = useState(false);
   const [refresh, setRefresh] = useState(false);
-  const isLoggedIn = CheckAuthentication();
+  const isLoggedIn = !!currentUser;
 
   const userRole = currentUser?.type;
-  // console.log("currentUser", currentUser);
+  console.log("app", currentUser);
 
 
   const hasAdminPrivileges = [
@@ -182,7 +183,7 @@ function App() {
   return (
     <>
       <Toaster position="top-right" reverseOrder={false} />
-      {isLoggedIn && !refresh ? (
+      {currentUser ? (
         <ColorModeContext.Provider value={colorMode}>
           <ThemeProvider theme={theme}>
             <CssBaseline />
@@ -205,10 +206,12 @@ function App() {
                     setIsToggled={setIsToggled}
                   />
                   <main className="main-content">
-                    <Routes>
-                      <Route path="/login" element={<Navigate to="/" />} />
-                      {hasAdminPrivileges ? adminRoutes : nonAdminRoutes}
-                    </Routes>
+                    <GlobalHospitalContextProvider>
+                      <Routes>
+                        <Route path="/login" element={<Navigate to="/" />} />
+                        {hasAdminPrivileges ? adminRoutes : nonAdminRoutes}
+                      </Routes>
+                    </GlobalHospitalContextProvider>
                   </main>
                 </div>
               </div>

@@ -14,9 +14,10 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
   const { currentUser, setCurrentUser } = UserContextHook();
   const userType = currentUser?.type;
   const isSuperAdmin = userType === "superadmin";
+  console.log("currentUser", currentUser)
 
 
-  // State for modals
+  // State for modal
   const [openProfileModal, setOpenProfileModal] = useState(false);
   const [openPasswordModal, setOpenPasswordModal] = useState(false);
 
@@ -25,7 +26,8 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
     name: currentUser?.name || "",
     email: currentUser?.email || "",
     username: currentUser?.username || "",
-    type: currentUser?.type || ""
+    type: currentUser?.type || "",
+    mongoId: currentUser?.mongoId
   });
   const { request: updateUser, loading: updateLoading } = useApi(commonRoutes.updateUser);
 
@@ -47,13 +49,13 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
 
   const handleProfileSubmit = async () => {
     try {
-      if (!user?.mongoId) {
+      if (!profileForm?.mongoId) {
         toast.error("User Not Found")
         return
       }
-      const res = await updateUser(user?.mongoId, profileForm);
+      const res = await updateUser(profileForm?.mongoId, profileForm);
       if (res?.success) {
-        localStorage.setItem("current_user", JSON.stringify(res?.data));
+        localStorage.setItem("current_profileForm", JSON.stringify(res?.data));
         setCurrentUser(res?.data)
 
         toast.success("Profile updated successfully");
@@ -78,7 +80,7 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
       return;
     }
     try {
-      const res = await updateUserPassword(user.username, passwordForm.newPassword);
+      const res = await updateUserPassword(profileForm?.username, passwordForm.newPassword);
       if (res?.success) {
         toast.success("Password changed successfully");
         setOpenPasswordModal(false);
@@ -99,22 +101,22 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
         </button>
 
         <div className="profile-header">
-          <div className="avatar">{user.name.charAt(0)}</div>
+          <div className="avatar">{profileForm.name.charAt(0)}</div>
           <h2>User Profile</h2>
         </div>
 
         <div className="profile-body">
           <div className="info-group">
             <label>Name</label>
-            <p>{user?.name}</p>
+            <p>{profileForm?.name}</p>
           </div>
           <div className="info-group">
             <label>Username</label>
-            <p>{user?.username}</p>
+            <p>{profileForm?.username}</p>
           </div>
           <div className="info-group">
             <label>Email</label>
-            <p>{user?.email}</p>
+            <p>{profileForm?.email}</p>
           </div>
         </div>
 
@@ -123,11 +125,11 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
             <>
               <button className="btn-update" onClick={() => setOpenProfileModal(true)}>Update Profile</button>
               <button className="btn-password" onClick={() => setOpenPasswordModal(true)}>
-                {user.type === "supermanager" ||
-                  user.type === "admin" ||
-                  user.type === "superAdmin" ||
-                  user.type === "superadmin" ||
-                  user.type === "SuperAdmin"
+                {profileForm.type === "supermanager" ||
+                  profileForm.type === "admin" ||
+                  profileForm.type === "superAdmin" ||
+                  profileForm.type === "superadmin" ||
+                  profileForm.type === "SuperAdmin"
                   ? "Change Password"
                   : "Request Password Change"}
               </button>
@@ -142,6 +144,8 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
           </button>
         </div>
       </div>
+
+      {console.log("profileForm", profileForm)}
 
       {/* Update Profile Modal */}
       <Dialog open={openProfileModal} onClose={() => setOpenProfileModal(false)}>
@@ -167,7 +171,7 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
             margin="dense"
             label="Username"
             name="username"
-            value={profileForm.username}
+            value={profileForm?.username}
             onChange={handleProfileChange}
             fullWidth
             disabled
