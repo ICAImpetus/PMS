@@ -125,19 +125,12 @@ router.get("/getHospitalsNames", auth, hospitalController.getHospitalsNames);
 router.get("/getHospitalByName/:hospitalName", auth, hospitalController.getHospitalByName);
 router.get("/getAllHospitals", auth, hospitalController.getAllHospitals);
 router.get("/hospitalsBasicInfo", auth, hospitalController.hospitalsWithBasicInfo);
-router.get("/getAllHospitals/:id", auth, hospitalController.getHospitalById);
 router.get("/get-branches", auth, hospitalController.getBranchesByHospital);
 router.put(
     "/hospitals/:hospitalId/branch",
     auth,
     restrictTo("superadmin", "admin"),
     hospitalController.updateBranchInHospital,
-);
-router.post(
-    "/hospitals/:hospitalId/branch",
-    auth,
-    restrictTo("superadmin", "admin"),
-    hospitalController.addBranchToHospital,
 );
 router.get(
     "/hospitals/:hospitalName/branches",

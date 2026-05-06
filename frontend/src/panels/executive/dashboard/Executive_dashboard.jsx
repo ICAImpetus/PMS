@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
+import { TextField, Button, CircularProgress, MenuItem, FormControl, InputLabel, Select, Dialog, DialogTitle, DialogContent, DialogActions, Grid } from "@mui/material";
 import Chart from "chart.js/auto";
 import "./Executive.css";
 // import { useCallData } from "../../../hooks/useCallData";
@@ -27,7 +28,6 @@ import { useNavigate } from "react-router-dom";
 import { ProfilePopup, CodeAnnousementPopup } from "../../../scenes/global/ProfileAndCodeAnnousementPopup";
 import toast from "react-hot-toast";
 import FilledFormsComponent from "../../../components/customComponents/FilledFormsComponent";
-import { Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
 import HospitalContext from "../../../contexts/HospitalContexts";
 
 const ExecutiveDashboard = () => {
@@ -61,11 +61,13 @@ const ExecutiveDashboard = () => {
     codeAlerts,
     branches,
     selectedBranch,
+    selectedHostpital,
     pagination,
     setSelectedBranch,
     filter,
     setFilter,
     setPagination,
+    setCodeAlerts,
     filterOptions
   } = useContext(HospitalContext);
 
@@ -245,168 +247,221 @@ const ExecutiveDashboard = () => {
 
 
       <div className="executive-date-filter">
-        <select
-          className="select-element"
-          id="global-date-range"
-          onChange={(e) => setSelectedBranch(e.target.value)}
-        >
-          {branches.length === 0 ? (
-            <option disabled>No Branches Assigned</option>
-          ) : (
-            branches.map((option) => (
-              <option key={option._id} value={option._id}>
-                {option.name}
-              </option>
-            ))
-          )}
-        </select>
-        <select
-          id="date-range"
-          value={filter}
-          onChange={(e) => {
-            setFilter(e.target.value);
-          }}
-        >
-          {filterOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.key}
-            </option>
-          ))}
-        </select>
 
+        {/* Filters Section */}
+        <div className="filters">
+          <Grid container spacing={1} alignItems="center" gap={1}>
+            {/* Branch Select */}
+            <FormControl sx={{ width: "220px" }} size="small">
+              <InputLabel
+                id="hospital-label"
+              >
+                Select Branch
+              </InputLabel>
+
+              <Select
+                labelId="hospital-label"
+                label="Select Branch"
+                value={selectedBranch}
+                onChange={(e) => setSelectedBranch(e.target.value)}
+                disabled={loading?.branchesLoading}
+                displayEmpty
+                sx={{
+                  borderRadius: 2,
+                  backgroundColor: "black",
+                  color: "black",
+
+                }}
+              >
+                {/* <MenuItem value="">
+                                               <em>Select Hospital</em>
+                                           </MenuItem> */}
+
+                {loading?.branchesLoading ? (
+                  <MenuItem value="">
+                    <CircularProgress size={20} sx={{ mr: 1 }} />
+                    Loading...
+                  </MenuItem>
+                ) : branches.length > 0 ? (
+                  branches.map((branch) => (
+                    <MenuItem
+                      key={branch._id}
+                      value={branch._id}
+                    >
+                      {branch.name}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem value="">
+                    No Branch Assigned
+                  </MenuItem>
+                )}
+              </Select>
+            </FormControl>
+
+            {/* Filter Select */}
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <InputLabel id="filter-label">Select Filter</InputLabel>
+
+              <Select
+                labelId="filter-label"
+                label="Select Filter"
+                value={filter || ""}
+                onChange={(e) => setFilter(e.target.value)}
+              >
+                {filterOptions.length > 0 ? (
+                  filterOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.key}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem value="">No Filters</MenuItem>
+                )}
+              </Select>
+            </FormControl>
+
+          </Grid>
+        </div>
+
+        {/* Buttons Section */}
         <div className="executive-forms-button-container">
 
           <button
             className="executive-forms-button"
-            onClick={() => navigate("/executive-forms", {
-              state: {
-                branch: {
-                  branchId: selectedBranch,
-                  // hospitalCode: selectedHospitalData?.hospitalCode,
-                  // contact: selectedHospitalData?.contact,
-                  // hospitallogo: selectedHospitalData?.hospitallogo
-
-                }
-              }
-            })}
+            onClick={() =>
+              navigate("/executive-forms", {
+                state: {
+                  branch: {
+                    branchId: selectedBranch,
+                  },
+                },
+              })
+            }
           >
             <ArticleOutlinedIcon /> Go to Forms
           </button>
+
           <button
             className="executive-forms-button"
             onClick={() => setNotesModalOpen(true)}
           >
             <StickyNote2Icon /> Notes
           </button>
+
           <button
             className="executiveannoucementbutton"
-            onKeyDown={(e) => e.key === "Enter" && setModalOpen("announcement")}
             onClick={() => setModalOpen("announcement")}
           >
             <CampaignIcon sx={{ fontSize: 25 }} /> Go to Announcements
           </button>
+
         </div>
       </div>
 
       {/* Sticky Notes Section */}
-      {notes.length > 0 && (
-        <div className="executive-dashboard-section">
-          <div className="executive-section-header">
-            <h4 className="executive-section-title">
-              <StickyNote2Icon /> Sticky Notes
-            </h4>
-          </div>
-          <div className="notes-container">
-            {notes.map((note) => (
-              <div
-                key={note.id}
-                className="note-card"
-                onClick={() => setExpandedNote(expandedNote === note.id ? null : note.id)}
-                onMouseEnter={() => setExpandedNote(note.id)}
-                onMouseLeave={() => setExpandedNote(null)}
-              >
-                <div className="note-header">
-                  <h3 className="note-heading">{note.heading}</h3>
-                  <button
-                    className="note-delete-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteNote(note.id);
-                    }}
-                  >
-                    <CloseIcon fontSize="small" />
-                  </button>
-                </div>
-                {expandedNote === note.id && (
-                  <div className="note-body">
-                    {note.body}
+      {
+        notes.length > 0 && (
+          <div className="executive-dashboard-section">
+            <div className="executive-section-header">
+              <h4 className="executive-section-title">
+                <StickyNote2Icon /> Sticky Notes
+              </h4>
+            </div>
+            <div className="notes-container">
+              {notes.map((note) => (
+                <div
+                  key={note.id}
+                  className="note-card"
+                  onClick={() => setExpandedNote(expandedNote === note.id ? null : note.id)}
+                  onMouseEnter={() => setExpandedNote(note.id)}
+                  onMouseLeave={() => setExpandedNote(null)}
+                >
+                  <div className="note-header">
+                    <h3 className="note-heading">{note.heading}</h3>
+                    <button
+                      className="note-delete-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteNote(note.id);
+                      }}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </button>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      {codeAlerts?.length > 0 && (
-        <div>
-          {codeAlerts.map((alert, index) => {
-            const hospitalName = alert?.HospitalId?.name || "Unknown Hospital";
-            const branchName = alert?.BranchId?.name || "Unknown Branch";
-            const city = alert?.BranchId?.branchId?.city || "";
-            const codeName = alert?.code_id?.name || "Code Alert";
-
-            return (
-              <div
-                key={alert._id || index}
-                className="ai-recommendation alert-card"
-                style={{
-                  backgroundColor: alert?.code_id?.color || '#f1f5f9',
-                  color: "#1e293b",
-                  borderLeft: '5px solid #0f172a',
-                  borderRadius: '12px',
-                  display: 'flex',
-                  gap: '10px',
-                  padding: '10px',
-                  marginBottom: '10px'
-                }}
-              >
-                <AlertTriangle size={20} color="#0f172a" />
-
-                <div style={{ flexGrow: 1, fontWeight: '600' }}>
-                  {codeName}:{" "}
-                  <span style={{ fontWeight: '400' }}>
-                    {codeName} raised in {hospitalName} {branchName} {city && `(${city})`}.
-                    Immediate attention required.
-                  </span>
+                  {expandedNote === note.id && (
+                    <div className="note-body">
+                      {note.body}
+                    </div>
+                  )}
                 </div>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  disableRipple
-                  disableElevation
-                  disabled={loadingId === alert._id}
-                  onClick={() => handleToggleStatus(alert._id)}
-                  sx={{
-                    backgroundColor: "white",
-                    color: "#000",
-                    borderColor: "#ccc",
-                    '&:hover': {
-                      backgroundColor: "white",
-                      borderColor: "#ccc"
-                    }
+              ))}
+            </div>
+          </div>
+        )
+      }
+      {
+        codeAlerts?.length > 0 && (
+          <div>
+            {codeAlerts.map((alert, index) => {
+              const hospitalName = alert?.HospitalId?.name || "Unknown Hospital";
+              const branchName = alert?.BranchId?.name || "Unknown Branch";
+              const city = alert?.BranchId?.branchId?.city || "";
+              const codeName = alert?.code_id?.name || "Code Alert";
+
+              return (
+                <div
+                  key={alert._id || index}
+                  className="ai-recommendation alert-card"
+                  style={{
+                    backgroundColor: alert?.code_id?.color || '#f1f5f9',
+                    color: "#1e293b",
+                    borderLeft: '5px solid #0f172a',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    gap: '10px',
+                    padding: '10px',
+                    marginBottom: '10px'
                   }}
                 >
-                  {loadingId === alert._id ? (
-                    <CircularProgress size={22} />
-                  ) : (
-                    "Resolve"
-                  )}
-                </Button>
-              </div>
-            );
-          })}
-        </div>
-      )}
+                  <AlertTriangle size={20} color="#0f172a" />
+
+                  <div style={{ flexGrow: 1, fontWeight: '600' }}>
+                    {codeName}:{" "}
+                    <span style={{ fontWeight: '400' }}>
+                      {codeName} raised in {hospitalName} {branchName} {city && `(${city})`}.
+                      Immediate attention required.
+                    </span>
+                  </div>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    disableRipple
+                    disableElevation
+                    disabled={loadingId === alert._id}
+                    onClick={() => handleToggleStatus(alert._id)}
+                    sx={{
+                      backgroundColor: "white",
+                      color: "#000",
+                      borderColor: "#ccc",
+                      '&:hover': {
+                        backgroundColor: "white",
+                        borderColor: "#ccc"
+                      }
+                    }}
+                  >
+                    {loadingId === alert._id ? (
+                      <CircularProgress size={22} />
+                    ) : (
+                      "Resolve"
+                    )}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        )
+      }
       <div className="executive-dashboard-section">
         <div className="executive-combined-reporting">
           <div className="bottom-row">
@@ -879,86 +934,91 @@ const ExecutiveDashboard = () => {
         </div>
       </div>
 
-      {modalOpen === "profile" && (
-        <ProfilePopup
-          onClose={() => setModalOpen(null)}
-        />
-      )}
+      {
+        modalOpen === "profile" && (
+          <ProfilePopup
+            onClose={() => setModalOpen(null)}
+          />
+        )
+      }
 
-      {modalOpen === "announcement" && (
-        <CodeAnnousementPopup
-          data={codeAlertsData}
-          currentUser={currentUser}
-          onClose={() => setModalOpen(null)}
-          hosId={hospitalId}
-          setCodeAlerts={setCodeAlerts}
-        />
-      )}
+      {
+        modalOpen === "announcement" && (
+          <CodeAnnousementPopup
+            selectedHostpital={selectedHostpital}
+            selectedBranch={selectedBranch}
+            data={codeAlertsData}
+            onClose={() => setModalOpen(null)}
+            setCodeAlerts={setCodeAlerts}
+          />
+        )
+      }
 
       {/* Calls List Modal */}
-      {callsModalOpen && (
-        <div
-          className="executive-modal-overlay"
-          onClick={() => setCallsModalOpen(false)}
-        >
+      {
+        callsModalOpen && (
           <div
-            className="executive-modal executive-modal-lg"
-            onClick={(e) => e.stopPropagation()}
+            className="executive-modal-overlay"
+            onClick={() => setCallsModalOpen(false)}
           >
-            <div className="executive-modal-header">
-              <h3>
-                <i className="fas fa-phone"></i> Call Details
-              </h3>
-              <div className="executive-modal-actions">
-                <button
-                  className="executive-btn-export-small"
-                // onClick={exportCallsToCSV}
-                // disabled={filteredCalls.length === 0}
-                >
-                  <i className="fas fa-file-export"></i> Export CSV
-                </button>
-                <button
-                  className="executive-modal-close"
-                  onClick={() => setCallsModalOpen(false)}
-                >
-                  <i className="fas fa-times"></i>
-                </button>
-              </div>
-            </div>
-            <div className="executive-modal-body">
-              <div className="executive-calls-filters">
-                <select
-                  value={callsDateFilter}
-                  onChange={(e) => setCallsDateFilter(e.target.value)}
-                  className="executive-calls-date-select"
-                >
-                  <option value="today">Today</option>
-                  <option value="yesterday">Yesterday</option>
-                  <option value="week">This Week</option>
-                  <option value="month">This Month</option>
-                </select>
-                <div className="executive-calls-tabs">
+            <div
+              className="executive-modal executive-modal-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="executive-modal-header">
+                <h3>
+                  <i className="fas fa-phone"></i> Call Details
+                </h3>
+                <div className="executive-modal-actions">
                   <button
-                    className={callsTab === "all" ? "active" : ""}
-                    onClick={() => setCallsTab("all")}
+                    className="executive-btn-export-small"
+                  // onClick={exportCallsToCSV}
+                  // disabled={filteredCalls.length === 0}
                   >
-                    All
+                    <i className="fas fa-file-export"></i> Export CSV
                   </button>
                   <button
-                    className={callsTab === "inbound" ? "active" : ""}
-                    onClick={() => setCallsTab("inbound")}
+                    className="executive-modal-close"
+                    onClick={() => setCallsModalOpen(false)}
                   >
-                    Inbound
-                  </button>
-                  <button
-                    className={callsTab === "outbound" ? "active" : ""}
-                    onClick={() => setCallsTab("outbound")}
-                  >
-                    Outbound
+                    <i className="fas fa-times"></i>
                   </button>
                 </div>
               </div>
-              {/* <div className="executive-calls-table-wrap">
+              <div className="executive-modal-body">
+                <div className="executive-calls-filters">
+                  <select
+                    value={callsDateFilter}
+                    onChange={(e) => setCallsDateFilter(e.target.value)}
+                    className="executive-calls-date-select"
+                  >
+                    <option value="today">Today</option>
+                    <option value="yesterday">Yesterday</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                  </select>
+                  <div className="executive-calls-tabs">
+                    <button
+                      className={callsTab === "all" ? "active" : ""}
+                      onClick={() => setCallsTab("all")}
+                    >
+                      All
+                    </button>
+                    <button
+                      className={callsTab === "inbound" ? "active" : ""}
+                      onClick={() => setCallsTab("inbound")}
+                    >
+                      Inbound
+                    </button>
+                    <button
+                      className={callsTab === "outbound" ? "active" : ""}
+                      onClick={() => setCallsTab("outbound")}
+                    >
+                      Outbound
+                    </button>
+                  </div>
+                </div>
+                {/* <div className="executive-calls-table-wrap">
                 {isCallsLoading ? (
                   <div className="executive-calls-loading">
                     Loading calls...
@@ -986,13 +1046,15 @@ const ExecutiveDashboard = () => {
                   </table>
                 )}
               </div> */}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Filled Forms Modal */}
-      {console.log("formsData", formsData)
+      {
+        console.log("formsData", formsData)
       }
       {
         formsModalOpen && (
@@ -1002,123 +1064,124 @@ const ExecutiveDashboard = () => {
             formsLoading={loading?.dashboardLoading}
             formsTypeFilter={formsTypeFilter}
             setFormsTypeFilter={setFormsTypeFilter}
-            page={page}
-            setPage={setPage}
-            totalPages={metrics?.pagination?.totalPages}
+            setPagination={setPagination}
+            pagination={pagination}
           >
           </FilledFormsComponent>
         )
       }
 
       {/* Branch Pending Follow-ups Popup */}
-      {followupsPopupOpen && (
-        <div
-          className="executive-modal-overlay"
-          onClick={() => setFollowupsPopupOpen(false)}
-        >
+      {
+        followupsPopupOpen && (
           <div
-            className="executive-modal executive-modal-lg"
-            onClick={(e) => e.stopPropagation()}
+            className="executive-modal-overlay"
+            onClick={() => setFollowupsPopupOpen(false)}
           >
-            <div className="executive-modal-header">
-              <h3>
-                <PhoneCallbackIcon style={{ marginRight: 8 }} />
-                All Pending Follow-ups (Branch)
-              </h3>
-              <button
-                className="executive-modal-close"
-                onClick={() => setFollowupsPopupOpen(false)}
-              >
-                <CloseIcon />
-              </button>
-            </div>
-            <div className="executive-modal-body">
-              {branchFollowups.length === 0 ? (
-                <div className="pending-followups-empty">
-                  No pending follow-ups found.
-                </div>
-              ) : (
-                <div className="pf-popup-table-wrap">
-                  <table className="pf-popup-table">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Patient</th>
-                        <th>Mobile</th>
-                        <th>Type</th>
-                        <th>Agent</th>
-                        <th>Doctor</th>
-                        <th>Department</th>
-                        <th>Date</th>
-                        <th>Remarks</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {branchFollowups.data?.map((fu, idx) => (
-                        <tr key={fu._id || idx}>
-                          <td>{(branchFollowups.page - 1) * branchFollowups.limit + idx + 1}</td>
-                          <td>{fu.patientName || "—"}</td>
-                          <td>{fu.patientMobile || "—"}</td>
-                          <td>
-                            <span className={`pf-type-badge pf-type-${fu.formType}`}>
-                              {fu.formType}
-                            </span>
-                          </td>
-                          <td>{fu.agentName || "—"}</td>
-                          <td>{fu.doctorName || "—"}</td>
-                          <td>{fu.departmentName || "—"}</td>
-                          <td>
-                            {fu.createdAt
-                              ? new Date(fu.createdAt).toLocaleDateString("en-IN", {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric",
-                              })
-                              : "—"}
-                          </td>
-                          <td title={fu.remarks || ""}>
-                            {fu.remarks
-                              ? fu.remarks.length > 40
-                                ? fu.remarks.slice(0, 40) + "…"
-                                : fu.remarks
-                              : "—"}
-                          </td>
+            <div
+              className="executive-modal executive-modal-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="executive-modal-header">
+                <h3>
+                  <PhoneCallbackIcon style={{ marginRight: 8 }} />
+                  All Pending Follow-ups (Branch)
+                </h3>
+                <button
+                  className="executive-modal-close"
+                  onClick={() => setFollowupsPopupOpen(false)}
+                >
+                  <CloseIcon />
+                </button>
+              </div>
+              <div className="executive-modal-body">
+                {branchFollowups.length === 0 ? (
+                  <div className="pending-followups-empty">
+                    No pending follow-ups found.
+                  </div>
+                ) : (
+                  <div className="pf-popup-table-wrap">
+                    <table className="pf-popup-table">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Patient</th>
+                          <th>Mobile</th>
+                          <th>Type</th>
+                          <th>Agent</th>
+                          <th>Doctor</th>
+                          <th>Department</th>
+                          <th>Date</th>
+                          <th>Remarks</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {branchFollowups.data?.map((fu, idx) => (
+                          <tr key={fu._id || idx}>
+                            <td>{(branchFollowups.page - 1) * branchFollowups.limit + idx + 1}</td>
+                            <td>{fu.patientName || "—"}</td>
+                            <td>{fu.patientMobile || "—"}</td>
+                            <td>
+                              <span className={`pf-type-badge pf-type-${fu.formType}`}>
+                                {fu.formType}
+                              </span>
+                            </td>
+                            <td>{fu.agentName || "—"}</td>
+                            <td>{fu.doctorName || "—"}</td>
+                            <td>{fu.departmentName || "—"}</td>
+                            <td>
+                              {fu.createdAt
+                                ? new Date(fu.createdAt).toLocaleDateString("en-IN", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                })
+                                : "—"}
+                            </td>
+                            <td title={fu.remarks || ""}>
+                              {fu.remarks
+                                ? fu.remarks.length > 40
+                                  ? fu.remarks.slice(0, 40) + "…"
+                                  : fu.remarks
+                                : "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+              {branchFollowups.total > branchFollowups.limit && (
+                <div className="executive-modal-footer pf-pagination">
+                  <div className="pf-pagination-info">
+                    Showing {(branchFollowups.page - 1) * branchFollowups.limit + 1} to{" "}
+                    {Math.min(branchFollowups.page * branchFollowups.limit, branchFollowups.total)} of{" "}
+                    {branchFollowups.total}
+                  </div>
+                  <div className="pf-pagination-btns">
+                    <button
+                      className="pf-page-btn"
+                      disabled={bfPage <= 1 || loading?.dashboardLoading}
+                      onClick={() => setBfPage((p) => p - 1)}
+                    >
+                      Previous
+                    </button>
+                    <span className="pf-page-num">Page {bfPage}</span>
+                    <button
+                      className="pf-page-btn"
+                      disabled={bfPage * branchFollowups.limit >= branchFollowups.total || loading?.dashboardLoading}
+                      onClick={() => setBfPage((p) => p + 1)}
+                    >
+                      Next
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
-            {branchFollowups.total > branchFollowups.limit && (
-              <div className="executive-modal-footer pf-pagination">
-                <div className="pf-pagination-info">
-                  Showing {(branchFollowups.page - 1) * branchFollowups.limit + 1} to{" "}
-                  {Math.min(branchFollowups.page * branchFollowups.limit, branchFollowups.total)} of{" "}
-                  {branchFollowups.total}
-                </div>
-                <div className="pf-pagination-btns">
-                  <button
-                    className="pf-page-btn"
-                    disabled={bfPage <= 1 || loading?.dashboardLoading}
-                    onClick={() => setBfPage((p) => p - 1)}
-                  >
-                    Previous
-                  </button>
-                  <span className="pf-page-num">Page {bfPage}</span>
-                  <button
-                    className="pf-page-btn"
-                    disabled={bfPage * branchFollowups.limit >= branchFollowups.total || loading?.dashboardLoading}
-                    onClick={() => setBfPage((p) => p + 1)}
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Notes Modal */}
       <Dialog open={notesModalOpen} onClose={() => setNotesModalOpen(false)} maxWidth="sm" fullWidth>
@@ -1150,7 +1213,7 @@ const ExecutiveDashboard = () => {
           <Button onClick={handleAddNote} variant="contained">Add Note</Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </div >
   );
 };
 

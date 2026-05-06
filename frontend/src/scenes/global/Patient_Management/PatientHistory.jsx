@@ -272,7 +272,7 @@ export const PatientHistory = () => {
                             <Select
                                 labelId="hospital-label"
                                 label="Select Hospital"
-                                value={selectedHostpital}
+                                value={selectedHostpital || ""}
                                 onChange={(e) => setSelectedHostpital(e.target.value)}
                                 disabled={loading?.hospitalsLoading}
 

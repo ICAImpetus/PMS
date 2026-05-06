@@ -4848,8 +4848,6 @@ export const getAllHospitals = async (req, res) => {
       }
 
       const hospitalIds = profile.hospitals?.map((hs) => hs?.hospitalId) || [];
-      console.log("hospitalIds", hospitalIds);
-
 
       hospitals = await HospitalModel.find({
         _id: { $in: hospitalIds },
@@ -4915,41 +4913,6 @@ export const hospitalsWithBasicInfo = async (req, res) => {
   }
 };
 
-// * Fetches a hospital by its unique ID (from req.params).
-// * Returns the hospital document if found, or an error if not found.
-export const getHospitalById = async (req, res) => {
-  const { id } = req.params;
-  try {
-    // const dataFromDb1 = await mongo.finddoc("hospitals", { ID: id });
-    const dataFromDb1 = await mongo.findActiveHospitalData(
-      { ID: id },
-      { _id: 0 },
-      "hospitals",
-      "isDeleted",
-    );
-    // console.log("dataFromDb1 is :", dataFromDb1);
-    if (dataFromDb1 === "not found") {
-      return res.json({
-        message: "No hospital found with this ID",
-        success: false,
-      });
-    }
-    // const { _id, ...dataFromDb } = dataFromDb1;
-    // console.log("dataFromDb is :", dataFromDb);
-    return res.json({
-      message: "hospital fetched successfully",
-      data: dataFromDb1["0"],
-      success: true,
-    });
-  } catch (error) {
-    console.log("error in fetching data", error);
-    return res.json({
-      message: "Error occurred while fetching",
-      success: false,
-    });
-  }
-};
-
 // * get branch doctors and departments by hospitalTimmed Name and branchId
 export const getDoctorsAndDepartmentsNames = async (req, res) => {
   const { hospitalName, branchId } = req.params;
@@ -5006,45 +4969,6 @@ export const updateBranchInHospital = async (req, res) => {
 
   try {
     const result = await mongo.updateBranchInHospital(
-      process.env.database,
-      "hospitals",
-      hospitalId,
-      newBranch,
-    );
-    res.status(result.status).json(result);
-  } catch (error) {
-    console.error("Error adding branch:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-// * Adds a new branch to a hospital by hospitalId (from req.params).
-// * Expects new branch data in req.body.
-// ! Returns error if hospitalId or branch data is missing.
-export const addBranchToHospital = async (req, res) => {
-  const { hospitalId } = req.params;
-  if (!hospitalId)
-    return res.status(400).json({
-      message: "Hospital ID is required",
-      success: false,
-    });
-  const newBranch = req.body;
-  // const isBranchValid = validateBranch(newBranch);
-
-  if (!newBranch || Object.keys(newBranch).length === 0) {
-    return res
-      .status(400)
-      .json({ error: "Branch data is required in the request body." });
-  }
-
-  if (!newBranch?.name) {
-    return res
-      .status(400)
-      .json({ error: "Branch name is required in the request body." });
-  }
-
-  try {
-    const result = await mongo.addBranchToHospital(
       process.env.database,
       "hospitals",
       hospitalId,

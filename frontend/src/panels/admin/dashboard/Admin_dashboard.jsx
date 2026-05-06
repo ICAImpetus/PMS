@@ -93,6 +93,7 @@ const AdminDashboard = () => {
 
   const {
     hospitals,
+    branchCount,
     forms,
     loading,
     analytics,
@@ -406,7 +407,7 @@ const AdminDashboard = () => {
       {/* --- CRITICAL KPI STRIP --- */}
       <section className="critical-strip">
         <UsersCard label="Users" count={analytics?.totalUsers} onClick={() => navigate("/user-management", { replace: true, state: { selectedHostpital } })} />
-        <UsersCard label="Branches" count={analytics?.totalBranches || 0} onClick={() => {
+        <UsersCard label="Branches" count={branchCount || 0} onClick={() => {
           const selectedHospitalData = hospitals.find(
             (h) => h._id === selectedHostpital
           );
@@ -416,8 +417,8 @@ const AdminDashboard = () => {
               hospital: {
                 name: selectedHospitalData?.name,
                 hospitalCode: selectedHospitalData?.hospitalCode,
-                contact: hospital?.contact,
-                hospitallogo: hospital?.hospitallogo
+                contact: selectedHospitalData?.contact,
+                hospitallogo: selectedHospitalData?.hospitallogo
 
 
 

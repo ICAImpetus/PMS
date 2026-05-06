@@ -58,17 +58,77 @@ body {
    ========================================= */
 
 .form-header {
-  min-height: 48px;
-  height: auto;
+  min-height: 60px;
   background: var(--bg-card);
   border-bottom: 1px solid var(--border-color);
+
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 20px;
+
+  padding: 10px 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
-  z-index: 100;
-  flex-shrink: 0;
+
+  flex-wrap: wrap;
+  /* 🔥 important for responsiveness */
+  gap: 10px;
+}
+
+/* LEFT SIDE */
+.header-top {
+  display: flex;
+  flex-direction: column;
+  /* 🔥 stack title + badge */
+  gap: 4px;
+}
+
+.header-top h1 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+/* Branch badge */
+.branch-display-badge {
+  display: flex;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+.hospital-label {
+  font-weight: 600;
+}
+
+.branch-label {
+  color: gray;
+}
+
+/* RIGHT SIDE */
+.form-toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Select */
+.global-date-range {
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+/* Buttons */
+.toggle-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+}
+
+.toggle-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
 }
 
 .header-top {

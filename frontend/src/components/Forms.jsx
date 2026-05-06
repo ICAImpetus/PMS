@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useContext } from "react";
 
 import "./Forms.css";
 import DoctorDropdown from "./DoctorDropdown";
-
-import { UserContextHook } from "../contexts/UserContexts";
 import { useApi } from "../api/useApi";
 import { commonRoutes } from "../api/apiService";
 import toast from "react-hot-toast";
@@ -12,7 +10,7 @@ import {
   TextField,
 } from "@mui/material";
 import DoctorProfileCard from "./DoctorCard";
-import { useLocation } from "react-router-dom";
+import HospitalContext from "../contexts/HospitalContexts";
 
 const getCurrentDateTime = () => {
   const now = new Date();
@@ -40,20 +38,12 @@ const maxDate = nextWeek.toISOString().slice(0, 16);
 
 
 function Forms() {
-  const { currentUser } = UserContextHook();
-  const location = useLocation()
-  const branchId = location.state?.branch?.branchId
   const [branchData, setBranchData] = useState(null);
   const [dynamicDepartments, setDynamicDepartments] = useState([]);
   const [dynamicDoctors, setDynamicDoctors] = useState([]);
   const [filteredDoctors, setfilteredDoctors] = useState([]);
   const [selectedDay, setSelectedDay] = useState(null);
-  const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
-  const [selectedBranch, setSelectedBranch] = useState(branchId || null)
-  const [branches, setBranches] = useState([])
-  const [profile, setProfile] = React.useState(null);
-  const [hospitalId, setHospitalId] = React.useState(null)
   const initialPatientDetails = {
     patientName: "",
     patientMobile: "",
@@ -123,72 +113,33 @@ function Forms() {
   };
 
   const [form, setForm] = useState(initialFormState);
-
   const { request: getSingleBranch, error: getSingleBranchError, loading: getSingleBranchLoading } = useApi(commonRoutes.getBranchById)
   const { request: saveFilledForm, error: saveFilledFormError, loading: saveFilledFormLoading } = useApi(commonRoutes.saveFilledForm)
-  const { request: getMe, error: getMeError, loading: getMeloading } = useApi(commonRoutes.getMe)
-  const { loading: branchesLoading, request: getBranches, error: branchesError } = useApi(commonRoutes.branchesByRole)
 
-  React.useEffect(() => {
-    const handleGetMe = async () => {
-      const res = await getMe();
-      setProfile(res.data || {});
-      if (res.data?.hospitals?.length && res.data?.branches?.length) {
-        setHospitalId(res.data?.hospitals[0]?.hospitalId)
-      }
-
-      // setIsShowAction(res?.data?.canDelete);
-      // toast.success(response.message);
-    };
-    handleGetMe()
-  }, [])
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Parallel API calls (fast)
-        const [res] = await Promise.all([
-          getBranches(hospitalId),
-        ]);
-
-        // Hospitals
-        setBranches(res?.data || []);
-        if (res?.data?.length) {
-          setSelectedBranch(res?.data[0]?._id)
-        }
-
-
-
-      } catch (err) {
-        console.error("Fetch Error:", err);
-      }
-    };
-    if (hospitalId) {
-      fetchData();
-    }
-  }, [hospitalId]);
+  const {
+    loading,
+    selectedBranch,
+    setSelectedBranch,
+    selectedHostpital,
+    branches,
+    errors,
+  } = useContext(HospitalContext);
 
   useEffect(() => {
     const fetchBranchAndDetails = async () => {
-      const activeUser = currentUser;
-
-      const userId = activeUser?.id || activeUser?._id || activeUser?.mongoId;
-
-      if (userId) {
-
-
-        const branchDetails = await getSingleBranch(selectedBranch, hospitalId);
-
+      if (selectedHostpital) {
+        const branchDetails = await getSingleBranch(selectedBranch, selectedHostpital);
         handleChange("branchId", selectedBranch);
-        handleChange("hospitalId", hospitalId);
+        handleChange("hospitalId", selectedHostpital);
         setBranchData(branchDetails.data?.branch);
         setDynamicDepartments(branchDetails?.data?.departments || []);
         setDynamicDoctors(branchDetails?.data?.doctors || []);
       }
     };
-    if (hospitalId && selectedBranch) {
+    if (selectedHostpital && selectedBranch) {
       fetchBranchAndDetails();
     }
-  }, [hospitalId, selectedBranch, currentUser]);
+  }, [selectedHostpital, selectedBranch]);
 
   const resetForm = () => {
     setSelectedDoctor(null);
@@ -306,13 +257,13 @@ function Forms() {
 
   const submitForm = async (e) => {
     e.preventDefault();
-    if (!hospitalId) {
+    if (!selectedHostpital) {
       toast.error("No Hospital Is Found")
     }
     if (!selectedBranch) {
       toast.error("No Branch Is Found")
     }
-    const res = await saveFilledForm(hospitalId, selectedBranch, form);
+    const res = await saveFilledForm(selectedHostpital, selectedBranch, form);
     if (res.success) {
       resetForm();
       toast.success("Form submitted successfully!");
@@ -432,7 +383,7 @@ function Forms() {
               </div>
             </div>
 
-            {selectedDoctor && <DoctorProfileCard hosId={hospitalId} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
             {/* Slot Duration Selector */}
             <div className="input-row">
@@ -634,7 +585,7 @@ function Forms() {
 
             </div>
 
-            {selectedDoctor && <DoctorProfileCard hosId={hospitalId} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
             <div className="input-row">
               <div className="input-group">
@@ -734,7 +685,7 @@ function Forms() {
                 />
               </div>
             </div>
-            {selectedDoctor && <DoctorProfileCard hosId={hospitalId} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
             <div className="input-row">
               <div className="input-group">
@@ -929,7 +880,7 @@ function Forms() {
               </div>
 
             </div>
-            {selectedDoctor && <DoctorProfileCard hosId={hospitalId} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
             <div className="input-row">
               <div className="input-group textarea-field-container">
                 <label className="required">Issue</label>
@@ -1170,7 +1121,7 @@ function Forms() {
                 />
               </div>
             </div>
-            {selectedDoctor && <DoctorProfileCard hosId={hospitalId} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
             <div className="input-row">
               <div className="input-group">
@@ -1257,7 +1208,7 @@ function Forms() {
               </div>
 
             </div>
-            {selectedDoctor && <DoctorProfileCard hosId={hospitalId} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
             <div className="input-row">
               <div className="input-group">
@@ -1361,7 +1312,7 @@ function Forms() {
               </div>
 
             </div>
-            {selectedDoctor && <DoctorProfileCard hosId={hospitalId} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
             <div className="input-row">
               <div className="input-group">
@@ -3508,6 +3459,8 @@ function Forms() {
       )}
 
       <div className="form-header">
+
+        {/* LEFT */}
         <div className="header-top">
           <h1>
             {form?.formType === "inbound" ? "Inbound" : "Outbound"} Call Log Form
@@ -3518,17 +3471,17 @@ function Forms() {
               <span className="hospital-label">
                 {branchData.hospital?.name}
               </span>
-
               <span className="branch-label">{branchData.name}</span>
             </div>
           )}
         </div>
 
+        {/* RIGHT */}
         <div className="form-toggle-container">
 
           <select
             className="global-date-range"
-            id="global-date-range"
+            value={selectedBranch || ""}
             onChange={(e) => setSelectedBranch(e.target.value)}
           >
             {branches?.length === 0 ? (
@@ -3541,6 +3494,7 @@ function Forms() {
               ))
             )}
           </select>
+
           <button
             className={`toggle-btn ${form?.formType === "inbound" ? "active" : ""}`}
             onClick={() => handleChange("formType", "inbound")}
@@ -3554,9 +3508,9 @@ function Forms() {
           >
             Outbound
           </button>
+
         </div>
       </div>
-
       <div className="form-container">
         {form?.formType === "inbound" ? renderInboundForm() : renderOutboundForm()}
       </div>

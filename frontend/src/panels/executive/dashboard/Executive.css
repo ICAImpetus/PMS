@@ -91,30 +91,33 @@ body {
     font-size: 1.1rem;
 }
 
-/* --- Date Filter Section --- */
 .executive-date-filter {
     display: flex;
+    justify-content: space-between;
+    align-items: center;
     gap: 12px;
     margin-bottom: 25px;
     background: var(--card-bg);
     padding: 18px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    align-items: center;
     flex-wrap: wrap;
 }
 
-.executive-date-filter select,
-.executive-date-filter input,
-.executive-date-filter button {
-    padding: 10px 14px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    background: white;
-    font-size: 0.9rem;
+.filters {
+    display: flex;
+    align-items: center;
+}
+
+.executive-forms-button-container {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .executive-date-filter button {
+    padding: 10px 14px;
+    border-radius: 8px;
     background: var(--primary);
     color: white;
     border: none;

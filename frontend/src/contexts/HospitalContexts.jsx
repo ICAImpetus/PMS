@@ -34,6 +34,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
     const isSuperAdmin = role === "superadmin";
     const isSuperManager = role === "supermanager";
+    const isExecutive = role === "executive";
     const isAdmin = ["superadmin", "admin"].includes(role);
     const isNonAdmin = ["supermanager", "teamleader", "executive"].includes(role);
 
@@ -41,7 +42,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     const [selectedHostpital, setSelectedHostpital] = useState(
         isNonAdmin ? currentUser?.hospitals?.[0]?.hospitalId?._id || null : null
     );
+
     const [selectedBranch, setSelectedBranch] = useState(null);
+    const [branchCount, setBranchCount] = useState(0)
 
     const [pagination, setPagination] = useState({
         patients: { ...defaultPagination },
@@ -52,24 +55,34 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
     const [filter, setFilter] = useState(filterOptions[0]?.value || "");
 
-    // ---------------- QUERIES ----------------
+    // ---------------- QUERIES (DESTRUCTURED) ----------------
 
-    const hospitalsQuery = useQuery({
+    const {
+        data: hospitalsData,
+        isLoading: hospitalsLoading,
+        error: hospitalsError
+    } = useQuery({
         queryKey: ["hospitals"],
         queryFn: async () => {
             const res = await commonRoutes.getAllHospital();
             return res.data;
         },
+        enabled: !isExecutive,
         onError: () => toast.error("Failed to fetch hospitals")
     });
 
     useEffect(() => {
-        if (hospitalsQuery.data?.length && !selectedHostpital) {
-            setSelectedHostpital(hospitalsQuery.data[0]?._id);
+        if (hospitalsData?.data?.length && !selectedHostpital) {
+            setSelectedHostpital(hospitalsData.data[0]?._id);
+            setBranchCount(hospitalsData.data[0]?.branchCount)
         }
-    }, [hospitalsQuery.data]);
+    }, [hospitalsData]);
 
-    const branchesQuery = useQuery({
+    const {
+        data: branchesData,
+        isLoading: branchesLoading,
+        error: branchesError
+    } = useQuery({
         queryKey: ["branches", selectedHostpital, role],
         queryFn: async () => {
             const res = isSuperManager
@@ -82,12 +95,16 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     });
 
     useEffect(() => {
-        if (branchesQuery.data?.length && !selectedBranch) {
-            setSelectedBranch(branchesQuery.data[0]?._id);
+        if (branchesData?.data?.length && !selectedBranch) {
+            setSelectedBranch(branchesData.data[0]?._id);
         }
-    }, [branchesQuery.data]);
+    }, [branchesData]);
 
-    const dashboardQuery = useQuery({
+    const {
+        data: dashboardData,
+        isLoading: dashboardLoading,
+        error: dashboardError
+    } = useQuery({
         queryKey: ["dashboard", selectedHostpital, selectedBranch],
         queryFn: async () => {
             const [dashboardRes, alertRes] = await Promise.all([
@@ -105,7 +122,11 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         onError: () => toast.error("Dashboard load failed")
     });
 
-    const patientsQuery = useQuery({
+    const {
+        data: patientsData,
+        isLoading: patientsLoading,
+        error: patientsError
+    } = useQuery({
         queryKey: [
             "patients",
             selectedHostpital,
@@ -120,23 +141,31 @@ export const GlobalHospitalContextProvider = ({ children }) => {
                 isNonAdmin ? selectedBranch : null,
                 selectedHostpital
             );
-            return res?.data || [];
+            return res?.data || {};
         },
         enabled: !!selectedHostpital && (!!selectedBranch || !isNonAdmin),
         onError: () => toast.error("Failed to fetch patients")
     });
 
-    const usersQuery = useQuery({
+    const {
+        data: usersData,
+        isLoading: usersLoading,
+        error: usersError
+    } = useQuery({
         queryKey: ["users", selectedHostpital],
         queryFn: async () => {
             const res = await commonRoutes.getAllUsers(selectedHostpital);
             return res.data;
         },
-        enabled: !!selectedHostpital,
+        enabled: !!selectedHostpital && !isExecutive,
         onError: () => toast.error("Users fetch failed")
     });
 
-    const adminsQuery = useQuery({
+    const {
+        data: adminsData,
+        isLoading: adminsLoading,
+        error: adminsError
+    } = useQuery({
         queryKey: ["admins"],
         queryFn: async () => {
             const res = await commonRoutes.getAllUsers(null, null, "admin");
@@ -146,7 +175,11 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         onError: () => toast.error("Admins fetch failed")
     });
 
-    const formsQuery = useQuery({
+    const {
+        data: formsData,
+        isLoading: formsLoading,
+        error: formsError
+    } = useQuery({
         queryKey: ["forms", selectedHostpital, filter, pagination.forms.page],
         queryFn: async () => {
             const res = await commonRoutes.getFilledForms(
@@ -155,13 +188,19 @@ export const GlobalHospitalContextProvider = ({ children }) => {
                 null,
                 selectedHostpital
             );
-            return res.data;
+            // console.log("res", res);
+
+            return res.data?.data;
         },
         enabled: !!selectedHostpital,
         onError: () => toast.error("Forms fetch failed")
     });
 
-    const auditLogsQuery = useQuery({
+    const {
+        data: auditLogsData,
+        isLoading: auditLogsLoading,
+        error: auditLogsError
+    } = useQuery({
         queryKey: ["auditLogs"],
         queryFn: async () => {
             const res = await commonRoutes.getAuditLogs();
@@ -173,57 +212,68 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
     // ---------------- DERIVED ----------------
 
-    const analytics = dashboardQuery.data?.analytics || {};
-    const branchFollowups = dashboardQuery.data?.branchFollowups || {};
-    const codeAlerts = dashboardQuery.data?.codeAlerts || [];
+    const hospitals = hospitalsData?.data || [];
+    const branches = branchesData?.data || [];
+    const patients = patientsData?.data || [];
+    const users = usersData?.data || [];
+    const admins = adminsData?.data || [];
+    const allLogs = auditLogsData?.data || [];
 
+    const analytics = dashboardData?.analytics || {};
+    const branchFollowups = dashboardData?.branchFollowups || {};
+    const codeAlerts = dashboardData?.codeAlerts || [];
+
+    console.log("formsData", formsData);
     const forms = {
-        today: formsQuery.data?.forms?.today || [],
-        appointments: formsQuery.data?.forms?.appointments || [],
-        followups: formsQuery.data?.forms?.followups || []
+        today: formsData?.forms?.today || [],
+        appointments: formsData?.forms?.appointments || [],
+        followups: formsData?.forms?.followups || []
     };
 
-    const metrics = formsQuery.data?.metrics || {};
 
-    // ---------------- GLOBAL LOADING & ERROR ----------------
+
+    const metrics = formsData?.metrics || {};
+
+    // ---------------- LOADING & ERRORS ----------------
 
     const loading = {
-        hospitals: hospitalsQuery.isLoading,
-        branches: branchesQuery.isLoading,
-        dashboard: dashboardQuery.isLoading,
-        patients: patientsQuery.isLoading,
-        users: usersQuery.isLoading,
-        admins: adminsQuery.isLoading,
-        forms: formsQuery.isLoading,
-        auditLogs: auditLogsQuery.isLoading,
+        hospitals: hospitalsLoading,
+        branches: branchesLoading,
+        dashboard: dashboardLoading,
+        patients: patientsLoading,
+        users: usersLoading,
+        admins: adminsLoading,
+        forms: formsLoading,
+        auditLogs: auditLogsLoading,
 
         isAnyLoading:
-            hospitalsQuery.isLoading ||
-            branchesQuery.isLoading ||
-            dashboardQuery.isLoading ||
-            patientsQuery.isLoading
+            hospitalsLoading ||
+            branchesLoading ||
+            dashboardLoading ||
+            patientsLoading
     };
 
     const errors = {
-        hospitals: hospitalsQuery.error,
-        branches: branchesQuery.error,
-        dashboard: dashboardQuery.error,
-        patients: patientsQuery.error,
-        users: usersQuery.error,
-        admins: adminsQuery.error,
-        forms: formsQuery.error,
-        auditLogs: auditLogsQuery.error
+        hospitals: hospitalsError,
+        branches: branchesError,
+        dashboard: dashboardError,
+        patients: patientsError,
+        users: usersError,
+        admins: adminsError,
+        forms: formsError,
+        auditLogs: auditLogsError
     };
 
     // ---------------- CONTEXT ----------------
 
     const contextValue = useMemo(() => ({
-        hospitals: hospitalsQuery.data || [],
-        branches: branchesQuery.data || [],
-        patients: patientsQuery.data || [],
-        userData: usersQuery.data || [],
-        admins: adminsQuery.data || [],
-        allLogs: auditLogsQuery.data || [],
+        hospitals,
+        branches,
+        patients,
+        userData: users,
+        admins,
+        allLogs,
+        branchCount,
 
         analytics,
         metrics,
@@ -251,12 +301,13 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         errors
 
     }), [
-        hospitalsQuery.data,
-        branchesQuery.data,
-        patientsQuery.data,
-        usersQuery.data,
-        adminsQuery.data,
-        auditLogsQuery.data,
+        hospitals,
+        branches,
+        patients,
+        users,
+        branchCount,
+        admins,
+        allLogs,
         analytics,
         metrics,
         forms,

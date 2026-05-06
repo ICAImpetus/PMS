@@ -232,10 +232,8 @@ const BranchInfo = () => {
   const [isShowAction, setIsShowAction] = React.useState(
     !["supermanager", "teamleader"].includes(userRole)
   );
-  const [profile, setProfile] = useState(null);
-
   const canEdit = isSuperAdmin || isAdmin;
-  const canDelete = isSuperAdmin || (isAdmin && profile?.canDelete);
+  const canDelete = isSuperAdmin || (isAdmin && currentUser?.canDelete);
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -438,31 +436,9 @@ const BranchInfo = () => {
     error: uploadCSVError,
   } = useApi(commonRoutes.uploadBranchCSV);
 
-
-  const { request: getMe, error: getMeError, loading: getMeloading } = useApi(commonRoutes.getMe)
-  React.useEffect(() => {
-
-
-    const handleGetMe = async () => {
-      const res = await getMe();
-      setProfile(res.data || {});
-      // setIsShowAction(res?.data?.canDelete);
-      // toast.success(response.message);
-    };
-    if (isAdmin) handleGetMe()
-  }, []);
-  // console.log("profile", profile);
-  // useEffect(() => {
-
-
-  //   setIsShowAction(profile?.canDelete)
-  // }, [profile])
-
   const fetchAllData = async () => {
     const res = await getSingleBranch(id, hosId);
     const branch = res?.data;
-    // console.log("nbrna", branch);
-
     // const suggestion = await getSuggestions();
     // console.log('suggestion', suggestion);
     setGlobalSuggestion(branch?.suggestion || {});
@@ -1477,7 +1453,7 @@ const BranchInfo = () => {
             <Table sx={{ tableLayout: "auto", minWidth: 800 }}>
               <TableHead sx={{ bgcolor: "#EEF2FF" }}>
                 <TableRow>
-                  <TableCell sx={{ color: "#5C6BC0", fontWeight: "bold" }}>
+                  <TableCell sx={{ width: "20%", color: "#5C6BC0", fontWeight: "bold" }}>
                     Doctor Name
                   </TableCell>
                   <TableCell sx={{ color: "#5C6BC0", fontWeight: "bold" }}>
@@ -1516,7 +1492,19 @@ const BranchInfo = () => {
                 {filteredDoctors.length > 0 ? (
                   filteredDoctors.map((row, i) => (
                     <TableRow key={i} hover>
-                      <TableCell sx={{ fontWeight: 500 }}>{row?.name}</TableCell>
+                      <TableCell sx={{ fontWeight: 500 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Avatar src={
+                            row.profilePreview ||
+                            (typeof row.profilePicture?.imagePath === "string"
+                              ? row.profilePicture?.imagePath
+                              : "")
+                          } />
+                          <span>
+                            {row?.title} {row?.name}
+                          </span>
+                        </Box>
+                      </TableCell>
                       <TableCell>
                         <SpecialtiesCell specialties={row?.specialties || []} />
                       </TableCell>

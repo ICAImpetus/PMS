@@ -11,39 +11,61 @@ export const useApi = (apiFn, options = {}) => {
 
   const { currentUser, logout } = UserContextHook();
 
-  const request = useCallback(
-    async (...args) => {
-      if (!currentUser && !isPublic) {
-        if (isLoggingOut) return;
+  const request = useCallback(async (...args) => {
 
+    // ✅ FIXED condition
+    if (!currentUser && !isPublic) {
+      if (!isLoggingOut) {
         isLoggingOut = true;
         logout("Session expired. Please log in again.");
-        return;
       }
 
-      try {
-        setLoading(true);
-        setError(null);
+      return {
+        success: false,
+        message: "Session expired",
+      };
+    }
 
-        const res = await apiFn(...args);
+    try {
+      setLoading(true);
+      setError(null);
 
-        return res.data;
-      } catch (err) {
-        if (err.response?.status === 401) {
-          if (isLoggingOut) return;
+      const res = await apiFn(...args);
 
+      return res.data;
+
+    } catch (err) {
+      console.log("Error in ", err);
+
+      const status = err.response?.status;
+      const message =
+        err.response?.data?.message || "Something went wrong";
+
+      if (status === 401) {
+        if (!isLoggingOut) {
           isLoggingOut = true;
           logout("Session expired. Please log in again.");
-          return;
         }
 
-        setError(err.response?.data?.message || "Something went wrong");
-      } finally {
-        setLoading(false);
+        return {
+          success: false,
+          message: "Unauthorized",
+        };
       }
-    },
-    [apiFn, currentUser, isPublic, logout],
-  );
+
+      setError(message);
+
+
+      return {
+        success: false,
+        message,
+      };
+
+    } finally {
+      setLoading(false);
+    }
+
+  }, [apiFn, currentUser, isPublic, logout]);
 
   return { request, loading, error };
 };

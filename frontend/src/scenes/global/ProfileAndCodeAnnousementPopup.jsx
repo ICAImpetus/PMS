@@ -53,14 +53,23 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
         toast.error("User Not Found")
         return
       }
+      console.log("xxxxxxxxxxxx", profileForm);
+
       const res = await updateUser(profileForm?.mongoId, profileForm);
-      if (res?.success) {
-        localStorage.setItem("current_profileForm", JSON.stringify(res?.data));
-        setCurrentUser(res?.data)
+      console.log("xxxxxxxxxxxx", profileForm);
+      if (res?.success && res?.data) {
+        localStorage.setItem(
+          "current_user",
+          JSON.stringify(res.data)
+        );
+
+        setCurrentUser(res.data);
 
         toast.success("Profile updated successfully");
         setOpenProfileModal(false);
+
       } else {
+        console.log("res", res);
         toast.error(res?.message || "Failed to update profile");
       }
     } catch (err) {
@@ -219,7 +228,7 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
   );
 };
 
-export const CodeAnnousementPopup = ({ hosId, data, onClose, currentUser, setCodeAlerts }) => {
+export const CodeAnnousementPopup = ({ data, onClose, selectedHostpital, selectedBranch, setCodeAlerts }) => {
 
   const { loading: createCodeAlertLoading, request: createCodeAlert, error: createCodeAlertError } = useApi(commonRoutes.createCodeAlert)
   const floors = ["Ground Floor", "First Floor", "ICU"];
@@ -245,8 +254,8 @@ export const CodeAnnousementPopup = ({ hosId, data, onClose, currentUser, setCod
   const handleRaise = async () => {
     try {
       const payload = {
-        HospitalId: currentUser?.hospital,
-        BranchId: currentUser?.branches?.[0],
+        HospitalId: selectedHostpital,
+        BranchId: selectedBranch,
         depertmentId: form.department,
         doctorId: form.doctor,
         code_id: selectedCode?._id, // Using the _id of the announcement
@@ -256,7 +265,7 @@ export const CodeAnnousementPopup = ({ hosId, data, onClose, currentUser, setCod
         description: form.notes,
       };
 
-      const res = await createCodeAlert(hosId, payload);
+      const res = await createCodeAlert(selectedHostpital, payload);
       if (res?.success) {
         setCodeAlerts((prev) => [...prev, res?.data])
         toast.success("Alert Raised Successfully");
@@ -274,6 +283,8 @@ export const CodeAnnousementPopup = ({ hosId, data, onClose, currentUser, setCod
     }
   }, [createCodeAlertError])
 
+  console.log("data", data);
+
   return (
     <div className="modal-overlay">
       <div className="profile-annoucement-card">
@@ -284,40 +295,38 @@ export const CodeAnnousementPopup = ({ hosId, data, onClose, currentUser, setCod
 
         <h2> <CampaignIcon sx={{ fontSize: 25 }} /> Code Announcement</h2>
 
-        {!selectedCode && (
-          <div className="code-list">
-            {data?.codeAlerts?.length === 0 && (
-              <div
-                className="code-card"
-                style={{ borderLeft: `6px solid black` }}
-              >
-                No  Code Alerts Are Found
+        <div className="code-list">
+          {data?.length === 0 && (
+            <div
+              className="code-card"
+              style={{ borderLeft: `6px solid black` }}
+            >
+              No  Code Alerts Are Found
+            </div>
+          )}
+          {data?.length && data?.length > 0 && data?.map((code) => (
+            <div
+              key={code.name}
+              className="code-card"
+              style={{ borderLeft: `6px solid ${code.color}` }}
+            >
+              <div>
+                <h3>{code.name}{" "}({code?.shortCode})</h3>
+                <p>{code.description}</p>
               </div>
-            )}
-            {data?.codeAlerts?.length && data?.codeAlerts?.length > 0 && data?.codeAlerts?.map((code) => (
-              <div
-                key={code.name}
-                className="code-card"
-                style={{ borderLeft: `6px solid ${code.color}` }}
+
+              <Button
+                variant="contained"
+                size="small"
+                style={{ background: code.color }}
+                onClick={() => setSelectedCode(code)}
               >
-                <div>
-                  <h3>{code.name}{" "}({code?.shortCode})</h3>
-                  <p>{code.description}</p>
-                </div>
+                Raise
+              </Button>
+            </div>
+          ))}
 
-                <Button
-                  variant="contained"
-                  size="small"
-                  style={{ background: code.color }}
-                  onClick={() => setSelectedCode(code)}
-                >
-                  Raise
-                </Button>
-              </div>
-            ))}
-
-          </div>
-        )}
+        </div>
 
         {selectedCode && (
           <div className="raise-form">
@@ -446,11 +455,11 @@ export const CodeAnnousementPopup = ({ hosId, data, onClose, currentUser, setCod
         )}
 
       </div>
-      <LogoutModal
+      {/* <LogoutModal
         open={isLogoutModalOpen}
         onClose={handleCloseLogoutModal}
         onLogout={handleLogoutConfirm}
-      />
+      /> */}
     </div>
   );
 };

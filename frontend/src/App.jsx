@@ -70,11 +70,11 @@ const HospitalManagementLayout = () => {
 function App() {
   const [theme, colorMode] = useMode();
   const { currentUser } = UserContextHook();
-  const colors = tokens(theme.palette.mode);
+  // const colors = tokens(theme.palette.mode);
   const [isSidebar, setIsSidebar] = useState(true);
   const [toggled, setIsToggled] = useState(false);
   const [refresh, setRefresh] = useState(false);
-  const isLoggedIn = !!currentUser;
+  // const isLoggedIn = !!currentUser;
 
   const userRole = currentUser?.type;
   console.log("app", currentUser);

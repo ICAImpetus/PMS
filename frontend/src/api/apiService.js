@@ -100,10 +100,9 @@ export const commonRoutes = {
   addUsers: (data) =>
     API.post(`api/addUsers`, data),
 
-  updateUser: (id, data) =>
-    API.put(`api/updateUser/${id}`, data),
-
-
+  updateUser: (id, data) => {
+    return API.put(`api/updateUser/${id}`, data)
+  },
 
   addDep: (hosId, branchId, data) =>
     API.post(`api/add-dep`, data, {
