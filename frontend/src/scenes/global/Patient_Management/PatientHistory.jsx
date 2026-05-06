@@ -372,8 +372,7 @@ export const PatientHistory = () => {
             )}
 
             {/* Loading State */}
-            {console.log("p", loading?.patients)
-            }
+
             {loading?.patients ? (
                 <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
                     <CircularProgress />

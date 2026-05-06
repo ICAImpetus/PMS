@@ -169,15 +169,14 @@ export const PatientHistory = () => {
     const calculateCounts = () => {
         const allCount = patients.length;
         const inboundCount = patients.filter(
-            (p) => p.formType?.toLowerCase() === "inbound"
+            (p) => p?.lastVisit?.formType?.toLowerCase() === "inbound"
         ).length;
         const outboundCount = patients.filter(
-            (p) => p.formType?.toLowerCase() === "outbound"
+            (p) => p?.lastVisit?.formType?.toLowerCase() === "outbound"
         ).length;
 
         return { allCount, inboundCount, outboundCount };
     };
-
     const counts = calculateCounts();
 
     // Handle pagination
@@ -524,7 +523,7 @@ export const PatientHistory = () => {
                                                         fontWeight: 500,
                                                     }}
                                                 >
-                                                    {patient.purpose || "N/A"}
+                                                    {patient?.lastVisit?.purpose || "N/A"}
                                                 </Box>
                                             </TableCell>
                                             <TableCell>
@@ -534,7 +533,7 @@ export const PatientHistory = () => {
                                                         px: 1.5,
                                                         py: 0.5,
                                                         backgroundColor:
-                                                            patient.formType === "inbound"
+                                                            patient?.lastVisit?.formType === "inbound"
                                                                 ? "#c8e6c9"
                                                                 : "#ffccbc",
                                                         borderRadius: 1,
@@ -542,11 +541,11 @@ export const PatientHistory = () => {
                                                         fontWeight: 500,
                                                     }}
                                                 >
-                                                    {patient.formType || "N/A"}
+                                                    {patient?.lastVisit?.formType || "N/A"}
                                                 </Box>
                                             </TableCell>
-                                            <TableCell>{patient.doctorName || "N/A"}</TableCell>
-                                            <TableCell>{patient.departmentName || "N/A"}</TableCell>
+                                            <TableCell>{patient?.lastVisit?.doctor?.name || "N/A"}</TableCell>
+                                            <TableCell>{patient?.lastVisit?.department?.name || "N/A"}</TableCell>
                                             <TableCell sx={{ fontSize: "0.9rem" }}>
                                                 {formatDate(patient.createdAt)}
                                             </TableCell>

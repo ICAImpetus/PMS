@@ -175,8 +175,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         onError: () => toast.error("Failed to fetch patients")
     });
 
-    console.log("patientsLoading", patientsLoading);
-
     const {
         data: usersData,
         isLoading: usersLoading,
@@ -265,14 +263,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     const users = usersData?.data || [];
     const admins = adminsData?.data || [];
     const allLogs = auditLogsData?.data || [];
-
-    console.log("dashboardData", dashboardData);
-
     const analytics = dashboardData?.analytics || {};
     const branchFollowups = dashboardData?.branchFollowups || {};
     const codeAlerts = dashboardData?.codeAlerts || [];
-
-    console.log("formsData", formsData);
     const forms = {
         today: formsData?.forms?.today || [],
         appointments: formsData?.forms?.appointments || [],

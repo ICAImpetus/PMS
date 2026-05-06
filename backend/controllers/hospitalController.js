@@ -115,11 +115,27 @@ function generateDoctorSlots(doctor) {
 
 export const getLogs = async (req, res) => {
   try {
-    const data = await AuditLog.find({ level: "audit" }).sort({ createdAt: -1 });
+    const { page } = req.query
+
+    const PAGE_LIMIT = 10;
+    const pageNum = Math.max(parseInt(page) || 1, 1);
+    const skip = (pageNum - 1) * PAGE_LIMIT;
+
+    const [data, totalDocument] = await Promise.all([
+      AuditLog.find({ level: "audit" }).skip(skip)
+        .limit(PAGE_LIMIT).sort({ createdAt: -1 }),
+      AuditLog.countDocuments()
+    ])
+
     res.json({
       success: true,
       message: "Audit logs successfully fetched",
       data: data,
+      pagination: {
+        totalDocument,
+        page: pageNum,
+        totalPages: Math.ceil(totalDocument / PAGE_LIMIT),
+      },
     });
   } catch (error) {
     console.error("Audit log fetch error:", error);
