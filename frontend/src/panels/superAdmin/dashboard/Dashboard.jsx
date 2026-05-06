@@ -38,8 +38,6 @@ import LabelIcon from "@mui/icons-material/Label";
 import "./dashboard.css";
 import FilledFormsComponent from "../../../components/customComponents/FilledFormsComponent";
 import { ProfilePopup } from "../../../scenes/global/ProfileAndCodeAnnousementPopup";
-import { commonRoutes } from "../../../api/apiService";
-import { useApi } from "../../../api/useApi";
 import UsersCard from "../../../components/UserCard";
 import moment from "moment";
 import { useNavigate } from "react-router-dom";
@@ -134,8 +132,8 @@ const SuperAdminDashboard = () => {
     setFilter,
     setMetrics,
     setSelectedHostpital,
-    setPage,
-    sethospitals,
+    setPagination,
+    pagination
   } = useContext(HospitalContext);
   const navigate = useNavigate()
 
@@ -878,9 +876,9 @@ const SuperAdminDashboard = () => {
             formsLoading={loading?.dashboardLoading}
             formsTypeFilter={formsTypeFilter}
             setFormsTypeFilter={setFormsTypeFilter}
-            page={page}
-            setPage={setPage}
-            totalPages={metrics?.pagination?.totalPages}
+            setPagination={setPagination}
+            pagination={pagination}
+
           >
           </FilledFormsComponent>
         )

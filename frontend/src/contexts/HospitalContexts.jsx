@@ -20,9 +20,11 @@ const filterOptions = [
     { key: "Last 3 Month", value: "last3M" }
 ];
 
+
+
 const defaultPagination = {
     page: 1,
-    totalDocuments: 0,
+    totalDocument: 0,
     totalPages: 0,
     limit: 10
 };
@@ -52,8 +54,31 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         forms: { ...defaultPagination },
         auditLogs: { ...defaultPagination }
     });
-
     const [filter, setFilter] = useState(filterOptions[0]?.value || "");
+
+
+    const updatePagination = (key, newPagination) => {
+        if (!newPagination) return;
+
+        setPagination((prev) => {
+            const prevData = prev[key];
+            if (
+                prevData.page === newPagination.page &&
+                prevData.totalPages === newPagination.totalPages &&
+                prevData.totalDocument === newPagination.totalDocument
+            ) {
+                return prev;
+            }
+
+            return {
+                ...prev,
+                [key]: {
+                    ...prevData,
+                    ...newPagination
+                }
+            };
+        });
+    };
 
     // ---------------- QUERIES (DESTRUCTURED) ----------------
 
@@ -91,6 +116,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             return res.data;
         },
         enabled: !!selectedHostpital,
+
         onError: () => toast.error("Failed to fetch branches")
     });
 
@@ -113,9 +139,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             ]);
 
             return {
-                analytics: dashboardRes?.data?.analytics || {},
-                branchFollowups: dashboardRes?.data?.branchFollowups || {},
-                codeAlerts: alertRes?.data || []
+                analytics: dashboardRes?.data?.data?.analytics || {},
+                branchFollowups: dashboardRes?.data?.data?.branchFollowups || {},
+                codeAlerts: alertRes?.data?.data || []
             };
         },
         enabled: !!selectedHostpital && (!!selectedBranch || !isNonAdmin),
@@ -125,13 +151,15 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     const {
         data: patientsData,
         isLoading: patientsLoading,
-        error: patientsError
+        error: patientsError,
+        isFetching: patientsRefetchLoader,
+        refetch: refetchPatients
     } = useQuery({
         queryKey: [
             "patients",
             selectedHostpital,
             selectedBranch,
-            pagination.patients.page,
+            pagination.patients?.page,
             filter
         ],
         queryFn: async () => {
@@ -146,6 +174,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         enabled: !!selectedHostpital && (!!selectedBranch || !isNonAdmin),
         onError: () => toast.error("Failed to fetch patients")
     });
+
+    console.log("patientsLoading", patientsLoading);
 
     const {
         data: usersData,
@@ -212,12 +242,31 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
     // ---------------- DERIVED ----------------
 
+    useEffect(() => {
+        updatePagination("patients", patientsData?.pagination);
+    }, [patientsData]);
+
+    useEffect(() => {
+        updatePagination("forms", formsData?.pagination);
+    }, [formsData]);
+
+    useEffect(() => {
+        updatePagination("users", usersData?.pagination);
+    }, [usersData]);
+
+    useEffect(() => {
+        updatePagination("auditLogs", auditLogsData?.pagination);
+    }, [auditLogsData]);
+
     const hospitals = hospitalsData?.data || [];
     const branches = branchesData?.data || [];
     const patients = patientsData?.data || [];
+
     const users = usersData?.data || [];
     const admins = adminsData?.data || [];
     const allLogs = auditLogsData?.data || [];
+
+    console.log("dashboardData", dashboardData);
 
     const analytics = dashboardData?.analytics || {};
     const branchFollowups = dashboardData?.branchFollowups || {};
@@ -240,7 +289,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         hospitals: hospitalsLoading,
         branches: branchesLoading,
         dashboard: dashboardLoading,
-        patients: patientsLoading,
+        patients: patientsRefetchLoader,
+
         users: usersLoading,
         admins: adminsLoading,
         forms: formsLoading,
@@ -289,6 +339,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
         filterOptions,
 
+
+
         setSelectedHostpital,
         setSelectedBranch,
         setPagination,
@@ -298,7 +350,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         role,
 
         loading,
-        errors
+        errors,
+
+        refetchPatients
 
     }), [
         hospitals,

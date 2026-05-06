@@ -13,7 +13,7 @@ export const useApi = (apiFn, options = {}) => {
 
   const request = useCallback(async (...args) => {
 
-    // ✅ FIXED condition
+    //  FIXED condition
     if (!currentUser && !isPublic) {
       if (!isLoggingOut) {
         isLoggingOut = true;

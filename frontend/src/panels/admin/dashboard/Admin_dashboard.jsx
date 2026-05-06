@@ -102,10 +102,11 @@ const AdminDashboard = () => {
     selectedHostpital,
     filter,
     errors,
-    setPagination,
     codeAlerts,
     setFilter,
     setSelectedHostpital,
+    pagination,
+    setPagination
   } = useContext(HospitalContext);
 
   const categoryData =
@@ -407,7 +408,7 @@ const AdminDashboard = () => {
       {/* --- CRITICAL KPI STRIP --- */}
       <section className="critical-strip">
         <UsersCard label="Users" count={analytics?.totalUsers} onClick={() => navigate("/user-management", { replace: true, state: { selectedHostpital } })} />
-        <UsersCard label="Branches" count={branchCount || 0} onClick={() => {
+        <UsersCard label="Branches" count={analytics?.totalBranches || 0} onClick={() => {
           const selectedHospitalData = hospitals.find(
             (h) => h._id === selectedHostpital
           );
@@ -766,9 +767,8 @@ const AdminDashboard = () => {
             formsLoading={loading?.dashboardLoading}
             formsTypeFilter={formsTypeFilter}
             setFormsTypeFilter={setFormsTypeFilter}
-            page={page}
             setPagination={setPagination}
-            totalPages={metrics?.pagination?.totalPages}
+            pagination={pagination}
           >
           </FilledFormsComponent>
         )

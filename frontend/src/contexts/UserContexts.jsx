@@ -1,10 +1,10 @@
 import React, { useEffect, useState, createContext, useContext } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import API from "../api/axiosInstance";
 
 // Creating context
 const UserContext = createContext();
-
 export const GlobalUserContextProvider = (props) => {
   const navigate = useNavigate()
 
@@ -17,17 +17,45 @@ export const GlobalUserContextProvider = (props) => {
       return null;
     }
   }); // Initialize currentUser as null
+
+
   useEffect(() => {
-    const data = localStorage.getItem("current_user");
+    const fetchUser = async () => {
+      try {
 
-    if (!data) {
-      // toast.error("Session expired");
-      navigate("/login", { replace: true });
-    }
+        const res = await API.get("/api/getMe");
 
+        const data = res.data; //  axios me direct data milta hai
+
+        if (data?.success && data?.data) {
+          setCurrentUser(data.data);
+          localStorage.setItem("current_user", JSON.stringify(data.data));
+
+          if (data.token) {
+            localStorage.setItem("token", data.token);
+          }
+        } else {
+          throw new Error("Session expired");
+        }
+
+      } catch (error) {
+        console.log("Error", error);
+
+        //  Timeout handle
+        if (error.code === "ECONNABORTED") {
+          toast.error("Request timeout (10s). Try again.");
+        } else {
+          toast.error("Session Expired! Please Login Again");
+        }
+
+        localStorage.clear();
+        setCurrentUser(null);
+        navigate("/login", { replace: true });
+      }
+    };
+
+    fetchUser();
   }, []);
-
-
 
   const storeDataInLocalStorage = async ({ key, value }) => {
     try {

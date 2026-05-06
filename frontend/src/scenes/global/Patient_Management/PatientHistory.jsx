@@ -35,14 +35,26 @@ import { useNavigate } from "react-router-dom";
 import HospitalContext from "../../../contexts/HospitalContexts";
 
 export const PatientHistory = () => {
-
-
-    const [filteredPatients, setFilteredPatients] = useState([]);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [searchName, setSearchName] = useState("");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
     const [formTypeFilter, setFormTypeFilter] = useState("all");
+
+    // Clear all filters
+    const handleClearFilters = () => {
+        setSearchName("");
+        setStartDate("");
+        setEndDate("");
+        setFormTypeFilter("all");
+        setPagination((prev) => ({
+            ...prev,
+            patients: {
+                ...prev.patients,
+                page: 0,
+            },
+        }));
+    };
 
     const {
         loading,
@@ -53,12 +65,12 @@ export const PatientHistory = () => {
         patients,
         pagination,
         setPagination,
-        refreshPatients
+        refetchPatients
     } = useContext(HospitalContext);
 
     const navigate = useNavigate()
 
-    useEffect(() => {
+    const filteredPatients = useMemo(() => {
         let filtered = [...patients];
 
         // Search by patient name
@@ -81,7 +93,6 @@ export const PatientHistory = () => {
 
                 if (end) {
                     end.setHours(23, 59, 59, 999);
-
                     if (patientDate > end) return false;
                 }
 
@@ -98,15 +109,11 @@ export const PatientHistory = () => {
             );
         }
 
-        setFilteredPatients(filtered);
-        setPagination((prev) => ({
-            ...prev,
-            patients: {
-                ...prev.patients,
-                page: 0,
-            },
-        }));
+        return filtered;
     }, [patients, searchName, startDate, endDate, formTypeFilter]);
+
+    console.log("filteredPatients", filteredPatients);
+
 
     // Export to CSV
     const handleExportCSV = () => {
@@ -231,13 +238,6 @@ export const PatientHistory = () => {
         }
     };
 
-    const paginatedData = useMemo(() => {
-        return filteredPatients.slice(
-            pagination?.patients * rowsPerPage,
-            pagination?.patients * rowsPerPage + rowsPerPage
-        );
-    }, [filteredPatients, pagination?.patients, rowsPerPage]);
-
 
     useEffect(() => {
         const error = errors?.patientsError
@@ -261,34 +261,22 @@ export const PatientHistory = () => {
                 <CardContent>
                     <Grid container spacing={2} alignItems="flex-end">
                         <FormControl sx={{ width: "220px" }} size="small">
-                            {/* <InputLabel
-                                id="hospital-label"
-                            >
-                                Select Hospital
-                            </InputLabel> */}
-
                             <InputLabel id="demo-multiple-checkbox-label">Select Hospital</InputLabel>
-
                             <Select
                                 labelId="hospital-label"
                                 label="Select Hospital"
                                 value={selectedHostpital || ""}
                                 onChange={(e) => setSelectedHostpital(e.target.value)}
                                 disabled={loading?.hospitalsLoading}
-
                                 sx={{
                                     borderRadius: 2,
                                     backgroundColor: "black",
                                     color: "black",
-
-
-
                                     ".MuiSvgIcon-root": {
                                         color: "black",
                                     },
                                 }}
                             >
-
                                 {loading?.hospitalsLoading ? (
                                     <MenuItem value="">
                                         <CircularProgress size={20} sx={{ mr: 1 }} />
@@ -329,7 +317,6 @@ export const PatientHistory = () => {
                                 placeholder="Enter patient name"
                             />
                         </Grid>
-
                         {/* Start Date */}
                         <Grid item xs={12} sm={6} md={3}>
                             <TextField
@@ -343,7 +330,6 @@ export const PatientHistory = () => {
                                 InputLabelProps={{ shrink: true }}
                             />
                         </Grid>
-
                         {/* End Date */}
                         <Grid item xs={12} sm={6} md={3}>
                             <TextField
@@ -357,31 +343,22 @@ export const PatientHistory = () => {
                                 InputLabelProps={{ shrink: true }}
                             />
                         </Grid>
-
-                        {/* Clear Filters Button */}
-                        {/* <Grid item xs={12} sm={6} md={2}>
-                            <Button
-                                fullWidth
-                                variant="outlined"
-                                color="secondary"
-                                startIcon={<ClearIcon />}
-                                onClick={handleClearFilters}
-                            >
-                                Clear
-                            </Button>
-                        </Grid> */}
-
-                        {/* Refresh Button */}
-
-
                     </Grid>
 
-                    {/* Active Filters Display */}
+                    {/* Active Filters Display and Clear Button (right) */}
                     {(searchName || startDate || endDate) && (
-                        <Box sx={{ mt: 2 }}>
+                        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Typography variant="caption" sx={{ color: "#7c8fa3" }}>
                                 Showing {filteredPatients.length} of {patients.length} patient(s)
                             </Typography>
+                            <Button
+                                variant="outlined"
+                                color="secondary"
+                                onClick={handleClearFilters}
+                                sx={{ ml: 2 }}
+                            >
+                                Clear
+                            </Button>
                         </Box>
                     )}
                 </CardContent>
@@ -395,7 +372,9 @@ export const PatientHistory = () => {
             )}
 
             {/* Loading State */}
-            {loading?.patientsLoading ? (
+            {console.log("p", loading?.patients)
+            }
+            {loading?.patients ? (
                 <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
                     <CircularProgress />
                 </Box>
@@ -485,12 +464,12 @@ export const PatientHistory = () => {
                                 <Button
                                     variant="outlined"
                                     color="primary"
-                                    disabled={loading?.patientsLoading}
+                                    disabled={loading?.patients}
                                     startIcon={<RefreshIcon />}
-                                    onClick={refreshPatients}
+                                    onClick={refetchPatients}
 
                                 >
-                                    {loading?.patientsLoading ? <CircularProgress size={24} /> : "Refresh"}
+                                    {loading?.patients ? <CircularProgress size={24} /> : "Refresh"}
                                 </Button>
 
                                 <Button
@@ -529,8 +508,8 @@ export const PatientHistory = () => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {paginatedData.length > 0 ? (
-                                    paginatedData.map((patient, index) => (
+                                {filteredPatients.length > 0 ? (
+                                    filteredPatients.map((patient, index) => (
                                         <TableRow
                                             key={patient._id}
                                             sx={{
@@ -636,8 +615,8 @@ export const PatientHistory = () => {
                             rowsPerPageOptions={[5, 10, 25, 50]}
                             component="div"
                             count={filteredPatients.length}
-                            rowsPerPage={rowsPerPage}
-                            page={pagination?.patients}
+                            rowsPerPage={pagination?.patients?.limit}
+                            page={pagination?.patients?.page}
                             onPageChange={handleChangePage}
                             onRowsPerPageChange={handleChangeRowsPerPage}
                             sx={{
