@@ -89,7 +89,7 @@ const UserForm = ({
   onClose,
   hospitalId,
   allUsers = [],
-  setUserData,
+  refetchAdmins,
 }) => {
   const { currentUser } = UserContextHook();
 
@@ -201,16 +201,13 @@ const UserForm = ({
         const response = await updateUser(initialState?._id, valuesToSubmit);
         if (response?.success) {
 
-
-          setUserData((prev) =>
-            prev.map((user) => (user?._id === initialState?._id ? response?.data : user)),
-          );
+          if (refetchAdmins) await refetchAdmins()
           toast.success("Profile Updated");
         }
       } else {
         const data = await addUser(valuesToSubmit);
         if (data?.success) {
-          setUserData((prev) => [...prev, data?.data])
+          if (refetchAdmins) await refetchAdmins()
           toast.success("New User Added")
         }
 

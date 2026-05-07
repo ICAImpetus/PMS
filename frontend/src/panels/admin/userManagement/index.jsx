@@ -32,9 +32,6 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import UserFormAdmin from "./UserFormAdmin";
 import DeleteConfirmationModal from "../../../components/DeleteConfirmationModal";
 import UpdatePasswordForm from "../../superAdmin/userManagement/UpdatePassword";
-import { commonRoutes } from "../../../api/apiService";
-import { useApi } from "../../../api/useApi";
-import { useLocation } from "react-router-dom";
 import { UserContextHook } from "../../../contexts/UserContexts";
 import HospitalContext from "../../../contexts/HospitalContexts";
 
@@ -76,6 +73,7 @@ function UserManagentAdmin() {
     errors,
     userData,
     setSelectedHostpital,
+    refetchUsers
   } = useContext(HospitalContext);
 
 
@@ -148,11 +146,7 @@ function UserManagentAdmin() {
       );
       if (response.success) {
         toast.success("User deleted successfully");
-        setUserData(
-          userData.filter(
-            (user) => user.username !== selectedUserForDelete.username,
-          ),
-        );
+        if (refetchUsers) await refetchUsers()
       } else {
         toast.error(response.message || "Failed to delete user");
       }
@@ -256,8 +250,16 @@ function UserManagentAdmin() {
 
   return (
     <ScrollableForm>
-
-      {loading?.userLoading && (
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 5000,
+          style: {
+            zIndex: 999999,
+          },
+        }}
+      />
+      {loading?.users && (
         <Box
           display="flex"
           flexDirection="column"
@@ -274,7 +276,7 @@ function UserManagentAdmin() {
           </Typography>
         </Box>
       )}
-      {!loading?.userLoading && (
+      {!loading?.users && (
         <>
 
 
@@ -394,7 +396,7 @@ function UserManagentAdmin() {
                   initialState={null}
                   onClose={() => setOpen(false)}
                   allUsers={userData}
-                  setAllUsers={setUserData}
+                  refetchUsers={refetchUsers}
                   hospitalId={selectedHostpital}
                   anyFieldDisabled={isSuperManager}
                 />
@@ -403,7 +405,7 @@ function UserManagentAdmin() {
                   initialState={userUpdateData}
                   onClose={() => setUpdateOpen(false)}
                   allUsers={userData}
-                  setAllUsers={setUserData}
+                  refetchUsers={refetchUsers}
                   hospitalId={selectedHostpital}
                   anyFieldDisabled={isSuperManager}
                 />

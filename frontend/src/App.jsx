@@ -6,13 +6,9 @@ import Sidebar from "./scenes/global/Sidebar";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { ColorModeContext, useMode } from "./theme";
 import { GlobalHospitalContextProvider } from "./contexts/HospitalContexts";
-import { tokens } from "./theme";
 import Login from "./components/Login/Login";
-import CheckAuthentication from "./authentication/Auth";
 import { UserContextHook } from "./contexts/UserContexts";
 import { Toaster } from "react-hot-toast";
-import { Provider } from "react-redux";
-import store from "./store/store";
 import GlobalLoader from "./components/GlobalLoader";
 import { Outlet } from "react-router-dom";
 
@@ -188,35 +184,34 @@ function App() {
           <ThemeProvider theme={theme}>
             <CssBaseline />
             <GlobalLoader />
-            <Provider store={store}>
-              <div className="app-container">
-                <div className="topbar-wrapper">
-                  <Topbar
-                    setIsSidebar={setIsSidebar}
-                    setIsToggled={setIsToggled}
-                    toggled={toggled}
-                    setRefresh={setRefresh}
-                  />
-                </div>
-
-                <div className="main-layout">
-                  <Sidebar
-                    isSidebar={isSidebar}
-                    toggled={toggled}
-                    setIsToggled={setIsToggled}
-                  />
-                  <main className="main-content">
-                    <GlobalHospitalContextProvider>
-                      <Routes>
-                        <Route path="/login" element={<Navigate to="/" />} />
-                        {hasAdminPrivileges ? adminRoutes : nonAdminRoutes}
-                      </Routes>
-                    </GlobalHospitalContextProvider>
-                  </main>
-                </div>
+            <div className="app-container">
+              <div className="topbar-wrapper">
+                <Topbar
+                  setIsSidebar={setIsSidebar}
+                  setIsToggled={setIsToggled}
+                  toggled={toggled}
+                  setRefresh={setRefresh}
+                />
               </div>
 
-            </Provider>
+              <div className="main-layout">
+                <Sidebar
+                  isSidebar={isSidebar}
+                  toggled={toggled}
+                  setIsToggled={setIsToggled}
+                />
+                <main className="main-content">
+                  <GlobalHospitalContextProvider>
+                    <Routes>
+                      <Route path="/login" element={<Navigate to="/" />} />
+                      {hasAdminPrivileges ? adminRoutes : nonAdminRoutes}
+                    </Routes>
+                  </GlobalHospitalContextProvider>
+                </main>
+              </div>
+            </div>
+
+
           </ThemeProvider>
         </ColorModeContext.Provider>
       ) : (

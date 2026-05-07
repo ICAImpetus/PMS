@@ -61,7 +61,7 @@ const UserFormAdmin = ({
   initialState = null,
   onClose,
   allUsers = [],
-  setAllUsers,
+  refetchUsers,
   hospitalId,
   anyFieldDisabled = false
 }) => {
@@ -70,7 +70,6 @@ const UserFormAdmin = ({
   const [showPassword, setShowPassword] = useState(false);
   const [teamLeaders, seteamLeaders] = useState([]);
   const [branchOptions, setBranchOptions] = useState([]);
-  const [hospitals, setHospitals] = useState([]);
   const [open, setOpen] = useState(false);
 
   const isUpdateComp = !!initialState;
@@ -138,16 +137,14 @@ const UserFormAdmin = ({
         const response = await updateUser(initialState?._id, valuesToSubmit);
 
         if (response?.success) {
-          setAllUsers((prev) =>
-            prev.map((user) => (user._id === initialState._id ? response?.data : user)),
-          );
+          if (refetchUsers) await refetchUsers()
           toast.success("Profile Updated");
           onClose();
         }
       } else {
         const data = await addUser(valuesToSubmit);
         if (data?.success) {
-          setAllUsers((prev) => [...prev, data?.data])
+          if (refetchUsers) await refetchUsers()
           toast.success("New User Added")
           onClose();
         }
@@ -163,16 +160,6 @@ const UserFormAdmin = ({
 
     }
   };
-
-  useEffect(() => {
-    const fetchHospitals = async () => {
-      const response = await allHospital();
-      // setHospitalNames(response?.data);
-      setHospitals(response?.data);
-    };
-    fetchHospitals();
-  }, []);
-
   // const teamLeaders = [
   //   { id: 1, name: "Rahul" },
   //   { id: 2, name: "Amit" },

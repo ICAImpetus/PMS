@@ -89,7 +89,7 @@ function UserManageMent() {
     errors,
     userData,
     setSelectedHostpital,
-    setUserData,
+    refetchUsers,
   } = useContext(HospitalContext);
 
 
@@ -110,7 +110,7 @@ function UserManageMent() {
 
   const deleteUser = async () => {
     await deleteUserById(deleteUserId);
-    setUserData((prev) => prev.filter((item) => item._id !== deleteUserId));
+    if (refetchUsers) await refetchUsers()
     setDeleteOpen(false);
     setDeleteUserId(null);
     toast.success("User Deleted");
@@ -437,7 +437,7 @@ function UserManageMent() {
                   initialState={null}
                   onClose={() => setOpen(false)}
                   allUsers={userData}
-                  setUserData={setUserData}
+                  refetchUsers={refetchUsers}
                   hospitalId={selectedHostpital}
                   setError={toast.error}
 
@@ -448,7 +448,7 @@ function UserManageMent() {
                   initialState={userUpdateData}
                   onClose={() => setUpdateOpen(false)}
                   allUsers={userData} // Also pass it for updates
-                  setUserData={setUserData}
+                  refetchUsers={refetchUsers}
                   hospitalId={selectedHostpital}
                   setError={toast.error}
                 />

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useContext, useState } from "react";
 import {
   Box,
   Button,
@@ -35,7 +35,7 @@ import { Toaster, toast } from "react-hot-toast";
 import { tokens } from "../../../../theme";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import * as Yup from "yup";
-// import { validateObject } from "./validateFunc"; // ❌ Removed manual validation
+// import { validateObject } from "./validateFunc"; //  Removed manual validation
 import ManagementDetailsAccordion from "./components/ManagementDetailAccordian";
 import HospitalBasicDetailAccrodian from "./components/HospitalDetailsAccordian";
 import AccountDetailAccordian from "./components/AccoundDetailSection";
@@ -43,6 +43,7 @@ import BranchesDetail from "./components/BranchesDetail";
 import Header from "../../../../components/HeaderNew";
 import { commonRoutes, superAdminRoutes } from "../../../../api/apiService";
 import { useApi } from "../../../../api/useApi";
+import HospitalContext from "../../../../contexts/HospitalContexts";
 
 //  STRICT YUP VALIDATION SCHEMA (for Create)
 const validationSchema = Yup.object().shape({
@@ -134,16 +135,12 @@ const editValidationSchema = Yup.object().shape({
 
 const AddHospitalData1 = ({
   initialState = null,
-  setData,
+  refetchHospital,
   handleClose = null,
 }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const isEditMode = !!(
-    initialState?._id ||
-    initialState?.ID ||
-    initialState?.id
-  );
+
 
   const { request: handleAddHospital, loading: hospitalLoading, error: hospitalError } = useApi(
     superAdminRoutes.addHospital,
@@ -152,6 +149,7 @@ const AddHospitalData1 = ({
   const { request: updateHospitalApi, loading: updateHospitalLoading, error: updateHospitalError } = useApi(
     superAdminRoutes.updateHospital,
   );
+
 
 
   const handleFormSubmit = async (values) => {
@@ -173,23 +171,17 @@ const AddHospitalData1 = ({
       } else {
         //  CREATE
         response = await handleAddHospital(formData);
+
+
       }
       if (!response?.success) {
-        // toast.error(response?.message || "Operation failed");
+        toast.error(response?.message || "Operation failed");
         return
       }
 
       //  Update UI state
-      if (setData) {
-        if (isEditing) {
-          setData((prev) =>
-            prev.map((item) =>
-              item?._id === hospitalId ? response?.data : item
-            )
-          );
-        } else {
-          setData((prev) => [...prev, response?.data]);
-        }
+      if (refetchHospital) {
+        refetchHospital()
       }
 
       //  Success

@@ -143,21 +143,38 @@ const HospitalCards = ({
                   sx={{
                     width: 64,
                     height: 64,
-                    // Force Light Blue/Teal background
+
+                    // Better clean background
+                    backgroundColor:
+                      theme.palette.mode === "dark"
+                        ? "rgba(148, 138, 138, 0.08)"
+                        : "#F4F8FB",
+
+                    border:
+                      theme.palette.mode === "dark"
+                        ? "1px solid rgba(255,255,255,0.12)"
+                        : "1px solid #DDE5EC",
+
+                    color:
+                      theme.palette.mode === "dark"
+                        ? "#90CAF9"
+                        : "#1565C0",
+
+                    boxShadow:
+                      theme.palette.mode === "dark"
+                        ? "0 2px 10px rgba(0,0,0,0.35)"
+                        : "0 2px 8px rgba(0,0,0,0.08)",
+
                     "& img": {
                       objectFit: "contain",
-                      padding: '4px'
+                      padding: "6px",
+                      backgroundColor: "transparent",
                     },
-
-                    border: '1px solid lightgrey',
-
-                    bgcolor: "#fff",
-                    color:
-                      theme.palette.mode === "dark" ? "#ffffff" : "#00695C",
                   }}
                 >
-                  {/*  fallback when no image */}
-                  {!hospital?.hospitallogo && <BusinessIcon sx={{ fontSize: 32 }} />}
+                  {!hospital?.hospitallogo && (
+                    <BusinessIcon sx={{ fontSize: 30 }} />
+                  )}
                 </Avatar>
               </Box>
 

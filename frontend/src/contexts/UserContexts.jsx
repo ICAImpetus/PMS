@@ -1,47 +1,63 @@
-import React, { useEffect, useState, createContext, useContext } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  createContext,
+  useContext,
+} from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axiosInstance";
 
 // Creating context
 const UserContext = createContext();
-export const GlobalUserContextProvider = (props) => {
-  const navigate = useNavigate()
 
+export const GlobalUserContextProvider = ({ children }) => {
+  const navigate = useNavigate();
+
+  // Prevent double API call in StrictMode
+  const fetched = useRef(false);
+
+  // Get user from localStorage initially
   const [currentUser, setCurrentUser] = useState(() => {
     const data = localStorage.getItem("current_user");
+
     try {
       return data ? JSON.parse(data) : null;
-    } catch {
+    } catch (error) {
       localStorage.removeItem("current_user");
       return null;
     }
-  }); // Initialize currentUser as null
-
+  });
 
   useEffect(() => {
+    if (fetched.current) return;
+
+    fetched.current = true;
+
     const fetchUser = async () => {
       try {
-
         const res = await API.get("/api/getMe");
 
-        const data = res.data; //  axios me direct data milta hai
+        const data = res.data;
 
         if (data?.success && data?.data) {
           setCurrentUser(data.data);
-          localStorage.setItem("current_user", JSON.stringify(data.data));
 
-          if (data.token) {
+          localStorage.setItem(
+            "current_user",
+            JSON.stringify(data.data)
+          );
+
+          if (data?.token) {
             localStorage.setItem("token", data.token);
           }
         } else {
           throw new Error("Session expired");
         }
-
       } catch (error) {
-        console.log("Error", error);
+        console.log("Fetch User Error:", error);
 
-        //  Timeout handle
         if (error.code === "ECONNABORTED") {
           toast.error("Request timeout (10s). Try again.");
         } else {
@@ -49,93 +65,105 @@ export const GlobalUserContextProvider = (props) => {
         }
 
         localStorage.clear();
+
         setCurrentUser(null);
+
         navigate("/login", { replace: true });
       }
     };
 
     fetchUser();
-  }, []);
+  }, [navigate]);
 
-  const storeDataInLocalStorage = async ({ key, value }) => {
+  // Store data in localStorage
+  const storeDataInLocalStorage = ({ key, value }) => {
     try {
       const jsonValue = JSON.stringify(value);
-      await localStorage.setItem(key, jsonValue);
+
+      localStorage.setItem(key, jsonValue);
+
       if (key === "current_user") {
         setCurrentUser(value);
       }
+
       return true;
     } catch (error) {
-      console.error("Error storing data in local storage:", error);
+      console.error("Error storing data:", error);
       return false;
     }
   };
 
-  const getDataFromLocalStorage = async (key) => {
+  // Get data from localStorage
+  const getDataFromLocalStorage = (key) => {
     try {
-      const value = await localStorage.getItem(key);
+      const value = localStorage.getItem(key);
+
       return value ? JSON.parse(value) : null;
     } catch (error) {
-      console.error("Error retrieving data from local storage:", error);
+      console.error("Error retrieving data:", error);
       return null;
     }
   };
 
+  // Login function
   const login = (data) => {
-    console.log("data", data);
+    try {
+      if (!data) return;
 
-    if (data) {
-      localStorage.setItem("current_user", JSON.stringify(data));
-      setCurrentUser(data)
-      toast.success("Login Success")
-      navigate("/", { replace: true })
+      localStorage.setItem(
+        "current_user",
+        JSON.stringify(data)
+      );
+
+      setCurrentUser(data);
+
+      toast.success("Login Success");
+
+      navigate("/", { replace: true });
+    } catch (error) {
+      console.log("Login Error:", error);
     }
+  };
 
+  // Logout function
+  const logout = async () => {
+    try {
+      // await logoutApi();
 
-  }
+      localStorage.removeItem("current_user");
+      localStorage.removeItem("token");
 
-  // Context provider value
-  const contextValue = React.useMemo(() => ({
-    currentUser,
-    setCurrentUser,
-    storeDataInLocalStorage,
-    getDataFromLocalStorage,
-    login,
-    logout: async () => {
-      try {
-        // await logoutApi();
-      } finally {
-        localStorage.removeItem("current_user");
-        setCurrentUser(null);
-      }
-    },
-  }), [currentUser]);
+      setCurrentUser(null);
+
+      navigate("/login", { replace: true });
+
+      toast.success("Logout Success");
+    } catch (error) {
+      console.log("Logout Error:", error);
+    }
+  };
+
+  // Memoized context value
+  const contextValue = React.useMemo(
+    () => ({
+      currentUser,
+      setCurrentUser,
+      storeDataInLocalStorage,
+      getDataFromLocalStorage,
+      login,
+      logout,
+    }),
+    [currentUser]
+  );
 
   return (
     <UserContext.Provider value={contextValue}>
-      {props.children}
+      {children}
     </UserContext.Provider>
   );
 };
 
+// Custom Hook
 export const UserContextHook = () => {
-  // Importing necessary values from UserContext
-  const {
-    currentUser,
-    setCurrentUser,
-    storeDataInLocalStorage,
-    getDataFromLocalStorage,
-    logout,
-    login
-  } = useContext(UserContext);
-
-  // Returning context values and functions
-  return {
-    currentUser,
-    setCurrentUser,
-    storeDataInLocalStorage,
-    getDataFromLocalStorage,
-    logout,
-    login
-  };
+  return useContext(UserContext);
 };

@@ -46,7 +46,7 @@ const validationSchema = Yup.object().shape({
   // hospitalName: Yup.string().required("Hospital is required"),
 });
 
-const UserFormTeamLeader = ({ initialState = null, hospitalId, onClose, setUserData }) => {
+const UserFormTeamLeader = ({ initialState = null, hospitalId, onClose, refetchUsers }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const { currentUser } = UserContextHook();
@@ -119,7 +119,7 @@ const UserFormTeamLeader = ({ initialState = null, hospitalId, onClose, setUserD
 
   }, []);
 
-  const handleSubmitForm = async (values) => {
+  const handleSubmitForm = async (values, resetForm) => {
     try {
       // console.log("values are :", values);
       let valuesToSubmit = { ...values };
@@ -133,30 +133,31 @@ const UserFormTeamLeader = ({ initialState = null, hospitalId, onClose, setUserD
       if (isUpdateComp) {
         const response = await updateUser(initialState?._id, valuesToSubmit);
         if (response?.success) {
-          setUserData((prev) =>
-            prev.map((user) => (user._id === initialState._id ? response?.data : user)),
-          );
+          if (refetchUsers) await refetchUsers()
           toast.success("Profile Updated");
           onClose();
         }
-        else {
-          toast.error("Error updating user");
-        }
+        // else {
+        //   toast.error("Error updating user");
+        // }
 
       } else {
         const data = await addUser(valuesToSubmit);
         if (data?.success) {
-          setUserData((prev) => [...prev, data?.data])
-
+          if (refetchUsers) await refetchUsers()
           console.log("valuesToSubmit", valuesToSubmit);
 
           toast.success("New User Added")
+
+          resetForm();
+
           onClose();
+
         }
 
-        else {
-          toast.error("Error Adding user");
-        }
+        // else {
+        //   toast.error("Error Adding user");
+        // }
       }
 
 
@@ -194,10 +195,7 @@ const UserFormTeamLeader = ({ initialState = null, hospitalId, onClose, setUserD
         return errors;
       }}
       onSubmit={async (values, { resetForm }) => {
-        await handleSubmitForm(values);
-        if (!isUpdateComp) {
-          resetForm();
-        }
+        await handleSubmitForm(values, resetForm);
       }}
     >
       {({

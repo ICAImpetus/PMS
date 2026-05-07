@@ -20,13 +20,16 @@ const filterOptions = [
     { key: "Last 3 Month", value: "last3M" }
 ];
 
-
-
 const defaultPagination = {
     page: 1,
     totalDocument: 0,
     totalPages: 0,
     limit: 10
+};
+
+const defaultDateFilter = {
+    startDate: "",
+    endDate: "",
 };
 
 export const GlobalHospitalContextProvider = ({ children }) => {
@@ -84,8 +87,10 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
     const {
         data: hospitalsData,
-        isLoading: hospitalsLoading,
-        error: hospitalsError
+        isFetching: hospitalsLoading,
+        error: hospitalsError,
+        refetch: refetchHospital
+
     } = useQuery({
         queryKey: ["hospitals"],
         queryFn: async () => {
@@ -128,7 +133,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
     const {
         data: dashboardData,
-        isLoading: dashboardLoading,
+        // isLoading: dashboardLoading,
+        isFetching: dashboardLoading,
         error: dashboardError
     } = useQuery({
         queryKey: ["dashboard", selectedHostpital, selectedBranch],
@@ -177,7 +183,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
     const {
         data: usersData,
-        isLoading: usersLoading,
+        isFetching: usersLoading,
+        refetch: refetchUsers,
         error: usersError
     } = useQuery({
         queryKey: ["users", selectedHostpital],
@@ -191,7 +198,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
     const {
         data: adminsData,
-        isLoading: adminsLoading,
+        isFetching: adminsLoading,
+        refetch: refetchAdmins,
         error: adminsError
     } = useQuery({
         queryKey: ["admins"],
@@ -345,7 +353,10 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         loading,
         errors,
 
-        refetchPatients
+        refetchPatients,
+        refetchHospital,
+        refetchAdmins,
+        refetchUsers
 
     }), [
         hospitals,

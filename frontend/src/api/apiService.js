@@ -85,7 +85,7 @@ export const commonRoutes = {
     }),
 
   updateDoctorStatus: (hosId, docId, currentStatus) =>
-    API.put(`api/update-doctor-status/${docId}`, {
+    API.put(`api/update-doctor-status/${docId}`, {}, {
       params: {
         hosId,
         currentStatus

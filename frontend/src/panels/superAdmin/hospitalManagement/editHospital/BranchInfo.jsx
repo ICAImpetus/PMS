@@ -931,7 +931,7 @@ const BranchInfo = () => {
 
       // Update the doctor's status in the local state first for immediate UI feedback
       const res = await updateDoctorStatusApi(hosId, doctorId, currentStatus)
-      if (res.success) {
+      if (res?.success) {
         toast.success(
           `Doctor ${!currentStatus ? "activated" : "deactivated"} successfully!`,
         );

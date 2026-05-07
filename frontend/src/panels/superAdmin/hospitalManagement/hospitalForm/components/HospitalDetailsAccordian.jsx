@@ -188,7 +188,27 @@ const HospitalBasicDetailAccrodian = ({
               label="Code of the hospital"
               name="hospitalCode"
               value={values.hospitalCode}
-              onChange={handleChange}
+              inputProps={{
+                minLength: 4,
+                maxLength: 9,
+              }}
+              onChange={(e) => {
+                const value = e.target.value;
+
+                // Allow only:
+                // a-z A-Z 0-9 _ -
+                const sanitizedValue = value
+                  .replace(/[^a-zA-Z0-9_-]/g, "")
+                  .slice(0, 9);
+
+
+                handleChange({
+                  target: {
+                    name: "hospitalCode",
+                    value: sanitizedValue,
+                  },
+                });
+              }}
               onBlur={handleBlur}
               fullWidth
               variant="standard"
@@ -204,10 +224,10 @@ const HospitalBasicDetailAccrodian = ({
               onChange={(e) => setFieldValue("beds", e.target.value)}
               onBlur={handleBlur}
               fullWidth
-              inputProps={{ min: 1, max: 10000 }}
+              inputProps={{ min: 0, max: 10000 }}
               onInput={(e) => {
                 if (e.target.value > 10000) e.target.value = 10000;
-                if (e.target.value < 1) e.target.value = 1;
+                if (e.target.value < 0) e.target.value = 0;
               }}
               variant="standard"
               // error={

@@ -41,7 +41,7 @@ function UserManagementSupermanager() {
     selectedHostpital,
     errors,
     userData,
-    setUserData,
+    refetchUsers,
     branches,
     selectedBranch,
     setSelectedBranch
@@ -243,7 +243,7 @@ function UserManagementSupermanager() {
                   initialState={null}
                   onClose={() => setOpen(false)}
                   allUsers={userData}
-                  setAllUsers={setUserData}
+                  refetchUsers={refetchUsers}
                   hospitalId={selectedHostpital}
                 />
               ) : updateOpen && userUpdateData ? (
@@ -251,7 +251,7 @@ function UserManagementSupermanager() {
                   initialState={userUpdateData}
                   onClose={() => setUpdateOpen(false)}
                   allUsers={userData}
-                  setAllUsers={setUserData}
+                  refetchUsers={refetchUsers}
                   hospitalId={selectedHostpital}
                 />
               ) : null}

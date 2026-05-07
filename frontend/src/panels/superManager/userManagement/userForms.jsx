@@ -50,7 +50,7 @@ const validationSchema = Yup.object().shape({
 });
 
 
-const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], setAllUsers, hospitalId }) => {
+const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], refetchUsers, hospitalId }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [showPassword, setShowPassword] = useState(false);
@@ -159,9 +159,7 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], set
       if (isUpdateComp) {
         const response = await updateUser(initialState?._id, valuesToSubmit);
         if (response?.success) {
-          setAllUsers((prev) =>
-            prev.map((user) => (user._id === initialState._id ? response?.data : user)),
-          );
+          if (refetchUsers) await refetchUsers()
           toast.success("Profile Updated");
           onClose();
         }
@@ -169,7 +167,7 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], set
       } else {
         const data = await addUser(valuesToSubmit);
         if (data?.success) {
-          setAllUsers((prev) => [...prev, data?.data])
+          if (refetchUsers) await refetchUsers()
           toast.success("New User Added")
           onClose();
 

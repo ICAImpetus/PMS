@@ -77,6 +77,7 @@ const HospitalCreationNew = () => {
     selectedHostpital,
     pagination,
     setPagination,
+    refetchHospital
   } = useContext(HospitalContext);
 
   const handleOpenAdd = () => {
@@ -201,7 +202,7 @@ const HospitalCreationNew = () => {
         <Box sx={modalStyle(theme)}>
           <AddHospitalData1
             initialState={selectedHospital}
-            setData={setHospitals}
+            refetchHospital={refetchHospital}
             handleClose={handleClose}
           />
         </Box>

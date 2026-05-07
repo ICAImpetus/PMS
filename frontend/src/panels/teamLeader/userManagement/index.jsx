@@ -8,17 +8,10 @@ import { tokens } from "../../../theme";
 import Header from "../../../components/Header";
 import { DataGridStyles } from "../../../utils/DataGridStyles";
 import { nanoid } from "@reduxjs/toolkit";
-import { oscillateRotation } from "../../../utils/keyFrameStyles";
-import { EditSqureIcon, AddIcon } from "../../../scenes/svgIcons/icons";
+import { AddIcon } from "../../../scenes/svgIcons/icons";
 import CustomButton from "../../../components/customComponents/Button";
-import LockResetIcon from "@mui/icons-material/LockReset";
-import DeleteIcon from "@mui/icons-material/Delete";
 import UserFormTeamLeader from "./UserFormTeamLeader"; // <-- This is the new form
-import { UserContextHook } from "../../../contexts/UserContexts";
-import DeleteConfirmationModal from "../../../components/DeleteConfirmationModal";
 import UpdatePasswordForm from "../../superAdmin/userManagement/UpdatePassword";
-import { useApi } from "../../../api/useApi";
-import { commonRoutes } from "../../../api/apiService";
 import HospitalContext from "../../../contexts/HospitalContexts";
 
 const ScrollableForm = styled(Box)({
@@ -50,10 +43,7 @@ function UserManagementTeamLeader() {
     selectedHostpital,
     errors,
     userData,
-    setUserData,
-    branches,
-    selectedBranch,
-    setSelectedBranch
+    refetchUsers,
   } = useContext(HospitalContext);
 
 
@@ -156,6 +146,15 @@ function UserManagementTeamLeader() {
 
   return (
     <ScrollableForm>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 5000,
+          style: {
+            zIndex: 999999,
+          },
+        }}
+      />
       {loading?.userLoading && (
         <Box
           display="flex"
@@ -221,14 +220,14 @@ function UserManagementTeamLeader() {
                 <UserFormTeamLeader
                   initialState={null}
                   onClose={() => setOpen(false)}
-                  setUserData={setUserData}
+                  refetchUsers={refetchUsers}
                   hospitalId={selectedHostpital}
                 />
               ) : updateOpen && userUpdateData ? (
                 <UserFormTeamLeader
                   initialState={userUpdateData}
                   onClose={() => setUpdateOpen(false)}
-                  setUserData={setUserData}
+                  refetchUsers={refetchUsers}
                   hospitalId={selectedHostpital}
                 />
               ) : null}

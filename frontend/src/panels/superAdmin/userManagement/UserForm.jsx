@@ -81,7 +81,7 @@ const UserForm = ({
   initialState = null,
   onClose,
   allUsers = [],
-  setUserData,
+  refetchUsers,
   hospitalId,
   setError = null
 
@@ -198,9 +198,9 @@ const UserForm = ({
       if (isUpdateComp) {
         const response = await updateUser(initialState?._id, valuesToSubmit);
         if (response.success) {
-          setUserData((prev) =>
-            prev.map((user) => (user._id === initialState._id ? response?.data : user)),
-          );
+
+          if (refetchUsers) await refetchUsers()
+
           toast.success("Profile Updated");
           onClose();
         }
@@ -208,7 +208,7 @@ const UserForm = ({
       } else {
         const data = await addUser(valuesToSubmit);
         if (data.success) {
-          setUserData((prev) => [...prev, data?.data])
+          if (refetchUsers) await refetchUsers()
           toast.success("New User Added")
           onClose();
         }

@@ -373,7 +373,9 @@ const SuperAdminDashboard = () => {
 
   }, [errors]);
 
-  if (loading?.dashboardLoading) {
+  console.log("loadin", loading);
+
+  if (loading?.dashboard) {
     return (
       <div className="tld-dashboard-content-wrapper">
         <div className="tld-page-header">
@@ -873,7 +875,7 @@ const SuperAdminDashboard = () => {
           <FilledFormsComponent
             setFormsModalOpen={setFormsModalOpen}
             formsData={formsData}
-            formsLoading={loading?.dashboardLoading}
+            formsLoading={loading?.dashboard}
             formsTypeFilter={formsTypeFilter}
             setFormsTypeFilter={setFormsTypeFilter}
             setPagination={setPagination}

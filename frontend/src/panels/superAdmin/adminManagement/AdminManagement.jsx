@@ -77,7 +77,7 @@ function AdminManagement() {
         loading,
         errors,
         admins,
-        setAdmins,
+        refetchAdmins
     } = useContext(HospitalContext);
 
     const {
@@ -89,7 +89,7 @@ function AdminManagement() {
     const deleteUser = async () => {
         const res = await deleteUserById(deleteUserId);
         if (res.success) {
-            setAdmins((prev) => prev.filter((item) => item._id !== deleteUserId));
+            await refetchAdmins()
             setDeleteOpen(false);
             setDeleteUserId(null);
             toast.success("User Deleted");
@@ -363,7 +363,7 @@ function AdminManagement() {
                                     initialState={null}
                                     onClose={() => setOpen(false)}
                                     allUsers={admins}
-                                    setAdmins={setAdmins}
+                                    refetchAdmins={refetchAdmins}
                                 // Pass the full user list
                                 />
                             ) : updateOpen && userUpdateData ? (
@@ -371,7 +371,7 @@ function AdminManagement() {
                                     initialState={userUpdateData}
                                     onClose={() => setUpdateOpen(false)}
                                     allUsers={admins} // Also pass it for updates
-                                    setAdmins={setAdmins}
+                                    refetchAdmins={refetchAdmins}
                                 />
                             ) : null}
                         </Box>

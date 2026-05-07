@@ -358,30 +358,46 @@ const AddBranchBasic = ({
     }));
   };
 
+  // Add a new contact number field
   const addContactNumber = () => {
     setFormData((prevData) => ({
       ...prevData,
       contactNumbers: [...prevData.contactNumbers, ""],
     }));
-    setErrors((prevErrors) => ({
-      ...prevErrors,
-      [`contactNumbers[${formData.contactNumbers.length}]`]: "",
-    }));
+    setErrors((prevErrors) => {
+      const newIndex = formData.contactNumbers.length;
+      return { ...prevErrors, [`contactNumbers[${newIndex}]`]: "" };
+    });
   };
 
+  // Remove a contact number field and reindex errors
   const removeContactNumber = (index) => {
-    const newContactNumbers = formData.contactNumbers.filter(
-      (_, i) => i !== index,
-    );
-    setFormData((prevData) => ({
-      ...prevData,
-      contactNumbers: newContactNumbers.length > 0 ? newContactNumbers : [""],
-    }));
-
+    setFormData((prevData) => {
+      const newContactNumbers = prevData.contactNumbers.filter((_, i) => i !== index);
+      return {
+        ...prevData,
+        contactNumbers: newContactNumbers.length > 0 ? newContactNumbers : []
+      };
+    });
     setErrors((prevErrors) => {
       const updatedErrors = { ...prevErrors };
-      delete updatedErrors[`contactNumbers[${index}]`];
-      return updatedErrors;
+      // Reindex errors for contactNumbers
+      const newErrors = {};
+      Object.keys(updatedErrors).forEach((key) => {
+        const match = key.match(/^contactNumbers\[(\d+)\]$/);
+        if (match) {
+          const idx = parseInt(match[1], 10);
+          if (idx < index) {
+            newErrors[key] = updatedErrors[key];
+          } else if (idx > index) {
+            newErrors[`contactNumbers[${idx - 1}]`] = updatedErrors[key];
+          }
+          // else (idx === index) skip (deleted)
+        } else {
+          newErrors[key] = updatedErrors[key];
+        }
+      });
+      return newErrors;
     });
   };
 
@@ -400,7 +416,7 @@ const AddBranchBasic = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!effectiveHospitalId) {
+    if (!hospitalId) {
       toast.error(
         `Error: Hospital ID is missing. Cannot ${isEdit ? "update" : "add"} branch.`,
       );
@@ -418,9 +434,7 @@ const AddBranchBasic = ({
         if (isEdit) {
           console.log("Updating branch:", formData);
 
-          response = await updateBranchApi(effectiveHospitalId, formData._id, formData);
-
-
+          response = await updateBranchApi(hospitalId, formData._id, formData);
           if (response?.success) {
             console.log("response branch:", response);
             // setHospitalBranches((prev) =>
@@ -434,20 +448,26 @@ const AddBranchBasic = ({
               )
             );
             toast.success("Branch Update Successfull")
+            if (handleClose) handleClose();
           }
 
 
         } else {
-          response = await addBranch(effectiveHospitalId, formData);
+          response = await addBranch(hospitalId, formData);
           if (response?.success) {
             setHospitalBranches((prev) => [...prev, response?.data]);
             toast.success("Branch Added Successfull")
+            if (handleClose) handleClose();
           }
 
         }
-        if (handleClose) handleClose();
+
       } catch (error) {
         console.error("API Error:", error);
+
+        toast.error(
+          error?.response?.data?.message || "Something went wrong"
+        );
       }
     } else {
       console.log("Validation Errors:", errors);
@@ -464,7 +484,16 @@ const AddBranchBasic = ({
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Toaster position="top-right" reverseOrder={false} />
+
+      {/* <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 5000,
+          style: {
+            zIndex: 999999,
+          },
+        }}
+      /> */}
       <Box
         component="form"
         onSubmit={handleSubmit}
@@ -475,7 +504,7 @@ const AddBranchBasic = ({
           borderRadius: 3,
           boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
           width: "100%",
-          maxWidth: "520px",
+          maxWidth: "620px",
           display: "flex",
           flexDirection: "column",
           gap: { xs: 1.5, md: 2.5 },
@@ -487,10 +516,10 @@ const AddBranchBasic = ({
         }}
       >
         <Typography
-          variant="h4"
-          component="h1"
+          variant="h5"
+          component="h2"
           gutterBottom
-          sx={{ textAlign: "center", mb: 1 }}
+          sx={{ textAlign: "center" }}
         >
           {isEdit ? "Edit Branch" : "Add New Hospital Branch"}
         </Typography>
@@ -604,40 +633,38 @@ const AddBranchBasic = ({
             inputProps={{ min: 1, max: 9999 }}
           />
         </Stack>
-
-        <TextField
-          label="Email"
-          name="email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-          onBlur={() => validateField("email", formData.email)}
-          fullWidth
-          variant="outlined"
-          size="medium"
-          error={!!errors.email}
-          helperText={errors.email}
-        />
-
-        <TextField
-          label="Contact"
-          name="contact"
-          value={formData.contact}
-          onChange={handleChange}
-          onBlur={() => validateField("contact", formData.contact)}
-          fullWidth
-          variant="outlined"
-          size="medium"
-          error={!!errors.contact}
-          helperText={errors.contact}
-        />
-
-        <Typography
-          variant="h6"
-          sx={{ mt: 1.5, mb: 0.5, color: "text.secondary", fontSize: "1rem" }}
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={{ xs: 1.5, sm: 2 }}
         >
-          Contact Numbers
-        </Typography>
+          <TextField
+            label="Email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            onBlur={() => validateField("email", formData.email)}
+            fullWidth
+            variant="outlined"
+            size="medium"
+            error={!!errors.email}
+            helperText={errors.email}
+          />
+
+          <TextField
+            label="Contact"
+            name="contact"
+            value={formData.contact}
+            onChange={handleChange}
+            onBlur={() => validateField("contact", formData.contact)}
+            fullWidth
+            variant="outlined"
+            size="medium"
+            error={!!errors.contact}
+            helperText={errors.contact}
+          />
+
+        </Stack>
         <Stack spacing={1.2}>
           {formData.contactNumbers.map((contact, index) => (
             <Box
@@ -647,9 +674,7 @@ const AddBranchBasic = ({
               <TextField
                 label={`Contact Number ${index + 1}`}
                 value={contact}
-                onChange={(e) =>
-                  handleContactNumberChange(index, e.target.value)
-                }
+                onChange={(e) => handleContactNumberChange(index, e.target.value)}
                 onBlur={(e) => handleContactNumberChange(index, e.target.value)}
                 fullWidth
                 variant="outlined"
@@ -658,15 +683,14 @@ const AddBranchBasic = ({
                 helperText={errors[`contactNumbers[${index}]`]}
                 sx={{ minWidth: 0 }}
               />
-              {formData.contactNumbers.length > 1 && (
-                <IconButton
-                  onClick={() => removeContactNumber(index)}
-                  color="error"
-                  sx={{ borderRadius: 10 }}
-                >
-                  <DeleteIcon />
-                </IconButton>
-              )}
+              <IconButton
+                onClick={() => removeContactNumber(index)}
+                color="error"
+                sx={{ borderRadius: 10 }}
+                aria-label={`Remove contact number ${index + 1}`}
+              >
+                <DeleteIcon />
+              </IconButton>
             </Box>
           ))}
           <Button
@@ -679,6 +703,7 @@ const AddBranchBasic = ({
               fontSize: "0.97rem",
               minHeight: 32,
               mt: 0.5,
+              alignSelf: "flex-start",
               "&:hover": {
                 bgcolor: "primary.light",
                 color: "white",
@@ -693,7 +718,7 @@ const AddBranchBasic = ({
           direction="row"
           spacing={1.5}
           justifyContent="space-between"
-          sx={{ mt: 2.5 }}
+        // sx={{}}
         >
           <Button
             variant="outlined"
