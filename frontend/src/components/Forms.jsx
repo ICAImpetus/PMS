@@ -16,6 +16,7 @@ import {
 import DoctorProfileCard from "./DoctorCard";
 import HospitalContext from "../contexts/HospitalContexts";
 import { CATEGORY, IndianStatesWithDistricts } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
+import { useMemo } from "react";
 
 
 const getCurrentDateTime = () => {
@@ -49,6 +50,7 @@ function Forms() {
   const [dynamicDoctors, setDynamicDoctors] = useState([]);
   const [filteredDoctors, setfilteredDoctors] = useState([]);
   const [selectedDay, setSelectedDay] = useState(null);
+  const [bookedSlotIds, setBookedSlotIds] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const initialPatientDetails = {
     patientName: "",
@@ -121,7 +123,13 @@ function Forms() {
   const [form, setForm] = useState(initialFormState);
   const { request: getSingleBranch, error: getSingleBranchError, loading: getSingleBranchLoading } = useApi(commonRoutes.getBranchById)
   const { request: saveFilledForm, error: saveFilledFormError, loading: saveFilledFormLoading } = useApi(commonRoutes.saveFilledForm)
-
+  const {
+    request: getBookedSlotsApi,
+    error: getBookedSlotsError,
+    loading: getBookedSlotsLoading,
+  } = useApi(
+    commonRoutes.getBookedSlotsApi
+  );
   const {
     loading,
     selectedBranch,
@@ -146,6 +154,43 @@ function Forms() {
       fetchBranchAndDetails();
     }
   }, [selectedHostpital, selectedBranch]);
+
+  const fetchBookedSlots = async () => {
+    try {
+      if (
+        !selectedDoctor?._id ||
+        !form.formData.dateTime
+      ) {
+        setBookedSlotIds([]);
+        return;
+      }
+      const data = {
+        doctorId: selectedDoctor._id,
+        date: form.formData.dateTime,
+      }
+      const response =
+        await getBookedSlotsApi(selectedHostpital, selectedBranch, data);
+
+      setBookedSlotIds(
+        response?.data || []
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookedSlots();
+  }, [
+    selectedDoctor?._id,
+    form.formData.dateTime,
+  ]);
+
+  const bookedSlotsSet = useMemo(() => {
+    return new Set(
+      bookedSlotIds.map(String)
+    );
+  }, [bookedSlotIds]);
 
   const resetForm = () => {
     setSelectedDoctor(null);
@@ -433,94 +478,162 @@ function Forms() {
             </div>
 
             {/* Available Slots Display - Button Style for Easy Selection */}
-            {selectedDoctor && selectedDoctor?.slots?.length > 0 && (
-              <div className="">
-                <div className="input-group">
-                  <label className="required">Select Appointment Slot</label>
+            {selectedDoctor &&
+              selectedDoctor?.slots?.length > 0 && (
+                <div>
+                  <div className="input-group">
+                    <label className="required">
+                      Select Appointment Slot
+                    </label>
 
-                  <div
-                    style={{
-                      width: "100%",
-                      display: "grid",
-                      gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-                      gap: "8px",
-                      padding: "10px 0",
-                      // backgroundColor: "royalblue"
-                    }}
-                  >
-                    {selectedDoctor?.slots.map((slot, index) => {
-                      const startHour = Number(slot.start.split(":")[0]);
+                    <div
+                      style={{
+                        width: "100%",
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fill, minmax(140px, 1fr))",
+                        gap: "8px",
+                        padding: "10px 0",
+                      }}
+                    >
+                      {selectedDoctor.slots.map(
+                        (slot, index) => {
+                          const startHour = Number(
+                            slot.start.split(":")[0]
+                          );
 
-                      const session =
-                        startHour < 12 ? "Morning" : "Evening";
+                          const session =
+                            startHour < 12
+                              ? "Morning"
+                              : "Evening";
 
-                      const formatTime = (time) => {
-                        const [hour, minute] = time.split(":");
-                        const h = Number(hour);
+                          const formatTime = (time) => {
+                            const [hour, minute] =
+                              time.split(":");
 
-                        const ampm = h >= 12 ? "PM" : "AM";
-                        const formattedHour = h % 12 || 12;
+                            const h = Number(hour);
 
-                        return `${formattedHour}:${minute} ${ampm}`;
-                      };
+                            const ampm =
+                              h >= 12 ? "PM" : "AM";
 
-                      const isSelected =
-                        form.formData.appointmentSlot &&
-                        form.formData.appointmentSlot?.start === slot.start;
+                            const formattedHour =
+                              h % 12 || 12;
 
-                      console.log("slot", slot);
+                            return `${formattedHour}:${minute} ${ampm}`;
+                          };
+
+                          const isSelected =
+                            String(
+                              form.formData
+                                .appointmentSlot?.slotId
+                            ) === String(slot._id);
+                          // IMPORTANT
+                          const isBooked =
+                            bookedSlotsSet.has(
+                              String(slot._id)
+                            );
+
+                          console.log("isBooked", isBooked);
 
 
-                      return (
-                        <button
-                          key={index}
-                          type="button"
-                          onClick={() => {
-                            const bookSlot = {
-                              start: slot?.start,
-                              end: slot?.end,
-                              isBooked: true,
-                              _id: slot?._id
+                          return (
+                            <button
+                              key={index}
+                              type="button"
+                              disabled={isBooked}
+                              onClick={() => {
+                                if (isBooked) return;
 
-                            }
-                            handleChange("formData.appointmentSlot", bookSlot);
-                          }}
-                          style={{
-                            padding: "10px 12px",
-                            border: "1px solid #ddd",
-                            borderRadius: "6px",
-                            backgroundColor: isSelected
-                              ? "#1976d2"
-                              : "#f5f5f5",
-                            color: isSelected ? "white" : "#333",
-                            cursor: "pointer",
-                            fontSize: "13px",
-                            fontWeight: isSelected ? "bold" : "normal",
-                            transition: "all 0.2s ease",
-                            textAlign: "left",
-                          }}
-                        >
-                          <div
-                            style={{
-                              fontSize: "11px",
-                              opacity: 0.8,
-                              marginBottom: "4px",
-                            }}
-                          >
-                            {session}
-                          </div>
+                                handleChange(
+                                  "formData.appointmentSlot",
+                                  {
+                                    slotId: slot._id,
 
-                          <div>
-                            {formatTime(slot.start)} -{" "}
-                            {formatTime(slot.end)}
-                          </div>
-                        </button>
-                      );
-                    })}
+                                    start: slot.start,
+                                    end: slot.end,
+
+                                    date:
+                                      form.formData
+                                        .dateTime,
+                                  }
+                                );
+                              }}
+                              style={{
+                                padding: "10px 12px",
+                                border:
+                                  "1px solid #ddd",
+
+                                borderRadius: "6px",
+
+                                backgroundColor:
+                                  isBooked
+                                    ? "#ffebee"
+                                    : isSelected
+                                      ? "#1976d2"
+                                      : "#f5f5f5",
+
+                                color:
+                                  isSelected
+                                    ? "white"
+                                    : isBooked
+                                      ? "#d32f2f"
+                                      : "#333",
+
+                                cursor: isBooked
+                                  ? "not-allowed"
+                                  : "pointer",
+
+                                fontSize: "13px",
+
+                                fontWeight:
+                                  isSelected
+                                    ? "bold"
+                                    : "normal",
+
+                                opacity:
+                                  isBooked ? 0.7 : 1,
+
+                                transition:
+                                  "all 0.2s ease",
+
+                                textAlign: "left",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontSize: "11px",
+                                  opacity: 0.8,
+                                  marginBottom: "4px",
+                                }}
+                              >
+                                {session}
+                              </div>
+
+                              <div>
+                                {formatTime(slot.start)} -{" "}
+                                {formatTime(slot.end)}
+                              </div>
+
+                              {isBooked && (
+                                <div
+                                  style={{
+                                    marginTop: 4,
+                                    fontSize: 11,
+                                    color: "#d32f2f",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  Booked
+                                </div>
+                              )}
+                            </button>
+                          );
+                        }
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
             {/* Patient Arrival Time for No Slots - Separate Date and Time */}
             {form.formData.slotDuration === "no-slots" && (
               <div className="input-row">

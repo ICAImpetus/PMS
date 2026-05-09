@@ -5,5 +5,7 @@ const router = express.Router();
 
 router.post("/filled-forms", auth, formController.createFilledForm);
 router.get("/filled-forms", auth, formController.getFilledForms);
+router.post("/booked-slots", formController.getBookedSlotsController
+);
 
 export default router;

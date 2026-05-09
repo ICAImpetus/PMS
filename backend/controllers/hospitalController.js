@@ -7402,3 +7402,4 @@ export const singlePatientHistory = async (req, res) => {
     });
   }
 };
+

@@ -701,3 +701,94 @@ export const getFilledForms = async (req, res) => {
     });
   }
 };
+
+export const getBookedSlotsController =
+  async (req, res) => {
+    try {
+      const { doctorId, date } = req.body;
+      const { hosId, branchId } = req.query;
+
+      if (
+        !hosId ||
+        !branchId ||
+        !mongoose.isValidObjectId(hosId) ||
+        !mongoose.isValidObjectId(branchId)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Valid hospitalId and branchId are required",
+        });
+      }
+
+
+      if (!doctorId || !date) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "doctorId and date required",
+        });
+      }
+
+      const hospital = await HospitalModel.findById(
+        hosId
+      )
+        .select("trimmedName name")
+        .lean();
+
+      if (!hospital) {
+        return res.status(404).json({
+          success: false,
+          message: "Hospital not found",
+        });
+      }
+
+      const conn = await getConnection(
+        hospital.trimmedName
+      );
+
+      const FilledFormsModel =
+        getFilledFormsModel(conn);
+
+      const PatientModel = getPatientModel(conn);
+
+      const DoctorModel = getDoctorModel(conn);
+      const bookedSlots =
+        await FilledFormsModel.find(
+          {
+            doctor: doctorId,
+
+            "formData.appointmentSlot.date":
+              date,
+
+            isDeleted: false,
+          },
+          {
+            "formData.appointmentSlot.slotId": 1,
+            _id: 0,
+          }
+        ).lean();
+
+
+
+      const bookedSlotIds =
+        bookedSlots.map(
+          (item) =>
+            item?.formData
+              ?.appointmentSlot?.slotId
+        );
+
+      return res.status(200).json({
+        success: true,
+        data: bookedSlotIds,
+      });
+    } catch (error) {
+      console.log(error);
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to fetch booked slots",
+      });
+    }
+  };

@@ -141,7 +141,7 @@ export const FilledFormSchema = new mongoose.Schema(
         date: {
           type: String,
           // required: true,
-          // index: true,
+          index: true,
         },
 
         slotId: {

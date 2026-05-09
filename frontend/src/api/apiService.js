@@ -365,6 +365,17 @@ export const commonRoutes = {
       }
     }),
 
+  getBookedSlotsApi: (hosId, branchId, data) =>
+
+    API.post(`api/booked-slots`, data, {
+      params: {
+        hosId,
+        branchId
+      }
+    }),
+
+
+
   // addDoctor: (branchid, data) => API.post(`api/add-doctor/${branchid}`, data),
   // removeDoc: (docId) => API.delete(`api/remove-doctor/${docId}`),
   // updateDoctor: (docId, data) => API.put(`api/update-doctor/${docId}`, data),
