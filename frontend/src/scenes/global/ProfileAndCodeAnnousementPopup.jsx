@@ -270,7 +270,7 @@ export const CodeAnnousementPopup = ({ data, onClose, selectedHostpital, selecte
       const res = await createCodeAlert(selectedHostpital, payload);
       if (res?.success) {
 
-        refetchDashboard()
+        await refetchDashboard()
         toast.success("Alert Raised Successfully");
         onClose();
       }

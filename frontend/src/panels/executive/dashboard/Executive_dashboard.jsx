@@ -31,6 +31,8 @@ import toast from "react-hot-toast";
 import FilledFormsComponent from "../../../components/customComponents/FilledFormsComponent";
 import HospitalContext from "../../../contexts/HospitalContexts";
 import { IconButton } from "@mui/material";
+import { useApi } from "../../../api/useApi";
+import { commonRoutes } from "../../../api/apiService";
 const ExecutiveDashboard = () => {
   const navigate = useNavigate();
   const hourlyChartRef = useRef(null);
@@ -70,9 +72,11 @@ const ExecutiveDashboard = () => {
     codeAlertsData,
     filterOptions,
     refetchDashboard,
-
+    refetchForms
 
   } = useContext(HospitalContext);
+
+  const { request: toggleAlertStatus } = useApi(commonRoutes.toggleCodeAlertStatus)
 
   useEffect(() => {
     if (hourlyChartRef.current) {
@@ -166,19 +170,19 @@ const ExecutiveDashboard = () => {
     try {
       setLoadingId(id);
 
-      const res = await toggleAlertStatus(hospitalId, id);
+      const res = await toggleAlertStatus(selectedHostpital, id);
 
       if (res?.success) {
         toast.success("Status Updated");
 
-        setCodeAlerts((prev) =>
-          prev.filter((item) => item?._id !== id)
-        );
+        await refetchDashboard()
       } else {
         toast.error(res?.message || "Something went wrong");
       }
 
     } catch (error) {
+      console.log("error", error);
+
       toast.error("Server Error");
     } finally {
       setLoadingId(null);
@@ -337,7 +341,14 @@ const ExecutiveDashboard = () => {
           <IconButton
             color="warning"
             size="small"
-            onClick={refetchDashboard}
+            onClick={async () => {
+
+              await Promise.all([
+                refetchDashboard(),
+                refetchForms()
+              ])
+
+            }}
             title="Refresh"
           >
             <RefreshIcon fontSize="small" />
@@ -848,7 +859,7 @@ const ExecutiveDashboard = () => {
             </div>
           </div>
 
-          <div className="data-card">
+          {/* <div className="data-card">
             <div className="executive-chart-title">
               <PhoneCallbackIcon /> Pending Inbound Followups
             </div>
@@ -865,7 +876,7 @@ const ExecutiveDashboard = () => {
                 </div>
               )}
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
       {/* Call Volume and Appointment Details Section */}

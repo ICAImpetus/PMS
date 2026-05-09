@@ -248,7 +248,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
     const {
         data: formsData,
-        isLoading: formsLoading,
+        isFetching: formsLoading,
+        refetch: refetchForms,
         error: formsError
     } = useQuery({
         queryKey: ["forms", selectedHostpital, selectedBranch, filter, pagination.forms.page],
@@ -394,7 +395,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         refetchPatients,
         refetchHospital,
         refetchAdmins,
-        refetchUsers
+        refetchUsers,
+        refetchForms
 
     }), [
         hospitals,
