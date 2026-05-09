@@ -108,7 +108,7 @@ export const PatientHistory = () => {
         }
 
         const headers = [
-            "Visit Date",
+            "Call Date",
             "Doctor Name",
             "Department",
             "Purpose",
@@ -357,7 +357,7 @@ export const PatientHistory = () => {
             )}
 
             {/* Loading State */}
-            {loading?.patientsLoading ? (
+            {loading?.patients ? (
                 <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
                     <CircularProgress />
                 </Box>

@@ -202,14 +202,15 @@ export default function Login({ setRefresh }) {
                 </button>
                 <div className="login-header">
 
+
                     <div style={{ display: "flex", alignItems: "center", gap: "12px", justifyContent: "center" }}>
 
                         <Avatar
                             sx={{
-                                width: 48,
-                                height: 48,
+                                width: 68,
+                                height: 68,
                                 bgcolor: 'transparent',
-                                border: '1px solid',
+                                // border: '1px solid',
                                 borderColor: 'divider',
                                 p: 0.5,
                             }}
@@ -226,8 +227,9 @@ export default function Login({ setRefresh }) {
                             />
                         </Avatar>
 
-                        <h1 style={{ margin: 0 }}>PMS</h1>
+
                     </div>
+                    <h4 style={{ margin: 0, color: "#2c4c96" }}>Patient Management System</h4>
                     <p className="text-muted">Sign in to your account</p>
                 </div>
 

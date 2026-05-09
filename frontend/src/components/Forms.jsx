@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useContext } from "react";
-
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs from "dayjs";
 import "./Forms.css";
 import DoctorDropdown from "./DoctorDropdown";
 import { useApi } from "../api/useApi";
@@ -8,10 +11,30 @@ import toast from "react-hot-toast";
 import {
   CircularProgress, Box,
   TextField,
+  Autocomplete
 } from "@mui/material";
 import DoctorProfileCard from "./DoctorCard";
 import HospitalContext from "../contexts/HospitalContexts";
+import { IndianStatesWithDistricts } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
 
+const CATEGORY = [
+  { key: "Cash", label: "Cash" },
+
+  {
+    key: "Govt. Health Scheme",
+    label: "Govt. Health Scheme",
+  },
+
+  {
+    key: "Non-Govt. Health Scheme",
+    label: "Non-Govt. Health Scheme",
+  },
+
+  {
+    key: "NA",
+    label: "NA",
+  },
+];
 const getCurrentDateTime = () => {
   const now = new Date();
 
@@ -303,8 +326,9 @@ function Forms() {
 
   useEffect(() => {
     handleChange("doctor", null)
+    // handleChange("purpose", "")
     setSelectedDoctor(null)
-  }, [form.department, form.purpose, form.formType])
+  }, [form.department, form.purpose, form.formType, selectedBranch])
   useEffect(() => {
     handleChange("department", null)
 
@@ -312,6 +336,18 @@ function Forms() {
   // console.log("form", form);
 
   // console.log("isres", isRequired);
+
+  const allLocations = Object.entries(IndianStatesWithDistricts)
+    .flatMap(([state, districts]) =>
+      districts.map((district) => ({
+        label: `${district}, ${state}`,
+        district,
+        state,
+      }))
+    );
+
+  // console.log("allLocations", allLocations)
+
 
   const renderInboundPurposeDetails = () => {
     switch (form.formType === "inbound" && form.purpose) {
@@ -353,18 +389,37 @@ function Forms() {
               </div>
 
               <div className="input-group">
-                <label className="required">Appointment Date</label>
+                <label className="required">
+                  Appointment Date
+                </label>
 
-                <input
-                  type="datetime-local"
-                  className="input-field"
-                  min={minDate}
-                  max={maxDate}
-                  value={form.formData.dateTime}
-                  onChange={(e) =>
-                    handleChange("formData.dateTime", e.target.value)
-                  }
-                />
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    value={
+                      form.formData.dateTime
+                        ? dayjs(form.formData.dateTime)
+                        : null
+                    }
+                    onChange={(newValue) => {
+                      handleChange(
+                        "formData.dateTime",
+                        newValue
+                          ? dayjs(newValue).format("YYYY-MM-DD")
+                          : ""
+                      );
+                    }}
+                    minDate={dayjs()}
+                    maxDate={dayjs().add(7, "day")}
+                    format="DD/MM/YYYY"
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        size: "small",
+                        className: "input-field",
+                      },
+                    }}
+                  />
+                </LocalizationProvider>
               </div>
 
             </div >
@@ -396,16 +451,18 @@ function Forms() {
 
             {/* Available Slots Display - Button Style for Easy Selection */}
             {selectedDoctor && selectedDoctor?.slots?.length > 0 && (
-              <div className="input-row">
+              <div className="">
                 <div className="input-group">
                   <label className="required">Select Appointment Slot</label>
 
                   <div
                     style={{
+                      width: "100%",
                       display: "grid",
                       gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
                       gap: "8px",
                       padding: "10px 0",
+                      // backgroundColor: "royalblue"
                     }}
                   >
                     {selectedDoctor?.slots.map((slot, index) => {
@@ -436,7 +493,14 @@ function Forms() {
                           key={index}
                           type="button"
                           onClick={() => {
-                            handleChange("formData.appointmentSlot", slot);
+                            const bookSlot = {
+                              start: slot?.start,
+                              end: slot?.end,
+                              isBooked: true,
+                              _id: slot?._id
+
+                            }
+                            handleChange("formData.appointmentSlot", bookSlot);
                           }}
                           style={{
                             padding: "10px 12px",
@@ -514,7 +578,7 @@ function Forms() {
                     }
                     style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                   />
-                  <span>Useful for Making Follow-up Forms</span>
+                  <span>Useful for Making Follow-up Patients</span>
                 </label>
               </div>
             </div>
@@ -2378,6 +2442,8 @@ function Forms() {
                       type="number"
                       className="input-field"
                       value={form.formData.patientDetails.patientAge}
+                      maxLength={100}
+                      min={0}
                       onChange={(e) =>
                         handleChange(
                           "formData.patientDetails.patientAge",
@@ -2964,22 +3030,22 @@ function Forms() {
           </div>
 
           <div className="input-group">
-            <label className="required">Attendant Mobile</label>
+            <label>Attendant Mobile</label>
 
             <input
               type="tel"
               className="input-field"
               value={form.formData.attendantDetails.attendantMobile}
               onChange={(e) => {
-                const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                const digits = e.target.value.replace(/\D/g, "").slice(0, 12);
                 handleChange("formData.attendantDetails.attendantMobile", digits);
               }}
-              required
-              pattern="[0-9]{10}"
-              maxLength="10"
+              // required
+              pattern="[0-9]{10,12}"
+              maxLength="12"
               minLength="10"
               title="Enter exactly 10 digit mobile number"
-              placeholder="10 digit number"
+              placeholder="10-12 digit number"
             />
           </div>
         </div>
@@ -3011,15 +3077,21 @@ function Forms() {
                   className="input-field"
                   value={form.formData.patientDetails.patientMobile}
                   onChange={(e) => {
-                    const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
-                    handleChange("formData.patientDetails.patientMobile", digits);
+                    const digits = e.target.value
+                      .replace(/\D/g, "")
+                      .slice(0, 12);
+
+                    handleChange(
+                      "formData.patientDetails.patientMobile",
+                      digits
+                    );
                   }}
                   required
-                  pattern="[0-9]{10}"
-                  maxLength="10"
+                  pattern="[0-9]{10,12}"
+                  maxLength="12"
                   minLength="10"
-                  title="Enter exactly 10 digit mobile number"
-                  placeholder="10 digit number"
+                  title="Enter 10 to 12 digit mobile number"
+                  placeholder="10-12 digit number"
                 />
               </div>
 
@@ -3030,14 +3102,14 @@ function Forms() {
                   className="input-field"
                   value={form.formData.patientDetails.alternateMobile}
                   onChange={(e) => {
-                    const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                    const digits = e.target.value.replace(/\D/g, "").slice(0, 12);
                     handleChange("formData.patientDetails.alternateMobile", digits);
                   }}
-                  pattern="[0-9]{10}"
-                  maxLength="10"
+                  pattern="[0-9]{10,12}"
+                  maxLength="12"
                   minLength="10"
-                  title="Enter exactly 10 digit mobile number"
-                  placeholder="10 digit number"
+                  title="Enter exactly 10-12 digit mobile number"
+                  placeholder="10-12 digit number"
                 />
               </div>
             </div>
@@ -3046,24 +3118,81 @@ function Forms() {
               <div className="input-group">
                 <label >Age</label>
                 <input
-                  type="number"
+                  type="text"
                   className="input-field"
                   value={form.formData.patientDetails.patientAge}
-                  onChange={(e) =>
-                    handleChange("formData.patientDetails.patientAge", e.target.value)
-                  }
+                  inputMode="numeric"
+                  placeholder="Enter Age"
+                  onChange={(e) => {
+                    let value = e.target.value.replace(/\D/g, "");
+
+                    // only 3 digits
+                    value = value.slice(0, 3);
+
+                    // max age 110
+                    if (value && Number(value) > 110) {
+                      value = "110";
+                    }
+
+                    handleChange(
+                      "formData.patientDetails.patientAge",
+                      value
+                    );
+                  }}
                 />
               </div>
 
               <div className="input-group">
                 <label>Location</label>
-                <input
+                {/* <input
                   type="text"
                   className="input-field"
                   value={form.formData.patientDetails.location}
                   onChange={(e) =>
                     handleChange("formData.patientDetails.location", e.target.value)
                   }
+                /> */}
+                <Autocomplete
+                  sx={{
+                    width: 300,
+                    // fontSize: '12px',
+                    "& .MuiOutlinedInput-root": {
+                      height: 33,
+                      border: "1px solid var(--border-color)",
+                      borderRadius: "var(--radius)",
+                      backgroundColor: "#fff",
+                      fontSize: '12px',
+
+                      "& fieldset": {
+                        border: "none",
+                      },
+                    },
+
+                    "& .MuiInputBase-input": {
+                      fontSize: '12px',
+                      padding: "0 14px",
+                    },
+                  }}
+                  options={allLocations}
+                  value={
+                    allLocations.find(
+                      (loc) =>
+                        loc.label === form.formData.patientDetails.location
+                    ) || null
+                  }
+                  onChange={(_, newValue) => {
+                    handleChange(
+                      "formData.patientDetails.location",
+                      newValue?.label || ""
+                    );
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      // label="Location"
+                      className="input-field"
+                    />
+                  )}
                 />
               </div>
 
@@ -3135,20 +3264,50 @@ function Forms() {
             <div className="input-row">
               <div className="input-group">
                 <label className={isRequired ? "required" : ""}>Category</label>
-                <select
-                  className="select-field"
-                  value={form.formData.patientDetails.category}
-                  onChange={(e) =>
-                    handleChange("formData.patientDetails.category", e.target.value)
+                <Autocomplete
+                  sx={{
+                    width: 300,
+
+                    "& .MuiOutlinedInput-root": {
+                      height: 33,
+                      border: "1px solid var(--border-color)",
+                      borderRadius: "var(--radius)",
+                      backgroundColor: "#fff",
+                      fontSize: "12px",
+
+                      "& fieldset": {
+                        border: "none",
+                      },
+                    },
+
+                    "& .MuiInputBase-input": {
+                      fontSize: "12px",
+                      padding: "0 14px",
+                    },
+                  }}
+                  options={CATEGORY}
+                  getOptionLabel={(option) => option.label}
+                  value={
+                    CATEGORY.find(
+                      (item) =>
+                        item.key ===
+                        form.formData.patientDetails.category
+                    ) || null
                   }
-                  required={isRequired}
-                >
-                  <option value="">Select</option>
-                  <option value="Cash">Cash</option>
-                  <option value="Govt. Health Scheme">Govt. Health Scheme</option>
-                  <option value="Non-Govt. Health Scheme">Non-Govt. Health Scheme</option>
-                  <option value="NA">NA</option>
-                </select>
+                  onChange={(_, newValue) => {
+                    handleChange(
+                      "formData.patientDetails.category",
+                      newValue?.key || ""
+                    );
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      placeholder="Select Category"
+                      className="input-field"
+                    />
+                  )}
+                />
               </div>
               <div className="input-group">
                 <label className="required">Call Status</label>
@@ -3376,15 +3535,15 @@ function Forms() {
               className="input-field"
               value={form.formData.patientDetails.patientMobile}
               onChange={(e) => {
-                const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                const digits = e.target.value.replace(/\D/g, "").slice(0, 12);
                 handleChange("formData.patientDetails.patientMobile", digits);
               }}
               required
-              pattern="[0-9]{10}"
-              maxLength="10"
+              pattern="[0-9]{10,12}"
+              maxLength="12"
               minLength="10"
-              title="Enter exactly 10 digit mobile number"
-              placeholder="10 digit number"
+              title="Enter exactly 10-12 digit mobile number"
+              placeholder="10-12 digit number"
             />
           </div>
 

@@ -35,6 +35,7 @@ import Header from "../../../../components/HeaderNew";
 // Icons
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
+import EventBusyIcon from "@mui/icons-material/EventBusy";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddBusinessIcon from "@mui/icons-material/AddBusiness";
@@ -1470,6 +1471,7 @@ const BranchInfo = () => {
                       color: "#5C6BC0",
                       fontWeight: "bold",
                       textAlign: "center",
+                      width: "10px",
                     }}
                   >
                     Status
@@ -1527,31 +1529,55 @@ const BranchInfo = () => {
                           disabled={saving}
                         />
                       </TableCell>
-                      {
-                        <TableCell align="center">
-                          {canEdit && (
-                            <IconButton
-                              color="primary"
-                              onClick={() => handleOpenModal("doctor", row)}
-                              size="small"
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          )}
-                          {canDelete && (
-                            <IconButton
-                              color="error"
-                              size="small"
-                              onClick={() => {
-                                setSelectedItem({ type: "doctor", id: row?._id });
-                                setDeleteOpen(true);
-                              }}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          )}
-                        </TableCell>
-                      }
+                      <TableCell
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                        }}
+                      >
+                        {/* Mark Absent */}
+                        <IconButton
+                          color="warning"
+                          size="small"
+                          onClick={() => handleOpenModal("doctorAbsent", row)}
+                          title="Mark Doctor Absent"
+                        >
+                          <EventBusyIcon fontSize="small" />
+                        </IconButton>
+
+                        {/* Edit */}
+                        {canEdit && (
+                          <IconButton
+                            color="primary"
+                            onClick={() => handleOpenModal("doctor", row)}
+                            size="small"
+                            title="Edit Doctor"
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        )}
+
+                        {/* Delete */}
+                        {canDelete && (
+                          <IconButton
+                            color="error"
+                            size="small"
+                            onClick={() => {
+                              setSelectedItem({
+                                type: "doctor",
+                                id: row?._id,
+                              });
+
+                              setDeleteOpen(true);
+                            }}
+                            title="Delete Doctor"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        )}
+                      </TableCell>
+
                     </TableRow>
                   ))
                 ) : (

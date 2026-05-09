@@ -399,8 +399,8 @@ const AddDoctorModal = ({
   // Handle changes for standard text fields
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "maxPatientsHandled" && value > 20) {
-      toast.error("Max 20 Patients Allowed")
+    if (name === "maxPatientsHandled" && value > 50) {
+      toast.error("Max 50 Patients Allowed")
       return
     }
     setCurrentDoctor((prev) => ({

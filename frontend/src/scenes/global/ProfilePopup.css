@@ -8,7 +8,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 999999;
 }
 
 .profile-annoucement-card {
@@ -19,6 +19,7 @@
   max-width: 550px;
   position: relative;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  z-index: 999999;
 }
 
 .close-btn {
@@ -106,4 +107,12 @@ button.btn-password {
   padding: 12px;
   background: #f9f9f9;
   border-radius: 6px;
+}
+
+.raise-form {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 99999;
+  overflow: visible;
 }

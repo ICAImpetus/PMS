@@ -176,7 +176,7 @@ export const SInglePatientDetails = () => {
         }
 
         const headers = [
-            "Visit Date",
+            "Call Date",
             "Doctor Name",
             "Department",
             "Purpose",
@@ -493,7 +493,7 @@ export const SInglePatientDetails = () => {
                                     }}
                                 >
                                     <TableCell align="center">S.No</TableCell>
-                                    <TableCell>Visit Date</TableCell>
+                                    <TableCell>Call Date</TableCell>
                                     <TableCell>Doctor Name</TableCell>
                                     <TableCell>Department</TableCell>
                                     <TableCell>Purpose</TableCell>

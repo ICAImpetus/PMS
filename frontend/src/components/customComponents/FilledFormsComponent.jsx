@@ -15,6 +15,7 @@ const FORMS_AVAILABLE_COLUMNS = [
   { key: "patientName", label: "Patient Name" },
   { key: "callStatus", label: "Call Status" },
   { key: "purpose", label: "POC / Purpose" },
+  { key: "appointmentslot", label: "App. Slot" },
   { key: "referenceFrom", label: "Reference From" },
   { key: "callerType", label: "Caller Type" },
   { key: "department", label: "Department" },
@@ -38,6 +39,7 @@ const flattenFilledForm = (doc) => {
     formType: doc.formType || "-",
     purpose: doc.purpose || "-",
 
+    appointmentslot: doc.appointmentslot || "-",
 
     referenceFrom: doc.referenceFrom || "-",
     callerType: doc.callerType || "-",
@@ -45,8 +47,8 @@ const flattenFilledForm = (doc) => {
     department: doc?.departmentName || "-",
     doctor: doc?.doctorName || "-",
 
-    remarks: doc.remarks || "-",
 
+    remarks: doc.remarks || "-",
     hospitalName: doc.hospitalId?.name || "-",
 
     agentName:
@@ -94,7 +96,7 @@ const FilledFormsComponent = ({
   const formsColumnFilterRef = useRef(null);
 
 
-  // console.log("formsData", formsData);
+  console.log("formsData-formsData", formsData);
 
 
   // useEffect(() => {

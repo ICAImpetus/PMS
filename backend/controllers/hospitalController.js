@@ -4255,9 +4255,9 @@ export const createCodeAlert = async (req, res) => {
 
     // Validate IDs
     if (
-      !BranchId?.branchId ||
+      !BranchId ||
       !hosId ||
-      !mongoose.Types.ObjectId.isValid(BranchId?.branchId) ||
+      !mongoose.Types.ObjectId.isValid(BranchId) ||
       !mongoose.Types.ObjectId.isValid(hosId)
     ) {
       return res.status(400).json({
@@ -4286,6 +4286,7 @@ export const createCodeAlert = async (req, res) => {
     const AdminAgentModel = await getAdminAgentModel(conn)
     const DepartmentModel = await getDepartmentModel(conn)
     const DoctorModel = await getDoctorModel(conn)
+    const BranchModel = await getBranchModel(conn)
     const CodeAnnouncementModel = await getCodeAnnoucementModel(conn)
 
     const pop = (path, model) => ({ path, model });
@@ -4306,12 +4307,7 @@ export const createCodeAlert = async (req, res) => {
     });
 
     await newAlert.save();
-    const populated = await CodeAlertsModel.findById(newAlert._id)
-      .populate(pop("AgentId", AdminAgentModel))
-      .populate(pop("depertmentId", DepartmentModel))
-      .populate(pop("doctorId", DoctorModel))
-      .populate(pop("code_id", CodeAnnouncementModel))
-      .lean();
+
 
 
     const actorRole = req.user?.type || "Unknown";
@@ -4334,7 +4330,7 @@ export const createCodeAlert = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Code alert triggered successfully",
-      data: populated,
+      data: newAlert,
     });
   } catch (error) {
     console.error("Create Code Alert Error:", error);
@@ -4424,12 +4420,12 @@ export const getCreatedCodeAlerts = async (req, res) => {
           message: "branch not found",
         });
       }
-      filter["BranchId.branchId"] = new mongoose.Types.ObjectId(branchId);
+      filter["BranchId"] = new mongoose.Types.ObjectId(branchId);
     }
 
 
     const alerts = await CodeAlertsModel.find(filter)
-      .populate(pop("BranchId.branchId", BranchModel))
+      .populate(pop("BranchId", BranchModel))
       .populate(pop("AgentId", AdminAgentModel))
       .populate(pop("depertmentId", DepartmentModel))
       .populate(pop("doctorId", DoctorModel))

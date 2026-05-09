@@ -6,6 +6,7 @@ import "./Executive.css";
 // import { useCallData } from "../../../hooks/useCallData";
 import CampaignIcon from "@mui/icons-material/Campaign";
 import DescriptionIcon from "@mui/icons-material/Description";
+import RefreshIcon from '@mui/icons-material/Refresh';
 import PieChartIcon from "@mui/icons-material/PieChart";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import TimelineIcon from "@mui/icons-material/Timeline";
@@ -29,7 +30,7 @@ import { ProfilePopup, CodeAnnousementPopup } from "../../../scenes/global/Profi
 import toast from "react-hot-toast";
 import FilledFormsComponent from "../../../components/customComponents/FilledFormsComponent";
 import HospitalContext from "../../../contexts/HospitalContexts";
-
+import { IconButton } from "@mui/material";
 const ExecutiveDashboard = () => {
   const navigate = useNavigate();
   const hourlyChartRef = useRef(null);
@@ -41,7 +42,6 @@ const ExecutiveDashboard = () => {
   const [callsTab, setCallsTab] = useState("all"); // "all" | "inbound" | "outbound"
   const [formsModalOpen, setFormsModalOpen] = useState(null);
   const [formsTypeFilter, setFormsTypeFilter] = useState("all"); // "all" | "inbound" | "outbound"
-  const [codeAlertsData, setcodeAlertsData] = useState([]);
   const [branchFollowups, setBranchFollowups] = useState({ data: [], total: 0, page: 1, limit: 10 });
   const [followupsPopupOpen, setFollowupsPopupOpen] = useState(false);
   const [bfPage, setBfPage] = useState(1);
@@ -67,8 +67,11 @@ const ExecutiveDashboard = () => {
     filter,
     setFilter,
     setPagination,
-    setCodeAlerts,
-    filterOptions
+    codeAlertsData,
+    filterOptions,
+    refetchDashboard,
+
+
   } = useContext(HospitalContext);
 
   useEffect(() => {
@@ -204,19 +207,23 @@ const ExecutiveDashboard = () => {
     toast.success("Note deleted");
   };
 
+
   const formsDataMap = {
     Forms: forms.today,
     Followups: forms.followups,
     Appointments: forms.appointments
   };
 
+  console.log("forms", forms);
+
   const formsData = formsDataMap[formsModalOpen] || [];
 
 
+  console.log("formformsData formsDatas", formsData);
   return (
     <div className="executive-dashboard-page">
 
-      {loading?.dashboardLoading && (
+      {loading?.dashboard && (
         <div className="loading-overlay-simple">
           <p>Loading DashBoard data...</p>
         </div>
@@ -324,8 +331,17 @@ const ExecutiveDashboard = () => {
           </Grid>
         </div>
 
+
         {/* Buttons Section */}
         <div className="executive-forms-button-container">
+          <IconButton
+            color="warning"
+            size="small"
+            onClick={refetchDashboard}
+            title="Refresh"
+          >
+            <RefreshIcon fontSize="small" />
+          </IconButton>
 
           <button
             className="executive-forms-button"
@@ -693,7 +709,7 @@ const ExecutiveDashboard = () => {
                 <div className="h-pagination-btns">
                   <button
                     className="h-page-btn"
-                    disabled={(bfPage === 1 && hPage === 1) || loading?.dashboardLoading}
+                    disabled={(bfPage === 1 && hPage === 1) || loading?.dashboard}
                     onClick={() => {
                       if (hPage > 1) {
                         setHPage(hPage - 1);
@@ -714,7 +730,7 @@ const ExecutiveDashboard = () => {
                     disabled={
                       (((bfPage - 1) * 10) + (hPage * 5) >= (branchFollowups.total || 0)) &&
                       (hPage * 5 >= (branchFollowups.data?.length || 0)) ||
-                      loading?.dashboardLoading
+                      loading?.dashboard
                     }
                     onClick={() => {
                       if (hPage < 2 && branchFollowups.data?.length > 5) {
@@ -949,7 +965,7 @@ const ExecutiveDashboard = () => {
             selectedBranch={selectedBranch}
             data={codeAlertsData}
             onClose={() => setModalOpen(null)}
-            setCodeAlerts={setCodeAlerts}
+            refetchDashboard={refetchDashboard}
           />
         )
       }
@@ -1061,7 +1077,7 @@ const ExecutiveDashboard = () => {
           <FilledFormsComponent
             setFormsModalOpen={setFormsModalOpen}
             formsData={formsData}
-            formsLoading={loading?.dashboardLoading}
+            formsLoading={loading?.dashboard}
             formsTypeFilter={formsTypeFilter}
             setFormsTypeFilter={setFormsTypeFilter}
             setPagination={setPagination}
@@ -1162,7 +1178,7 @@ const ExecutiveDashboard = () => {
                   <div className="pf-pagination-btns">
                     <button
                       className="pf-page-btn"
-                      disabled={bfPage <= 1 || loading?.dashboardLoading}
+                      disabled={bfPage <= 1 || loading?.dashboard}
                       onClick={() => setBfPage((p) => p - 1)}
                     >
                       Previous
@@ -1170,7 +1186,7 @@ const ExecutiveDashboard = () => {
                     <span className="pf-page-num">Page {bfPage}</span>
                     <button
                       className="pf-page-btn"
-                      disabled={bfPage * branchFollowups.limit >= branchFollowups.total || loading?.dashboardLoading}
+                      disabled={bfPage * branchFollowups.limit >= branchFollowups.total || loading?.dashboard}
                       onClick={() => setBfPage((p) => p + 1)}
                     >
                       Next

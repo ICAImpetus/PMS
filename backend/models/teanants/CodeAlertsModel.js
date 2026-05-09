@@ -13,9 +13,8 @@ export const CodeAlertsSchema = new mongoose.Schema({
         default: null
     },
     BranchId: {
-        branchId: mongoose.Schema.Types.ObjectId,
-        name: String,
-        hospitalId: mongoose.Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Branch",
     },
     depertmentId: {
         type: mongoose.Schema.Types.ObjectId,

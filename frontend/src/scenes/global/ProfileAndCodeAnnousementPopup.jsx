@@ -228,10 +228,12 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
   );
 };
 
-export const CodeAnnousementPopup = ({ data, onClose, selectedHostpital, selectedBranch, setCodeAlerts }) => {
+export const CodeAnnousementPopup = ({ data, onClose, selectedHostpital, selectedBranch, refetchDashboard }) => {
 
   const { loading: createCodeAlertLoading, request: createCodeAlert, error: createCodeAlertError } = useApi(commonRoutes.createCodeAlert)
   const floors = ["Ground Floor", "First Floor", "ICU"];
+
+  console.log("codeAlertsData", data);
 
   const [selectedCode, setSelectedCode] = useState(null);
 
@@ -267,7 +269,8 @@ export const CodeAnnousementPopup = ({ data, onClose, selectedHostpital, selecte
 
       const res = await createCodeAlert(selectedHostpital, payload);
       if (res?.success) {
-        setCodeAlerts((prev) => [...prev, res?.data])
+
+        refetchDashboard()
         toast.success("Alert Raised Successfully");
         onClose();
       }
@@ -296,7 +299,7 @@ export const CodeAnnousementPopup = ({ data, onClose, selectedHostpital, selecte
         <h2> <CampaignIcon sx={{ fontSize: 25 }} /> Code Announcement</h2>
 
         <div className="code-list">
-          {data?.length === 0 && (
+          {data?.codeAlerts.length === 0 && (
             <div
               className="code-card"
               style={{ borderLeft: `6px solid black` }}
@@ -304,7 +307,7 @@ export const CodeAnnousementPopup = ({ data, onClose, selectedHostpital, selecte
               No  Code Alerts Are Found
             </div>
           )}
-          {data?.length && data?.length > 0 && data?.map((code) => (
+          {data?.codeAlerts?.length && data?.codeAlerts?.length > 0 && data?.codeAlerts?.map((code) => (
             <div
               key={code.name}
               className="code-card"
@@ -329,10 +332,19 @@ export const CodeAnnousementPopup = ({ data, onClose, selectedHostpital, selecte
         </div>
 
         {selectedCode && (
-          <div className="raise-form">
+          <div
+            className="raise-form"
+            style={{
+              position: "relative",
+              overflow: "visible",
+              zIndex: 99999,
+            }}
+          >
+            <h3 style={{ color: selectedCode.color }}>
+              Raise Alert : {selectedCode.name}
+            </h3>
 
-            <h3 style={{ color: `${selectedCode.color}` }}>Raise Alert : {selectedCode.name}</h3>
-
+            {/* Department */}
             <TextField
               select
               fullWidth
@@ -342,14 +354,26 @@ export const CodeAnnousementPopup = ({ data, onClose, selectedHostpital, selecte
               onChange={(e) =>
                 handleChange("department", e.target.value)
               }
+              SelectProps={{
+                MenuProps: {
+                  disableScrollLock: true,
+                  PaperProps: {
+                    sx: {
+                      zIndex: 999999,
+                      maxHeight: 250,
+                    },
+                  },
+                },
+              }}
             >
-              {data?.departments.map((d) => (
-                <MenuItem key={d} value={d?._id}>
+              {data?.departments?.map((d) => (
+                <MenuItem key={d?._id} value={d?._id}>
                   {d?.name}
                 </MenuItem>
               ))}
             </TextField>
 
+            {/* Doctor */}
             <TextField
               select
               fullWidth
@@ -359,14 +383,26 @@ export const CodeAnnousementPopup = ({ data, onClose, selectedHostpital, selecte
               onChange={(e) =>
                 handleChange("doctor", e.target.value)
               }
+              SelectProps={{
+                MenuProps: {
+                  disableScrollLock: true,
+                  PaperProps: {
+                    sx: {
+                      zIndex: 999999,
+                      maxHeight: 250,
+                    },
+                  },
+                },
+              }}
             >
-              {data?.doctors.map((d) => (
-                <MenuItem key={d} value={d?._id}>
+              {data?.doctors?.map((d) => (
+                <MenuItem key={d?._id} value={d?._id}>
                   {d?.name}
                 </MenuItem>
               ))}
             </TextField>
 
+            {/* Floor */}
             <TextField
               select
               fullWidth
@@ -376,6 +412,17 @@ export const CodeAnnousementPopup = ({ data, onClose, selectedHostpital, selecte
               onChange={(e) =>
                 handleChange("floor", e.target.value)
               }
+              SelectProps={{
+                MenuProps: {
+                  disableScrollLock: true,
+                  PaperProps: {
+                    sx: {
+                      zIndex: 999999,
+                      maxHeight: 250,
+                    },
+                  },
+                },
+              }}
             >
               {floors.map((f) => (
                 <MenuItem key={f} value={f}>
@@ -383,9 +430,6 @@ export const CodeAnnousementPopup = ({ data, onClose, selectedHostpital, selecte
                 </MenuItem>
               ))}
             </TextField>
-
-
-
 
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
@@ -407,12 +451,14 @@ export const CodeAnnousementPopup = ({ data, onClose, selectedHostpital, selecte
                   label="Bed Number"
                   margin="normal"
                   type="text"
-                  inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+                  inputProps={{
+                    inputMode: "numeric",
+                    pattern: "[0-9]*",
+                  }}
                   value={form.bedNo}
                   onChange={(e) => {
                     const value = e.target.value;
 
-                    // only numbers allow
                     if (/^\d*$/.test(value)) {
                       handleChange("bedNo", value);
                     }
@@ -420,6 +466,7 @@ export const CodeAnnousementPopup = ({ data, onClose, selectedHostpital, selecte
                 />
               </Grid>
             </Grid>
+
             <TextField
               multiline
               rows={3}
@@ -439,7 +486,11 @@ export const CodeAnnousementPopup = ({ data, onClose, selectedHostpital, selecte
                 disabled={createCodeAlertLoading}
                 onClick={handleRaise}
               >
-                {createCodeAlertLoading ? <CircularProgress size={22} /> : "Raise Alert"}
+                {createCodeAlertLoading ? (
+                  <CircularProgress size={22} />
+                ) : (
+                  "Raise Alert"
+                )}
               </Button>
 
               <Button
@@ -450,7 +501,6 @@ export const CodeAnnousementPopup = ({ data, onClose, selectedHostpital, selecte
                 Back
               </Button>
             </div>
-
           </div>
         )}
 

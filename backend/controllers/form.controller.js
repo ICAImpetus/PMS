@@ -108,6 +108,7 @@ export const createFilledForm = async (req, res) => {
 
     let patient = await PatientModel.findOne({
       patientMobile: mobile,
+      branchId: branchId
     }).session(session);
 
     if (!patient) {
@@ -469,23 +470,43 @@ export const getFilledForms = async (req, res) => {
               }
             },
             { $unwind: { path: "$department", preserveNullAndEmptyArrays: true } },
+            {
+              $lookup: {
+                from: "patients",
+                localField: "formData.patientDetails",
+                foreignField: "_id",
+                as: "patientDetails",
+              },
+            },
+            {
+              $unwind: {
+                path: "$patientDetails",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
 
             {
               $project: {
                 _id: 1,
                 purpose: 1,
                 formType: 1,
-                callStatus: 1,
                 createdAt: 1,
                 agentName: 1,
+                callStatus: 1,
+
                 callerType: "$formData.callerType",
+
+                // appointmentslot: "$formData?.appointmentSlot?.date"
+
+                patientName: "$patientDetails.patientName",
+                patientMobile: "$patientDetails.patientMobile",
+
                 remarks: "$formData.remarks",
-                patientName: "$formData.patientDetails.patientName",
-                patientMobile: "$formData.patientDetails.patientMobile",
                 referenceFrom: "$formData.referenceFrom",
+
                 doctorName: "$doctor.name",
-                departmentName: "$department.name"
-              }
+                departmentName: "$department.name",
+              },
             }
           ],
 
@@ -515,23 +536,40 @@ export const getFilledForms = async (req, res) => {
               }
             },
             { $unwind: { path: "$department", preserveNullAndEmptyArrays: true } },
-
+            {
+              $lookup: {
+                from: "patients",
+                localField: "formData.patientDetails",
+                foreignField: "_id",
+                as: "patientDetails",
+              },
+            },
+            {
+              $unwind: {
+                path: "$patientDetails",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
             {
               $project: {
                 _id: 1,
                 purpose: 1,
                 formType: 1,
-                callStatus: 1,
                 createdAt: 1,
                 agentName: 1,
+                callStatus: 1,
+
                 callerType: "$formData.callerType",
+
+                patientName: "$patientDetails.patientName",
+                patientMobile: "$patientDetails.patientMobile",
+
                 remarks: "$formData.remarks",
-                patientName: "$formData.patientDetails.patientName",
-                patientMobile: "$formData.patientDetails.patientMobile",
                 referenceFrom: "$formData.referenceFrom",
+
                 doctorName: "$doctor.name",
-                departmentName: "$department.name"
-              }
+                departmentName: "$department.name",
+              },
             }
           ],
           forms: [
@@ -563,7 +601,20 @@ export const getFilledForms = async (req, res) => {
                 preserveNullAndEmptyArrays: true,
               },
             },
-
+            {
+              $lookup: {
+                from: "patients",
+                localField: "formData.patientDetails",
+                foreignField: "_id",
+                as: "patientDetails",
+              },
+            },
+            {
+              $unwind: {
+                path: "$patientDetails",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
             {
               $project: {
                 _id: 1,
@@ -572,15 +623,19 @@ export const getFilledForms = async (req, res) => {
                 createdAt: 1,
                 agentName: 1,
                 callStatus: 1,
+
                 callerType: "$formData.callerType",
-                patientName: "$formData.patientDetails.patientName",
-                patientMobile: "$formData.patientDetails.patientMobile",
+
+                patientName: "$patientDetails.patientName",
+                patientMobile: "$patientDetails.patientMobile",
+
                 remarks: "$formData.remarks",
                 referenceFrom: "$formData.referenceFrom",
+
                 doctorName: "$doctor.name",
                 departmentName: "$department.name",
               },
-            },
+            }
           ],
 
           totalCount: [{ $count: "count" }],

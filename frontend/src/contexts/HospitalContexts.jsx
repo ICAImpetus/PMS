@@ -85,6 +85,13 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
     // ---------------- QUERIES (DESTRUCTURED) ----------------
 
+    useEffect(() => {
+        console.log("currentUser", currentUser);
+
+        if (currentUser?.hospitals?.length) {
+            setSelectedHostpital(currentUser?.hospitals?.[0]?.hospitalId?._id || currentUser?.hospitals?.[0]?.hospitalId)
+        }
+    }, [isNonAdmin, currentUser])
     const {
         data: hospitalsData,
         isFetching: hospitalsLoading,
@@ -108,6 +115,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         }
     }, [hospitalsData]);
 
+    console.log("selectedHostpital", selectedHostpital);
+
     const {
         data: branchesData,
         isLoading: branchesLoading,
@@ -115,7 +124,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     } = useQuery({
         queryKey: ["branches", selectedHostpital, role],
         queryFn: async () => {
-            const res = isSuperManager
+            const res = isAdmin
                 ? await commonRoutes.getHospitalBranchById(selectedHostpital)
                 : await commonRoutes.branchesByRole(selectedHostpital);
             return res.data;
@@ -135,6 +144,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         data: dashboardData,
         // isLoading: dashboardLoading,
         isFetching: dashboardLoading,
+        refetch: refetchDashboard,
         error: dashboardError
     } = useQuery({
         queryKey: ["dashboard", selectedHostpital, selectedBranch],
@@ -150,8 +160,32 @@ export const GlobalHospitalContextProvider = ({ children }) => {
                 codeAlerts: alertRes?.data?.data || []
             };
         },
-        enabled: !!selectedHostpital && (!!selectedBranch || !isNonAdmin),
+        enabled: !!selectedHostpital && (!!selectedBranch),
         onError: () => toast.error("Dashboard load failed")
+    });
+
+
+    const {
+        data: codeAlertsData,
+        // isLoading: patientsLoading,
+        error: codeAlertsDataError,
+        isFetching: codeAlertsDataRefetchLoader,
+        refetch: refetchCodeAlertsData
+    } = useQuery({
+        queryKey: [
+            "codeAlertsData",
+            selectedHostpital,
+            selectedBranch,
+        ],
+        queryFn: async () => {
+            const res = await commonRoutes.getCodeAlerts(
+                selectedHostpital,
+                selectedBranch
+            );
+            return res?.data?.data || [];
+        },
+        enabled: !!selectedHostpital && (!!selectedBranch) && isExecutive,
+        onError: () => toast.error("Failed to fetch Hospital Code")
     });
 
     const {
@@ -211,17 +245,18 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         onError: () => toast.error("Admins fetch failed")
     });
 
+
     const {
         data: formsData,
         isLoading: formsLoading,
         error: formsError
     } = useQuery({
-        queryKey: ["forms", selectedHostpital, filter, pagination.forms.page],
+        queryKey: ["forms", selectedHostpital, selectedBranch, filter, pagination.forms.page],
         queryFn: async () => {
             const res = await commonRoutes.getFilledForms(
                 filter,
                 pagination.forms,
-                null,
+                isAdmin ? null : selectedBranch,
                 selectedHostpital
             );
             // console.log("res", res);
@@ -331,6 +366,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         forms,
         codeAlerts,
         branchFollowups,
+        codeAlertsData,
 
         selectedHostpital,
         selectedBranch,
@@ -353,6 +389,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         loading,
         errors,
 
+
+        refetchDashboard,
         refetchPatients,
         refetchHospital,
         refetchAdmins,
@@ -361,6 +399,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     }), [
         hospitals,
         branches,
+        codeAlertsData,
         patients,
         users,
         branchCount,

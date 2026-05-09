@@ -21,6 +21,13 @@ const SlotSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    unavailableDates: [
+      {
+        date: { type: String, required: true },
+        reason: { type: String },
+        markedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      }
+    ],
   },
 );
 

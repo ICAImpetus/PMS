@@ -15,8 +15,6 @@ const UserContext = createContext();
 export const GlobalUserContextProvider = ({ children }) => {
   const navigate = useNavigate();
 
-  // Prevent double API call in StrictMode
-  const fetched = useRef(false);
 
   // Get user from localStorage initially
   const [currentUser, setCurrentUser] = useState(() => {
@@ -31,9 +29,6 @@ export const GlobalUserContextProvider = ({ children }) => {
   });
 
   useEffect(() => {
-    if (fetched.current) return;
-
-    fetched.current = true;
 
     const fetchUser = async () => {
       try {
