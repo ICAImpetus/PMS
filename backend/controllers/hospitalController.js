@@ -72,9 +72,7 @@ function generateSlots(start, end, slotMinutes = 20, maxPatients = 10) {
 function generateDoctorSlots(doctor) {
   if (!doctor?.timings) return [];
 
-  const slotMinutes = parseInt(
-    doctor?.averagePatientTime?.replace("m", "")
-  ) || 20;
+  const slotMinutes = parseInt(doctor?.averagePatientTime || 10)
 
   const maxPatients = doctor?.maxPatientsHandled || 10;
 

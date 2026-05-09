@@ -188,7 +188,7 @@ const AddDoctorModal = ({
     departments: [],
     surgeries: [], // New surgeries field
     whatsappNumber: "",
-    averagePatientTime: "15m",
+    averagePatientTime: "10m",
     maxPatientsHandled: 1,
     floor: "",
     masters: "",
@@ -380,7 +380,7 @@ const AddDoctorModal = ({
           department: null,
           surgeries: [],
           whatsappNumber: "",
-          averagePatientTime: "15m",
+          averagePatientTime: "10m",
           maxPatientsHandled: 1,
           floor: "",
           masters: "",
@@ -2223,10 +2223,11 @@ const AddDoctorModal = ({
                         value={currentDoctor.averagePatientTime}
                         onChange={handleChange}
                       >
-                        <MenuItem value="15m">15 Minutes</MenuItem>
-                        <MenuItem value="30m">30 Minutes</MenuItem>
-                        <MenuItem value="45m">45 Minutes</MenuItem>
-                        <MenuItem value="60m">60 Minutes</MenuItem>
+                        <MenuItem value="10">10 Minutes</MenuItem>
+                        <MenuItem value="15">15 Minutes</MenuItem>
+                        <MenuItem value="30">30 Minutes</MenuItem>
+                        <MenuItem value="45">45 Minutes</MenuItem>
+                        <MenuItem value="60">60 Minutes</MenuItem>
                       </TextField>
                     </Grid>
 

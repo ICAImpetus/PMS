@@ -847,3 +847,218 @@ export const IndianStatesWithDistricts = {
     "Yanam"
   ]
 };
+
+export const CATEGORY = [
+  // Basic
+  { key: "Cash", label: "Cash" },
+
+  {
+    key: "Govt. Health Scheme",
+    label: "Govt. Health Scheme",
+  },
+
+  {
+    key: "Non-Govt. Health Scheme",
+    label: "Non-Govt. Health Scheme",
+  },
+
+  {
+    key: "NA",
+    label: "NA",
+  },
+
+  // Central Government Schemes
+  {
+    key: "AB-PMJAY",
+    label:
+      "AB-PMJAY (Ayushman Bharat - Pradhan Mantri Jan Arogya Yojana)",
+  },
+
+  {
+    key: "AB-PMJAY Vay Vandana",
+    label:
+      "AB-PMJAY Vay Vandana (Free ₹5L cover for all citizens aged 70+)",
+  },
+
+  {
+    key: "CGHS",
+    label: "CGHS (Central Government Health Scheme)",
+  },
+
+  {
+    key: "ECHS",
+    label:
+      "ECHS (Ex-Servicemen Contributory Health Scheme)",
+  },
+
+  {
+    key: "ESIC",
+    label:
+      "ESIC (Employees' State Insurance Corporation)",
+  },
+
+  {
+    key: "Ayushman CAPF",
+    label: "Ayushman CAPF",
+  },
+
+  {
+    key: "UHIS",
+    label: "Universal Health Insurance Scheme (UHIS)",
+  },
+
+  {
+    key: "RSBY",
+    label:
+      "Rashtriya Swasthya Bima Yojana (RSBY)",
+  },
+
+  {
+    key: "AABY",
+    label:
+      "Aam Aadmi Bima Yojana (AABY)",
+  },
+
+  {
+    key: "JBY",
+    label:
+      "Janshree Bima Yojana (JBY)",
+  },
+
+  {
+    key: "PMSBY",
+    label:
+      "Pradhan Mantri Suraksha Bima Yojana (PMSBY)",
+  },
+
+  // Rajasthan
+  {
+    key: "RGHS",
+    label:
+      "RGHS (Rajasthan Government Health Scheme)",
+  },
+
+  {
+    key: "MAAY",
+    label:
+      "Mukhyamantri Ayushman Arogya Yojana (MAAY)",
+  },
+
+  // Maharashtra
+  {
+    key: "MJPJAY",
+    label:
+      "Mahatma Jyotiba Phule Jan Arogya Yojana (MJPJAY)",
+  },
+
+  // West Bengal
+  {
+    key: "Swasthya Sathi",
+    label: "Swasthya Sathi",
+  },
+
+  // Odisha
+  {
+    key: "BSKY",
+    label:
+      "Biju Swasthya Kalyan Yojana (BSKY)",
+  },
+
+  // Andhra Pradesh
+  {
+    key: "YSR Aarogyasri",
+    label:
+      "Dr. YSR Aarogyasri",
+  },
+
+  // Telangana
+  {
+    key: "EJHS",
+    label:
+      "Telangana Employees & Journalists Health Scheme (EJHS)",
+  },
+
+  // Kerala
+  {
+    key: "KASP",
+    label:
+      "Karunya Health Care Scheme (KASP)",
+  },
+
+  // Punjab
+  {
+    key: "Punjab Sehat Bima",
+    label:
+      "Ayushman Bharat - Mukhya Mantri Sehat Bima Yojana",
+  },
+
+  // Tamil Nadu
+  {
+    key: "CMCHIS",
+    label:
+      "Chief Minister’s Comprehensive Health Insurance Scheme (CMCHIS)",
+  },
+
+  // Karnataka
+  {
+    key: "Yashasvini",
+    label:
+      "Yashasvini Health Insurance Scheme",
+  },
+
+  // Maternal & Specialty
+  {
+    key: "JSY",
+    label:
+      "Janani Suraksha Yojana (JSY)",
+  },
+
+  {
+    key: "PMMVY",
+    label:
+      "PM Matru Vandana Yojana (PMMVY)",
+  },
+
+  {
+    key: "RBSK",
+    label:
+      "Rashtriya Bal Swasthya Karyakram (RBSK)",
+  },
+
+  {
+    key: "NPHCE",
+    label:
+      "National Programme for Health Care of the Elderly (NPHCE)",
+  },
+
+  {
+    key: "Rashtriya Vayoshri",
+    label:
+      "Rashtriya Vayoshri Yojana",
+  },
+
+  {
+    key: "Nikshay Poshan",
+    label:
+      "Nikshay Poshan Yojana",
+  },
+
+  // Digital Health
+  {
+    key: "ABDM",
+    label:
+      "ABDM (Ayushman Bharat Digital Mission / ABHA)",
+  },
+
+  {
+    key: "NHCX",
+    label:
+      "NHCX (National Health Claims Exchange)",
+  },
+
+  {
+    key: "e-Sanjeevani",
+    label:
+      "e-Sanjeevani (National Telemedicine Service)",
+  },
+];

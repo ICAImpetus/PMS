@@ -15,26 +15,9 @@ import {
 } from "@mui/material";
 import DoctorProfileCard from "./DoctorCard";
 import HospitalContext from "../contexts/HospitalContexts";
-import { IndianStatesWithDistricts } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
+import { CATEGORY, IndianStatesWithDistricts } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
 
-const CATEGORY = [
-  { key: "Cash", label: "Cash" },
 
-  {
-    key: "Govt. Health Scheme",
-    label: "Govt. Health Scheme",
-  },
-
-  {
-    key: "Non-Govt. Health Scheme",
-    label: "Non-Govt. Health Scheme",
-  },
-
-  {
-    key: "NA",
-    label: "NA",
-  },
-];
 const getCurrentDateTime = () => {
   const now = new Date();
 
