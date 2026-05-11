@@ -25,7 +25,7 @@ const MultiSelectDropdown = ({
     // 🔹 Disabled logic
     const getDisabledState = (option) => {
         const assignmentFieldMap = {
-            admin: "assignedToAdmin",
+            // admin: "assignedToAdmin",
             supermanager: "assignedToManager",
             teamleader: "assignedToTeamLeader",
             executive: "assignedToExecutive",
@@ -63,10 +63,17 @@ const MultiSelectDropdown = ({
 
     const selectableOptions = options.filter(opt => !getDisabledState(opt).isAssigned);
 
+    // All selectable options are selected
     const allSelected = selectableOptions.length > 0 &&
         selectableOptions.every(opt =>
             selectedOptions.some(sel => String(sel?._id) === String(opt?._id))
         );
+
+    // Some but not all selectable options are selected
+    const someSelected = selectableOptions.some(opt =>
+        selectedOptions.some(sel => String(sel?._id) === String(opt?._id))
+    );
+
 
     //  HANDLE CHANGE FIXED
     const handleChange = (event) => {
@@ -77,7 +84,6 @@ const MultiSelectDropdown = ({
             const selectedObj = options.find(
                 (opt) => String(opt._id) === String(value)
             );
-
             setSelectedOptions(
                 selectedObj
                     ? [{ _id: selectedObj._id, name: selectedObj.name }]
@@ -87,11 +93,45 @@ const MultiSelectDropdown = ({
         }
 
         // MULTI SELECT
-        if (value?.includes("select-all")) {
-            handleSelectAll();
+        if (value.includes("select-all")) {
+
+            if (allSelected) {
+
+                // remove all selectable
+                const remaining = selectedOptions.filter(
+                    sel =>
+                        !selectableOptions.some(
+                            opt => String(opt._id) === String(sel._id)
+                        )
+                );
+
+                setSelectedOptions(remaining);
+
+            } else {
+
+                // add all selectable
+                const merged = [
+                    ...selectedOptions,
+                    ...selectableOptions
+                        .filter(
+                            opt =>
+                                !selectedOptions.some(
+                                    sel => String(sel._id) === String(opt._id)
+                                )
+                        )
+                        .map(opt => ({
+                            _id: opt._id,
+                            name: opt.name
+                        }))
+                ];
+
+                setSelectedOptions(merged);
+            }
+
             return;
         }
 
+        // Normal multi select
         const selectedObjects = value.map((id) => {
             const fullObj = options.find(
                 (opt) => String(opt._id) === String(id)
@@ -101,29 +141,11 @@ const MultiSelectDropdown = ({
                 : null;
         }).filter(Boolean);
 
-        setSelectedOptions(selectedObjects); //  no prev
+        setSelectedOptions(selectedObjects);
     };
 
-    //  SELECT ALL FIXED
-    const handleSelectAll = () => {
-        if (allSelected) {
-            const selectableIds = selectableOptions.map(opt => String(opt._id));
-            const remaining = selectedOptions.filter(
-                sel => !selectableIds.includes(String(sel._id))
-            );
-            setSelectedOptions(remaining);
-        } else {
-            const newSelection = [...selectedOptions];
-
-            selectableOptions.forEach(opt => {
-                if (!newSelection.some(sel => String(sel._id) === String(opt._id))) {
-                    newSelection.push({ _id: opt._id, name: opt.name });
-                }
-            });
-
-            setSelectedOptions(newSelection);
-        }
-    };
+    //  SELECT ALL FIXED (not used anymore, logic in handleChange)
+    // const handleSelectAll = () => {};
 
     const handleDelete = (id) => {
         setSelectedOptions(
@@ -134,20 +156,31 @@ const MultiSelectDropdown = ({
     //  RENDER VALUE FIXED
     const renderValue = (selectedIds) => {
         const selected = options.filter(opt =>
-            selectedIds.includes(opt._id)
+            selectedIds.includes(String(opt._id))
         );
 
         return (
-            <Box sx={{ display: "flex", flexWrap: "nowrap", gap: 0.5, overflowX: "auto" }}>
+            <Box
+                sx={{
+                    display: "flex",
+                    flexWrap: "nowrap",
+                    gap: 0.5,
+                    overflowX: "auto",
+                }}
+            >
                 {selected.slice(0, 3).map((option) => (
                     <Chip
                         key={String(option._id)}
                         label={option.name}
                         size="small"
-                        onDelete={() => handleDelete(option._id)}
+                        onDelete={(e) => {
+                            e.stopPropagation();
+                            handleDelete(option._id);
+                        }}
                         onMouseDown={(e) => e.stopPropagation()}
                     />
                 ))}
+
                 {selected.length > 3 && (
                     <Chip label={`+${selected.length - 3}`} size="small" />
                 )}
@@ -165,24 +198,17 @@ const MultiSelectDropdown = ({
                     value={
                         isSingleSelect
                             ? selectedOptions[0]?._id || ""
-                            : selectedOptions.map(opt => opt._id)
+                            : selectedOptions.map(opt => String(opt._id))
                     }
                     onChange={handleChange}
-                    renderValue={(selected) => renderValue(selected)}
+                    renderValue={renderValue}
                 >
                     {options.length > 0 && !isSingleSelect && (
                         <>
                             <MenuItem value="select-all">
                                 <Checkbox
                                     checked={allSelected}
-                                    indeterminate={
-                                        !allSelected &&
-                                        selectableOptions.some(opt =>
-                                            selectedOptions.some(sel =>
-                                                String(sel?._id) === String(opt?._id)
-                                            )
-                                        )
-                                    }
+                                    indeterminate={!allSelected && someSelected}
                                 />
                                 <ListItemText
                                     primary={allSelected ? "Deselect All" : "Select All"}
@@ -201,7 +227,7 @@ const MultiSelectDropdown = ({
                         return (
                             <MenuItem
                                 key={String(option._id)}
-                                value={option._id}
+                                value={String(option._id)}
                                 disabled={isAssigned}
                             >
                                 {!isSingleSelect && (

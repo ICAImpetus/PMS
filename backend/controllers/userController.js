@@ -439,7 +439,7 @@ export const updateUser = async (req, res) => {
 
     const roleFields = {
       superadmin: "superadmin",
-      admin: "assignedToAdmin",
+      // admin: "assignedToAdmin",
       supermanager: "assignedToManager",
       teamleader: "assignedToTeamLeader",
       executive: "assignedToExecutive",
@@ -505,7 +505,7 @@ export const updateUser = async (req, res) => {
       }
 
       // ===================== ADMIN / MANAGER =====================
-      if (["admin", "supermanager"].includes(typeSafe)) {
+      if (["supermanager"].includes(typeSafe)) {
         const field = roleFields[typeSafe];
 
         await HospitalModel.updateMany(
@@ -670,22 +670,22 @@ export const deleteUserById = async (req, res) => {
     // ===================== ADMIN =====================
     console.log("hospitalIds", hospitalIds);
 
-    if (role === "admin") {
-      // if (!user.canDelete) {
-      //   return res.status(403).json({
-      //     success: false,
-      //     message: "Delete permission denied",
-      //   });
-      // }
+    // if (role === "admin") {
+    // if (!user.canDelete) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: "Delete permission denied",
+    //   });
+    // }
 
-      await HospitalModel.updateMany(
-        {
-          _id: { $in: hospitalIds },
-          "assignedToAdmin.userId": user._id,
-        },
-        { $set: { assignedToAdmin: null } }
-      );
-    }
+    // await HospitalModel.updateMany(
+    //   {
+    //     _id: { $in: hospitalIds },
+    //     "assignedToAdmin.userId": user._id,
+    //   },
+    //   { $set: { assignedToAdmin: null } }
+    // );
+    // }
 
     // ===================== SUPER MANAGER =====================
     if (role === "supermanager") {

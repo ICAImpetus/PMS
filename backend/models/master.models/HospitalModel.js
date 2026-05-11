@@ -2,16 +2,16 @@ import mongoose from "mongoose";
 
 export const HospitalSchema = new mongoose.Schema(
   {
-    assignedToAdmin: {
-      type: {
-        userId: {
-          type: mongoose.Schema.Types.ObjectId,
-        },
-        name: String,
-        email: String,
-      },
-      default: null
-    },
+    // assignedToAdmin: {
+    //   type: {
+    //     userId: {
+    //       type: mongoose.Schema.Types.ObjectId,
+    //     },
+    //     name: String,
+    //     email: String,
+    //   },
+    //   default: null
+    // },
     assignedToManager: {
       type: {
         userId: {

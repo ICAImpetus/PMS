@@ -122,7 +122,7 @@ const UserFormAdmin = ({
 
 
 
-  const handleSubmitForm = async (values) => {
+  const handleSubmitForm = async (values, formikHelpers) => {
     try {
 
       let valuesToSubmit = { ...values };
@@ -146,7 +146,9 @@ const UserFormAdmin = ({
         if (data?.success) {
           if (refetchUsers) await refetchUsers()
           toast.success("New User Added")
+          formikHelpers?.resetForm();
           onClose();
+
         }
 
       }
@@ -267,10 +269,7 @@ const UserFormAdmin = ({
       validationSchema={validationSchema}
       context={{ isUpdateComp }}
       onSubmit={async (values, formikHelpers) => {
-        await handleSubmitForm(values);
-        if (!isUpdateComp) {
-          formikHelpers.resetForm();
-        }
+        await handleSubmitForm(values, formikHelpers);
       }}
     >
       {({
@@ -571,9 +570,9 @@ const UserFormAdmin = ({
                     )}
 
                     <MenuItem value="teamleader">Team Leader</MenuItem>
-                    {values?.type && values?.type === "executive" && (
-                      <MenuItem value="executive">Executive</MenuItem>
-                    )}
+                    {/* {values?.type && values?.type === "executive" && ( */}
+                    <MenuItem value="executive">Executive</MenuItem>
+                    {/* )} */}
                   </TextField>
                 </Grid>
                 {(values.type === "teamleader" ||

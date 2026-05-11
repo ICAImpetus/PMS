@@ -1330,7 +1330,7 @@ const BranchInfo = () => {
             sx={{
               borderRadius: 2,
               boxShadow: "none",
-              border: "1px solid #eee", overflowX: "auto",
+              border: "1px solid #eee",
               overflowX: "auto"
             }}
           >
@@ -1447,7 +1447,7 @@ const BranchInfo = () => {
             sx={{
               borderRadius: 2,
               boxShadow: "none",
-              border: "1px solid #eee", overflowX: "auto",
+              border: "1px solid #eee",
               overflowX: "auto"
             }}
           >

@@ -68,7 +68,7 @@ export const GlobalUserContextProvider = ({ children }) => {
     };
 
     fetchUser();
-  }, [navigate]);
+  }, []);
 
   // Store data in localStorage
   const storeDataInLocalStorage = ({ key, value }) => {

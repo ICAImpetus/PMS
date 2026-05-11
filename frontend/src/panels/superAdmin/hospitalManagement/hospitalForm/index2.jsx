@@ -388,9 +388,6 @@ const AddHospitalData1 = ({
                 </AccordionDetails>
               </Accordion>
 
-              {console.log("values", values)
-              }
-
               {!initialState && values?.itsBranch === false && (
                 <Accordion
                   data-testid="branchdetailstest"

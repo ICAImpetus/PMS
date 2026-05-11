@@ -2,27 +2,44 @@ import React, { useState, useEffect, useRef, useContext } from "react";
 import "./Team.css";
 import SectionLoader from "../../../components/SectionLoader";
 import { useLocation, useNavigate } from "react-router-dom";
-import PhoneCallbackIcon from "@mui/icons-material/PhoneCallback";
-import { ProfilePopup } from "../../../scenes/global/ProfileAndCodeAnnousementPopup";
-import { Toaster, toast } from "react-hot-toast";
+import CampaignIcon from "@mui/icons-material/Campaign";
+import DescriptionIcon from "@mui/icons-material/Description";
+import RefreshIcon from '@mui/icons-material/Refresh';
+import PieChartIcon from "@mui/icons-material/PieChart";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import TimelineIcon from "@mui/icons-material/Timeline";
+import ShowChartIcon from "@mui/icons-material/ShowChart";
+import StickyNote2Icon from "@mui/icons-material/StickyNote2";
+import {
+
+  AlertTriangle,
+  UserPlus,
+  Users,
+  User,
+  ChevronLeft,
+  ChevronRight
+} from "lucide-react";
+
+import { ProfilePopup, CodeAnnousementPopup } from "../../../scenes/global/ProfileAndCodeAnnousementPopup";
+import toast from "react-hot-toast";
 import FilledFormsComponent from "../../../components/customComponents/FilledFormsComponent";
+import HospitalContext from "../../../contexts/HospitalContexts";
+import { IconButton } from "@mui/material";
 import { UserContextHook } from "../../../contexts/UserContexts";
 import { useApi } from "../../../api/useApi";
 import { commonRoutes } from "../../../api/apiService";
-import { AlertTriangle, User } from "lucide-react";
 import { Pie } from "react-chartjs-2";
 import DashboardIcon from "@mui/icons-material/Dashboard";
-import ShowChartIcon from "@mui/icons-material/ShowChart";
 import PeopleIcon from "@mui/icons-material/People";
-import DescriptionIcon from "@mui/icons-material/Description";
-import PieChartIcon from "@mui/icons-material/PieChart";
-import BarChartIcon from "@mui/icons-material/BarChart";
-import LabelIcon from "@mui/icons-material/Label";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import SpeakerNotesIcon from "@mui/icons-material/SpeakerNotes";
 import PhoneMissedIcon from "@mui/icons-material/PhoneMissed";
 import UserIcon from "@mui/icons-material/Person";
-import HospitalContext from "../../../contexts/HospitalContexts";
+import EventIcon from "@mui/icons-material/Event";
+import LabelIcon from "@mui/icons-material/Label";
+import PhoneCallbackIcon from "@mui/icons-material/PhoneCallback";
+import CloseIcon from "@mui/icons-material/Close";
+import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 
 const filterOptions = [
   { key: "Today", value: "today" },
@@ -176,7 +193,11 @@ const TeamDashboard = () => {
         </select>
         <select
           id="global-date-range"
-          onChange={(e) => setSelectedBranch(e.target.value)}
+          onChange={(e) => {
+            // console.log("setSelectedBranch", e.target.value)
+
+            setSelectedBranch(e.target.value)
+          }}
         >
           {branches?.length === 0 ? (
             <option disabled>No Branches Assigned</option>
@@ -188,7 +209,55 @@ const TeamDashboard = () => {
             ))
           )}
         </select>
+        {/* <div className="team-forms-button-container">
+          <IconButton
+            color="warning"
+            size="small"
+            onClick={async () => {
+              await Promise.all([
+                refetchDashboard(),
+                refetchForms()
+              ])
+
+            }}
+            title="Refresh"
+          >
+            <RefreshIcon fontSize="small" />
+          </IconButton>
+
+          <button
+            className="team-forms-button"
+            onClick={() =>
+              navigate("/executive-forms", {
+                state: {
+                  branch: {
+                    branchId: selectedBranch,
+                  },
+                },
+              })
+            }
+          >
+            <ArticleOutlinedIcon /> Go to Forms
+          </button>
+
+          <button
+            className="executive-forms-button"
+            onClick={() => setNotesModalOpen(true)}
+          >
+            <StickyNote2Icon /> Notes
+          </button>
+
+          <button
+            className="executiveannoucementbutton"
+            onClick={() => setModalOpen("announcement")}
+          >
+            <CampaignIcon sx={{ fontSize: 25 }} /> Go to Announcements
+          </button>
+
+        </div> */}
       </div>
+
+
 
 
 

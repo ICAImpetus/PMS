@@ -256,6 +256,15 @@ function AdminManagement() {
 
     return (
         <ScrollableForm>
+            <Toaster
+                position="top-right"
+                toastOptions={{
+                    duration: 5000,
+                    style: {
+                        zIndex: 999999,
+                    },
+                }}
+            />
             {/* Loader */}
             {loading?.userLoading && (
                 <Box

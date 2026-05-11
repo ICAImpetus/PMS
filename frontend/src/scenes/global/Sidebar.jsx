@@ -199,11 +199,15 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                 </Box>
                 <Box textAlign="center">
                   <Typography
-                    variant="h3"
                     sx={{
                       color: "white !important",
                       fontWeight: "bold",
                       m: "10px 0 0 0",
+                      fontSize: "clamp(14px, 2vw, 20px)",
+                      maxWidth: "100%",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {currentUser?.name || "USER"}

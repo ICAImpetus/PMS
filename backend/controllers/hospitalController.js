@@ -344,6 +344,9 @@ export const updateHospitalById = async (req, res) => {
   // =========================
   //  VALIDATION
   // =========================
+
+  console.log("hospitalData", hospitalData);
+
   if (!id || !mongoose.isValidObjectId(id)) {
     return res.status(400).json({
       message: "Valid ID is required",
@@ -770,7 +773,7 @@ export const getAllHospitalBranches = async (req, res) => {
     const hospital = await HospitalModel.findOne({
       _id: id,
       isDeleted: false,
-    }).lean();
+    }).select("trimmedName").lean();
 
 
     if (!hospital) {

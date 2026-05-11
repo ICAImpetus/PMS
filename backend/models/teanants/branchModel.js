@@ -8,25 +8,25 @@ export const BranchSchema = new mongoose.Schema(
         ref: "Department",
       }
     ],
-    assignedToAdmin: {
-      userId: {
-        type: mongoose.Schema.Types.ObjectId,
+    // assignedToAdmin: {
+    //   userId: {
+    //     type: mongoose.Schema.Types.ObjectId,
 
-      },
-      // cached data (fast access)
-      name: String,
-      email: String,
-    },
-    assignedToManager: {
-      type: {
-        userId: {
-          type: mongoose.Schema.Types.ObjectId,
-        },
-        name: String,
-        email: String,
-      },
-      default: null
-    },
+    //   },
+    //   // cached data (fast access)
+    //   name: String,
+    //   email: String,
+    // },
+    // assignedToManager: {
+    //   type: {
+    //     userId: {
+    //       type: mongoose.Schema.Types.ObjectId,
+    //     },
+    //     name: String,
+    //     email: String,
+    //   },
+    //   default: null
+    // },
     assignedToTeamLeader: {
       type: {
         userId: {

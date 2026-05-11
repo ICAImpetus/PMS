@@ -334,7 +334,6 @@ const AddDoctorModal = ({
           degrees: doctorData.degrees || [],
           customDegrees: doctorData.customDegrees || [],
           subDepartment: doctorData.subDepartment || "",
-          surgeries: doctorData.surgeries || [],
           whatsappNumber: doctorData.whatsappNumber || "",
           averagePatientTime: doctorData.averagePatientTime,
           maxPatientsHandled: doctorData.maxPatientsHandled,
@@ -823,7 +822,7 @@ const AddDoctorModal = ({
 
       toast.error(
         errorMessages.length > 0
-          ? `⚠️ ${errorMessages[0]}`
+          ? `${errorMessages[0]}`
           : "Please fill in all required fields correctly.",
         { duration: 4000 },
       );
