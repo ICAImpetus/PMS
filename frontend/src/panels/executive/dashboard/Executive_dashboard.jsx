@@ -49,11 +49,13 @@ const ExecutiveDashboard = () => {
   const [bfPage, setBfPage] = useState(1);
   const [page, setPage] = useState(1);
   const [hPage, setHPage] = useState(1); // Horizontal page (5 items per page)
-  // Notes states
-  const [notes, setNotes] = useState([]);
   const [notesModalOpen, setNotesModalOpen] = useState(false);
   const [newNote, setNewNote] = useState({ heading: '', body: '' });
   const [expandedNote, setExpandedNote] = useState(null);
+  const [notes, setNotes] = useState(() => {
+    const savedNotes = localStorage.getItem("notes");
+    return savedNotes ? JSON.parse(savedNotes) : [];
+  });
   const {
     forms,
     loading,
@@ -72,7 +74,8 @@ const ExecutiveDashboard = () => {
     codeAlertsData,
     filterOptions,
     refetchDashboard,
-    refetchForms
+    refetchForms,
+    refetchPatients
 
   } = useContext(HospitalContext);
 
@@ -189,6 +192,7 @@ const ExecutiveDashboard = () => {
     }
   };
 
+
   const handleAddNote = () => {
     if (newNote.heading.trim() && newNote.body.trim()) {
       const note = {
@@ -197,9 +201,17 @@ const ExecutiveDashboard = () => {
         body: newNote.body.trim(),
         createdAt: new Date().toISOString()
       };
-      setNotes(prev => [...prev, note]);
+
+      const updatedNotes = [...notes, note];
+
+      setNotes(updatedNotes);
+
+      // Save to localStorage
+      localStorage.setItem("notes", JSON.stringify(updatedNotes));
+
       setNewNote({ heading: '', body: '' });
       setNotesModalOpen(false);
+
       toast.success("Note added successfully");
     } else {
       toast.error("Please fill both heading and body");
@@ -207,9 +219,19 @@ const ExecutiveDashboard = () => {
   };
 
   const handleDeleteNote = (id) => {
-    setNotes(prev => prev.filter(note => note.id !== id));
+    const updatedNotes = notes.filter(note => note.id !== id);
+
+    setNotes(updatedNotes);
+
+    // Update localStorage
+    localStorage.setItem("notes", JSON.stringify(updatedNotes));
+
     toast.success("Note deleted");
   };
+
+  useEffect(() => {
+    localStorage.setItem("notes", JSON.stringify(notes));
+  }, [notes]);
 
 
   const formsDataMap = {
@@ -345,7 +367,8 @@ const ExecutiveDashboard = () => {
 
               await Promise.all([
                 refetchDashboard(),
-                refetchForms()
+                refetchForms(),
+                refetchPatients()
               ])
 
             }}

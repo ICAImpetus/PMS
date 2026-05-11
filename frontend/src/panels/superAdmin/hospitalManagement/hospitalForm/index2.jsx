@@ -260,6 +260,7 @@ const AddHospitalData1 = ({
 
               {/* Components */}
               <HospitalBasicDetailAccrodian
+                isUpdated={(initialState?._id || initialState?.ID || initialState?.id) ? true : false}
                 values={values}
                 setFieldValue={setFieldValue}
                 handleChange={handleChange}

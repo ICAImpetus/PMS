@@ -3586,20 +3586,24 @@ function Forms() {
         </div>
       )}
 
-      <div className="button-group">
-        <button
-          disabled={saveFilledFormLoading}
-          type="button"
-          className="btn btn-clear"
-          onClick={resetForm}
-        >
-          Clear Form
-        </button>
+      {form.callStatus === "Connected" && form.purpose !== "" && form.formType !== "outbound" && (
+        <div className="button-group">
+          <button
+            disabled={saveFilledFormLoading}
+            type="button"
+            className="btn btn-clear"
+            onClick={resetForm}
+          >
+            Clear Form
+          </button>
 
-        <button type="submit" disabled={saveFilledFormLoading} className="btn btn-submit">
-          {saveFilledFormLoading ? <CircularProgress size={20} color="inherit" /> : "Submit"}
-        </button>
-      </div>
+          <button type="submit" disabled={saveFilledFormLoading} className="btn btn-submit">
+            {saveFilledFormLoading ? <CircularProgress size={20} color="inherit" /> : "Submit"}
+          </button>
+        </div>
+      )}
+
+
     </form>
   );
 

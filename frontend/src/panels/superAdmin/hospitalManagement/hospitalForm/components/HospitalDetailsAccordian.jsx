@@ -27,7 +27,8 @@ const HospitalBasicDetailAccrodian = ({
   touched,
   errors,
   colors,
-  setFieldValue
+  setFieldValue,
+  isUpdated = false
 }) => {
   const { submitCount } = useFormikContext();
   const [cities, setCities] = useState([]);
@@ -131,44 +132,38 @@ const HospitalBasicDetailAccrodian = ({
                 )}
               </Box>
             </Box>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "flex-end",
-                alignItems: "center",
-                gap: 2,
-                mb: 2,
-              }}
-            >
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={values.itsBranch || false}
-                    onChange={(e) =>
-                      setFieldValue("itsBranch", e.target.checked)
-                    }
-                    color="warning"
-                    size="small"
-                  />
-                }
-                label={
-                  <Typography
-                    sx={{ color: colors.grey[100], fontSize: "0.9rem" }}
-                  >
-                    Is this a branch?
-                  </Typography>
-                }
-              />
-
-              {/* <Typography
-                variant="caption"
-                sx={{ color: colors.grey[400], minWidth: 180 }}
+            {isUpdated ? null : (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  alignItems: "center",
+                  gap: 2,
+                  mb: 2,
+                }}
               >
-                {values.itsBranch
-                  ? "This will be linked as a branch of an existing hospital"
-                  : "This will create a new main hospital"}
-              </Typography> */}
-            </Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={values.itsBranch || false}
+                      onChange={(e) =>
+                        setFieldValue("itsBranch", e.target.checked)
+                      }
+                      color="warning"
+                      size="small"
+                    />
+                  }
+                  label={
+                    <Typography
+                      sx={{ color: colors.grey[100], fontSize: "0.9rem" }}
+                    >
+                      Is this a branch?
+                    </Typography>
+                  }
+                />
+              </Box>
+            )}
+
           </Grid>
           <Grid item xs={12} md={6} lg={4}>
             <TextField

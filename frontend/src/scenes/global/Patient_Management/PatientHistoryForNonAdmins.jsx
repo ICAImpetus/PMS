@@ -500,7 +500,7 @@ export const PatientHistory = () => {
                                             }}
                                         >
                                             <TableCell align="center">
-                                                {page * rowsPerPage + index + 1}
+                                                {index + 1}
                                             </TableCell>
                                             <TableCell sx={{ fontWeight: 500 }}>
                                                 {patient.patientName || "N/A"}

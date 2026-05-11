@@ -238,7 +238,7 @@ const AddBranchBasic = ({
         if (!value || value <= 0) {
           error = "Number of Beds must be a positive number.";
         } else if (!/^[0-9]{1,4}$/.test(value)) {
-          error = "Number of Beds must be 1 to 4 digits.";
+          error = "Number of Beds must be 10000 or less.";
         }
         break;
       case "email":

@@ -7,9 +7,6 @@ export const NewsTicker = ({ currentUser }) => {
 
   if (currentUser?.type?.includes("admin")) return null;
 
-
-
-
   const hospital = currentUser?.hospitals?.[0]
   const hospitalName = hospital?.name || "Hospital";
   const hospitalAddress = hospital?.hospitalId?.corporateAddress || "Corporate Address";
@@ -54,7 +51,7 @@ export const NewsTicker = ({ currentUser }) => {
           }}
         >
           <Avatar
-            src={hospitallogo || undefined}
+            src={hospitallogo || '/hospitalIcon.png'}
             alt="Hospital Logo"
             variant="rounded"
             sx={{
