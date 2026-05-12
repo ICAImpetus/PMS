@@ -317,9 +317,6 @@ const UserFormAdmin = ({
             }
 
             try {
-
-              console.log("Calling API with IDs:", hospitalId);
-
               const response = await getBranches(hospitalId);
 
               setBranchOptions(response?.data || []);

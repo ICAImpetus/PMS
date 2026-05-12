@@ -195,7 +195,7 @@ const TabHeader = ({
                     } else if (!file.name.endsWith(".csv")) {
                       toast.error("Invalid file type. Please upload a CSV file.");
                     }
-                    console.log("CSV File:", file);
+
                     if (uploadCSV) uploadCSV(type, file);
 
                   }}
@@ -798,12 +798,12 @@ const BranchInfo = () => {
           }
         }
       } else {
-        console.log("Unhandled type:", type, newData);
+
         saved = true;
       }
-      console.log("sa", saved);
+
       if (saved) {
-        console.log("sa", saved);
+
         await fetchAllData(); // Refresh all lists to sync cross-referenced data
         toast.success("Saved successfully!");
         handleCloseModal(type);
@@ -926,9 +926,7 @@ const BranchInfo = () => {
   const handleDoctorStatusToggle = async (doctorId, currentStatus) => {
     try {
       setSaving(true);
-      console.log("hosId", hosId);
-      console.log("doctorId", doctorId);
-      console.log("currentStatus", currentStatus);
+
 
       // Update the doctor's status in the local state first for immediate UI feedback
       const res = await updateDoctorStatusApi(hosId, doctorId, currentStatus)
@@ -1033,14 +1031,12 @@ const BranchInfo = () => {
     const formdata = new FormData();
     formdata.append("csv", file);
     formdata.append("type", type);
-    console.log(open);
 
     setOpen(true);
     setProgress(0);
 
     try {
       const res = await uploadCSVApi(hosId, id, formdata);
-      console.log("message", res);
 
       if (res?.success) {
         toast.success(res?.message || "CSV uploaded successfully!");

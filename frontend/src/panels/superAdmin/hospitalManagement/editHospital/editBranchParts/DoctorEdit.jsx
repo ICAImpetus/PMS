@@ -1344,10 +1344,7 @@ const AddDoctorModal = ({
                                             `Department "${deptName}" added successfully!`,
                                           );
                                         } else {
-                                          console.log(
-                                            "Department API failed:",
-                                            response,
-                                          );
+
                                           toast.error(
                                             response?.message ||
                                             "Failed to add department",

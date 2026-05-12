@@ -116,9 +116,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             setBranchCount(hospitalsData.data[0]?.branchCount)
         }
     }, [hospitalsData]);
-
-    console.log("selectedHostpital", selectedHostpital);
-
     const {
         data: branchesData,
         isLoading: branchesLoading,
@@ -624,11 +621,7 @@ export default HospitalContext;
 //             setBranches(res?.data || []);
 
 //             if (res?.data?.length) {
-//                 console.log("res.data[0]", res.data[0]);
-
-//                 console.log("Setting branch id:", res.data[0]?._id);
-//                 setSelectedBranch(res.data[0]?._id);
-//                 console.log("Setting branch id:", selectedBranch);
+//      
 //             }
 
 //         } catch (err) {

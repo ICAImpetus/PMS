@@ -350,9 +350,6 @@ function Forms() {
     handleChange("department", null)
 
   }, [form.purpose])
-  // console.log("form", form);
-
-  // console.log("isres", isRequired);
 
   const allLocations = Object.entries(IndianStatesWithDistricts)
     .flatMap(([state, districts]) =>
@@ -363,7 +360,6 @@ function Forms() {
       }))
     );
 
-  // console.log("allLocations", allLocations)
 
 
   const renderInboundPurposeDetails = () => {
@@ -521,9 +517,6 @@ function Forms() {
                             bookedSlotsSet.has(
                               String(slot._id)
                             );
-
-                          console.log("isBooked", isBooked);
-
 
                           return (
                             <button

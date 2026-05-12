@@ -841,8 +841,7 @@ const ExecutiveDashboard = () => {
             <div className="executive-chart-title">
               <PieChartIcon /> Top 5 Inbound Purpose
             </div>
-            {console.log("analytics", analytics)
-            }
+
             <div className="scrollable-content">
               {analytics?.topInboundPurpose?.length === 0 ? (
                 <div>No Data Found</div>
@@ -1099,10 +1098,7 @@ const ExecutiveDashboard = () => {
         )
       }
 
-      {/* Filled Forms Modal */}
-      {
-        console.log("formsData", formsData)
-      }
+
       {
         formsModalOpen && (
           <FilledFormsComponent

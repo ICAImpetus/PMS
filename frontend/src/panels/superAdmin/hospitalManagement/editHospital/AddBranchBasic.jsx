@@ -427,21 +427,16 @@ const AddBranchBasic = ({
     }
 
     if (validateForm()) {
-      console.log("Submitting Branch Data:", formData);
+
       try {
         // Use different API endpoints for create vs update
         let response;
         if (isEdit) {
-          console.log("Updating branch:", formData);
+
 
           response = await updateBranchApi(hospitalId, formData._id, formData);
           if (response?.success) {
-            console.log("response branch:", response);
-            // setHospitalBranches((prev) =>
-            //   prev.map((branch) =>
-            //     branch._id === formData._id ? response?.data : formData
-            //   )
-            // );
+
             setHospitalBranches((prev) =>
               prev.map((branch) =>
                 branch._id === formData._id ? response?.data : branch

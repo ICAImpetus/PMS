@@ -493,8 +493,7 @@ const AddIpdDetailsModal = ({ open, onClose, onSave, ipdData = null, departments
                         <MenuItem value="">
                           <em>None</em>
                         </MenuItem>
-                        {console.log("deparmy", departments)
-                        }
+
                         {departments.map((dept, idx) => {
 
                           return (
