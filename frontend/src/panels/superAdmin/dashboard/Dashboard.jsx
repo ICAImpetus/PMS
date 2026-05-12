@@ -868,8 +868,6 @@ const SuperAdminDashboard = () => {
           </table>
         </div>
       </div> */}
-
-
       {
         formsModalOpen && (
           <FilledFormsComponent

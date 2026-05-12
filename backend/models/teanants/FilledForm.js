@@ -139,26 +139,18 @@ export const FilledFormSchema = new mongoose.Schema(
       },
       appointmentSlot: {
         date: {
-          type: String,
-          // required: true,
+          type: Date,
           index: true,
         },
 
         slotId: {
           type: mongoose.Schema.Types.ObjectId,
-          // required: true,
         },
 
-        start: {
-          type: String,
-          // required: true,
-        },
+        start: String,
 
-        end: {
-          // type: String,
-          // required: true,
-        },
-      },
+        end: String,
+      }
     },
     isDeleted: { type: Boolean, default: false },
   },

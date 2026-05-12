@@ -187,7 +187,7 @@ const AuditLogs = () => {
   const today = new Date().toISOString().split("T")[0];
   return (
     <div className="page-container" id="audit">
-      <h2 className="section-title">Admin Audit Log</h2>
+      <h2 className="section-title">Audit Log</h2>
 
       <div className="filter-bar">
         <div className="filter-group">
@@ -333,7 +333,8 @@ const AuditLogs = () => {
 
         </div>
 
-        {10 > 1 && (
+        {console.log("Action Distribution", pagination)}
+        {pagination?.auditLogs?.totalPages > 1 && (
           <div className="pagination">
             <button
               disabled={pagination?.auditLogs?.page === 1}
@@ -350,10 +351,10 @@ const AuditLogs = () => {
               &larr; Previous
             </button>
             <span className="page-info">
-              Page {pagination?.auditLogs?.page} of {10}
+              Page {pagination?.auditLogs?.page} of {pagination?.auditLogs?.totalPages}
             </span>
             <button
-              disabled={pagination?.auditLogs?.page === 10}
+              disabled={pagination?.auditLogs?.page === pagination?.auditLogs?.totalPages}
               onClick={() => setPagination(prev => ({
                 ...prev,
                 auditLogs: {

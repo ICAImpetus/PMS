@@ -11,11 +11,20 @@ import toast from "react-hot-toast";
 import {
   CircularProgress, Box,
   TextField,
-  Autocomplete
+  Autocomplete,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Stack,
+  Typography,
+  MenuItem,
+  DialogActions,
+  Button,
+
 } from "@mui/material";
 import DoctorProfileCard from "./DoctorCard";
 import HospitalContext from "../contexts/HospitalContexts";
-import { CATEGORY, IndianStatesWithDistricts } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
+import { CATEGORY, INBOUND_PURPOSE_OPTIONS, IndianStatesWithDistricts, OUTBOUND_PURPOSE_OPTIONS, REFERENCE_OPTIONS } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
 import { useMemo } from "react";
 
 
@@ -52,6 +61,17 @@ function Forms() {
   const [selectedDay, setSelectedDay] = useState(null);
   const [bookedSlotIds, setBookedSlotIds] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [bookedSlotModal, setBookedSlotModal] =
+    useState({
+      open: false,
+      slot: null,
+    });
+
+  const [bookedSlotAction, setBookedSlotAction] =
+    useState("");
+
+  const [cancelReason, setCancelReason] =
+    useState("");
   const initialPatientDetails = {
     patientName: "",
     patientMobile: "",
@@ -454,13 +474,13 @@ function Forms() {
             {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
             {/* Slot Duration Selector */}
-            <div className="input-row">
+            {/* <div className="input-row">
               <div className="input-group">
                 <label className="required">Appointment Slot Selection</label>
 
               </div>
 
-            </div>
+            </div> */}
 
             {/* Available Slots Display - Button Style for Easy Selection */}
             {selectedDoctor &&
@@ -522,9 +542,16 @@ function Forms() {
                             <button
                               key={index}
                               type="button"
-                              disabled={isBooked}
+                              // disabled={isBooked}
                               onClick={() => {
-                                if (isBooked) return;
+                                if (isBooked) {
+                                  setBookedSlotModal({
+                                    open: true,
+                                    slot,
+                                  });
+
+                                  return;
+                                }
 
                                 handleChange(
                                   "formData.appointmentSlot",
@@ -542,6 +569,7 @@ function Forms() {
                               }}
                               style={{
                                 padding: "10px 12px",
+                                cursor: "pointer",
                                 border:
                                   "1px solid #ddd",
 
@@ -549,7 +577,7 @@ function Forms() {
 
                                 backgroundColor:
                                   isBooked
-                                    ? "#ffebee"
+                                    ? "#a0afbc"
                                     : isSelected
                                       ? "#1976d2"
                                       : "#f5f5f5",
@@ -561,9 +589,7 @@ function Forms() {
                                       ? "#d32f2f"
                                       : "#333",
 
-                                cursor: isBooked
-                                  ? "not-allowed"
-                                  : "pointer",
+                                // cursor:"c",
 
                                 fontSize: "13px",
 
@@ -3004,44 +3030,67 @@ function Forms() {
             form.formData.callerType === "Attendant")
             && (
               <div className="input-group">
-                <label className={isRequired ? "required" : ""}>Reference From</label>
+                <label className={isRequired ? "required" : ""}>
+                  Reference From
+                </label>
 
-                <select
-                  className="select-field"
-                  value={form.formData.referenceFrom}
-                  onChange={(e) =>
-                    handleChange("formData.referenceFrom", e.target.value)
+                <Autocomplete
+                  freeSolo
+                  sx={{
+                    width: "100%",
+
+                    "& .MuiOutlinedInput-root": {
+                      minHeight: 38,
+                      border:
+                        "1px solid var(--border-color)",
+                      borderRadius: "var(--radius)",
+                      backgroundColor: "#fff",
+                      fontSize: "13px",
+
+                      "& fieldset": {
+                        border: "none",
+                      },
+                    },
+
+                    "& .MuiInputBase-input": {
+                      fontSize: "13px",
+                      padding: "0 14px",
+                    },
+                  }}
+                  options={REFERENCE_OPTIONS}
+                  getOptionLabel={(option) =>
+                    typeof option === "string"
+                      ? option
+                      : option.label
                   }
-                  required={isRequired}
-                >
-                  <option value="">Select</option>
-
-                  <option value="Doctor">Doctor</option>
-
-                  <option value="Friends And Family">Friends And Family</option>
-
-                  <option value="Marketing Campaign">Marketing Campaign</option>
-
-                  <option value="News Paper">News Paper</option>
-
-                  <option value="Radio">Radio</option>
-
-                  <option value="Existing Patient">Existing Patient</option>
-
-                  <option value="Google">Google</option>
-
-                  <option value="Govt. Hospital">Govt. Hospital</option>
-
-                  <option value="Website">Website</option>
-
-                  <option value="Social Media">Social Media</option>
-
-                  <option value="Health Camp">Health Camp</option>
-
-                  <option value="Lives Nearby">Lives Nearby</option>
-
-                  <option value="NA">NA</option>
-                </select>
+                  value={
+                    REFERENCE_OPTIONS.find(
+                      (item) =>
+                        item.value ===
+                        form.formData.referenceFrom
+                    ) || form.formData.referenceFrom
+                  }
+                  onChange={(_, newValue) => {
+                    handleChange(
+                      "formData.referenceFrom",
+                      typeof newValue === "string"
+                        ? newValue
+                        : newValue?.value || ""
+                    );
+                  }}
+                  onInputChange={(_, newInputValue) => {
+                    handleChange(
+                      "formData.referenceFrom",
+                      newInputValue
+                    );
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      placeholder="Search or select reference"
+                    />
+                  )}
+                />
               </div>
             )}
         </div>
@@ -3420,60 +3469,25 @@ function Forms() {
           <div className="input-row">
             <div className="input-group">
               <label className="required">Purpose Of Call</label>
-
-              <select
-                className="select-field"
-                value={form.purpose}
-                onChange={(e) => {
-                  handleChange("purpose", e.target.value);
-
-                  // Auto-scroll to purpose details when POC is selected
-
-                  if (e.target.value) {
-                    // Auto-scroll removed as per user request for less jumping
-                  }
+              <Autocomplete freeSolo
+                sx={{
+                  width: "100%", "& .MuiOutlinedInput-root":
+                  {
+                    minHeight: 38, border: "1px solid var(--border-color)",
+                    borderRadius:
+                      "var(--radius)",
+                    backgroundColor: "#fff", fontSize: "13px", "& fieldset": { border: "none", },
+                  },
+                  "& .MuiInputBase-input": { fontSize: "13px", padding: "0 14px", },
                 }}
-                required
-              >
-                <option value="">Select</option>
-
-                <option value="Appointment">Appointment</option>
-                <option value="General Query">General Query</option>
-
-                <option value="Surgery">Surgery</option>
-
-                <option value="Health Checkup">Health Checkup</option>
-
-                <option value="Emergency Query">Emergency Query</option>
-
-                {/* <option value="Call Drop">Call Drop</option> */}
-
-                <option value="Marketing Campaign">Marketing Campaign</option>
-
-                <option value="Complaints">Complaints</option>
-
-                <option value="OPD Timings">OPD Timings</option>
-
-                <option value="Diagnose or Test Price">
-                  Diagnose or Test Price
-                </option>
-
-                <option value="Reports">Reports</option>
-
-                <option value="Government Health Schemes">
-                  Government Health Schemes
-                </option>
-
-                <option value="Non-Government Schemes">
-                  Non-Government Schemes
-                </option>
-
-                <option value="Ambulance">Ambulance</option>
-
-                <option value="Junk">Junk</option>
-
-                <option value="Job Related">Job Related</option>
-              </select>
+                options={INBOUND_PURPOSE_OPTIONS}
+                getOptionLabel={(option) => typeof option === "string" ?
+                  option : option.label}
+                value={INBOUND_PURPOSE_OPTIONS.find((item) => item.value === form.purpose) || form.purpose}
+                onChange={(_, newValue) => { handleChange("purpose", typeof newValue === "string" ? newValue : newValue?.value || ""); }}
+                onInputChange={(_, newInputValue) => { handleChange("purpose", newInputValue); }}
+                renderInput={(params) =>
+                  (<TextField {...params} placeholder="Search or type purpose" />)} />
             </div>
           </div>
 
@@ -3632,38 +3646,57 @@ function Forms() {
           <div className="input-group">
             <label className="required">Purpose</label>
 
-            <select
-              className="select-field"
-              value={form.purpose}
-              onChange={(e) =>
-                handleChange("purpose", e.target.value)
+            <Autocomplete
+              freeSolo
+              sx={{
+                width: "100%",
+
+                "& .MuiOutlinedInput-root": {
+                  minHeight: 38,
+                  border: "1px solid var(--border-color)",
+                  borderRadius: "var(--radius)",
+                  backgroundColor: "#fff",
+                  fontSize: "13px",
+
+                  "& fieldset": {
+                    border: "none",
+                  },
+                },
+
+                "& .MuiInputBase-input": {
+                  fontSize: "13px",
+                  padding: "0 14px",
+                },
+              }}
+              options={OUTBOUND_PURPOSE_OPTIONS}
+              getOptionLabel={(option) =>
+                typeof option === "string"
+                  ? option
+                  : option.label
               }
-              required
-            >
-              <option value="">-- Select --</option>
-
-              <option value="Appointment">
-                Appointment/Reschedule Appointment
-              </option>
-
-              <option value="Followup">Follow Up Call</option>
-
-              <option value="Informative">Informative</option>
-
-              <option value="Marketing">Marketing Campaign</option>
-
-              <option value="Feedback">Feedback</option>
-
-              <option value="Missed">Missed Calls</option>
-
-              <option value="Justdial">JustDial</option>
-
-              <option value="Practo">Practo</option>
-
-              <option value="Whatsapp">Whatsapp</option>
-
-              <option value="Facebook">Facebook</option>
-            </select>
+              value={
+                OUTBOUND_PURPOSE_OPTIONS.find(
+                  (item) => item.value === form.purpose
+                ) || form.purpose
+              }
+              onChange={(_, newValue) => {
+                handleChange(
+                  "purpose",
+                  typeof newValue === "string"
+                    ? newValue
+                    : newValue?.value || ""
+                );
+              }}
+              onInputChange={(_, newInputValue) => {
+                handleChange("purpose", newInputValue);
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder="Search or select purpose"
+                />
+              )}
+            />
           </div>
         </div>
       </div>
@@ -3755,6 +3788,166 @@ function Forms() {
       <div className="form-container">
         {form?.formType === "inbound" ? renderInboundForm() : renderOutboundForm()}
       </div>
+
+      <Dialog
+        open={bookedSlotModal.open}
+        onClose={() => {
+          setBookedSlotModal({ open: false, slot: null });
+          setBookedSlotAction("");
+          setCancelReason("");
+        }}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            background: "#f7fbff",
+            boxShadow: 8,
+          },
+        }}
+      >
+        <DialogTitle sx={{ bgcolor: '#1976d2', color: 'white', fontWeight: 700 }}>
+          Appointment Slot Already Booked
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} mt={1}>
+            <Typography color="error" fontWeight={600}>
+              The selected appointment slot is already booked. Please choose a different slot, doctor, or department.
+            </Typography>
+            <Box>
+              <Typography fontWeight={600}>
+                Selected Slot
+              </Typography>
+              <Typography variant="body2">
+                {bookedSlotModal.slot?.start} - {bookedSlotModal.slot?.end}
+              </Typography>
+            </Box>
+            <TextField
+              select
+              label="Choose Action"
+              value={bookedSlotAction}
+              onChange={(e) => setBookedSlotAction(e.target.value)}
+              fullWidth
+              sx={{ bgcolor: 'white', borderRadius: 1 }}
+            >
+              <MenuItem value="change">Change Department / Doctor</MenuItem>
+              <MenuItem value="cancel">Cancel Appointment</MenuItem>
+            </TextField>
+            {bookedSlotAction === "change" && (
+              <>
+                <Typography variant="body2" color="text.secondary">
+                  Select a different department, doctor, or change the appointment date below to find an available slot.
+                </Typography>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                  <TextField
+                    select
+                    label="Department"
+                    value={form?.department || ""}
+                    onChange={async (e) => {
+                      const depId = e.target.value;
+                      handleDepartmentChange(depId);
+                      handleChange("department", depId);
+                    }}
+                    fullWidth
+                    sx={{ bgcolor: 'white', borderRadius: 1 }}
+                  >
+                    <MenuItem value="">Select</MenuItem>
+                    {dynamicDepartments?.map((dept) => (
+                      <MenuItem key={dept._id} value={dept._id}>{dept.name}</MenuItem>
+                    ))}
+                  </TextField>
+                  <TextField
+                    select
+                    label="Doctor"
+                    value={selectedDoctor?._id || ""}
+                    onChange={(e) => {
+                      const docId = e.target.value;
+                      const doc = filteredDoctors.find(d => d._id === docId);
+                      handleDoctorSelect(doc);
+                    }}
+                    fullWidth
+                    sx={{ bgcolor: 'white', borderRadius: 1 }}
+                    disabled={!form?.department}
+                  >
+                    <MenuItem value="">Select</MenuItem>
+                    {filteredDoctors?.map((doc) => (
+                      <MenuItem key={doc._id} value={doc._id}>{doc.name}</MenuItem>
+                    ))}
+                  </TextField>
+                </Stack>
+                <Box mt={2}>
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DatePicker
+                      label="Change Appointment Date"
+                      value={form.formData.dateTime ? dayjs(form.formData.dateTime) : null}
+                      onChange={(newValue) => {
+                        handleChange("formData.dateTime", newValue ? dayjs(newValue).format("YYYY-MM-DD") : "");
+                      }}
+                      minDate={dayjs()}
+                      maxDate={dayjs().add(7, "day")}
+                      format="DD/MM/YYYY"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          size: "small",
+                          sx: { bgcolor: 'white', borderRadius: 1 },
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+                </Box>
+              </>
+            )}
+            {bookedSlotAction === "cancel" && (
+              <TextField
+                label="Cancellation Reason"
+                multiline
+                rows={4}
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                fullWidth
+                placeholder="Enter cancellation reason"
+                sx={{ bgcolor: 'white', borderRadius: 1 }}
+              />
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setBookedSlotModal({ open: false, slot: null });
+              setBookedSlotAction("");
+              setCancelReason("");
+            }}
+            sx={{ fontWeight: 600 }}
+          >
+            Close
+          </Button>
+          <Button
+            variant="contained"
+            color={bookedSlotAction === "cancel" ? "error" : "primary"}
+            disabled={
+              !bookedSlotAction ||
+              (bookedSlotAction === "cancel" && !cancelReason.trim())
+            }
+            onClick={async () => {
+              if (bookedSlotAction === "cancel") {
+                // TODO: Call cancel appointment API here
+                toast.success("Appointment cancelled successfully.");
+              }
+              if (bookedSlotAction === "change") {
+                toast("Please select a new department and doctor, then choose an available slot.");
+              }
+              setBookedSlotModal({ open: false, slot: null });
+              setBookedSlotAction("");
+              setCancelReason("");
+            }}
+            sx={{ fontWeight: 600 }}
+          >
+            {bookedSlotAction === "cancel" ? "Confirm Cancel" : "Continue"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

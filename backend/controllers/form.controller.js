@@ -209,6 +209,15 @@ export const createFilledForm = async (req, res) => {
         ...data.formData,
 
         patientDetails: patient._id,
+
+        appointmentSlot: data.formData.appointmentSlot
+          ? {
+            ...data.formData.appointmentSlot,
+            date: new Date(
+              data.formData.appointmentSlot.date
+            ),
+          }
+          : null,
       },
     };
 
@@ -706,6 +715,10 @@ export const getBookedSlotsController =
       const { doctorId, date } = req.body;
       const { hosId, branchId } = req.query;
 
+      console.log("doctorId", doctorId);
+      console.log("date", date);
+
+
       if (
         !hosId ||
         !branchId ||
@@ -751,22 +764,28 @@ export const getBookedSlotsController =
       const PatientModel = getPatientModel(conn);
 
       const DoctorModel = getDoctorModel(conn);
-      const bookedSlots =
-        await FilledFormsModel.find(
-          {
-            doctor: doctorId,
+      const startDate = new Date(date);
+      startDate.setHours(0, 0, 0, 0);
 
-            "formData.appointmentSlot.date":
-              date,
+      const endDate = new Date(date);
+      endDate.setHours(23, 59, 59, 999);
 
-            isDeleted: false,
+      const bookedSlots = await FilledFormsModel.find(
+        {
+          doctor: new mongoose.Types.ObjectId(doctorId),
+
+          "formData.appointmentSlot.date": {
+            $gte: startDate,
+            $lte: endDate,
           },
-          {
-            "formData.appointmentSlot.slotId": 1,
-            _id: 0,
-          }
-        ).lean();
 
+          isDeleted: false,
+        },
+        {
+          "formData.appointmentSlot.slotId": 1,
+          _id: 0,
+        }
+      ).lean();
 
 
       const bookedSlotIds =

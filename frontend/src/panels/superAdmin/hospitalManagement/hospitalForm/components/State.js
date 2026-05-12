@@ -1062,3 +1062,127 @@ export const CATEGORY = [
       "e-Sanjeevani (National Telemedicine Service)",
   },
 ];
+
+export const INBOUND_PURPOSE_OPTIONS = [
+  { label: "Appointment", value: "Appointment" },
+  { label: "General Query", value: "General Query" },
+  { label: "Surgery", value: "Surgery" },
+  { label: "Health Checkup", value: "Health Checkup" },
+  { label: "Emergency Query", value: "Emergency Query" },
+  { label: "Marketing Campaign", value: "Marketing Campaign" },
+  { label: "Complaints", value: "Complaints" },
+  { label: "OPD Timings", value: "OPD Timings" },
+  {
+    label: "Diagnose or Test Price",
+    value: "Diagnose or Test Price",
+  },
+  { label: "Reports", value: "Reports" },
+  {
+    label: "Government Health Schemes",
+    value: "Government Health Schemes",
+  },
+  {
+    label: "Non-Government Schemes",
+    value: "Non-Government Schemes",
+  },
+  { label: "Ambulance", value: "Ambulance" },
+  { label: "Junk", value: "Junk" },
+  { label: "Job Related", value: "Job Related" },
+];
+
+export const OUTBOUND_PURPOSE_OPTIONS = [
+  {
+    label: "Appointment/Reschedule Appointment",
+    value: "Appointment",
+  },
+
+  {
+    label: "Follow Up Call",
+    value: "Followup",
+  },
+
+  {
+    label: "Informative",
+    value: "Informative",
+  },
+
+  {
+    label: "Marketing Campaign",
+    value: "Marketing",
+  },
+
+  {
+    label: "Feedback",
+    value: "Feedback",
+  },
+
+  {
+    label: "Missed Calls",
+    value: "Missed",
+  },
+
+  {
+    label: "JustDial",
+    value: "Justdial",
+  },
+
+  {
+    label: "Practo",
+    value: "Practo",
+  },
+
+  {
+    label: "Whatsapp",
+    value: "Whatsapp",
+  },
+
+  {
+    label: "Facebook",
+    value: "Facebook",
+  },
+];
+export const REFERENCE_OPTIONS = [
+  { label: "Doctor", value: "Doctor" },
+
+  {
+    label: "Friends And Family",
+    value: "Friends And Family",
+  },
+
+  {
+    label: "Marketing Campaign",
+    value: "Marketing Campaign",
+  },
+
+  { label: "News Paper", value: "News Paper" },
+
+  { label: "Radio", value: "Radio" },
+
+  {
+    label: "Existing Patient",
+    value: "Existing Patient",
+  },
+
+  { label: "Google", value: "Google" },
+
+  {
+    label: "Govt. Hospital",
+    value: "Govt. Hospital",
+  },
+
+  { label: "Website", value: "Website" },
+
+  {
+    label: "Social Media",
+    value: "Social Media",
+  },
+
+  { label: "Health Camp", value: "Health Camp" },
+
+  {
+    label: "Lives Nearby",
+    value: "Lives Nearby",
+  },
+
+  { label: "NA", value: "NA" },
+];

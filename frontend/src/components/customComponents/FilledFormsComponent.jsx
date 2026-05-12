@@ -7,7 +7,7 @@ import IosShareOutlinedIcon from '@mui/icons-material/IosShareOutlined';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import { Box, Pagination, TextField } from "@mui/material";
 
-// Filled Forms: available columns for filter & export
+
 const FORMS_AVAILABLE_COLUMNS = [
   { key: "agentName", label: "Agent Name" },
   { key: "formType", label: "Form Type" },
@@ -23,7 +23,7 @@ const FORMS_AVAILABLE_COLUMNS = [
   { key: "remarks", label: "Remarks" },
   { key: "createdAt", label: "Submitted At" },
 ];
-// Flatten a filled form document into a row with all display fields
+
 const flattenFilledForm = (doc) => {
   const formData = doc.formData || {};
   const patient = formData.patientDetails || {};
@@ -76,7 +76,6 @@ const FilledFormsComponent = ({
   setFormsTypeFilter,
   pagination,
   setPagination,
-  totalPages,
   formsLoading = false,
 }) => {
   const [formsColumnFilterOpen, setFormsColumnFilterOpen] = useState(false);
@@ -96,31 +95,31 @@ const FilledFormsComponent = ({
   const formsColumnFilterRef = useRef(null);
 
 
-  // useEffect(() => {
 
 
-  //   const fetchForms = async () => {
-
-  //     const res = await getFilledForms({
-  //       page: 1,
-  //       limit: 10,
-  //       filters: {
-  //         seletedHospital,
-  //         seletedbranch,
-  //         filtervalue
-  //       },
-  //     });
-  //     sethospitals(res?.data || [])
-  //   }
-  //   if (page !== 1) {
-  //     fetchForms()
-  //   }
-  //   fetchForms()
 
 
-  // }, []);
 
-  // Flatten and filter filled forms for display
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   const flattenedForms = React.useMemo(() => {
     return formsData?.map(flattenFilledForm);
   }, [formsData]);
@@ -128,12 +127,12 @@ const FilledFormsComponent = ({
   const filteredForms = React.useMemo(() => {
     let data = flattenedForms || [];
 
-    // 🔹 Step 1: Form Type Filter
+
     if (formsTypeFilter !== "all") {
       data = data.filter((r) => r.formType === formsTypeFilter);
     }
 
-    // 🔹 Step 2: Search Filter
+
     if (searchTerm?.trim()) {
       const term = searchTerm.toLowerCase();
 
@@ -157,7 +156,7 @@ const FilledFormsComponent = ({
     return data;
   }, [flattenedForms, formsTypeFilter, searchTerm]);
 
-  //  for pagination 
+
   const rowParPage = 10
 
   const paginationData = filteredForms.slice((pagination?.forms?.page - 1) * rowParPage, pagination?.forms?.page * rowParPage)
@@ -228,15 +227,15 @@ const FilledFormsComponent = ({
     setPagination((prev) => ({
       ...prev,
       forms: {
-        ...prev.patients,
+        ...prev.forms,
         page: 1,
       },
     }));
   }, [searchTerm, formsTypeFilter]);
 
-  // useEffect(() => {
-  //   fetchForms();
-  // }, [page]);
+
+
+
   return (
     <div
       className="ff-modal-overlay"
@@ -395,7 +394,7 @@ const FilledFormsComponent = ({
                         if (val instanceof Date)
                           val = moment(val).format("DD/MM/YYYY hh:mm A");
 
-                        // Safe rendering for objects to prevent React errors
+
                         if (
                           val &&
                           typeof val === "object" &&
@@ -425,12 +424,12 @@ const FilledFormsComponent = ({
           }}
         >
           <Pagination
-            count={totalPages}
+            count={pagination?.forms?.totalPages || 1}
             page={pagination?.forms?.page}
             onChange={(e, value) => setPagination((prev) => ({
               ...prev,
               forms: {
-                ...prev.patients,
+                ...prev.forms,
                 page: value,
               },
             }))}

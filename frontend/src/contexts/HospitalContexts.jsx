@@ -27,11 +27,6 @@ const defaultPagination = {
     limit: 10
 };
 
-const defaultDateFilter = {
-    startDate: "",
-    endDate: "",
-};
-
 export const GlobalHospitalContextProvider = ({ children }) => {
 
     const { currentUser } = UserContextHook();
@@ -43,13 +38,16 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     const isAdmin = ["superadmin", "admin"].includes(role);
     const isNonAdmin = ["supermanager", "teamleader", "executive"].includes(role);
 
-    // ---------------- STATE ----------------
+
+
     const [selectedHostpital, setSelectedHostpital] = useState(
-        isNonAdmin ? currentUser?.hospitals?.[0]?.hospitalId?._id || null : null
+        isNonAdmin
+            ? currentUser?.hospitals?.[0]?.hospitalId?._id || null
+            : null
     );
 
     const [selectedBranch, setSelectedBranch] = useState(null);
-    const [branchCount, setBranchCount] = useState(0)
+    const [branchCount, setBranchCount] = useState(0);
 
     const [pagination, setPagination] = useState({
         patients: { ...defaultPagination },
@@ -57,16 +55,48 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         forms: { ...defaultPagination },
         auditLogs: { ...defaultPagination }
     });
-    const [filter, setFilter] = useState(filterOptions[0]?.value || "");
+
+    const [filter, setFilter] = useState(
+        filterOptions[0]?.value || ""
+    );
+
+
+
+    const mergePaginatedData = (oldData = [], newData = [], page = 1) => {
+        if (page === 1) return newData;
+
+        const oldIds = new Set(oldData.map((item) => item?._id));
+
+        const filteredNew = newData.filter(
+            (item) => !oldIds.has(item?._id)
+        );
+
+        return [...oldData, ...filteredNew];
+    };
+
+
+
+    const [patients, setPatients] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [allLogs, setAllLogs] = useState([]);
+
+    const [forms, setForms] = useState({
+        today: [],
+        appointments: [],
+        followups: []
+    });
+
+    const [metrics, setMetrics] = useState({});
+
 
 
     const updatePagination = (key, newPagination) => {
-
 
         if (!newPagination) return;
 
         setPagination((prev) => {
             const prevData = prev[key];
+
             if (
                 prevData.page === newPagination.page &&
                 prevData.totalPages === newPagination.totalPages &&
@@ -83,23 +113,26 @@ export const GlobalHospitalContextProvider = ({ children }) => {
                 }
             };
         });
-
-
     };
 
-    // ---------------- QUERIES (DESTRUCTURED) ----------------
+
 
     useEffect(() => {
         if (currentUser?.hospitals?.length) {
-            setSelectedHostpital(currentUser?.hospitals?.[0]?.hospitalId?._id || currentUser?.hospitals?.[0]?.hospitalId)
+            setSelectedHostpital(
+                currentUser?.hospitals?.[0]?.hospitalId?._id ||
+                currentUser?.hospitals?.[0]?.hospitalId
+            );
         }
-    }, [isNonAdmin, currentUser])
+    }, [isNonAdmin, currentUser]);
+
+
+
     const {
         data: hospitalsData,
         isFetching: hospitalsLoading,
         error: hospitalsError,
         refetch: refetchHospital
-
     } = useQuery({
         queryKey: ["hospitals"],
         queryFn: async () => {
@@ -113,9 +146,12 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     useEffect(() => {
         if (hospitalsData?.data?.length && !selectedHostpital) {
             setSelectedHostpital(hospitalsData.data[0]?._id);
-            setBranchCount(hospitalsData.data[0]?.branchCount)
+            setBranchCount(hospitalsData.data[0]?.branchCount);
         }
     }, [hospitalsData]);
+
+
+
     const {
         data: branchesData,
         isLoading: branchesLoading,
@@ -123,13 +159,14 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     } = useQuery({
         queryKey: ["branches", selectedHostpital, role],
         queryFn: async () => {
+
             const res = isAdmin
                 ? await commonRoutes.getHospitalBranchById(selectedHostpital)
                 : await commonRoutes.branchesByRole(selectedHostpital);
+
             return res.data;
         },
         enabled: !!selectedHostpital,
-
         onError: () => toast.error("Failed to fetch branches")
     });
 
@@ -139,34 +176,48 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         }
     }, [branchesData]);
 
+
+
     const {
         data: dashboardData,
-        // isLoading: dashboardLoading,
         isFetching: dashboardLoading,
         refetch: refetchDashboard,
         error: dashboardError
     } = useQuery({
         queryKey: ["dashboard", selectedHostpital, selectedBranch],
         queryFn: async () => {
+
             const [dashboardRes, alertRes] = await Promise.all([
-                commonRoutes.getDashboard(selectedBranch, selectedHostpital),
-                commonRoutes.getCreatedCodeAlerts(selectedHostpital, selectedBranch)
+                commonRoutes.getDashboard(
+                    selectedBranch,
+                    selectedHostpital
+                ),
+
+                commonRoutes.getCreatedCodeAlerts(
+                    selectedHostpital,
+                    selectedBranch
+                )
             ]);
 
             return {
-                analytics: dashboardRes?.data?.data?.analytics || {},
-                branchFollowups: dashboardRes?.data?.data?.branchFollowups || {},
-                codeAlerts: alertRes?.data?.data || []
+                analytics:
+                    dashboardRes?.data?.data?.analytics || {},
+
+                branchFollowups:
+                    dashboardRes?.data?.data?.branchFollowups || {},
+
+                codeAlerts:
+                    alertRes?.data?.data || []
             };
         },
-        enabled: !!selectedHostpital && (!!selectedBranch),
+        enabled: !!selectedHostpital && !!selectedBranch,
         onError: () => toast.error("Dashboard load failed")
     });
 
 
+
     const {
         data: codeAlertsData,
-        // isLoading: patientsLoading,
         error: codeAlertsDataError,
         isFetching: codeAlertsDataRefetchLoader,
         refetch: refetchCodeAlertsData
@@ -174,18 +225,27 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         queryKey: [
             "codeAlertsData",
             selectedHostpital,
-            selectedBranch,
+            selectedBranch
         ],
         queryFn: async () => {
+
             const res = await commonRoutes.getCodeAlerts(
                 selectedHostpital,
                 selectedBranch
             );
+
             return res?.data?.data || [];
         },
-        enabled: !!selectedHostpital && (!!selectedBranch) && isExecutive,
-        onError: () => toast.error("Failed to fetch Hospital Code")
+        enabled:
+            !!selectedHostpital &&
+            !!selectedBranch &&
+            isExecutive,
+
+        onError: () =>
+            toast.error("Failed to fetch Hospital Code")
     });
+
+
 
     const {
         data: patientsData,
@@ -198,21 +258,50 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             "patients",
             selectedHostpital,
             selectedBranch,
-            pagination.patients?.page,
+            pagination.patients.page,
             filter
         ],
         queryFn: async () => {
+
             const res = await commonRoutes.getPatients(
                 filter,
                 pagination.patients,
                 isNonAdmin ? selectedBranch : null,
                 selectedHostpital
             );
+
             return res?.data || {};
         },
-        enabled: !!selectedHostpital && (!!selectedBranch || !isNonAdmin),
-        onError: () => toast.error("Failed to fetch patients")
+        enabled:
+            !!selectedHostpital &&
+            (!!selectedBranch || !isNonAdmin),
+
+        keepPreviousData: true,
+
+        onError: () =>
+            toast.error("Failed to fetch patients")
     });
+
+    useEffect(() => {
+
+        if (!patientsData) return;
+
+        setPatients((prev) =>
+            mergePaginatedData(
+                prev,
+                patientsData?.data || [],
+                pagination.patients.page
+            )
+        );
+
+        updatePagination(
+            "patients",
+            patientsData?.pagination
+        );
+
+    }, [patientsData]);
+
+
 
     const {
         data: usersData,
@@ -220,14 +309,45 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         refetch: refetchUsers,
         error: usersError
     } = useQuery({
-        queryKey: ["users", selectedHostpital],
+        queryKey: [
+            "users",
+            selectedHostpital,
+            pagination.users.page
+        ],
         queryFn: async () => {
-            const res = await commonRoutes.getAllUsers(selectedHostpital);
+
+            const res = await commonRoutes.getAllUsers(
+                selectedHostpital,
+                pagination.users
+            );
+
             return res.data;
         },
         enabled: !!selectedHostpital && !isExecutive,
+        keepPreviousData: true,
         onError: () => toast.error("Users fetch failed")
     });
+
+    useEffect(() => {
+
+        if (!usersData) return;
+
+        setUsers((prev) =>
+            mergePaginatedData(
+                prev,
+                usersData?.data || [],
+                pagination.users.page
+            )
+        );
+
+        updatePagination(
+            "users",
+            usersData?.pagination
+        );
+
+    }, [usersData]);
+
+
 
     const {
         data: adminsData,
@@ -237,12 +357,19 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     } = useQuery({
         queryKey: ["admins"],
         queryFn: async () => {
-            const res = await commonRoutes.getAllUsers(null, null, "admin");
+
+            const res = await commonRoutes.getAllUsers(
+                null,
+                null,
+                "admin"
+            );
+
             return res.data;
         },
         enabled: isSuperAdmin,
         onError: () => toast.error("Admins fetch failed")
     });
+
 
 
     const {
@@ -251,92 +378,200 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         refetch: refetchForms,
         error: formsError
     } = useQuery({
-        queryKey: ["forms", selectedHostpital, selectedBranch, filter, pagination.forms.page],
+        queryKey: [
+            "forms",
+            selectedHostpital,
+            selectedBranch,
+            filter,
+            pagination.forms.page
+        ],
+
         queryFn: async () => {
+
             const res = await commonRoutes.getFilledForms(
                 filter,
-                pagination.forms,
+                pagination.forms.page,
                 isAdmin ? null : selectedBranch,
                 selectedHostpital
             );
-            // console.log("res", res);
 
             return res.data?.data;
         },
+
         enabled: !!selectedHostpital,
-        onError: () => toast.error("Forms fetch failed")
+
+        keepPreviousData: true,
+
+        onError: () =>
+            toast.error("Forms fetch failed")
     });
+
+    useEffect(() => {
+
+        if (!formsData) return;
+
+        setForms((prev) => ({
+            today: mergePaginatedData(
+                prev.today,
+                formsData?.forms?.today || [],
+                pagination.forms.page
+            ),
+
+            appointments: mergePaginatedData(
+                prev.appointments,
+                formsData?.forms?.appointments || [],
+                pagination.forms.page
+            ),
+
+            followups: mergePaginatedData(
+                prev.followups,
+                formsData?.forms?.followups || [],
+                pagination.forms.page
+            )
+        }));
+
+        setMetrics(formsData?.metrics || {});
+
+        updatePagination(
+            "forms",
+            formsData?.metrics?.pagination
+        );
+
+    }, [formsData]);
+
+
 
     const {
         data: auditLogsData,
         isLoading: auditLogsLoading,
         error: auditLogsError
     } = useQuery({
-        queryKey: ["auditLogs"],
+        queryKey: [
+            "auditLogs",
+            pagination.auditLogs.page
+        ],
+
         queryFn: async () => {
-            const res = await commonRoutes.getAuditLogs();
+
+            const res =
+                await commonRoutes.getAuditLogs(
+                    pagination.auditLogs
+                );
+
             return res.data;
         },
+
         enabled: isAdmin,
-        onError: () => toast.error("Audit logs failed")
+
+        keepPreviousData: true,
+
+        onError: () =>
+            toast.error("Audit logs failed")
     });
 
-    // ---------------- DERIVED ----------------
-
     useEffect(() => {
-        updatePagination("patients", patientsData?.pagination);
-    }, [patientsData]);
 
-    useEffect(() => {
-        const paginationData = formsData?.metrics?.pagination;
+        if (!auditLogsData) return;
 
-        if (!paginationData) return
-            ;
+        setAllLogs((prev) =>
+            mergePaginatedData(
+                prev,
+                auditLogsData?.data || [],
+                pagination.auditLogs.page
+            )
+        );
 
-        updatePagination("forms", paginationData);
+        updatePagination(
+            "auditLogs",
+            auditLogsData?.pagination
+        );
 
-    }, [
-        formsData?.metrics?.pagination?.page,
-        formsData?.metrics?.pagination?.totalDocument,
-        formsData?.metrics?.pagination?.totalPages
-    ]);
-
-    useEffect(() => {
-        updatePagination("users", usersData?.pagination);
-    }, [usersData]);
-
-    useEffect(() => {
-        updatePagination("auditLogs", auditLogsData?.pagination);
     }, [auditLogsData]);
+
+
+
+    useEffect(() => {
+
+        setPatients([]);
+
+        setPagination((prev) => ({
+            ...prev,
+            patients: {
+                ...prev.patients,
+                page: 1
+            }
+        }));
+
+    }, [selectedHostpital, selectedBranch, filter]);
+
+    useEffect(() => {
+
+        setForms({
+            today: [],
+            appointments: [],
+            followups: []
+        });
+
+        setPagination((prev) => ({
+            ...prev,
+            forms: {
+                ...prev.forms,
+                page: 1
+            }
+        }));
+
+    }, [selectedHostpital, selectedBranch, filter]);
+
+    useEffect(() => {
+
+        setUsers([]);
+
+        setPagination((prev) => ({
+            ...prev,
+            users: {
+                ...prev.users,
+                page: 1
+            }
+        }));
+
+    }, [selectedHostpital]);
+
+    useEffect(() => {
+
+        setAllLogs([]);
+
+        setPagination((prev) => ({
+            ...prev,
+            auditLogs: {
+                ...prev.auditLogs,
+                page: 1
+            }
+        }));
+
+    }, []);
+
+
 
     const hospitals = hospitalsData?.data || [];
     const branches = branchesData?.data || [];
-    const patients = patientsData?.data || [];
-
-    const users = usersData?.data || [];
     const admins = adminsData?.data || [];
-    const allLogs = auditLogsData?.data || [];
-    const analytics = dashboardData?.analytics || {};
-    const branchFollowups = dashboardData?.branchFollowups || {};
-    const codeAlerts = dashboardData?.codeAlerts || [];
-    const forms = {
-        today: formsData?.forms?.today || [],
-        appointments: formsData?.forms?.appointments || [],
-        followups: formsData?.forms?.followups || []
-    };
+
+    const analytics =
+        dashboardData?.analytics || {};
+
+    const branchFollowups =
+        dashboardData?.branchFollowups || {};
+
+    const codeAlerts =
+        dashboardData?.codeAlerts || [];
 
 
-
-    const metrics = formsData?.metrics || {};
-
-    // ---------------- LOADING & ERRORS ----------------
 
     const loading = {
         hospitals: hospitalsLoading,
         branches: branchesLoading,
         dashboard: dashboardLoading,
         patients: patientsRefetchLoader,
-
         users: usersLoading,
         admins: adminsLoading,
         forms: formsLoading,
@@ -349,6 +584,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             patientsLoading
     };
 
+
+
     const errors = {
         hospitals: hospitalsError,
         branches: branchesError,
@@ -360,7 +597,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         auditLogs: auditLogsError
     };
 
-    // ---------------- CONTEXT ----------------
+
 
     const contextValue = useMemo(() => ({
         hospitals,
@@ -386,8 +623,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
         filterOptions,
 
-
-
         setSelectedHostpital,
         setSelectedBranch,
         setPagination,
@@ -399,7 +634,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         loading,
         errors,
 
-
         refetchDashboard,
         refetchPatients,
         refetchHospital,
@@ -410,17 +644,17 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     }), [
         hospitals,
         branches,
-        codeAlertsData,
         patients,
         users,
-        branchCount,
         admins,
         allLogs,
+        branchCount,
         analytics,
         metrics,
         forms,
         codeAlerts,
         branchFollowups,
+        codeAlertsData,
         selectedHostpital,
         selectedBranch,
         pagination,
@@ -437,592 +671,3 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 };
 
 export default HospitalContext;
-// 
-
-// import React, {
-//     createContext,
-//     useCallback,
-//     useEffect,
-//     useMemo,
-//     useRef,
-//     useState
-// } from "react";
-
-// import { commonRoutes } from "../api/apiService";
-// import { UserContextHook } from "./UserContexts";
-// import { useApi } from "../api/useApi";
-// import toast from "react-hot-toast";
-
-// export const HospitalContext = createContext();
-
-// const filterOptions = [
-//     { key: "Today", value: "today" },
-//     { key: "Yesterday", value: "yesterday" },
-//     { key: "Last 7 Days", value: "last7" },
-//     { key: "Last 30 Days", value: "last30" },
-//     { key: "Last 3 Month", value: "last3M" }
-// ];
-
-// const defaultPagination = {
-//     page: 1,
-//     totalDocuments: 0,
-//     totalPages: 0,
-//     limit: 10
-// };
-
-// export const GlobalHospitalContextProvider = ({ children }) => {
-
-//     const { currentUser } = UserContextHook();
-//     const role = currentUser?.type?.toLowerCase();
-//     const isSuperAdmin = role === "superadmin" ? true : false
-//     const isSuperManager = role === "supermanager" ? true : false
-//     const isAdmin = ["superadmin", "admin"].includes(role);
-//     const isNonAdmin = ["supermanager", "teamleader", "executive"].includes(role);
-
-
-//     // ---------------- STATES ----------------
-//     const [hospitals, setHospitals] = useState([]);
-//     const [branches, setBranches] = useState([])
-//     const [branCount, setBranCount] = useState(0);
-//     const [selectedHostpital, setSelectedHostpital] = useState(
-//         isNonAdmin ? currentUser?.hospitals?.[0]?.hospitalId?._id || null : null);
-//     const [selectedBranch, setSelectedBranch] = useState(null)
-//     const [metrics, setMetrics] = useState({});
-//     const [analytics, setAnalytics] = useState({});
-//     const [branchFollowups, setBranchFollowups] = useState({ data: [], total: 0, page: 1, limit: 10 });
-//     const [hospitalCodeAlerts, sethospitalCodeAlerts] = useState([]);
-//     const [pagination, setPagination] = useState({
-//         patients: { ...defaultPagination },
-//         users: { ...defaultPagination },
-//         forms: { ...defaultPagination },
-//         auditLogs: { ...defaultPagination }
-//     });
-
-//     const [startDate, setStartDate] = useState({
-//         auditLogs: ''
-//     });
-//     const [endDate, setEndDate] = useState({
-//         auditLogs: ''
-//     });
-
-//     const [codeAlerts, setCodeAlerts] = useState([]);
-
-//     const [userData, setUserData] = React.useState([]);
-//     const [admins, setAdmins] = React.useState([])
-//     const [patients, setPatients] = useState([]);
-
-//     const [allLogs, setAllLogs] = useState([]);
-//     const [error, setError] = useState(null);
-
-//     const [filter, setFilter] = useState(
-//         filterOptions[0]?.value || ""
-//     );
-
-//     const [forms, setForms] = useState({
-//         today: [],
-//         appointments: [],
-//         followups: []
-//     });
-
-//     // ---------------- API ----------------
-
-//     const {
-//         loading: hospitalsLoading,
-//         request: getHospitals,
-//         error: hospitalsError
-//     } = useApi(commonRoutes.getAllHospital);
-
-//     const {
-//         loading: dashboardLoading,
-//         request: getDashboard,
-//         error: dashError
-//     } = useApi(commonRoutes.getDashboard);
-
-//     const {
-//         loading: alertLoading,
-//         request: getCodeAlerts
-//     } = useApi(commonRoutes.getCreatedCodeAlerts);
-
-//     const {
-//         loading: formLoading,
-//         request: getForms,
-//         error: formsError
-//     } = useApi(commonRoutes.getFilledForms);
-
-
-//     const {
-//         request: getAllUsers,
-//         loading: userLoading,
-//         error: usersError,
-//     } = useApi(commonRoutes.getAllUsers);
-
-
-//     const {
-//         loading: patientsLoading,
-//         request: getPatients,
-//         error: patientsError,
-//     } = useApi(commonRoutes.getPatients);
-
-//     const { request: fetchLogsRequest, loading: auditLogLoading, error: auditLogError } = useApi(commonRoutes.getAuditLogs);
-//     const { loading: branchesLoading, request: getBranches, error: branchesError } = useApi(commonRoutes.branchesByRole)
-//     const { loading: hosBranchesLoading, request: getHosBranches, error: hosBranchesError } = useApi(commonRoutes.getHospitalBranchById)
-
-
-//     const fetchHospitals = useCallback(async () => {
-
-//         try {
-
-//             const res = await getHospitals();
-
-//             const hospitalData = res?.data || [];
-
-//             setHospitals(hospitalData);
-
-//             if (hospitalData?.length) {
-
-//                 const firstHospital = hospitalData[0];
-
-//                 setSelectedHostpital(firstHospital?._id);
-
-//                 setBranCount(firstHospital?.branchCount || 0);
-//             }
-
-//         } catch (err) {
-//             console.error("Hospital Fetch Error:", err);
-//         }
-
-//     }, [getHospitals]);
-
-//     const fetchData = useCallback(async () => {
-//         try {
-//             const [res] = await Promise.all([
-//                 getBranches(selectedHostpital),
-//             ]);
-
-//             setBranches(res?.data || []);
-
-//             if (res?.data?.length) {
-//                 setSelectedBranch(res.data[0]?._id);
-//             }
-
-//         } catch (err) {
-//             console.error("Fetch Error:", err);
-//         }
-//     }, [selectedHostpital]);
-
-//     const fetchHospitalBranches = useCallback(async () => {
-//         if (!selectedHostpital || !isSuperManager) return
-
-//         try {
-//             const [res] = await Promise.all([
-//                 getHosBranches(selectedHostpital),
-//             ]);
-
-//             setBranches(res?.data || []);
-
-//             if (res?.data?.length) {
-//      
-//             }
-
-//         } catch (err) {
-//             console.error("Fetch Error:", err);
-//         }
-
-//     }, [selectedHostpital, selectedBranch, isSuperManager])
-//     // ---------------- FETCH FORMS ----------------
-
-//     const fetchForms = useCallback(async () => {
-
-//         if (!selectedHostpital) return;
-
-//         try {
-
-//             const res = await getForms(
-//                 filter,
-//                 pagination.forms,
-//                 null,
-//                 selectedHostpital
-//             );
-
-//             if (res?.data) {
-
-//                 const {
-//                     metrics,
-//                     forms: formsData
-//                 } = res.data;
-
-//                 setMetrics(metrics || {});
-
-//                 setForms((prev) => ({
-
-//                     today:
-//                         pagination.forms === 1
-//                             ? formsData?.today || []
-//                             : [
-//                                 ...prev.today,
-//                                 ...(formsData?.today || [])
-//                             ],
-
-//                     appointments:
-//                         pagination.forms === 1
-//                             ? formsData?.appointments || []
-//                             : [
-//                                 ...prev.appointments,
-//                                 ...(formsData?.appointments || [])
-//                             ],
-
-//                     followups:
-//                         pagination.forms === 1
-//                             ? formsData?.followups || []
-//                             : [
-//                                 ...prev.followups,
-//                                 ...(formsData?.followups || [])
-//                             ]
-
-//                 }));
-//             }
-
-//         } catch (err) {
-//             console.error("Forms Fetch Error:", err);
-//         }
-
-//     }, [
-//         filter,
-//         pagination.forms,
-//         selectedHostpital,
-//         getForms
-//     ]);
-
-//     // ---------------- FETCH DASHBOARD ----------------
-
-//     const fetchDashboard = useCallback(async () => {
-
-//         if (!selectedHostpital) return;
-//         if (isNonAdmin && !selectedBranch) return;
-
-//         try {
-
-//             const [dashboardRes, alertRes] = await Promise.all([
-//                 getDashboard(selectedBranch, selectedHostpital),
-//                 getCodeAlerts(selectedHostpital, selectedBranch)
-//             ]);
-
-//             if (dashboardRes?.data) {
-//                 const { analytics, branchFollowups } = dashboardRes.data;
-//                 setAnalytics(
-//                     analytics || {}
-//                 );
-//                 setBranchFollowups(branchFollowups)
-//             }
-
-//             setCodeAlerts(alertRes?.data || []);
-
-//         } catch (err) {
-//             console.error("Dashboard Fetch Error:", err);
-//         }
-
-//     }, [
-//         selectedHostpital,
-//         selectedBranch,
-//         getDashboard,
-//         getCodeAlerts
-//     ]);
-
-//     // ---------------- User Routes ----------------
-
-//     const fetchUsers = React.useCallback(async (selectedHostpital = null) => {
-//         try {
-//             const res = await getAllUsers(selectedHostpital);
-
-
-//             if (res.data) {
-//                 setUserData(res.data || []);
-//             }
-
-//         } catch (err) {
-//             console.error(err);
-//         }
-//     }, [selectedHostpital, getAllUsers]);
-
-//     const fetchAdmins = React.useCallback(async () => {
-//         try {
-//             const res = await getAllUsers(null, null, "admin");
-
-
-//             if (res.data) {
-//                 setAdmins(res.data || []);
-//             }
-
-//         } catch (err) {
-//             console.error(err);
-//         }
-//     }, [getAllUsers]);
-
-//     const fetchPatients = useCallback(async () => {
-//         if (!selectedHostpital) {
-//             setError("Hospital ID not found. Please select a hospital.");
-//             return;
-//         }
-//         if (isNonAdmin && !selectedBranch) {
-//             setError("Branch Id is Required");
-//             return;
-//         }
-//         try {
-//             const response = await getPatients(
-//                 null,
-//                 pagination.patients,
-//                 isNonAdmin ? selectedBranch : null,
-//                 selectedHostpital
-//             );
-
-//             if (response?.success) {
-//                 const flattenedData = response?.data || [];
-
-//                 setPatients(flattenedData);
-
-//                 // setPagination((prev) => ({
-//                 //     ...prev,
-//                 //     patients: 0,
-//                 // }));
-//             }
-//         } catch (err) {
-//             const errorMsg =
-//                 err?.response?.data?.message ||
-//                 err.message ||
-//                 "Failed to fetch patients";
-
-//             console.log(err);
-
-//             setError("Internal Server Error Please. Try Again later !");
-//             // toast.error(errorMsg);
-//         }
-//     }, [
-//         selectedHostpital,
-//         selectedBranch,
-//         pagination.patients?.page,
-//         isNonAdmin,
-//         getPatients
-//     ]);
-
-//     const fetchAuditLog = useCallback(async () => {
-//         try {
-//             const res = await fetchLogsRequest();
-
-//             if (res?.success) {
-//                 setAllLogs(prev => {
-//                     const newData = res.data || [];
-//                     return JSON.stringify(prev) === JSON.stringify(newData)
-//                         ? prev
-//                         : newData;
-//                 });
-//             }
-//         } catch (error) {
-//             console.error("Audit Log Fetch Error:", error);
-//         }
-//     }, [fetchLogsRequest]);
-
-//     React.useEffect(() => {
-//         if (selectedHostpital && isNonAdmin && !isSuperManager) {
-//             fetchData();
-//         }
-//     }, [selectedHostpital, isNonAdmin, isSuperManager, fetchData]);
-
-//     React.useEffect(() => {
-//         if (selectedHostpital && isSuperManager) {
-//             fetchHospitalBranches();
-//         }
-//     }, [selectedHostpital, isSuperManager, fetchHospitalBranches]);
-
-//     // Initial fetch
-//     React.useEffect(() => {
-//         fetchPatients();
-//     }, [fetchPatients]);
-
-//     React.useEffect(() => {
-//         fetchHospitals();
-//     }, [fetchHospitals]);
-
-
-//     React.useEffect(() => {
-//         if (selectedHostpital) {
-//             fetchUsers(selectedHostpital);
-//         }
-//     }, [fetchUsers]);
-
-//     React.useEffect(() => {
-//         if (isSuperAdmin) {
-//             fetchAdmins();
-//         }
-//     }, [fetchAdmins]);
-
-//     React.useEffect(() => {
-//         fetchForms();
-//     }, [fetchForms]);
-
-//     React.useEffect(() => {
-//         if (isNonAdmin && selectedBranch) {
-//             fetchDashboard();
-//         }
-//         else {
-//             fetchDashboard();
-//         }
-
-//     }, [fetchDashboard]);
-
-//     React.useEffect(() => {
-//         if (isAdmin) {
-//             fetchAuditLog();
-//         }
-
-//     }, [fetchAuditLog]);
-
-//     // ---------------- LOADING ----------------
-
-//     const errors = useMemo(() => ({
-//         hospitals: hospitalsError,
-//         dashboard: dashError,
-//         forms: formsError,
-//         usersError,
-//         patientsError,
-//         auditLogError,
-//         branchesError
-//     }), [
-//         hospitalsError,
-//         dashError,
-//         formsError,
-//         usersError,
-//         branchesError,
-//         patientsError,
-//         auditLogError
-//     ]);
-//     const loading = React.useMemo(() => ({
-//         hospitals: hospitalsLoading,
-//         dashboard: dashboardLoading,
-//         alerts: alertLoading,
-//         forms: formLoading,
-//         users: userLoading,
-//         patientsLoading,
-//         auditLogLoading,
-//         branchesLoading,
-
-//         isAnyLoading:
-//             hospitalsLoading ||
-//             dashboardLoading ||
-//             alertLoading ||
-//             formLoading ||
-//             userLoading
-//     }), [
-//         hospitalsLoading,
-//         dashboardLoading,
-//         alertLoading,
-//         formLoading,
-//         userLoading,
-//         patientsLoading,
-//         auditLogLoading,
-//         branchesLoading
-//     ]);
-
-//     // ---------------- CONTEXT VALUE ----------------
-
-//     const contextValue = useMemo(() => ({
-//         hospitals,
-//         selectedHostpital,
-//         branCount,
-
-//         startDate,
-//         endDate,
-
-//         metrics,
-//         analytics,
-
-//         pagination,
-//         filter,
-
-//         codeAlerts,
-//         forms,
-
-//         allLogs,
-
-
-//         loading,
-//         errors,
-
-//         hospitalsError,
-//         dashError,
-//         formsError,
-
-//         patients,
-
-
-//         userData,
-
-
-//         admins,
-//         branches,
-//         branchFollowups,
-
-//         filterOptions,
-
-//         setBranches,
-//         setBranchFollowups,
-//         setStartDate,
-//         setEndDate,
-//         setPatients,
-//         setUserData,
-//         setAllLogs,
-//         setAdmins,
-//         setHospitals,
-//         setPagination,
-//         setFilter,
-//         setSelectedHostpital,
-//         setSelectedBranch,
-//         isSuperAdmin,
-//         role,
-//         refetchLogs: fetchAuditLog,
-//         refetchForms: fetchForms,
-//         refetchDashboard: fetchDashboard,
-//         refetchHospitals: fetchHospitals,
-//         refreshPatients: fetchPatients
-
-//     }), [
-
-//         branches,
-//         startDate,
-//         endDate,
-//         hospitals,
-//         selectedHostpital,
-//         selectedBranch,
-//         branCount,
-//         branchFollowups,
-//         metrics,
-//         analytics,
-//         filterOptions,
-//         filter,
-
-//         codeAlerts,
-//         forms,
-
-//         loading,
-
-//         hospitalsError,
-//         dashError,
-//         formsError,
-
-//         role,
-//         isSuperAdmin,
-
-//         pagination,
-//         fetchForms,
-//         fetchDashboard,
-//         fetchHospitals,
-//         errors
-//     ]);
-
-//     return (
-//         <HospitalContext.Provider value={contextValue}>
-//             {children}
-//         </HospitalContext.Provider>
-//     );
-// };
-
-// export default HospitalContext;
