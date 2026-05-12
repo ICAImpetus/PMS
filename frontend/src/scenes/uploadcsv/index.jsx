@@ -79,7 +79,7 @@ const CSVUploader = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         file.uploadData = new Date().toISOString();
-        console.log('file is :', file);
+
 
         // if (file) {
         //     Papa.parse(file, {

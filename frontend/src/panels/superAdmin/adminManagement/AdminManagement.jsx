@@ -229,9 +229,6 @@ function AdminManagement() {
         },
     ];
 
-    console.log("admins:", admins);
-    console.log("type:", typeof admins);
-
     // Filter users based on search term (search by name only)
     const filteredUserData = (admins || []).filter((user) =>
         user?.name?.toLowerCase().includes(searchTerm.toLowerCase())

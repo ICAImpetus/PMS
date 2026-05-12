@@ -14,8 +14,6 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
   const { currentUser, setCurrentUser } = UserContextHook();
   const userType = currentUser?.type;
   const isSuperAdmin = userType === "superadmin";
-  console.log("currentUser", currentUser)
-
 
   // State for modal
   const [openProfileModal, setOpenProfileModal] = useState(false);
@@ -53,10 +51,9 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
         toast.error("User Not Found")
         return
       }
-      console.log("xxxxxxxxxxxx", profileForm);
 
       const res = await updateUser(profileForm?.mongoId, profileForm);
-      console.log("xxxxxxxxxxxx", profileForm);
+
       if (res?.success && res?.data) {
         localStorage.setItem(
           "current_user",
@@ -69,7 +66,6 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
         setOpenProfileModal(false);
 
       } else {
-        console.log("res", res);
         toast.error(res?.message || "Failed to update profile");
       }
     } catch (err) {
@@ -154,7 +150,6 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
         </div>
       </div>
 
-      {console.log("profileForm", profileForm)}
 
       {/* Update Profile Modal */}
       <Dialog open={openProfileModal} onClose={() => setOpenProfileModal(false)}>
@@ -233,7 +228,6 @@ export const CodeAnnousementPopup = ({ data, onClose, selectedHostpital, selecte
   const { loading: createCodeAlertLoading, request: createCodeAlert, error: createCodeAlertError } = useApi(commonRoutes.createCodeAlert)
   const floors = ["Ground Floor", "First Floor", "ICU"];
 
-  console.log("codeAlertsData", data);
 
   const [selectedCode, setSelectedCode] = useState(null);
 
@@ -286,7 +280,7 @@ export const CodeAnnousementPopup = ({ data, onClose, selectedHostpital, selecte
     }
   }, [createCodeAlertError])
 
-  console.log("data", data);
+
 
   return (
     <div className="modal-overlay">

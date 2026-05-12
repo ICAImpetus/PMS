@@ -16,8 +16,6 @@ export const createFilledForm = async (req, res) => {
 
     const data = req.body;
 
-    console.log("req.body", data);
-
     if (
       !hosId ||
       !branchId ||

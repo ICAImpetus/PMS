@@ -240,12 +240,9 @@ const ExecutiveDashboard = () => {
     Appointments: forms.appointments
   };
 
-  console.log("forms", forms);
+
 
   const formsData = formsDataMap[formsModalOpen] || [];
-
-
-  console.log("formformsData formsDatas", formsData);
   return (
     <div className="executive-dashboard-page">
 

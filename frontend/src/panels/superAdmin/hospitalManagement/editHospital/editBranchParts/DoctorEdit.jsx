@@ -812,13 +812,12 @@ const AddDoctorModal = ({
       };
       localStorage.setItem("added_suggestions", JSON.stringify(updated));
 
-      console.log("on sav", doctorToSave);
+
 
 
       onSave(doctorToSave);
     } else {
       const errorMessages = Object.values(errors).filter(Boolean);
-      console.log(errorMessages);
 
       toast.error(
         errorMessages.length > 0
@@ -1314,17 +1313,10 @@ const AddDoctorModal = ({
                                           response?.data?.success ||
                                           response?.status === 200 ||
                                           response?.status === "success";
-                                        console.log("Is success:", isSuccess);
 
                                         if (isSuccess) {
                                           // Extract data from different possible response structures
                                           const departmentData = response?.data?.data
-
-                                          console.log(
-                                            "Extracted department data:",
-                                            departmentData,
-                                          );
-
                                           const updatedDepartments = [
                                             departmentData,
                                             ...departments

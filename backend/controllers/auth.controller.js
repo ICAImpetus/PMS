@@ -63,8 +63,6 @@ export const createUser = async (req, res, next) => {
       userCreatedBy: req.user?.id || "system",
     });
 
-    console.log("User Created:", newUser.username);
-
     return res.status(201).json({
       success: true,
       message: "User created successfully",
@@ -84,7 +82,7 @@ export const createUser = async (req, res, next) => {
 export const userLogin = async (req, res, next) => {
   try {
     const { username, password } = req.body;
-    console.log("Login attempt:", { username });
+
 
     if (!env.jwtSecret) {
       return res.status(500).json({
@@ -162,7 +160,7 @@ export const userLogin = async (req, res, next) => {
 
     const token = jwt.sign(tokenPayload, env.jwtSecret);
 
-    console.log("user", userData);
+
 
     const result = {
       id: userData.ID,

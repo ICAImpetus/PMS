@@ -22,14 +22,13 @@ const AddHospitalData = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const handleSubmit = async (values, submitForm) => {
-    console.log("values are :", values);
+
     const response = await sendDataApiFunc(
       "addOrUpdateHospital",
       values,
       "post",
     );
     if (response.success) {
-      console.log("response is :", response);
       toast.success(response.message);
     } else {
       toast.error(response.message);

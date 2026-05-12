@@ -32,7 +32,7 @@ function DeleteConfirmationModal({
   confirmText = "Delete",
   cancelText = "Cancel",
 }) {
-  console.log("running delete confirmation modal");
+
   return (
     <Dialog
       open={open}

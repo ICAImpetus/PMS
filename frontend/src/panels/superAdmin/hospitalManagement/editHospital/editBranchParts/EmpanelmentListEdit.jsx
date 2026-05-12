@@ -114,8 +114,6 @@ const AddEmpanelmentListModal = ({
     }
   }, [open]);
 
-  console.log("availableDoctors", availableDoctors);
-
   // State for coverage areas fields
   const [doctorsForSelectedDepartment, setDoctorsForSelectedDepartment] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState(null); // Single department selection
@@ -208,14 +206,14 @@ const AddEmpanelmentListModal = ({
     if (!selectedDepartment) {
       setDoctorsForSelectedDepartment(availableDoctors);
     } else {
-      console.log("selected", selectedDepartment);
+
 
       const filteredDoctors = availableDoctors.filter(
         (doc) => doc.department?._id === selectedDepartment
       );
 
       setDoctorsForSelectedDepartment(filteredDoctors);
-      console.log("filteredDoctors", filteredDoctors);
+
     }
   }, [selectedDepartment, availableDoctors]);
 

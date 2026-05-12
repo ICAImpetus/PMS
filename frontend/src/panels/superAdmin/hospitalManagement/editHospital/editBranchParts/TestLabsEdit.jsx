@@ -350,7 +350,7 @@ const AddTestLabModal = ({
     (item) => item?.type === "serviceGroup"
   ) || [];
 
-  console.log("Current Test Lab State:", serviceGroup);
+
 
   return (
     <Dialog

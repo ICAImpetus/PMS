@@ -73,7 +73,6 @@ const UserFormAdmin = ({
   const [open, setOpen] = useState(false);
 
   const isUpdateComp = !!initialState;
-  console.log("isUpdateComp", initialState);
 
   const initialValues = useMemo(() => ({
     name: initialState?.name ?? "",
@@ -171,9 +170,6 @@ const UserFormAdmin = ({
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleClick = (event) => {
-    console.log("user", allUsers);
-    console.log("leaderHospital", initialState);
-
     const leader = initialState
     if (!leader?._id || !Array.isArray(allUsers)) {
       toast.error("Invalid data");
@@ -182,8 +178,6 @@ const UserFormAdmin = ({
 
 
     const leaderHospital = leader?.hospitals?.[0]?.hospitalId || leader?.hospitals?.[0]?._id;
-    console.log("leaderHospital", leaderHospital);
-
 
     if (!leaderHospital) {
       toast.error("Leader hospital missing");

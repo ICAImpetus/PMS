@@ -22,9 +22,7 @@ import {
   HospitalCreation,
   HospitalList,
   UserManagement,
-  DashboardOverview,
   AuditLogs,
-  SystemHealth,
 } from "./panels/superAdmin";
 
 import {
@@ -73,9 +71,6 @@ function App() {
   // const isLoggedIn = !!currentUser;
 
   const userRole = currentUser?.type;
-  console.log("app", currentUser);
-
-
   const hasAdminPrivileges = [
     "superadmin",
     "admin",
@@ -86,8 +81,6 @@ function App() {
 
   const adminRoutes = (
     <>
-      <Route path="/hospital/:id" element={<DashboardOverview />} />
-
       {userRole === "superadmin" && (
         <>
           <Route path="/admin-management" element={<AdminManagement />} />
@@ -135,7 +128,6 @@ function App() {
             <Route path="/" element={<AdminDashboard />} />
           )}
           <Route path="/audit-logs" element={<AuditLogs />} />
-          <Route path="/system-health" element={<SystemHealth />} />
           <Route path="/admin-audit-logs" element={<AuditLog />} />
         </>
       )}

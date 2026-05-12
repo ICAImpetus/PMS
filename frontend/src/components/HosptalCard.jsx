@@ -22,7 +22,7 @@ import hospitalImg from "../../src/assets/hospitalPlus.png";
 export default function HospitalCard({
   hostpitalData,
 
-  navigationFunction = () => {},
+  navigationFunction = () => { },
 
   avatarIcon = "",
 }) {
@@ -109,7 +109,7 @@ export default function HospitalCard({
 
               handleClose();
 
-              console.log("Edit clicked");
+
 
             }}
 
@@ -126,8 +126,6 @@ export default function HospitalCard({
               e.stopPropagation();
 
               handleClose();
-
-              console.log("Delete clicked");
 
             }}
 

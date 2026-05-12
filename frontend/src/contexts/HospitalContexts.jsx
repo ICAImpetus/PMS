@@ -61,6 +61,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
 
     const updatePagination = (key, newPagination) => {
+
+
         if (!newPagination) return;
 
         setPagination((prev) => {
@@ -81,13 +83,13 @@ export const GlobalHospitalContextProvider = ({ children }) => {
                 }
             };
         });
+
+
     };
 
     // ---------------- QUERIES (DESTRUCTURED) ----------------
 
     useEffect(() => {
-        console.log("currentUser", currentUser);
-
         if (currentUser?.hospitals?.length) {
             setSelectedHostpital(currentUser?.hospitals?.[0]?.hospitalId?._id || currentUser?.hospitals?.[0]?.hospitalId)
         }
@@ -289,8 +291,18 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     }, [patientsData]);
 
     useEffect(() => {
-        updatePagination("forms", formsData?.pagination);
-    }, [formsData]);
+        const paginationData = formsData?.metrics?.pagination;
+
+        if (!paginationData) return
+            ;
+
+        updatePagination("forms", paginationData);
+
+    }, [
+        formsData?.metrics?.pagination?.page,
+        formsData?.metrics?.pagination?.totalDocument,
+        formsData?.metrics?.pagination?.totalPages
+    ]);
 
     useEffect(() => {
         updatePagination("users", usersData?.pagination);

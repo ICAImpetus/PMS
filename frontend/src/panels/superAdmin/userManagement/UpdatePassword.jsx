@@ -134,7 +134,6 @@ const UpdatePasswordForm = ({ user, onClose }) => {
     }
     try {
       const response = await updateUserPassword(user.username, newPassword)
-      console.log("response is :", response);
       if (response.success) {
         alert("Password updated successfully" || response.message);
         onClose(); // Close the modal on success  

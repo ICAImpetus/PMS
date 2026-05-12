@@ -117,7 +117,6 @@ function UserManageMent() {
   };
 
   const handleDeleteUser = async (userId) => {
-    console.log("Deleting user with ID:", userId);
     // deleteUser(userId)
     setDeleteUserId(userId);
     setDeleteOpen(true);

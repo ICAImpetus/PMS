@@ -153,11 +153,8 @@ const AddHospitalData1 = ({
 
 
   const handleFormSubmit = async (values) => {
-    console.log("form values:", values);
 
     const formData = buildFormData(values);
-    console.log("formData", formData);
-
 
     const hospitalId = values._id || values.ID || values.id;
     const isEditing = Boolean(hospitalId);

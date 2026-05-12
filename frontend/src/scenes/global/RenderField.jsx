@@ -18,13 +18,13 @@ import dayjs from 'dayjs';
 import RatingWithLabels from '../outboundForm/RatingWithLabels';
 
 export const renderFieldInFormGeneration = (field, index, handleChange, readonly = false) => {
-    console.log('Rendering field:', field); // Debugging to log field
+
     //   console.log(formData); // Debugging
     //   const fieldValue = formData[field.name] || ''; // Use field.name dynamically
     // const fieldValue = field.name || ''; // Use field.name dynamically
-    const fieldValue =  ''; // Use field.name dynamically
+    const fieldValue = ''; // Use field.name dynamically
 
-    console.log('Field value:', fieldValue);
+
 
     const renderQuestion = field.question ? (
         <Typography variant="subtitle1" marginTop={3}>
@@ -59,7 +59,7 @@ export const renderFieldInFormGeneration = (field, index, handleChange, readonly
                         onChange={!readonly ? (e) => handleChange(field.name, e.target.value) : undefined}
                         fullWidth
                         margin="normal"
-                        // InputProps={{ readOnly: readonly }}
+                    // InputProps={{ readOnly: readonly }}
                     >
                         {field.options?.map((option) => (
                             <MenuItem key={option.value} value={option.value}>
@@ -121,15 +121,15 @@ export const renderFieldInFormGeneration = (field, index, handleChange, readonly
                                     <Checkbox
                                         checked={field.name?.includes(option.value) || false}
                                         onChange={
-                                             (e) => {
-                                                    const updatedValue = field.name || [];
-                                                    if (e.target.checked) {
-                                                        handleChange(field.name, [...updatedValue, option.value]);
-                                                    } else {
-                                                        handleChange(field.name, updatedValue.filter((val) => val !== option.value));
-                                                    }
+                                            (e) => {
+                                                const updatedValue = field.name || [];
+                                                if (e.target.checked) {
+                                                    handleChange(field.name, [...updatedValue, option.value]);
+                                                } else {
+                                                    handleChange(field.name, updatedValue.filter((val) => val !== option.value));
                                                 }
-                                                
+                                            }
+
                                         }
                                         disabled={readonly}
                                     />
@@ -151,14 +151,14 @@ export const renderFieldInFormGeneration = (field, index, handleChange, readonly
                             value={fieldValue ? dayjs(fieldValue) : null}
                             onChange={
                                 (date) => {
-                                        if (date) {
-                                            const formattedDate = dayjs(date).format('YYYY-MM-DD');
-                                            handleChange(field.name, formattedDate);
-                                        } else {
-                                            handleChange(field.name, null);
-                                        }
+                                    if (date) {
+                                        const formattedDate = dayjs(date).format('YYYY-MM-DD');
+                                        handleChange(field.name, formattedDate);
+                                    } else {
+                                        handleChange(field.name, null);
                                     }
-                             
+                                }
+
                             }
                             renderInput={(params) => (
                                 <TextField {...params} fullWidth margin="normal" InputProps={{ readOnly: readonly }} />
@@ -177,15 +177,15 @@ export const renderFieldInFormGeneration = (field, index, handleChange, readonly
                             label={field.label}
                             value={fieldValue ? dayjs(fieldValue, 'HH:mm') : null}
                             onChange={
-                               (time) => {
-                                        if (time && dayjs(time).isValid()) {
-                                            const formattedTime = dayjs(time).format('HH:mm');
-                                            handleChange(field.name, formattedTime);
-                                        } else {
-                                            handleChange(field.name, null);
-                                        }
+                                (time) => {
+                                    if (time && dayjs(time).isValid()) {
+                                        const formattedTime = dayjs(time).format('HH:mm');
+                                        handleChange(field.name, formattedTime);
+                                    } else {
+                                        handleChange(field.name, null);
                                     }
-                                    
+                                }
+
                             }
                             renderInput={(params) => (
                                 <TextField {...params} fullWidth margin="normal" InputProps={{ readOnly: readonly }} />

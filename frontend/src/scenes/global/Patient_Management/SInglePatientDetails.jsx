@@ -55,8 +55,6 @@ export const SInglePatientDetails = () => {
     const filteredVisits = useMemo(() => {
         let filtered = [...(visits || [])];
 
-        console.log("filtered", filtered);
-
 
         // Search by doctor name or department
         if (searchTerm.trim()) {

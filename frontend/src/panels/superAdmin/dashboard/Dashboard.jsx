@@ -373,7 +373,7 @@ const SuperAdminDashboard = () => {
 
   }, [errors]);
 
-  console.log("loadin", loading);
+
 
   if (loading?.dashboard) {
     return (
@@ -869,7 +869,7 @@ const SuperAdminDashboard = () => {
         </div>
       </div> */}
 
-      {/* Profile Modal */}
+
       {
         formsModalOpen && (
           <FilledFormsComponent

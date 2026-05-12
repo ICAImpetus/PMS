@@ -117,8 +117,6 @@ const UserForm = ({
     canDelete: initialState?.canDelete ?? false,
   }), [initialState, isUpdateComp, hospitalId]);
 
-  console.log("intial", initialValues);
-
 
   // const {
   //   request: checkUserNameApi,
@@ -182,7 +180,7 @@ const UserForm = ({
 
   const handleSubmitForm = async (values, { setSubmitting }) => {
     try {
-      console.log("values are :", values);
+
       setSubmitting(true); // Start loading state
 
 
@@ -195,7 +193,7 @@ const UserForm = ({
       valuesToSubmit.selectedBranch = valuesToSubmit?.selectedBranch?.map(
         (item) => isUpdateComp ? item?.branchId : item?._id
       ) || [];
-      console.log("selectedBranch are :", valuesToSubmit);
+
 
       if (isUpdateComp) {
         const response = await updateUser(initialState?._id, valuesToSubmit);
@@ -267,8 +265,7 @@ const UserForm = ({
           return errors;
         }}
         onSubmit={async (values, { resetForm, setSubmitting }) => {
-          // ... (onSubmit is unchanged) ...
-          console.log("vvalu", values);
+
 
           await handleSubmitForm(values, { setSubmitting });
           if (!isUpdateComp) {
@@ -468,7 +465,6 @@ const UserForm = ({
                       options={hospitalNames}
                       selectedOptions={values.hospitalName}
                       setSelectedOptions={(val) => {
-                        console.log("val", val);
 
                         setFieldValue("hospitalName", val);
                       }}

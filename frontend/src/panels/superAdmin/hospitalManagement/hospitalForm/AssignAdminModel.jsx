@@ -48,19 +48,15 @@ const AssignAdminModal = ({ open, onClose, onAssign, hospitalName }) => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      console.log("Fetching users...");
       const response = await getDataFunc("getAllUsers");
-      console.log("API Response:", response);
-
       if (response.success && response.data) {
-        console.log("Raw users data:", response.data);
         // Filter users that can be assigned (exclude patients, etc.)
         const assignableTypes = ["admin", "superManager"];
         const assignableUsers = response.data.filter((user) => {
-          console.log("Filtering user:", user.name, user.type);
+
           return user.type && assignableTypes.includes(user.type.toLowerCase());
         });
-        console.log("Filtered users:", assignableUsers);
+
         setAllAdmins(assignableUsers);
 
         if (assignableUsers.length === 0) {

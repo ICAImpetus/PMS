@@ -96,9 +96,6 @@ const FilledFormsComponent = ({
   const formsColumnFilterRef = useRef(null);
 
 
-  console.log("formsData-formsData", formsData);
-
-
   // useEffect(() => {
 
 

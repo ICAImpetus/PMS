@@ -179,17 +179,6 @@ const HospitalForm = () => {
         errors,
         touched,
       }) => {
-        // Debug: Log validation state
-        console.log("Validation state:", {
-          isValid,
-          errors,
-          touched,
-          values: {
-            name: values.name,
-            contactNumbers: values.contactNumbers,
-            branches: values.branches,
-          },
-        });
 
         // Use the validateObject function for cleaner validation
         const requiredFields = {
@@ -202,14 +191,6 @@ const HospitalForm = () => {
         };
 
         const manualIsValid = validateObject(requiredFields);
-
-        console.log("Required fields:", requiredFields);
-        console.log("Manual validation result:", manualIsValid);
-        console.log(
-          "Submit button should be:",
-          manualIsValid ? "ENABLED" : "DISABLED",
-        );
-
         return (
           <Form>
             <Box>

@@ -50,8 +50,6 @@ export const commonRoutes = {
   }),
 
   uploadBranchCSV: (hosId, branchId, formdata) => {
-    console.log("hosId", formdata);
-
     return API.post(`api/upload-branch-csv`, formdata, {
       params: {
         hosId,
@@ -60,8 +58,6 @@ export const commonRoutes = {
     })
   },
   addDoctor: (hosId, branchId, data) => {
-    console.log("hosId", branchId,);
-
     return API.post(`api/add-doctor`, data, {
       params: {
         hosId, branchId

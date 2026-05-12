@@ -223,7 +223,6 @@ function Forms() {
   };
 
   const handleDepartmentChange = async (depId) => {
-    console.log("Selected Department ID:", depId);
 
     handleChange("doctor", null);
     setSelectedDoctor(null);
@@ -244,16 +243,13 @@ function Forms() {
         Array.isArray(selectedDep.doctors) &&
         selectedDep.doctors?.length > 0
       ) {
-        console.log("Using doctors from populated department:", selectedDep.doctors);
         setSelectedDay(getDayName(form?.formData.dateTime) || null)
-        console.log("fille", selectedDep);
+
 
         setfilteredDoctors(selectedDep.doctors);
         return;
       }
 
-      // 3. Fallback: Filter from global dynamicDoctors (Branch-wide list)
-      console.log("Falling back to global doctor filter. Total branch doctors:", dynamicDoctors?.length);
       const updatedDoc = dynamicDoctors.filter((doc) => {
         const docDepId =
           typeof doc?.department === "object" && doc?.department !== null
@@ -261,8 +257,6 @@ function Forms() {
             : doc?.department;
         return String(docDepId) === String(depId);
       });
-
-      console.log("Filtered doctors for dep (fallback):", depId, updatedDoc);
 
       // 4. Error Handling: What if no doctors match?
       if (updatedDoc?.length === 0) {
@@ -286,15 +280,10 @@ function Forms() {
       return;
     }
 
-    console.log("doctor", doctor);
-
-
     // doctor set - save ID for form submission
     handleChange("doctor", doctor?._id);
     // set full object for UI card - immediate reflection
     setSelectedDoctor(doctor);
-
-    console.log("apt", doctor);
 
     const depId = doctor?.department?._id || doctor?.department;
 

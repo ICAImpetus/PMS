@@ -85,7 +85,7 @@ const chipStyles = {
 };
 
 const DoctorProfileCard = ({ doctor, hosId }) => {
-    console.log("doctor", doctor);
+
 
 
     const [profile, setProfile] = useState(null)

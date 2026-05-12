@@ -87,7 +87,7 @@ const UserForm = ({
 
 }) => {
 
-  console.log("hospitalId-hospitalId", initialState);
+
 
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -95,8 +95,6 @@ const UserForm = ({
   // ... (rest of your state)
 
   const isUpdateComp = !!initialState;
-  console.log("isUpdateComp", isUpdateComp);
-
   const initialValues = useMemo(() => ({
     name: initialState?.name ?? "",
     email: initialState?.email ?? "",
@@ -178,21 +176,16 @@ const UserForm = ({
 
   const handleSubmitForm = async (values, { setSubmitting }) => {
     try {
-      console.log("values are :", values);
+
       setSubmitting(true); // Start loading state
-
-
 
       let valuesToSubmit = { ...values };
       valuesToSubmit.hospitalName = [hospitalId]
-
-      console.log("valuesToSubmit before branch mapping are :", values);
 
       valuesToSubmit.selectedBranch = valuesToSubmit?.selectedBranch?.map(
         (item) => item?._id
       ) || [];
 
-      console.log("xxxxxit:", valuesToSubmit);
       // console.log("selectedBranch are :", valuesToSubmit);
 
       if (isUpdateComp) {
@@ -271,9 +264,6 @@ const UserForm = ({
           return errors;
         }}
         onSubmit={async (values, { resetForm, setSubmitting }) => {
-          // ... (onSubmit is unchanged) ...
-          console.log("vvalu", values);
-
           await handleSubmitForm(values, { setSubmitting });
           if (!isUpdateComp) {
             resetForm();
@@ -526,7 +516,6 @@ const UserForm = ({
                     </Grid>
                   )}
 
-                  {console.log("values", values)}
                   <Grid item xs={12}>
                     <TextField
                       variant="standard"
@@ -555,8 +544,7 @@ const UserForm = ({
                       values.type === "executive") && (
 
                       <>
-                        {console.log("brnahc", branchOptions)
-                        }
+
                         <Grid item xs={12}>
                           <MultiSelectDropdown
                             options={branchOptions}
@@ -579,7 +567,7 @@ const UserForm = ({
                   {/* Submit and Cancel Buttons */}
                   <Grid item xs={12} container spacing={2}>
                     <Grid item xs={12} sm={6}>
-                      {console.log(isUpdateComp)}
+
 
                       {isUpdateComp && isUpdateComp === true ? (
                         <Button

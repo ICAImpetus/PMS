@@ -25,7 +25,6 @@ export const oscillateRotation = {
 const CustomButton = ({ icon, children, sx = {}, ...props }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  console.log("colors are :", colors);
   return (
     <Box sx={{ position: "relative" }}>
       <style>{keyframes}</style> {/* Inject the keyframes animation */}

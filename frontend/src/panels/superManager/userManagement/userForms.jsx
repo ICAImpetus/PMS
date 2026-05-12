@@ -143,7 +143,7 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
 
   const handleSubmitForm = async (values) => {
     try {
-      console.log("values are :", values);
+
       // setSubmitting(true); // Start loading state
 
 
@@ -154,7 +154,6 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
       valuesToSubmit.selectedBranch = valuesToSubmit?.selectedBranch?.map(
         (item) => isUpdateComp ? item?.branchId : item?._id
       ) || [];
-      console.log("selectedBranch are :", valuesToSubmit);
 
       if (isUpdateComp) {
         const response = await updateUser(initialState?._id, valuesToSubmit);
@@ -229,8 +228,6 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
             try {
               //  ALWAYS convert to pure ID array
               if (!hospitalId) return;
-
-              console.log("Calling API with IDs:", hospitalId);
 
               const response = await getBranches(hospitalId);
 

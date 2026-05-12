@@ -105,9 +105,8 @@ function UserManagentAdmin() {
   }));
 
   const handleOpenUpdateModel = (row) => {
-    console.log("row data is :", row);
     const { id, ...rest } = row;
-    console.log("rest is :", rest);
+
     setUserUpdateData(rest);
     setUpdateOpen(true);
   };

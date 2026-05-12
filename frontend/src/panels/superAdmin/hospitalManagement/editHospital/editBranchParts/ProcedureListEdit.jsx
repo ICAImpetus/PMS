@@ -175,13 +175,7 @@ const AddProcedureModal = ({
       const selectedDepartment = departments.find(
         (dept) => dept._id === value
       );
-
-      // us department ke doctors set karo
-      console.log("sele", selectedDepartment);
-
       setDoctors(selectedDepartment?.doctors);
-      console.log("sele", doctors);
-
       // doctor selection reset karo
       setCurrentProcedure((prev) => ({
         ...prev,

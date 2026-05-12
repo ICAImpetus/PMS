@@ -231,10 +231,7 @@ export const AddHospital = async (req, res) => {
     const conn = await getConnection(dbName);
     const BranchModel = getBranchModel(conn);
 
-    // =========================
-    //  STEP 3: CREATE BRANCH(ES)
-    // =========================
-    console.log("hospitalData", hospitalData);
+
 
     if (!hospitalData?.itsBranch) {
       //  Parent hospital → multiple branches
@@ -341,11 +338,6 @@ export const updateHospitalById = async (req, res) => {
   const { id } = req.params;
   let hospitalData = sanitizeHospitalPayload(req.body || {});
 
-  // =========================
-  //  VALIDATION
-  // =========================
-
-  console.log("hospitalData", hospitalData);
 
   if (!id || !mongoose.isValidObjectId(id)) {
     return res.status(400).json({
@@ -700,13 +692,6 @@ export const updateHospital = async (req, res) => {
     }
 
     const { keyToUpdate, trimmedName, ...updateDoc } = hospitalData;
-    console.log(
-      "keyToUpdate ,trimmednmae,updatedoc",
-      keyToUpdate,
-      trimmedName,
-      updateDoc,
-    );
-
     if (!keyToUpdate) {
       return res
         .status(400)
@@ -1041,8 +1026,6 @@ export const getBranchesByRole = async (req, res) => {
 
     const BranchModel = getBranchModel(conn);
 
-    console.log("user.branches", user.branches);
-
     const branchIds = user.branches?.map(item => item.branchId) || [];
 
     const branches = await BranchModel.find({
@@ -1211,8 +1194,6 @@ export const addDoctor = async (req, res) => {
   let uploadedImageUrl = null;
   try {
     const { branchId, hosId } = req.query;
-    console.log(req.body);
-
 
     // Validate IDs
     if (
@@ -1414,7 +1395,7 @@ export const updateDoctor = async (req, res) => {
   let uploadedPublicId = null;
   let uploadedImageUrl = null;
 
-  console.log(req.body);
+
 
   try {
     const { id } = req.params;
@@ -1492,11 +1473,6 @@ export const updateDoctor = async (req, res) => {
       doctor.videoConsultation,
     );
 
-    // =============================
-    // IMAGE HANDLING
-    // =============================
-
-    console.log(" req.imageUrl", req.file);
 
     if (req.imageUrl) {
       uploadedPublicId = req.publicId;
@@ -1672,11 +1648,6 @@ export const updateDoctorStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { hosId, currentStatus } = req.query;
-
-    console.log("id", id);
-    console.log("hosId", hosId);
-    console.log("currentStatus", currentStatus);
-
 
     if (!id || !currentStatus) {
 
@@ -2064,8 +2035,6 @@ export const updateDepartment = async (req, res) => {
         { _id: { $in: newDoctorIds } },
         { $set: { department: departmentObjectId } },
       );
-
-      console.log("Doctors updated:", updateResult.modifiedCount);
 
       department.doctors = newDoctorIds;
     }
@@ -3089,8 +3058,6 @@ export const updateIPDAndDayCare = async (req, res, next) => {
       req.body;
 
     const { hosId, type } = req.query
-    console.log("hos", hosId);
-
 
     //  id & type check
     if (!id || !type) {
@@ -3311,7 +3278,7 @@ export const removeIPDAndDayCare = async (req, res) => {
 };
 
 export const createProcedure = async (req, res, next) => {
-  console.log(req.body);
+
 
   try {
     const {
@@ -3427,8 +3394,6 @@ export const createProcedure = async (req, res, next) => {
       "empanelmentType",
       empanelmentType
     );
-
-    console.log('empanelmentTypeIds', empanelmentTypeIds);
 
     const newProcedure = new ProcedureModel({
       branch: branchId,
@@ -3600,7 +3565,6 @@ export const updateProcedure = async (req, res, next) => {
       });
     }
 
-    console.log(req.body);
 
     // get suggestion ids
     const categoryIds = await updateSuggestions(conn, "procedureCategory", category);

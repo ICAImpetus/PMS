@@ -102,8 +102,6 @@ const AddIpdDetailsModal = ({ open, onClose, onSave, ipdData = null, departments
   // Handle changes for standard text fields and single selects
   const handleChange = (e) => {
     const { name, value } = e.target;
-    console.log("asdfg", name);
-    console.log("xdsfg", value);
 
     setCurrentIpdDetails((prev) => ({
       ...prev,

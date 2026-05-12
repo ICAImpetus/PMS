@@ -80,8 +80,7 @@ const EditHopsitalSuperadmin = () => {
         const response = await getDataFunc("hospitalsBasicInfo");
         // [];
         if (response.success) {
-          toast.success(response.message);
-          console.log("response.data", response.data);
+          toast.success(response.message)
           setData(response.data);
         } else {
           toast.error(response.message);
@@ -95,7 +94,6 @@ const EditHopsitalSuperadmin = () => {
   }, [open]);
 
   const deleteUser = async () => {
-    console.log("Deleting hospital with ID:", deleteHospitalId);
     try {
       const response = await sendDataApiFunc(
         `deleteHospital/${deleteHospitalId}`,
@@ -119,13 +117,12 @@ const EditHopsitalSuperadmin = () => {
   };
 
   const handleDeleteHospital = async (hospitalId) => {
-    console.log("Deleting hospital with ID:", hospitalId);
     setDeleteHospitalId(hospitalId);
     setDeleteOpen(true);
   };
 
   const handleOpenUpdateModel = (row) => {
-    console.log("row data is handleOpenUpdateModal:", row);
+
     setSelectedHospital(row);
     setOpen(true);
   };
@@ -226,7 +223,7 @@ const EditHopsitalSuperadmin = () => {
         alignItems={isSmallScreen ? "flex-start" : "center"} // Adjust alignment for mobile
         justifyContent={isSmallScreen ? "flex-start" : "space-between"} // Adjust spacing for mobile
         gap={isSmallScreen ? 2 : 0} // Add spacing between items for mobile
-        // mb={2} // Adds margin below the container
+      // mb={2} // Adds margin below the container
       >
         <Header
           title="Hospital Edit Management"

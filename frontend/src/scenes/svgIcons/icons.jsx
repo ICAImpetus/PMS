@@ -93,8 +93,8 @@ export const NoAccountCircleIcon = () => {
 export const BroadcastIcon = () => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
-    console.log('this is broadcast icon');
-    
+
+
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"

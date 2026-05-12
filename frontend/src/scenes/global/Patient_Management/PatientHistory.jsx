@@ -73,12 +73,17 @@ export const PatientHistory = () => {
     const filteredPatients = useMemo(() => {
         let filtered = [...patients];
 
-        // Search by patient name
+        // Search by patient name OR mobile
         if (searchName.trim()) {
+            const searchValue = searchName.toLowerCase().trim();
+
             filtered = filtered.filter((patient) =>
                 patient.patientName
                     ?.toLowerCase()
-                    .includes(searchName.toLowerCase())
+                    .includes(searchValue) ||
+                patient.patientMobile
+                    ?.toString()
+                    .includes(searchValue)
             );
         }
 
@@ -111,9 +116,6 @@ export const PatientHistory = () => {
 
         return filtered;
     }, [patients, searchName, startDate, endDate, formTypeFilter]);
-
-    console.log("filteredPatients", filteredPatients);
-
 
     // Export to CSV
     const handleExportCSV = () => {
@@ -314,7 +316,7 @@ export const PatientHistory = () => {
                                         </InputAdornment>
                                     ),
                                 }}
-                                placeholder="Enter patient name"
+                                placeholder="Enter Patient Name,PhoneNo"
                             />
                         </Grid>
                         {/* Start Date */}

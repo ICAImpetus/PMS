@@ -50,9 +50,9 @@ export default function Login({ setRefresh }) {
             //     body: data,
             //     call_back: handleResponse,
             // });
-            console.log("data", data);
+
             const response = await loginRequest(data);
-            console.log("currentUser", response);
+
             localStorage.setItem("token", response?.token)
             login(response?.result)
 
