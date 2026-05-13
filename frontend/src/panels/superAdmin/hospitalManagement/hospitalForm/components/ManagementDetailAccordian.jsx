@@ -5,9 +5,9 @@ import { Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { superAdminRoutes } from '../../../../../api/apiService';
 import { useState } from 'react';
 
-const ManagementDetailsAccordion = ({ values, handleChange, handleBlur, touched, errors, push, remove }) => {
+const ManagementDetailsAccordion = ({ values, handleChange, handleBlur, touched, errors, push, remove, setFieldValue }) => {
 
-  const [memberTypeSuggestions, setMemberTypeSuggestions] = useState(["Director", "CEO", "CFO", "COO", "Manager"]);
+  const [initialSuggestions, setInitialSuggestions] = useState(["Director", "CEO", "CFO", "COO", "Manager"]);
 
   React.useEffect(() => {
     const fetchSuggestions = async () => {
@@ -17,7 +17,7 @@ const ManagementDetailsAccordion = ({ values, handleChange, handleBlur, touched,
           const suggestions = response.data.data.map(item => item.value);
           // Merge with defaults and remove duplicates
           const uniqueSuggestions = [...new Set([...suggestions, "Director", "CEO", "CFO", "COO", "Manager"])];
-          setMemberTypeSuggestions(uniqueSuggestions);
+          setInitialSuggestions(uniqueSuggestions);
         }
       } catch (error) {
         console.error("Failed to fetch member type suggestions:", error);
@@ -25,6 +25,15 @@ const ManagementDetailsAccordion = ({ values, handleChange, handleBlur, touched,
     };
     fetchSuggestions();
   }, []);
+
+  // Compute combined suggestions: fetched + what's currently in the form
+  const memberTypeSuggestions = React.useMemo(() => {
+    const currentValues = (values.managementDetails ?? [])
+      .map(m => m.memberType)
+      .filter(val => typeof val === "string" && val.trim() !== "");
+    
+    return [...new Set([...initialSuggestions, ...currentValues])];
+  }, [initialSuggestions, values.managementDetails]);
 
   // Handle phone number input to allow only numeric values and limit to 10 digits
   const handlePhoneNumberChange = (event, fieldName) => {
@@ -50,13 +59,11 @@ const ManagementDetailsAccordion = ({ values, handleChange, handleBlur, touched,
                 freeSolo
                 options={memberTypeSuggestions}
                 value={member.memberType || null}
+                onInputChange={(event, newInputValue) => {
+                  setFieldValue(`managementDetails[${memberIndex}].memberType`, newInputValue);
+                }}
                 onChange={(event, newValue) => {
-                  handleChange({
-                    target: {
-                      name: `managementDetails[${memberIndex}].memberType`,
-                      value: newValue || ""
-                    }
-                  });
+                  setFieldValue(`managementDetails[${memberIndex}].memberType`, newValue || "");
                 }}
                 onBlur={handleBlur}
                 fullWidth

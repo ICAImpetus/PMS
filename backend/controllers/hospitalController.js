@@ -276,7 +276,7 @@ export const AddHospital = async (req, res) => {
         name: hospitalData?.name,
         contact: hospitalData?.contact,
         location: hospitalData?.corporateAddress,
-        contactNumbers: hospitalData?.cont || [],
+        contactNumbers: hospitalData?.contactNumbers || [],
         email: hospitalData?.email,
         code: hospitalData?.hospitalCode,
         beds: hospitalData?.beds,

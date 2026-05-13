@@ -380,6 +380,7 @@ const AddHospitalData1 = ({
                         errors={errors}
                         push={push}
                         remove={remove}
+                        setFieldValue={setFieldValue}
                       />
                     )}
                   </FieldArray>
