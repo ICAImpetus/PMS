@@ -809,3 +809,121 @@ export const getBookedSlotsController =
       });
     }
   };
+
+// Controller
+export const updateFormAppointmentController = async (
+  req,
+  res
+) => {
+
+  try {
+
+    const {
+      hosId,
+      branchId
+    } = req.query;
+
+    const {
+      formId,
+      doctor,
+      department,
+      dateTime,
+      patientArrivalTime,
+      status,
+      cancelReason
+    } = req.body;
+
+    if (!formId) {
+      return res.status(400).json({
+        success: false,
+        message: "Form ID is required"
+      });
+    }
+
+    const updateData = {};
+
+    // Update doctor only
+    if (doctor) {
+      updateData.doctor = doctor;
+    }
+
+    // Update department only
+    if (department) {
+      updateData.department =
+        department;
+    }
+
+    // Update appointment date only
+    if (dateTime) {
+      updateData[
+        "formData.dateTime"
+      ] = dateTime;
+    }
+
+    // Update arrival time only
+    if (patientArrivalTime) {
+      updateData[
+        "formData.patientArrivalTime"
+      ] = patientArrivalTime;
+    }
+
+    // Cancel appointment
+    if (status) {
+      updateData[
+        "formData.status"
+      ] = status;
+    }
+
+    if (cancelReason) {
+      updateData.cancelReason =
+        cancelReason;
+    }
+
+    const updatedForm =
+      await FilledFormsModel.findOneAndUpdate(
+        {
+          _id: formId,
+          hospital: hosId,
+          branch: branchId,
+          isDeleted: false,
+        },
+        {
+          $set: updateData
+        },
+        {
+          new: true
+        }
+      );
+
+    if (!updatedForm) {
+      return res.status(404).json({
+        success: false,
+        message: "Form not found"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message:
+        status === "Cancelled"
+          ? "Appointment cancelled successfully"
+          : "Appointment updated successfully",
+
+      data: updatedForm
+    });
+
+  } catch (error) {
+
+    console.log(
+      "updateFormAppointmentController error",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Internal server error",
+      error: error.message
+    });
+  }
+};

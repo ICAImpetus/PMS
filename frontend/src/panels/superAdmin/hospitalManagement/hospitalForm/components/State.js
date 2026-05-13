@@ -847,7 +847,6 @@ export const IndianStatesWithDistricts = {
     "Yanam"
   ]
 };
-
 export const CATEGORY = [
   // Basic
   { key: "Cash", label: "Cash" },
@@ -1089,7 +1088,6 @@ export const INBOUND_PURPOSE_OPTIONS = [
   { label: "Junk", value: "Junk" },
   { label: "Job Related", value: "Job Related" },
 ];
-
 export const OUTBOUND_PURPOSE_OPTIONS = [
   {
     label: "Appointment/Reschedule Appointment",
@@ -1186,3 +1184,72 @@ export const REFERENCE_OPTIONS = [
 
   { label: "NA", value: "NA" },
 ];
+
+const initialPatientDetails = {
+  patientName: "",
+  patientMobile: "",
+  alternateMobile: "",
+  patientArrivalTime: "",
+  patientAge: "",
+  gender: "",
+  status: "",
+  location: "",
+  category: "",
+};
+
+const initialFormData = {
+  callerType: "",
+  referenceFrom: "",
+  refDoctorName: "",
+  refHospitalName: "",
+  refHospitalLocation: "",
+  diagnosisOrTestName: "",
+  patientDetails: initialPatientDetails,
+  bookSlot: null,
+  missedConnectionStatus: "",
+  attendantDetails: {
+    attendantName: "",
+    attendantMobile: ""
+  },
+  informativeTopic: "",
+  informativeDetailsShared: "",
+  feedbackType: "",
+  noFeedbackRemarks: "",
+  notConnectedRemarks: "",
+  opdNumber: "",
+  marketingCampaignName: "",
+  marketingDetailsShared: "",
+  remarks: "",
+  callBack: "",
+  callDropReason: "",
+  connected: "",
+  disconnectionReason: "",
+  surgeryName: "",
+  healthPackageName: "",
+  healthSchemeName: "",
+  reportName: "",
+  issue: "",
+  ambulanceLocation: "",
+  ambulanceShared: "",
+  govertHealthSchemeName: "",
+  nonGovtHealthSchemeName: "",
+  dateTime: getCurrentDateTime(),
+  followupType: "",
+  status: "",
+  detailsShared: "",
+  slotDuration: "",
+  appointmentSlot: null,
+  patientArrivalTime: "",
+  useForFollowup: false
+};
+
+export const initialFormState = {
+  formType: "inbound",
+  purpose: "",
+  doctor: null,
+  department: null,
+  branchId: null,
+  hospitalId: null,
+  callStatus: "",
+  formData: initialFormData
+};

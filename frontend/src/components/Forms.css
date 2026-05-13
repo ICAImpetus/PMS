@@ -690,3 +690,104 @@ body {
   border: 1px solid lightgrey;
   border-radius: 7px;
 }
+
+.followup-container {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.followup-card {
+  flex: 1 1 300px;
+  min-width: 280px;
+  background: #f9fafb;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #111827;
+  font-size: 15px;
+}
+
+.checkbox-input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #7c3aed;
+}
+
+.input-label {
+  font-weight: 500;
+  color: #111827;
+  font-size: 15px;
+}
+
+.time-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+  background: #ffffff;
+}
+
+.time-input:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+.live-arrival-time {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #f3f0ff;
+  border: 1px solid #d8b4fe;
+  border-radius: 8px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.live-time-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.live-time-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #7c3aed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .followup-container {
+    flex-direction: column;
+    padding: 12px;
+  }
+
+  .followup-card {
+    width: 100%;
+    min-width: 100%;
+  }
+}

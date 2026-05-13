@@ -370,6 +370,14 @@ export const commonRoutes = {
       }
     }),
 
+  updateFormApi: (hosId, branchId, data) =>
+    API.put(`api/update-form`, data, {
+      params: {
+        hosId,
+        branchId
+      }
+    }),
+
 
 
   // addDoctor: (branchid, data) => API.post(`api/add-doctor/${branchid}`, data),

@@ -24,7 +24,7 @@ import {
 } from "@mui/material";
 import DoctorProfileCard from "./DoctorCard";
 import HospitalContext from "../contexts/HospitalContexts";
-import { CATEGORY, INBOUND_PURPOSE_OPTIONS, IndianStatesWithDistricts, OUTBOUND_PURPOSE_OPTIONS, REFERENCE_OPTIONS } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
+import { CATEGORY, INBOUND_PURPOSE_OPTIONS, IndianStatesWithDistricts, initialFormState, OUTBOUND_PURPOSE_OPTIONS, REFERENCE_OPTIONS } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
 import { useMemo } from "react";
 
 
@@ -37,6 +37,74 @@ const getCurrentDateTime = () => {
   );
 
   return local.toISOString().slice(0, 16);
+};
+
+const getPatientArrivalDateTime = (
+  appointmentSlot,
+  selectedDate
+) => {
+
+  if (!appointmentSlot || !selectedDate) {
+    return null;
+  }
+
+  // Extract only date
+  const onlyDate =
+    selectedDate.split("T")[0];
+
+  const fullDateTime =
+    `${onlyDate}T${appointmentSlot.start}:00`;
+
+  return new Date(fullDateTime);
+};
+
+const getRemainingTime = (
+  selectedDate,
+  patientArrivalTime
+) => {
+
+  if (!selectedDate || !patientArrivalTime) {
+    return "";
+  }
+
+  const onlyDate =
+    selectedDate.split("T")[0];
+
+  const arrivalDateTime = new Date(
+    `${onlyDate}T${patientArrivalTime}:00`
+  );
+
+  const diff =
+    arrivalDateTime.getTime() - Date.now();
+
+  if (diff <= 0) {
+    return "Patient Arrived";
+  }
+
+  const totalMinutes = Math.floor(
+    diff / (1000 * 60)
+  );
+
+  const days = Math.floor(
+    totalMinutes / (60 * 24)
+  );
+
+  const hours = Math.floor(
+    (totalMinutes % (60 * 24)) / 60
+  );
+
+  const minutes =
+    totalMinutes % 60;
+
+  if (days > 0) {
+    return `${days} Day ${hours} Hr left`;
+  }
+
+  if (hours > 0) {
+    return `${hours} Hr ${minutes} Min left`;
+  }
+
+  return `${minutes} Min left`;
 };
 
 const getDayName = (dateTime) => {
@@ -61,85 +129,10 @@ function Forms() {
   const [selectedDay, setSelectedDay] = useState(null);
   const [bookedSlotIds, setBookedSlotIds] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
-  const [bookedSlotModal, setBookedSlotModal] =
-    useState({
-      open: false,
-      slot: null,
-    });
-
-  const [bookedSlotAction, setBookedSlotAction] =
-    useState("");
-
-  const [cancelReason, setCancelReason] =
-    useState("");
-  const initialPatientDetails = {
-    patientName: "",
-    patientMobile: "",
-    alternateMobile: "",
-    patientAge: "",
-    gender: "",
-    status: "",
-    location: "",
-    category: "",
-  };
-
-  const initialFormData = {
-    callerType: "",
-    referenceFrom: "",
-    refDoctorName: "",
-    refHospitalName: "",
-    refHospitalLocation: "",
-    diagnosisOrTestName: "",
-    patientDetails: initialPatientDetails,
-    bookSlot: null,
-    missedConnectionStatus: "",
-    attendantDetails: {
-      attendantName: "",
-      attendantMobile: ""
-    },
-    informativeTopic: "",
-    informativeDetailsShared: "",
-    feedbackType: "",
-    noFeedbackRemarks: "",
-    notConnectedRemarks: "",
-    opdNumber: "",
-    marketingCampaignName: "",
-    marketingDetailsShared: "",
-    remarks: "",
-    callBack: "",
-    callDropReason: "",
-    connected: "",
-    disconnectionReason: "",
-    surgeryName: "",
-    healthPackageName: "",
-    healthSchemeName: "",
-    reportName: "",
-    issue: "",
-    ambulanceLocation: "",
-    ambulanceShared: "",
-    govertHealthSchemeName: "",
-    nonGovtHealthSchemeName: "",
-    dateTime: getCurrentDateTime(),
-    followupType: "",
-    status: "",
-    detailsShared: "",
-    slotDuration: "",
-    appointmentSlot: null,
-    patientArrivalTime: getCurrentDateTime(),
-    useForFollowup: false
-  };
-
-  const initialFormState = {
-    formType: "inbound",
-    purpose: "",
-    doctor: null,
-    department: null,
-    branchId: null,
-    hospitalId: null,
-    callStatus: "",
-    formData: initialFormData
-  };
-
+  const [liveTime, setLiveTime] = useState("");
+  const [bookedSlotModal, setBookedSlotModal] = useState({ open: false, slot: null, });
+  const [bookedSlotAction, setBookedSlotAction] = useState("");
+  const [cancelReason, setCancelReason] = useState("");
   const [form, setForm] = useState(initialFormState);
   const { request: getSingleBranch, error: getSingleBranchError, loading: getSingleBranchLoading } = useApi(commonRoutes.getBranchById)
   const { request: saveFilledForm, error: saveFilledFormError, loading: saveFilledFormLoading } = useApi(commonRoutes.saveFilledForm)
@@ -149,6 +142,14 @@ function Forms() {
     loading: getBookedSlotsLoading,
   } = useApi(
     commonRoutes.getBookedSlotsApi
+  );
+
+  const {
+    request: updateFormApi,
+    error: updateFormApiError,
+    loading: updateFormApiLoading,
+  } = useApi(
+    commonRoutes.updateFormApi
   );
   const {
     loading,
@@ -371,6 +372,56 @@ function Forms() {
 
   }, [form.purpose])
 
+
+  useEffect(() => {
+
+    const slotStart =
+      form.formData.appointmentSlot?.start;
+
+    if (
+      form.formData.dateTime &&
+      slotStart &&
+      form.formData.patientArrivalTime !== slotStart
+    ) {
+
+      handleChange(
+        "formData.patientArrivalTime",
+        slotStart
+      );
+    }
+
+  }, [
+    form.formData.dateTime,
+    form.formData.appointmentSlot?.start
+  ]);
+  useEffect(() => {
+
+    const updateLiveTime = () => {
+
+      const time =
+        getRemainingTime(
+          form.formData.dateTime,
+          form.formData.patientArrivalTime
+        );
+
+      setLiveTime(time);
+    };
+
+    updateLiveTime();
+
+    const interval = setInterval(
+      updateLiveTime,
+      60000
+    );
+
+    return () => clearInterval(interval);
+
+  }, [
+    form.formData.dateTime,
+    form.formData.patientArrivalTime
+  ]);
+
+
   const allLocations = Object.entries(IndianStatesWithDistricts)
     .flatMap(([state, districts]) =>
       districts.map((district) => ({
@@ -380,7 +431,22 @@ function Forms() {
       }))
     );
 
+  const isPastSlot = (slotStart, selectedDate) => {
 
+    if (!slotStart || !selectedDate) {
+      return false;
+    }
+
+    // Extract only date part
+    const onlyDate =
+      selectedDate.split("T")[0];
+
+    const slotDateTime = new Date(
+      `${onlyDate}T${slotStart}:00`
+    );
+
+    return slotDateTime < new Date();
+  };
 
   const renderInboundPurposeDetails = () => {
     switch (form.formType === "inbound" && form.purpose) {
@@ -483,10 +549,13 @@ function Forms() {
             </div> */}
 
             {/* Available Slots Display - Button Style for Easy Selection */}
-            {selectedDoctor &&
+            {
+              selectedDoctor &&
               selectedDoctor?.slots?.length > 0 && (
                 <div>
+
                   <div className="input-group">
+
                     <label className="required">
                       Select Appointment Slot
                     </label>
@@ -501,8 +570,10 @@ function Forms() {
                         padding: "10px 0",
                       }}
                     >
+
                       {selectedDoctor.slots.map(
                         (slot, index) => {
+
                           const startHour = Number(
                             slot.start.split(":")[0]
                           );
@@ -513,6 +584,7 @@ function Forms() {
                               : "Evening";
 
                           const formatTime = (time) => {
+
                             const [hour, minute] =
                               time.split(":");
 
@@ -532,24 +604,40 @@ function Forms() {
                               form.formData
                                 .appointmentSlot?.slotId
                             ) === String(slot._id);
-                          // IMPORTANT
+
                           const isBooked =
                             bookedSlotsSet.has(
                               String(slot._id)
                             );
 
+                          // NEW
+                          const isPast =
+                            isPastSlot(
+                              slot.start,
+                              form.formData.dateTime
+                            );
+
+                          const isDisabled = isPast;
+
                           return (
                             <button
                               key={index}
                               type="button"
-                              // disabled={isBooked}
+                              disabled={isDisabled}
+
                               onClick={() => {
+
                                 if (isBooked) {
+
                                   setBookedSlotModal({
                                     open: true,
                                     slot,
                                   });
 
+                                  return;
+                                }
+
+                                if (isPast) {
                                   return;
                                 }
 
@@ -559,6 +647,7 @@ function Forms() {
                                     slotId: slot._id,
 
                                     start: slot.start,
+
                                     end: slot.end,
 
                                     date:
@@ -567,29 +656,37 @@ function Forms() {
                                   }
                                 );
                               }}
+
                               style={{
                                 padding: "10px 12px",
-                                cursor: "pointer",
+
+                                cursor:
+                                  isDisabled
+                                    ? "not-allowed"
+                                    : "pointer",
+
                                 border:
                                   "1px solid #ddd",
 
                                 borderRadius: "6px",
 
                                 backgroundColor:
-                                  isBooked
-                                    ? "#a0afbc"
-                                    : isSelected
-                                      ? "#1976d2"
-                                      : "#f5f5f5",
+                                  isPast
+                                    ? "#ececec"
+                                    : isBooked
+                                      ? "#a0afbc"
+                                      : isSelected
+                                        ? "#1976d2"
+                                        : "#f5f5f5",
 
                                 color:
                                   isSelected
                                     ? "white"
                                     : isBooked
                                       ? "#d32f2f"
-                                      : "#333",
-
-                                // cursor:"c",
+                                      : isPast
+                                        ? "#888"
+                                        : "#333",
 
                                 fontSize: "13px",
 
@@ -599,7 +696,7 @@ function Forms() {
                                     : "normal",
 
                                 opacity:
-                                  isBooked ? 0.7 : 1,
+                                  isDisabled ? 0.7 : 1,
 
                                 transition:
                                   "all 0.2s ease",
@@ -607,6 +704,7 @@ function Forms() {
                                 textAlign: "left",
                               }}
                             >
+
                               <div
                                 style={{
                                   fontSize: "11px",
@@ -634,14 +732,32 @@ function Forms() {
                                   Booked
                                 </div>
                               )}
+
+                              {isPast && (
+                                <div
+                                  style={{
+                                    marginTop: 4,
+                                    fontSize: 11,
+                                    color: "#888",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  Expired
+                                </div>
+                              )}
+
                             </button>
                           );
                         }
                       )}
+
                     </div>
+
                   </div>
+
                 </div>
-              )}
+              )
+            }
             {/* Patient Arrival Time for No Slots - Separate Date and Time */}
             {form.formData.slotDuration === "no-slots" && (
               <div className="input-row">
@@ -671,36 +787,90 @@ function Forms() {
               </div>
             )}
 
-            <div className="input-row">
-              <div className="input-group">
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="input-group textarea-field-container">
+              <label className="required">Patient Status</label>
+              <div className="followup-container">
+                {/* Follow-up Checkbox */}
+                <div className="followup-card">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={form.formData.useForFollowup}
+                      onChange={(e) =>
+                        handleChange("formData.useForFollowup", e.target.checked)
+                      }
+                      className="checkbox-input"
+                    />
+
+                    <span>Useful for Making Follow-up Patients</span>
+                  </label>
+                </div>
+
+                {/* Patient Arrival Time */}
+                <div className="followup-card">
+
+                  <label className="input-label">
+                    Patient Arrival Time
+                  </label>
+
                   <input
-                    type="checkbox"
-                    checked={form.formData.useForFollowup}
+                    type="time"
+                    value={form.formData.patientArrivalTime || ""}
                     onChange={(e) =>
-                      handleChange("formData.useForFollowup", e.target.checked)
+                      handleChange(
+                        "formData.patientArrivalTime",
+                        e.target.value
+                      )
                     }
-                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                    className="time-input"
                   />
-                  <span>Useful for Making Follow-up Patients</span>
-                </label>
+
+                  {
+                    form.formData.appointmentSlot?.start && (
+                      <small className="slot-time-helper">
+                        Auto-filled from selected slot (
+                        {form.formData.appointmentSlot.start}
+                        )
+                      </small>
+                    )
+                  }
+
+                  {
+                    liveTime && (
+                      <div className="live-arrival-time">
+
+                        <span className="live-time-label">
+                          Patient will arrive in:
+                        </span>
+
+                        <span className="live-time-value">
+                          {console.log("Patient will arrive in: ", liveTime)
+                          }
+                          {liveTime}
+                        </span>
+
+                      </div>
+                    )
+                  }
+
+                </div>
+
               </div>
             </div>
 
-            <div className="input-row">
-              <div className="input-group textarea-field-container">
-                <label className="required">Remarks</label>
+            <div className="input-group textarea-field-container">
+              <label className="required">Remarks</label>
 
-                <textarea
-                  className="textarea-field"
-                  value={form.formData.remarks}
-                  onChange={(e) =>
-                    handleChange("formData.remarks", e.target.value)
-                  }
-                  required
-                  rows="3"
-                />
-              </div>
+              <textarea
+                className="textarea-field"
+                value={form.formData.remarks}
+                onChange={(e) =>
+                  handleChange("formData.remarks", e.target.value)
+                }
+                required
+                rows="3"
+              />
+
             </div>
 
 

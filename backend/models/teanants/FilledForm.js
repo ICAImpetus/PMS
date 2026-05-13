@@ -150,7 +150,14 @@ export const FilledFormSchema = new mongoose.Schema(
         start: String,
 
         end: String,
-      }
+      },
+      patientArrivalTime: {
+        type: String,
+      },
+      isCancelApp: {
+        type: Boolean,
+      },
+      cancelReason: String,
     },
     isDeleted: { type: Boolean, default: false },
   },
