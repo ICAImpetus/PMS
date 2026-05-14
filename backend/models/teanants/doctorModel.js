@@ -1,5 +1,16 @@
 import mongoose from "mongoose";
 
+const toTitleCase = (str) => {
+  if (!str) return str;
+
+  return str
+    .toLowerCase()
+    .split(" ")
+    .map(
+      (word) => word.charAt(0).toUpperCase() + word.slice(1)
+    )
+    .join(" ");
+};
 const SlotSchema = new mongoose.Schema(
   {
     start: {
@@ -52,8 +63,8 @@ export const DoctorSchema = new mongoose.Schema(
     },
     name: {
       type: String,
-
       trim: true,
+      set: toTitleCase,
     },
     averagePatientTime: {
       type: String,
@@ -183,9 +194,9 @@ export const DoctorSchema = new mongoose.Schema(
       type: String,
     },
 
-    masters: {
+    specialization: {
       type: String,
-      enum: ["Surgeon", "Physician"],
+      toLowerCase: true,
     },
 
     title: {
@@ -217,6 +228,8 @@ export const DoctorSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+
 
 // const DoctorModel = mongoose.model("Doctor", doctorSchema);
 // export default DoctorModel;

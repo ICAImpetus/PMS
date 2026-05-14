@@ -1287,7 +1287,7 @@ export const addDoctor = async (req, res) => {
       name: body.name,
       type: body?.type,
       designation: body.designation,
-      masters: body?.masters,
+      specialization: body?.specialization,
       title: body.title,
       opdNo: body.opdNo,
       averagePatientTime: body?.averagePatientTime,
@@ -1537,7 +1537,7 @@ export const updateDoctor = async (req, res) => {
     doctor.title = body.title ?? doctor.title;
     doctor.designation = body.designation ?? doctor.designation;
     doctor.opdNo = body.opdNo ?? doctor.opdNo;
-    doctor.masters = body.masters ?? doctor.masters;
+    doctor.specialization = body.specialization ?? doctor.specialization;
     doctor.subDepartment = body.subDepartment ?? doctor.subDepartment;
     doctor.type = body.type ?? doctor.type;
     doctor.averagePatientTime = body?.averagePatientTime ?? doctor?.averagePatientTime,
@@ -6611,196 +6611,473 @@ export const uploadBranchCSV = async (req, res) => {
     });
   }
 };
+const normalize = (value = "") => {
+  return value
+    .toString()
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+};
 
-const uploadDoctorCSV = async ({ conn, branchId, rows, normalize, session }) => {
+const uploadDoctorCSV = async ({
+  conn,
+  branchId,
+  rows,
+  session,
+}) => {
   try {
-    const DepartmentModel = getDepartmentModel(conn);
-    const DoctorModel = getDoctorModel(conn);
+    const DepartmentModel =
+      getDepartmentModel(conn);
 
-    const branchObjectId = toObjectId(branchId);
+    const DoctorModel =
+      getDoctorModel(conn);
+
+    const branchObjectId =
+      toObjectId(branchId);
 
     const splitComma = (val) =>
-      val ? val.split(",").map((v) => v.trim()) : [];
+      val
+        ? val
+          .split(",")
+          .map((v) => v.trim())
+          .filter(Boolean)
+        : [];
 
-    //  STEP 0: Existing Doctors (for duplicate check)
-    const doctorNamesSet = new Set(
-      rows.map((r) => normalize(r.name)).filter(Boolean)
-    );
+    const cleanPhone = (val) => {
+      if (!val) return "";
 
-    const existingDoctors = await DoctorModel.find({
-      branch: branchObjectId,
-      isDeleted: false,
-      name: { $in: Array.from(doctorNamesSet) },
-    }).select("name").lean();
+      return val
+        .toString()
+        .replace(/\D/g, "");
+    };
 
-    const existingDoctorSet = new Set(
-      existingDoctors.map((d) => normalize(d.name))
-    );
+    // =========================
+    // EXISTING DOCTORS
+    // =========================
 
-    //  STEP 1: Departments fetch
-    const departments = await DepartmentModel.find({
-      branch: branchObjectId,
-      isDeleted: false,
-    }).session(session);
+    const existingDoctors =
+      await DoctorModel.find({
+        branch: branchObjectId,
+        isDeleted: false,
+      })
+        .select("name")
+        .lean();
+
+    const existingDoctorSet =
+      new Set(
+        existingDoctors.map((d) =>
+          normalize(d.name)
+        )
+      );
+
+    // =========================
+    // EXISTING DEPARTMENTS
+    // =========================
+
+    const departments =
+      await DepartmentModel.find({
+        branch: branchObjectId,
+        isDeleted: false,
+      }).session(session);
 
     const deptMap = {};
-    departments.forEach((d) => {
-      deptMap[normalize(d.name)] = d._id;
+
+    departments.forEach((dept) => {
+      const key = normalize(dept.name);
+
+      deptMap[key] = dept._id;
+
+      console.log(
+        "EXISTING DEPT =>",
+        dept.name,
+        key,
+        dept._id
+      );
     });
 
-    const newDepartments = [];
+    // =========================
+    // CREATE NEW DEPARTMENTS
+    // =========================
+
+    const newDepartmentsMap = {};
+
+    for (const row of rows) {
+      const deptName =
+        row?.department?.trim();
+
+      if (!deptName) continue;
+
+      const normalizedDept =
+        normalize(deptName);
+
+      if (
+        !deptMap[normalizedDept] &&
+        !newDepartmentsMap[
+        normalizedDept
+        ]
+      ) {
+        newDepartmentsMap[
+          normalizedDept
+        ] = {
+          name: deptName,
+          branch: branchObjectId,
+        };
+      }
+    }
+
+    const newDepartments =
+      Object.values(newDepartmentsMap);
+
+    if (newDepartments.length > 0) {
+      const createdDepartments =
+        await DepartmentModel.insertMany(
+          newDepartments,
+          { session }
+        );
+
+      createdDepartments.forEach(
+        (dept) => {
+          const key = normalize(
+            dept.name
+          );
+
+          deptMap[key] = dept._id;
+
+          console.log(
+            "NEW DEPT =>",
+            dept.name,
+            key,
+            dept._id
+          );
+        }
+      );
+    }
+
+    console.log(
+      "FINAL DEPT MAP =>",
+      deptMap
+    );
+
+    // =========================
+    // PROCESS DOCTORS
+    // =========================
+
     const doctorsToInsert = [];
 
-    //  STEP 2: Collect new departments
     for (const row of rows) {
-      const deptName = normalize(row.department);
+      try {
+        if (!row?.name?.trim())
+          continue;
 
-      if (row.department && !deptMap[deptName]) {
-        deptMap[deptName] = "PENDING";
+        const normalizedName =
+          normalize(row.name);
 
-        newDepartments.push({
-          name: row.department.trim(),
+        // DUPLICATE SKIP
+
+        if (
+          existingDoctorSet.has(
+            normalizedName
+          )
+        ) {
+          console.log(
+            "DUPLICATE SKIPPED =>",
+            row.name
+          );
+
+          continue;
+        }
+
+        existingDoctorSet.add(
+          normalizedName
+        );
+
+        const surgeries =
+          await updateSuggestions(
+            conn,
+            "surgery",
+            row?.surgeries || []
+          );
+
+        const specialties =
+          await updateSuggestions(
+            conn,
+            "speciality",
+            row?.specialties || []
+          );
+
+        // =========================
+        // DEPARTMENT MATCH
+        // =========================
+
+        const normalizedDept =
+          normalize(
+            row?.department || ""
+          );
+
+        const departmentId =
+          deptMap[normalizedDept];
+
+        console.log(
+          "DEPARTMENT CHECK =>",
+          {
+            original:
+              row?.department,
+            normalized:
+              normalizedDept,
+            departmentId,
+          }
+        );
+
+        doctorsToInsert.push({
           branch: branchObjectId,
+
+          department:
+            departmentId || null,
+
+          name:
+            row?.name?.trim(),
+
+          specialization:
+            row?.specialization?.trim() ||
+            "",
+
+          title:
+            row?.title?.trim() ||
+            "",
+
+          opdNo:
+            row?.opdNo?.trim() ||
+            "",
+
+          type:
+            row?.type
+              ?.trim()
+              ?.toLowerCase() ||
+            "visiting",
+
+          contactNumber:
+            cleanPhone(
+              row?.contactNumber
+            ),
+
+          whatsappNumber:
+            cleanPhone(
+              row?.whatsappNumber
+            ),
+
+          designation:
+            row?.designation?.trim() ||
+            "",
+
+          additionalInfo:
+            row?.additionalInfo?.trim() ||
+            "",
+
+          floor:
+            row?.floor?.trim() ||
+            "",
+
+          degrees: splitComma(
+            row?.degrees
+          ),
+
+          specialties,
+
+          surgeries,
+
+          experience:
+            Number(
+              row?.experience
+            ) || 0,
+
+          consultationCharges:
+            Number(
+              row?.consultationCharges
+            ) || 0,
+
+          teleMedicine:
+            row?.teleMedicine ===
+              "TRUE"
+              ? "Yes"
+              : "No",
+
+          timings: {
+            morning: {
+              start:
+                row?.morningStart?.trim() ||
+                "",
+
+              end:
+                row?.morningEnd?.trim() ||
+                "",
+            },
+
+            evening: {
+              start:
+                row?.eveningStart?.trim() ||
+                "",
+
+              end:
+                row?.eveningEnd?.trim() ||
+                "",
+            },
+
+            custom: {
+              start:
+                row?.customStart?.trim() ||
+                "",
+
+              end:
+                row?.customEnd?.trim() ||
+                "",
+            },
+          },
+
+          videoConsultation: {
+            enabled:
+              row?.videoEnabled ===
+              "TRUE",
+
+            charges:
+              Number(
+                row?.videoCharges
+              ) || 0,
+
+            days: row?.videoDays
+              ? row.videoDays
+                .split(",")
+                .map((d) =>
+                  d.trim()
+                )
+                .filter(Boolean)
+              : [],
+
+            timeSlot:
+              row?.videoTimeSlot ||
+              "",
+
+            startTime:
+              row?.videoStartTime ||
+              "",
+
+            endTime:
+              row?.videoEndTime ||
+              "",
+          },
+
+          opdDays: row?.opdDays
+            ? row.opdDays
+              .split(",")
+              .map((d) =>
+                d.trim()
+              )
+              .filter(Boolean)
+            : [],
         });
+      } catch (innerError) {
+        console.log(
+          "ROW PROCESS ERROR =>",
+          row?.name
+        );
+
+        console.log(innerError);
       }
     }
 
-    //  STEP 3: Insert new departments
-    if (newDepartments.length) {
-      const created = await DepartmentModel.insertMany(newDepartments, {
-        session,
-      });
+    console.log(
+      "FINAL doctorsToInsert =>",
+      JSON.stringify(
+        doctorsToInsert,
+        null,
+        2
+      )
+    );
 
-      created.forEach((d) => {
-        deptMap[normalize(d.name)] = d._id;
-      });
+    // =========================
+    // INSERT DOCTORS
+    // =========================
+
+    let insertedDoctors = [];
+
+    if (doctorsToInsert.length > 0) {
+      insertedDoctors =
+        await DoctorModel.insertMany(
+          doctorsToInsert,
+          {
+            session,
+            ordered: true,
+          }
+        );
     }
 
-    //  STEP 4: Process doctors (with duplicate check)
-    for (const row of rows) {
-      if (!row.name) continue;
+    console.log(
+      "insertedDoctors =>",
+      insertedDoctors.length
+    );
 
-      const nameNorm = normalize(row.name);
+    // =========================
+    // UPDATE DEPARTMENTS
+    // =========================
 
-      //  Duplicate skip (DB + same CSV)
-      if (existingDoctorSet.has(nameNorm)) {
-        continue;
-      }
-
-      existingDoctorSet.add(nameNorm);
-
-      const surgeries = await updateSuggestions(
-        conn,
-        "surgery",
-        row?.surgeries || []
-      );
-
-      const specialties = await updateSuggestions(
-        conn,
-        "speciality",
-        row?.specialties || []
-      );
-
-      doctorsToInsert.push({
-        branch: branchObjectId,
-        department: deptMap[normalize(row?.department)] || null,
-        name: row?.name,
-        masters: row?.masters,
-        title: row?.title,
-        opdNo: row?.opdNo,
-        type: row?.type,
-        contactNumber: row?.contactNumber,
-        whatsappNumber: row?.whatsappNumber,
-        designation: row?.designation,
-        additionalInfo: row?.additionalInfo,
-        floor: row?.floor,
-
-        //  FIX (duplicate field removed)
-        degrees: splitComma(row?.degrees),
-
-        specialties,
-        surgeries,
-        experience: Number(row?.experience) || 0,
-        consultationCharges: Number(row?.consultationCharges) || 0,
-        teleMedicine: row?.teleMedicine === "TRUE" ? "Yes" : "No",
-
-        timings: {
-          morning: {
-            start: row?.morningStart || "",
-            end: row?.morningEnd || "",
-          },
-          evening: {
-            start: row?.eveningStart || "",
-            end: row?.eveningEnd || "",
-          },
-          custom: {
-            start: row?.customStart || "",
-            end: row?.customEnd || "",
-          },
-        },
-
-        videoConsultation: {
-          enabled: row?.videoEnabled === "TRUE",
-          charges: Number(row?.videoCharges) || 0,
-          days: row?.videoDays,
-          timeSlot: row?.videoTimeSlot || "",
-          startTime: row?.videoStartTime || "",
-          endTime: row?.videoEndTime || "",
-        },
-
-        opdDays: row?.opdDays
-          ? row.opdDays.split(",").map((d) => d.trim())
-          : [],
-      });
-    }
-
-    //  STEP 5: Insert doctors
-    const insertedDoctors = await DoctorModel.insertMany(doctorsToInsert, {
-      session,
-      ordered: false,
-    });
-
-    //  STEP 6: Map department → doctors
     const deptDoctorMap = {};
 
     insertedDoctors.forEach((doc) => {
-      if (!doc.department) return;
+      if (!doc.department)
+        return;
 
-      const deptId = doc.department.toString();
+      const deptId =
+        doc.department.toString();
 
       if (!deptDoctorMap[deptId]) {
         deptDoctorMap[deptId] = [];
       }
 
-      deptDoctorMap[deptId].push(doc._id);
+      deptDoctorMap[deptId].push(
+        doc._id
+      );
     });
 
-    //  STEP 7: Update departments
-    const updates = Object.entries(deptDoctorMap).map(
-      ([deptId, doctorIds]) =>
-        DepartmentModel.updateOne(
-          { _id: deptId },
-          {
-            $addToSet: {
-              doctors: { $each: doctorIds },
+    await Promise.all(
+      Object.entries(
+        deptDoctorMap
+      ).map(
+        ([deptId, doctorIds]) =>
+          DepartmentModel.updateOne(
+            { _id: deptId },
+            {
+              $addToSet: {
+                doctors: {
+                  $each: doctorIds,
+                },
+              },
             },
-          },
-          { session }
-        )
+            { session }
+          )
+      )
     );
 
-    await Promise.all(updates);
-
     return {
-      inserted: insertedDoctors.length,
-      skipped: rows.length - doctorsToInsert.length, //  useful
+      inserted:
+        insertedDoctors.length,
+
+      skipped:
+        rows.length -
+        insertedDoctors.length,
+
       doctors: insertedDoctors,
     };
   } catch (error) {
-    throw Error(error.message || "Error To Upload Doctors");
+    console.log(
+      "uploadDoctorCSV ERROR =>",
+      error
+    );
+
+    throw new Error(
+      error.message ||
+      "Error To Upload Doctors"
+    );
   }
 };
-
 const uploadEmpanelmentCSV = async ({ conn, branchId, rows, normalize, session }) => {
   try {
     const EmpanelmentModel = getEmpanelmentModel(conn);

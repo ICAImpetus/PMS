@@ -1,9 +1,0 @@
-policyName,branch,typeOfCoverage,doctor,department,service,treatableAreas,coverageLimit,notes,coveringAreasOfSpeciality,additionalRemarks
-Star Policy,Main Branch,Full,Dr. Sharma,Cardiology,"Surgery,Consultation","Heart,Angioplasty",5L,Covered fully,"Cardiology,Neurology",Good policy
-ICICI Health,City Branch,Partial,Dr. Mehta,Orthopedic,Operation,"Knee,Joint",2L,Partial cover,Orthopedic,Limited coverage
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,,,,
-,,,,,,,...,,,

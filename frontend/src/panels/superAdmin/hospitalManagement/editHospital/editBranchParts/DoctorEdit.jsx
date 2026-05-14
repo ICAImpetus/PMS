@@ -182,6 +182,7 @@ const AddDoctorModal = ({
     title: "Dr.",
     designation: "",
     department: null,
+    specialization: "",
     degrees: [],
     customDegrees: [],
     subDepartment: "",
@@ -190,8 +191,7 @@ const AddDoctorModal = ({
     whatsappNumber: "",
     averagePatientTime: "10m",
     maxPatientsHandled: 1,
-    floor: "",
-    masters: "",
+    floor: ""
   });
 
   const [whatsappOption, setWhatsappOption] = useState("same"); // "same" or "custom"
@@ -382,7 +382,7 @@ const AddDoctorModal = ({
           averagePatientTime: "10m",
           maxPatientsHandled: 1,
           floor: "",
-          masters: "",
+          specialization: "",
           title: "",
         });
         setWhatsappOption("same");
@@ -580,8 +580,8 @@ const AddDoctorModal = ({
     if (!currentDoctor.title?.trim())
       tempErrors.title = "Title  is required.";
 
-    if (!currentDoctor.masters?.trim())
-      tempErrors.masters = "Masters (Surgeon / Physician) is required.";
+    if (!currentDoctor.specialization?.trim())
+      tempErrors.specialization = "Specialization is required.";
 
     if (!currentDoctor.type?.trim())
       tempErrors.type = "Doctor type is required.";
@@ -827,7 +827,7 @@ const AddDoctorModal = ({
       );
     }
   };
-  const speciality = (globalSuggestion || []).filter(
+  const speciality = (globalSuggestion || [])?.filter(
     (item) => item?.type === "speciality"
   );
   const surgery = (globalSuggestion || [])?.filter(
@@ -1173,16 +1173,16 @@ const AddDoctorModal = ({
                         select
                         fullWidth
                         label="Specialization"
-                        name="masters"
-                        value={currentDoctor.masters}
+                        name="specialization"
+                        value={currentDoctor.specialization}
                         onChange={handleChange}
                         variant="outlined"
                         required
-                        error={!!errors.masters}
-                        helperText={errors.masters}
+                        error={!!errors.specialization}
+                        helperText={errors.specialization}
                       >
-                        <MenuItem value="Surgeon">Surgeon</MenuItem>
-                        <MenuItem value="Physician">Physician</MenuItem>
+                        <MenuItem value="surgeon">General Surgeon</MenuItem>
+                        <MenuItem value="physician">General Physician</MenuItem>
                       </TextField>
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -1198,10 +1198,10 @@ const AddDoctorModal = ({
                         error={!!errors.type}
                         helperText={errors.type}
                       >
-                        <MenuItem value="Full Time">Full Time</MenuItem>
-                        <MenuItem value="Part Time">Part Time</MenuItem>
-                        <MenuItem value="Visiting">Visiting</MenuItem>
-                        <MenuItem value="On Call">On Call</MenuItem>
+                        <MenuItem value="fulltime">Full Time</MenuItem>
+                        <MenuItem value="parttime">Part Time</MenuItem>
+                        <MenuItem value="visiting">Visiting</MenuItem>
+                        <MenuItem value="oncall">On Call</MenuItem>
                       </TextField>
                     </Grid>
 
@@ -1398,10 +1398,10 @@ const AddDoctorModal = ({
                             error={!!errors.title}
                             helperText={errors.title}
                           >
-                            <MenuItem value="Dr.">Dr.</MenuItem>
-                            <MenuItem value="Prof. Dr.">Prof. Dr.</MenuItem>
-                            <MenuItem value="Assoc. Prof. Dr.">Assoc. Prof. Dr.</MenuItem>
-                            <MenuItem value="Asst. Prof. Dr.">Asst. Prof. Dr.</MenuItem>
+                            <MenuItem value="dr">Dr.</MenuItem>
+                            <MenuItem value="profdr">Prof. Dr.</MenuItem>
+                            <MenuItem value="assocprofdr">Assoc. Prof. Dr.</MenuItem>
+                            <MenuItem value="asstprofdr">Asst. Prof. Dr.</MenuItem>
                           </TextField>
                         </Grid>
                         <Grid item xs={12} sm={6}>
@@ -1413,11 +1413,11 @@ const AddDoctorModal = ({
                             value={currentDoctor.designation}
                             onChange={handleChange}
                           >
-                            <MenuItem value="Consultant">Consultant</MenuItem>
-                            <MenuItem value="Senior Consultant">Senior Consultant</MenuItem>
-                            <MenuItem value="Junior Resident">Junior Resident</MenuItem>
-                            <MenuItem value="Senior Resident">Senior Resident</MenuItem>
-                            <MenuItem value="HOD">HOD</MenuItem>
+                            <MenuItem value="consultant">Consultant</MenuItem>
+                            <MenuItem value="seniorconsultant">Senior Consultant</MenuItem>
+                            <MenuItem value="junioresident">Junior Resident</MenuItem>
+                            <MenuItem value="senioresident">Senior Resident</MenuItem>
+                            <MenuItem value="hod">HOD</MenuItem>
                           </TextField>
                         </Grid>
                       </Grid>

@@ -1,3 +1,0 @@
-policyName,branch,typeOfCoverage,doctor,department,service,treatableAreas,coverageLimit,notes,coveringAreasOfSpeciality,additionalRemarks
-Star Policy,Main Branch,Reimbursement,Dr. A,Cardiology,"Surgery,Consultation","Heart,Angioplasty",5L,Covered fully,"Cardiology,Neurology",Good policy
-ICICI Health,City Branch,Cashless,Dr. B,Orthopedic,"Operation","Knee,Joint",2L,Partial cover,"Orthopedic",Limited coverage
