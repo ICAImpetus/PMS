@@ -1185,6 +1185,18 @@ export const REFERENCE_OPTIONS = [
   { label: "NA", value: "NA" },
 ];
 
+export const getCurrentDateTime = () => {
+  const now = new Date();
+
+  // local timezone ke according datetime-local format
+  const local = new Date(
+    now.getTime() - now.getTimezoneOffset() * 60000
+  );
+
+  return local.toISOString().slice(0, 16);
+};
+
+
 const initialPatientDetails = {
   patientName: "",
   patientMobile: "",

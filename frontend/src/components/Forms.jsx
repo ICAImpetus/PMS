@@ -24,20 +24,8 @@ import {
 } from "@mui/material";
 import DoctorProfileCard from "./DoctorCard";
 import HospitalContext from "../contexts/HospitalContexts";
-import { CATEGORY, INBOUND_PURPOSE_OPTIONS, IndianStatesWithDistricts, initialFormState, OUTBOUND_PURPOSE_OPTIONS, REFERENCE_OPTIONS } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
+import { CATEGORY, INBOUND_PURPOSE_OPTIONS, getCurrentDateTime, IndianStatesWithDistricts, initialFormState, OUTBOUND_PURPOSE_OPTIONS, REFERENCE_OPTIONS } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
 import { useMemo } from "react";
-
-
-const getCurrentDateTime = () => {
-  const now = new Date();
-
-  // local timezone ke according datetime-local format
-  const local = new Date(
-    now.getTime() - now.getTimezoneOffset() * 60000
-  );
-
-  return local.toISOString().slice(0, 16);
-};
 
 const getPatientArrivalDateTime = (
   appointmentSlot,
