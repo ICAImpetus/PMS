@@ -1209,7 +1209,7 @@ const initialPatientDetails = {
   category: "",
 };
 
-const initialFormData = {
+export const initialFormData = {
   callerType: "",
   referenceFrom: "",
   refDoctorName: "",

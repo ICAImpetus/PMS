@@ -93,14 +93,16 @@ export const apiRateLimiter = rateLimit({
  */
 
 export const loginRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 WRONG attempts allowed
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+
   message: {
     success: false,
     message: "Too many failed login attempts, please try again after 15 minutes.",
     statusCode: 429,
   },
-  skipSuccessfulRequests: true, //
+
+  skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
 });

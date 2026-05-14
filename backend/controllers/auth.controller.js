@@ -182,7 +182,7 @@ export const userLogin = async (req, res, next) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       message: "Login successful",
       result,
@@ -273,14 +273,14 @@ export const userLogout = async (req, res) => {
       sameSite: "strict",
     });
 
-    res.json({
+    return res.status(200).json({
       success: true,
       message: "Logout successful",
       sessionDuration: formatDuration(sessionDuration),
     });
   } catch (error) {
     console.error("Logout error:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Error during logout",
     });

@@ -24,7 +24,11 @@ import {
 } from "@mui/material";
 import DoctorProfileCard from "./DoctorCard";
 import HospitalContext from "../contexts/HospitalContexts";
-import { CATEGORY, INBOUND_PURPOSE_OPTIONS, getCurrentDateTime, IndianStatesWithDistricts, initialFormState, OUTBOUND_PURPOSE_OPTIONS, REFERENCE_OPTIONS } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
+import {
+  CATEGORY, INBOUND_PURPOSE_OPTIONS, getCurrentDateTime,
+  IndianStatesWithDistricts, initialFormState, OUTBOUND_PURPOSE_OPTIONS,
+  REFERENCE_OPTIONS, initialFormData
+} from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
 import { useMemo } from "react";
 
 const getPatientArrivalDateTime = (
