@@ -439,7 +439,7 @@ export const updateUser = async (req, res) => {
 
     const roleFields = {
       superadmin: "superadmin",
-      // admin: "assignedToAdmin",
+      admin: "assignedToAdmin",
       supermanager: "assignedToManager",
       teamleader: "assignedToTeamLeader",
       executive: "assignedToExecutive",

@@ -1,3 +1,0 @@
-masters,designation,name,branch,department,contactNumber,experience,consultationCharges,floor,opdDays,opdNo,degrees,specialties,surgeries,teleConsultation,videoEnabled,videoStartTime,videoEndTime,videoDays,morningStart,morningEnd,eveningStart,eveningEnd,customStart,customEnd
-Surgeon,Senior Urologist,Dr A,Main Branch,Cardiology,9999999999,10,500,2,"Mon,Tue,Wed",101,"MBBS,MD","Heart,BP","Bypass,Angioplasty",true,true,10:00,12:00,"Mon,Tue",09:00,12:00,05:00,08:00,,
-Physician,,Dr B,Main Branch,Neurology,8888888888,8,400,1,"Mon,Fri",102,"MBBS","Brain","Neuro Surgery",false,false,,,,09:30,12:30,,,
