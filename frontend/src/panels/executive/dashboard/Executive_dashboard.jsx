@@ -931,7 +931,7 @@ const ExecutiveDashboard = () => {
 
           <div className="executive-analytics-card">
             <div className="executive-chart-title">
-              <EventIcon /> Today's Appointments
+              <EventIcon /> Latest Appointments
             </div>
             <ul className="executive-appointment-list">
               {forms.appointments && forms.appointments.length > 0 ? (
