@@ -287,6 +287,8 @@ function Forms() {
 
   const handleDoctorSelect = (doctor) => {
 
+    console.log("selectedDoctor", doctor);
+
     if (!doctor) {
       handleChange("doctor", null);
       setSelectedDoctor(null);
@@ -836,8 +838,6 @@ function Forms() {
                         </span>
 
                         <span className="live-time-value">
-                          {console.log("Patient will arrive in: ", liveTime)
-                          }
                           {liveTime}
                         </span>
 

@@ -2,6 +2,7 @@ import React from "react";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import "./DoctorDropdown.css";
+import dayjs from "dayjs";
 import { Tooltip } from "@mui/material";
 
 function formatSchedule(timings) {
@@ -27,11 +28,32 @@ export default function DoctorDropdown({
   selectedDay = null,
   required = false,
 }) {
-
   const isDoctorAvailableOnDay = (doctor) => {
+
     if (!selectedDay) return true;
+
     if (!doctor?.opdDays) return false;
-    return doctor.opdDays.includes(selectedDay);
+
+    // Selected day name
+    const dayName =
+      dayjs(selectedDay).format("dddd");
+
+    // Selected full date
+    const formattedDate =
+      dayjs(selectedDay).format("YYYY-MM-DD");
+
+    // OPD day check
+    const isOpdDay =
+      doctor?.opdDays?.includes(dayName);
+
+    // Unavailable check
+    const isUnavailable =
+      doctor?.unavailableDates?.includes(
+        formattedDate
+      );
+
+    // Final availability
+    return isOpdDay && !isUnavailable;
   };
 
   return (

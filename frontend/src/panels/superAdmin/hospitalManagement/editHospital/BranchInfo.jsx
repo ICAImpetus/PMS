@@ -1498,7 +1498,7 @@ const BranchInfo = () => {
                       color: "#5C6BC0",
                       fontWeight: "bold",
                       textAlign: "center",
-                      width: "10px",
+
                     }}
                   >
                     Status
@@ -1508,7 +1508,8 @@ const BranchInfo = () => {
                       sx={{
                         color: "#5C6BC0",
                         fontWeight: "bold",
-                        textAlign: "center",
+                        mt: '20px'
+
                       }}
                     >
                       Actions
@@ -1559,8 +1560,6 @@ const BranchInfo = () => {
                       <TableCell
                         sx={{
                           display: "flex",
-                          alignItems: "center",
-                          gap: 1,
                         }}
                       >
                         <IconButton
