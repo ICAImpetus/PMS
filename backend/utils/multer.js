@@ -37,9 +37,19 @@ export const uploadDoctorAssets = (req, res, next) => {
       if (req.files?.csv?.[0]) {
         const csvFile = req.files.csv[0];
 
+        const originalName =
+          csvFile.originalname
+            .trim()
+            .replace(/\s+/g, "-");
+
+        const fileName =
+          originalName.length > 20
+            ? originalName.slice(0, 20)
+            : originalName;
+
         const filePath = path.join(
           "uploads",
-          `${Date.now()}-${csvFile.originalname}`
+          `${Date.now()}-${fileName}`
         );
 
         fs.writeFileSync(filePath, csvFile.buffer);
