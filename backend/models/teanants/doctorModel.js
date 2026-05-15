@@ -99,6 +99,10 @@ export const DoctorSchema = new mongoose.Schema(
     floor: String,
 
     opdDays: [String],
+    unavailableDates: {
+      type: [String],
+      default: [],
+    },
     slots: {
       type: [SlotSchema],
       default: [],

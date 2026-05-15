@@ -22,6 +22,11 @@ import {
   Divider,
   Switch,
   TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  CircularProgress,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
@@ -35,7 +40,7 @@ import Header from "../../../../components/HeaderNew";
 // Icons
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
-import EventBusyIcon from "@mui/icons-material/EventBusy";
+import CancelIcon from "@mui/icons-material/Cancel";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddBusinessIcon from "@mui/icons-material/AddBusiness";
@@ -44,6 +49,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import BusinessIcon from "@mui/icons-material/Business";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import SearchIcon from "@mui/icons-material/Search";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 
 // Modals
 import AddDoctorModal from "./editBranchParts/DoctorEdit";
@@ -59,6 +65,7 @@ import { useApi } from "../../../../api/useApi";
 import { commonRoutes } from "../../../../api/apiService";
 import DeleteConfirmationModal from "../../../../components/DeleteConfirmationModal";
 import ProgressPopup, { SpecialtiesCell } from "./UploadLoading";
+import DoctorAttendanceCalendar from "./DoctorAttendanceCalendar";
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -224,12 +231,13 @@ const BranchInfo = () => {
   const location = useLocation()
   const hosId = location?.state?.hospitalId
   const navigate = useNavigate();
-
   const { currentUser } = UserContextHook();
   const userRole = (currentUser?.userType || currentUser?.type || "").toLowerCase();
   const isSuperAdmin = userRole === "superadmin";
   const isAdmin = userRole === "admin";
-
+  const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
+  const [attendanceType, setAttendanceType] = useState("");
+  const [selectedDoctorData, setSelectedDoctorData] = useState(null);
   const [isShowAction, setIsShowAction] = React.useState(
     !["supermanager", "teamleader"].includes(userRole)
   );
@@ -252,6 +260,7 @@ const BranchInfo = () => {
   const [proceduresList, setProceduresList] = useState([]);
   const [inchargeList, setInchargeList] = useState([]);
   const [codeAlertsList, setCodeAlertsList] = useState([]);
+  const [unavailableDates, setUnavailableDates] = useState([]);
   const [modalOpen, setModalOpen] = useState({});
   const [selectedItem, setSelectedItem] = useState(null);
   const [open, setOpen] = useState(false);
@@ -923,24 +932,37 @@ const BranchInfo = () => {
 
     }
   };
-  const handleDoctorStatusToggle = async (doctorId, currentStatus) => {
+  const openAttendanceModal = (type, doctor) => {
+    setAttendanceType(type);
+    setSelectedDoctorData(doctor);
+    setAttendanceModalOpen(true);
+  };
+
+  const closeAttendanceModal = () => {
+    setAttendanceModalOpen(false);
+    setAttendanceType("");
+    setSelectedDoctorData(null);
+  };
+  const handleDoctorStatusToggle = async (doctorId, currentStatus, unavailableDates = []) => {
     try {
       setSaving(true);
 
 
       // Update the doctor's status in the local state first for immediate UI feedback
-      const res = await updateDoctorStatusApi(hosId, doctorId, currentStatus)
+      const res = await updateDoctorStatusApi(hosId, doctorId, currentStatus, unavailableDates)
       if (res?.success) {
+        setDoctorsList((prev) =>
+          prev.map((doctor) =>
+            doctor._id === doctorId
+              ? res?.data
+              : doctor
+          )
+        );
+        closeAttendanceModal()
         toast.success(
           `Doctor ${!currentStatus ? "activated" : "deactivated"} successfully!`,
         );
-        setDoctorsList((prev) =>
-          prev.map((doctor) =>
-            doctor._id === doctorId || doctor.id === doctorId
-              ? { ...doctor, isEnabled: !currentStatus }
-              : doctor,
-          ),
-        );
+        return
       }
 
       else {
@@ -959,7 +981,6 @@ const BranchInfo = () => {
       setSaving(false);
     }
   };
-
 
   const listMap = {
     department: departmentsList,
@@ -1058,7 +1079,17 @@ const BranchInfo = () => {
     }
   }
 
-  useEffect(() => {
+  React.useEffect(() => {
+
+    if (selectedDoctorData) {
+
+      setUnavailableDates(
+        selectedDoctorData?.unavailableDates || []
+      );
+    }
+
+  }, [selectedDoctorData]);
+  React.useEffect(() => {
     const errors = [
       branchError,
       uploadCSVError,
@@ -1532,14 +1563,13 @@ const BranchInfo = () => {
                           gap: 1,
                         }}
                       >
-                        {/* Mark Absent */}
                         <IconButton
-                          color="warning"
+                          color="primary"
+                          onClick={() => openAttendanceModal("doctor", row)}
                           size="small"
-                          onClick={() => handleOpenModal("doctorAbsent", row)}
-                          title="Mark Doctor Absent"
+                          title="Edit Doctor"
                         >
-                          <EventBusyIcon fontSize="small" />
+                          <CalendarMonthIcon color="primary" />
                         </IconButton>
 
                         {/* Edit */}
@@ -2392,6 +2422,119 @@ const BranchInfo = () => {
         progress={progress}
         title="Uploading Doctors CSV..."
       />
+      <Dialog
+        open={attendanceModalOpen}
+        onClose={closeAttendanceModal}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            padding: 1,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            fontWeight: 600,
+            fontSize: "20px",
+            borderBottom: "1px solid #e0e0e0",
+            pb: 2,
+          }}
+        >
+          Doctor Attendance Management
+        </DialogTitle>
+
+        <DialogContent sx={{ pt: 3 }}>
+          <Typography
+            variant="body1"
+            sx={{
+              mb: 2,
+              color: "text.secondary",
+              lineHeight: 1.7,
+            }}
+          >
+            Select a date from the calendar below to mark the doctor as
+            <strong> Present</strong> or <strong> Absent</strong>.
+          </Typography>
+
+          <Typography
+            variant="body2"
+            sx={{
+              mb: 3,
+              color: "#757575",
+            }}
+          >
+            • First Click → Present <br />
+            • Second Click → Absent <br />
+            • Third Click → Clear Selection
+          </Typography>
+
+          <div
+            style={{
+              border: "1px solid #e0e0e0",
+              borderRadius: "12px",
+              padding: "12px",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <DoctorAttendanceCalendar
+              doctor={selectedDoctorData}
+              unavailableDates={unavailableDates}
+              setUnavailableDates={setUnavailableDates}
+            />
+          </div>
+        </DialogContent>
+
+        <DialogActions
+          sx={{
+            px: 3,
+            pb: 2,
+            pt: 2,
+            borderTop: "1px solid #e0e0e0",
+            justifyContent: "space-between",
+          }}
+        >
+          <Button
+            onClick={closeAttendanceModal}
+            variant="outlined"
+            color="inherit"
+            disabled={updateDoctorStatusLoading}
+            sx={{
+              borderRadius: 2,
+              textTransform: "none",
+              px: 3,
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            disabled={updateDoctorStatusLoading}
+            onClick={() =>
+              handleDoctorStatusToggle(
+                selectedDoctorData?._id,
+                selectedDoctorData?.isEnabled,
+                unavailableDates
+              )
+            }
+            sx={{
+              borderRadius: 2,
+              textTransform: "none",
+              px: 4,
+              fontWeight: 600,
+            }}
+          >
+            {
+              updateDoctorStatusLoading
+                ? <CircularProgress size={20} />
+                : "Save Attendance"
+            }
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

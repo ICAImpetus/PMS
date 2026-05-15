@@ -1537,6 +1537,9 @@ export const updateDoctor = async (req, res) => {
     doctor.title = body.title ?? doctor.title;
     doctor.designation = body.designation ?? doctor.designation;
     doctor.opdNo = body.opdNo ?? doctor.opdNo;
+    doctor.opdDays = body.opdDays
+      ? body.opdDays.split(",").map((d) => d.trim())
+      : doctor.opdDays;
     doctor.specialization = body.specialization ?? doctor.specialization;
     doctor.subDepartment = body.subDepartment ?? doctor.subDepartment;
     doctor.type = body.type ?? doctor.type;
@@ -1646,28 +1649,34 @@ export const updateDoctor = async (req, res) => {
 
 export const updateDoctorStatus = async (req, res) => {
   try {
+
     const { id } = req.params;
+
     const { hosId, currentStatus } = req.query;
 
-    if (!id || !currentStatus) {
+    const { unavailableDates } = req.body;
 
+    // Validate doctor id + status
+    if (!id || currentStatus === undefined) {
       return res.status(400).json({
         success: false,
-        message: "Doctor ID and  currentStatus is required",
+        message:
+          "Doctor ID and currentStatus are required",
       });
     }
 
+    // Validate hospital id
     if (
       !hosId ||
       !mongoose.Types.ObjectId.isValid(hosId)
     ) {
       return res.status(400).json({
         success: false,
-        message: "Valid hospitalId are required",
+        message: "Valid hospitalId is required",
       });
     }
 
-    // Validate hospital (master DB)
+    // Validate hospital
     const hospital = await HospitalModel.findOne({
       _id: hosId,
       isDeleted: false,
@@ -1679,16 +1688,41 @@ export const updateDoctorStatus = async (req, res) => {
         message: "Hospital not found",
       });
     }
-    const conn = await getConnection(hospital.trimmedName);
-    const DoctorModel = getDoctorModel(conn);
 
-    const doctor = await DoctorModel.findByIdAndUpdate(id, {
-      $set: {
-        isEnabled: currentStatus
-      }
-    }, {
-      new: true
-    })
+    // Dynamic DB connection
+    const conn =
+      await getConnection(hospital.trimmedName);
+
+    const DoctorModel =
+      getDoctorModel(conn);
+
+    // Dynamic update object
+    const updateData = {
+      isEnabled: currentStatus,
+    };
+
+    // Only update unavailableDates
+    // if field exists
+    if (
+      unavailableDates &&
+      Array.isArray(unavailableDates)
+    ) {
+      updateData.unavailableDates =
+        unavailableDates;
+    }
+
+    // Update doctor
+    const doctor =
+      await DoctorModel.findByIdAndUpdate(
+        id,
+        {
+          $set: updateData,
+        },
+        {
+          new: true,
+        }
+      );
+
     if (!doctor) {
       return res.status(404).json({
         success: false,
@@ -1696,43 +1730,53 @@ export const updateDoctorStatus = async (req, res) => {
       });
     }
 
+    // Actor Info
+    const actorRole =
+      req.user?.type || "Unknown";
 
-    //  Actor Info
-    const actorRole = req.user?.type || "Unknown";
-    const actorName = req.user?.name || "Unknown User";
+    const actorName =
+      req.user?.name || "Unknown User";
 
-    //  Audit Log
+    // Audit Log
     auditLog({
       action: "UPDATE_DOCTOR",
       module: "DoctorManagement",
       event: "UPDATE",
       role: actorRole,
-      customMessage: `${actorRole} "${actorName}" Update doctor "${doctor.name}" Status.`,
+      customMessage:
+        `${actorRole} "${actorName}" updated doctor "${doctor.name}" status.`,
       name: actorName,
       userId: req.user?.id,
       ip: req.userIp,
-      userAgent: req.headers["user-agent"],
+      userAgent:
+        req.headers["user-agent"],
     });
 
+    // Populate doctor
     const populatedDoctor =
-      await DoctorModel.findById(id).populate("department");
+      await DoctorModel.findById(id)
+        .populate("department");
 
     return res.status(200).json({
       success: true,
-      message: "Doctor updated successfully",
+      message:
+        "Doctor updated successfully",
       data: populatedDoctor,
     });
 
   } catch (error) {
-    console.error("Doctor full profile error:", error);
+
+    console.error(
+      "Update doctor error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
       message: "Server error",
     });
   }
-}
-
+};
 export const removeDoctor = async (req, res) => {
   try {
     const { id } = req.params;

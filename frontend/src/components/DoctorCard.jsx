@@ -18,66 +18,6 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { useApi } from "../api/useApi";
 
-const doctor = {
-    _id: "69b51716b29cf7c642e8adbc",
-
-    name: "Dr. Rajesh Sharma",
-
-    department: {
-        _id: "dep123",
-        name: "Cardiology"
-    },
-
-    specialties: [
-        {
-            _id: "sp1",
-            name: "Physician"
-        }
-    ],
-
-    qualification: ["MBBS", "MD", "DM"],
-
-    experience: 12,
-
-    profilePicture: {
-        url: "https://res.cloudinary.com/dja0qks2v/image/upload/v1773475605/images/ptwd38mnzvfymog4ggar.jpg"
-    },
-
-    timings: {
-        start: "10:00 AM",
-        end: "2:00 PM"
-    },
-
-    opdDays: ["Mon", "Wed", "Fri"],
-
-    empanelmentList: [
-        {
-            _id: "emp1",
-            name: "CGHS",
-            treatableAreas: [
-                { _id: "t1", name: "Heart Attack" },
-                { _id: "t2", name: "Arrhythmia" }
-            ]
-        },
-        {
-            _id: "emp2",
-            name: "ESIC",
-            treatableAreas: [{ _id: "t3", name: "Hypertension" }]
-        }
-    ],
-
-    procedures: [
-        { _id: "p1", name: "Angiography" },
-        { _id: "p2", name: "ECG" },
-        { _id: "p3", name: "Echo" }
-    ],
-
-    surgeries: [
-        { _id: "s1", name: "Bypass Surgery" },
-        { _id: "s2", name: "Angioplasty" }
-    ]
-};
-
 const chipStyles = {
     opd: { bgcolor: "#E3F2FD", color: "#1976D2" },
     specialties: { bgcolor: "#FFF3E0", color: "#F57C00" },
