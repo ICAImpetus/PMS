@@ -34,6 +34,8 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { UserContextHook } from "../../../contexts/UserContexts";
 import HospitalContext from "../../../contexts/HospitalContexts";
+import { FORMS_AVAILABLE_COLUMNS, getNestedValue } from "./PatientHistory";
+import moment from "moment";
 
 export const PatientHistory = () => {
     const [page, setPage] = useState(0);
@@ -43,7 +45,16 @@ export const PatientHistory = () => {
     const [endDate, setEndDate] = useState("");
     const [error, setError] = useState(null);
     const [formTypeFilter, setFormTypeFilter] = useState("all");
-
+    const [formsColumnFilterOpen, setFormsColumnFilterOpen] = useState(false);
+    const [selectedFormColumns, setSelectedFormColumns] = useState([
+        "patientName",
+        "patientMobile",
+        "lastVisit.purpose",
+        "lastVisit.formType",
+        "createdAt",
+    ]);
+    const formsColumnFilterRef = React.useRef(null);
+    const columnFilterButtonRef = React.useRef(null);
     const navigate = useNavigate()
     const {
         loading,
@@ -57,6 +68,37 @@ export const PatientHistory = () => {
         selectedHostpital,
         refreshPatients
     } = useContext(HospitalContext);
+
+
+    const visibleFormColumns = FORMS_AVAILABLE_COLUMNS.filter((col) =>
+        selectedFormColumns.includes(col.key),
+    );
+    const toggleFormColumn = (colKey) => {
+        setSelectedFormColumns((prev) =>
+            prev.includes(colKey)
+                ? prev.filter((key) => key !== colKey)
+                : [...prev, colKey]
+        );
+    };
+    // Handle click outside for dropdown
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                formsColumnFilterRef.current &&
+                !formsColumnFilterRef.current.contains(event.target) &&
+                columnFilterButtonRef.current &&
+                !columnFilterButtonRef.current.contains(event.target)
+            ) {
+                setFormsColumnFilterOpen(false);
+            }
+        };
+        if (formsColumnFilterOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [formsColumnFilterOpen]);
 
     const filteredPatients = useMemo(() => {
         let filtered = [...patients];
@@ -455,6 +497,16 @@ export const PatientHistory = () => {
                                 </Button>
 
                                 <Button
+                                    variant="outlined"
+                                    color="secondary"
+                                    ref={columnFilterButtonRef}
+                                    onClick={() => setFormsColumnFilterOpen((prev) => !prev)}
+
+                                >
+                                    <i className="fas fa-columns"></i> Select Fields (
+                                    {selectedFormColumns.length})
+                                </Button>
+                                <Button
                                     variant="contained"
                                     color="warning"
                                     startIcon={<FileDownloadIcon />}
@@ -472,28 +524,26 @@ export const PatientHistory = () => {
                                     sx={{
                                         backgroundColor: "#212f3d",
                                         "& th": {
-
                                             fontWeight: 600,
                                             fontSize: "0.95rem",
                                         },
                                     }}
                                 >
                                     <TableCell align="center">S.No</TableCell>
-                                    <TableCell>Patient Name</TableCell>
-                                    <TableCell>Mobile</TableCell>
-                                    <TableCell>Purpose</TableCell>
-                                    <TableCell>Form Type</TableCell>
-                                    <TableCell>Doctor</TableCell>
-                                    <TableCell>Department</TableCell>
-                                    <TableCell>Date & Time</TableCell>
-                                    <TableCell>Action</TableCell>
+
+                                    {visibleFormColumns.map((col) => (
+                                        <TableCell key={col.key}>
+                                            {col.label}
+                                        </TableCell>
+                                    ))}
+                                    <TableCell align="center">Action</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {paginatedData.length > 0 ? (
-                                    paginatedData.map((patient, index) => (
+                                {filteredPatients.length > 0 ? (
+                                    filteredPatients.map((row, index) => (
                                         <TableRow
-                                            key={patient._id}
+                                            key={row._id}
                                             sx={{
                                                 "&:hover": { backgroundColor: "#f0f0f0" },
                                                 "&:nth-of-type(odd)": { backgroundColor: "#fafafa" },
@@ -502,62 +552,41 @@ export const PatientHistory = () => {
                                             <TableCell align="center">
                                                 {index + 1}
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 500 }}>
-                                                {patient.patientName || "N/A"}
-                                            </TableCell>
-                                            <TableCell>{patient.patientMobile || "N/A"}</TableCell>
-                                            <TableCell>
-                                                <Box
-                                                    sx={{
-                                                        display: "inline-block",
-                                                        px: 1.5,
-                                                        py: 0.5,
-                                                        backgroundColor:
-                                                            patient.purpose === "Appointment"
-                                                                ? "#e3f2fd"
-                                                                : patient.purpose === "followup"
-                                                                    ? "#f3e5f5"
-                                                                    : "#fce4ec",
-                                                        borderRadius: 1,
-                                                        fontSize: "0.85rem",
-                                                        fontWeight: 500,
-                                                    }}
-                                                >
-                                                    {patient?.lastVisit?.purpose || "N/A"}
-                                                </Box>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Box
-                                                    sx={{
-                                                        display: "inline-block",
-                                                        px: 1.5,
-                                                        py: 0.5,
-                                                        backgroundColor:
-                                                            patient?.lastVisit?.formType === "inbound"
-                                                                ? "#c8e6c9"
-                                                                : "#ffccbc",
-                                                        borderRadius: 1,
-                                                        fontSize: "0.85rem",
-                                                        fontWeight: 500,
-                                                    }}
-                                                >
-                                                    {patient?.lastVisit?.formType || "N/A"}
-                                                </Box>
-                                            </TableCell>
-                                            <TableCell>{patient?.lastVisit?.doctor?.name || "N/A"}</TableCell>
-                                            <TableCell>{patient?.lastVisit?.department?.name || "N/A"}</TableCell>
-                                            <TableCell sx={{ fontSize: "0.9rem" }}>
-                                                {formatDate(patient.createdAt)}
-                                            </TableCell>
+                                            {visibleFormColumns.map((col) => {
+                                                let val = getNestedValue(row, col.key);
+
+
+                                                if (val) {
+                                                    const date = moment(val);
+
+                                                    if (date.isValid()) {
+                                                        val = date.format("DD/MM/YYYY hh:mm A");
+                                                    }
+                                                }
+
+                                                if (
+                                                    val &&
+                                                    typeof val === "object" &&
+                                                    !Array.isArray(val)
+                                                ) {
+                                                    val = val.name || JSON.stringify(val);
+                                                }
+
+                                                return (
+                                                    <TableCell key={col.key}>
+                                                        {val ?? "-"}
+                                                    </TableCell>
+                                                );
+                                            })}
                                             <TableCell>
                                                 <Button
                                                     onClick={() => {
-                                                        navigate(`/single-patient-history/${patient?._id}`, {
+                                                        navigate(`/single-patient-history/${row?._id}`, {
                                                             state: {
+
                                                                 patient: {
-                                                                    ...patient,
-                                                                    hospitalId: selectedHostpital,
-                                                                    branchId: selectedBranch
+                                                                    ...row,
+                                                                    hospitalId: selectedHostpital
                                                                 }
                                                             }
                                                         })
@@ -577,6 +606,91 @@ export const PatientHistory = () => {
                                                 </Button>
                                             </TableCell>
                                         </TableRow>
+                                        // <TableRow
+                                        //     key={patient._id}
+                                        //     sx={{
+                                        //         "&:hover": { backgroundColor: "#f0f0f0" },
+                                        //         "&:nth-of-type(odd)": { backgroundColor: "#fafafa" },
+                                        //     }}
+                                        // >
+                                        //     <TableCell align="center">
+                                        //         {index + 1}
+                                        //     </TableCell>
+                                        //     <TableCell sx={{ fontWeight: 500 }}>
+                                        //         {patient.patientName || "N/A"}
+                                        //     </TableCell>
+                                        //     <TableCell>{patient.patientMobile || "N/A"}</TableCell>
+                                        //     <TableCell>
+                                        //         <Box
+                                        //             sx={{
+                                        //                 display: "inline-block",
+                                        //                 px: 1.5,
+                                        //                 py: 0.5,
+                                        //                 backgroundColor:
+                                        //                     patient.purpose === "Appointment"
+                                        //                         ? "#e3f2fd"
+                                        //                         : patient.purpose === "followup"
+                                        //                             ? "#f3e5f5"
+                                        //                             : "#fce4ec",
+                                        //                 borderRadius: 1,
+                                        //                 fontSize: "0.85rem",
+                                        //                 fontWeight: 500,
+                                        //             }}
+                                        //         >
+                                        //             {patient?.lastVisit?.purpose || "N/A"}
+                                        //         </Box>
+                                        //     </TableCell>
+                                        //     <TableCell>
+                                        //         <Box
+                                        //             sx={{
+                                        //                 display: "inline-block",
+                                        //                 px: 1.5,
+                                        //                 py: 0.5,
+                                        //                 backgroundColor:
+                                        //                     patient?.lastVisit?.formType === "inbound"
+                                        //                         ? "#c8e6c9"
+                                        //                         : "#ffccbc",
+                                        //                 borderRadius: 1,
+                                        //                 fontSize: "0.85rem",
+                                        //                 fontWeight: 500,
+                                        //             }}
+                                        //         >
+                                        //             {patient?.lastVisit?.formType || "N/A"}
+                                        //         </Box>
+                                        //     </TableCell>
+                                        //     <TableCell>{patient?.lastVisit?.doctor?.name || "N/A"}</TableCell>
+                                        //     <TableCell>{patient?.lastVisit?.department?.name || "N/A"}</TableCell>
+                                        //     <TableCell sx={{ fontSize: "0.9rem" }}>
+                                        //         {formatDate(patient.createdAt)}
+                                        //     </TableCell>
+                                        // <TableCell>
+                                        //     <Button
+                                        //         onClick={() => {
+                                        //             navigate(`/single-patient-history/${patient?._id}`, {
+                                        //                 state: {
+
+                                        //                     patient: {
+                                        //                         ...patient,
+                                        //                         hospitalId: selectedHostpital
+                                        //                     }
+                                        //                 }
+                                        //             })
+                                        //         }}
+                                        //         variant="contained"
+                                        //         color="success"
+                                        //         size="small"
+                                        //         sx={{
+                                        //             fontSize: "12px",
+                                        //             textTransform: "none", // keeps "View More" normal
+                                        //             minWidth: "auto",      // removes default large width
+                                        //             px: 1.5,               // horizontal padding
+                                        //             py: 0.5,               // vertical padding
+                                        //         }}
+                                        //     >
+                                        //         View More
+                                        //     </Button>
+                                        // </TableCell>
+                                        // </TableRow>
                                     ))
                                 ) : (
                                     <TableRow>
@@ -611,6 +725,38 @@ export const PatientHistory = () => {
                 </>
             )
             }
+            {/* Column Filter Dropdown */}
+            {formsColumnFilterOpen && (
+                <div
+                    ref={formsColumnFilterRef}
+                    className="ff-column-filter-dropdown"
+                    style={{
+                        position: "absolute",
+                        zIndex: 10,
+                        top: columnFilterButtonRef.current ? columnFilterButtonRef.current.getBoundingClientRect().bottom + window.scrollY + 8 : '100%',
+                        left: columnFilterButtonRef.current ? columnFilterButtonRef.current.getBoundingClientRect().left + window.scrollX : 0,
+                        background: "#fff",
+                        border: "1px solid #ccc",
+                        borderRadius: 6,
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                        padding: 12,
+                        minWidth: 180,
+                    }}
+                >
+                    <div className="ff-column-checkboxes">
+                        {FORMS_AVAILABLE_COLUMNS.map((col) => (
+                            <label key={col.key} className="ff-column-check" style={{ display: 'block', marginBottom: 6 }}>
+                                <input
+                                    type="checkbox"
+                                    checked={selectedFormColumns.includes(col.key)}
+                                    onChange={() => toggleFormColumn(col.key)}
+                                />
+                                <span style={{ marginLeft: 8 }}>{col.label}</span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
+            )}
         </Box >
     );
 };

@@ -960,7 +960,7 @@ const BranchInfo = () => {
         );
         closeAttendanceModal()
         toast.success(
-          `Doctor ${!currentStatus ? "activated" : "deactivated"} successfully!`,
+          `Doctor ${currentStatus ? "activated" : "deactivated"} successfully!`,
         );
         return
       }
@@ -1503,7 +1503,19 @@ const BranchInfo = () => {
                   >
                     Status
                   </TableCell>
+
                   {isShowAction && (
+                    <TableCell
+                      sx={{
+                        color: "#EF6C00",
+                        fontWeight: "bold",
+                        textAlign: "center",
+                      }}
+                    >
+                      Actions
+                    </TableCell>
+                  )}
+                  {/* {isShowAction && (
                     <TableCell
                       sx={{
                         color: "#5C6BC0",
@@ -1514,7 +1526,7 @@ const BranchInfo = () => {
                     >
                       Actions
                     </TableCell>
-                  )}
+                  )} */}
 
                 </TableRow>
               </TableHead>
@@ -1557,7 +1569,7 @@ const BranchInfo = () => {
                           disabled={saving}
                         />
                       </TableCell>
-                      <TableCell
+                      {/* <TableCell
                         sx={{
                           display: "flex",
                         }}
@@ -1571,7 +1583,7 @@ const BranchInfo = () => {
                           <CalendarMonthIcon color="primary" />
                         </IconButton>
 
-                        {/* Edit */}
+                 
                         {canEdit && (
                           <IconButton
                             color="primary"
@@ -1583,7 +1595,6 @@ const BranchInfo = () => {
                           </IconButton>
                         )}
 
-                        {/* Delete */}
                         {canDelete && (
                           <IconButton
                             color="error"
@@ -1601,6 +1612,49 @@ const BranchInfo = () => {
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         )}
+                      </TableCell> */}
+
+                      <TableCell align="center">
+                        <Box sx={{ display: "flex" }}>
+                          <IconButton
+                            color="primary"
+                            onClick={() => openAttendanceModal("doctor", row)}
+                            size="small"
+                            title="Doctor Attendance"
+                          >
+                            <CalendarMonthIcon color="primary" />
+                          </IconButton>
+
+
+                          {canEdit && (
+                            <IconButton
+                              color="primary"
+                              onClick={() => handleOpenModal("doctor", row)}
+                              size="small"
+                              title="Edit Doctor"
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          )}
+
+                          {canDelete && (
+                            <IconButton
+                              color="error"
+                              size="small"
+                              onClick={() => {
+                                setSelectedItem({
+                                  type: "doctor",
+                                  id: row?._id,
+                                });
+
+                                setDeleteOpen(true);
+                              }}
+                              title="Delete Doctor"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>)}
+                        </Box>
+
                       </TableCell>
 
                     </TableRow>

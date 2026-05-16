@@ -31,6 +31,15 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { commonRoutes } from "../../../api/apiService";
 import { useApi } from "../../../api/useApi";
 
+export const FORMS_AVAILABLE_COLUMNS = [
+    { key: "patientName", label: "Patient Name" },
+    { key: "patientMobile", label: "Patient Mobile No" },
+    { key: "lastVisit.purpose", label: "POC / Purpose" },
+    { key: "lastVisit.formType", label: "Form Type" },
+    { key: "lastVisit.doctor.name", label: "Doctor" },
+    { key: "lastVisit.department.name", label: "Department" },
+    { key: "createdAt", label: "Created At" },
+];
 export const SInglePatientDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams();
@@ -44,6 +53,16 @@ export const SInglePatientDetails = () => {
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
     const [formTypeFilter, setFormTypeFilter] = useState("all");
+    const [formsColumnFilterOpen, setFormsColumnFilterOpen] = useState(false);
+    const formsColumnFilterRef = React.useRef(null);
+    const columnFilterButtonRef = React.useRef(null);
+    const [selectedFormColumns, setSelectedFormColumns] = useState([
+        "patientName",
+        "patientMobile",
+        "lastVisit.purpose",
+        "lastVisit.formType",
+        "createdAt",
+    ]);
     const [error, setError] = useState(null)
 
     const {
@@ -96,6 +115,34 @@ export const SInglePatientDetails = () => {
 
         return filtered;
     }, [visits, searchTerm, startDate, endDate, formTypeFilter]);
+
+
+    const toggleFormColumn = (colKey) => {
+        setSelectedFormColumns((prev) =>
+            prev.includes(colKey)
+                ? prev.filter((key) => key !== colKey)
+                : [...prev, colKey]
+        );
+    };
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                formsColumnFilterRef.current &&
+                !formsColumnFilterRef.current.contains(event.target) &&
+                columnFilterButtonRef.current &&
+                !columnFilterButtonRef.current.contains(event.target)
+            ) {
+                setFormsColumnFilterOpen(false);
+            }
+        };
+        if (formsColumnFilterOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [formsColumnFilterOpen]);
+
     useEffect(() => {
         const fetchHistory = async () => {
             if (!patient?.hospitalId || !patient?._id) {
@@ -315,7 +362,8 @@ export const SInglePatientDetails = () => {
             <Card sx={{ mb: 3, boxShadow: 2 }}>
                 <CardContent>
                     <Grid container spacing={2} alignItems="flex-end">
-                        {/* Search by Doctor/Department */}
+
+                        {/* Search */}
                         <Grid item xs={12} sm={6} md={3}>
                             <TextField
                                 fullWidth
@@ -363,21 +411,23 @@ export const SInglePatientDetails = () => {
                             />
                         </Grid>
 
-                        {/* Clear Filters Button */}
-                        {/* <Grid item xs={12} sm={6} md={2}>
+                        {/* Select Fields */}
+                        <Grid item xs={12} sm={6} md={2}>
                             <Button
                                 fullWidth
                                 variant="outlined"
                                 color="secondary"
-                                startIcon={<ClearIcon />}
-                                onClick={handleClearFilters}
-                                size="small"
+                                ref={columnFilterButtonRef}
+                                onClick={() => setFormsColumnFilterOpen((prev) => !prev)}
+                                size="medium"
+                                sx={{ height: "40px" }}
                             >
-                                Clear
+                                <i className="fas fa-columns"></i>
+                                &nbsp; Select Fields ({selectedFormColumns.length})
                             </Button>
-                        </Grid> */}
+                        </Grid>
 
-                        {/* Export CSV Button */}
+                        {/* Export CSV */}
                         <Grid item xs={12} sm={6} md={2}>
                             <Button
                                 fullWidth
@@ -385,11 +435,13 @@ export const SInglePatientDetails = () => {
                                 color="success"
                                 startIcon={<FileDownloadIcon />}
                                 onClick={handleExportCSV}
-                                size="small"
+                                size="medium"
+                                sx={{ height: "40px" }}
                             >
                                 Export CSV
                             </Button>
                         </Grid>
+
                     </Grid>
 
                     {/* Active Filters Display */}
@@ -607,7 +659,37 @@ export const SInglePatientDetails = () => {
 
             {/* Visits Table */}
 
-
+            {formsColumnFilterOpen && (
+                <div
+                    ref={formsColumnFilterRef}
+                    className="ff-column-filter-dropdown"
+                    style={{
+                        position: "absolute",
+                        zIndex: 10,
+                        top: columnFilterButtonRef.current ? columnFilterButtonRef.current.getBoundingClientRect().bottom + window.scrollY + 8 : '100%',
+                        left: columnFilterButtonRef.current ? columnFilterButtonRef.current.getBoundingClientRect().left + window.scrollX : 0,
+                        background: "#fff",
+                        border: "1px solid #ccc",
+                        borderRadius: 6,
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                        padding: 12,
+                        minWidth: 180,
+                    }}
+                >
+                    <div className="ff-column-checkboxes">
+                        {FORMS_AVAILABLE_COLUMNS.map((col) => (
+                            <label key={col.key} className="ff-column-check" style={{ display: 'block', marginBottom: 6 }}>
+                                <input
+                                    type="checkbox"
+                                    checked={selectedFormColumns.includes(col.key)}
+                                    onChange={() => toggleFormColumn(col.key)}
+                                />
+                                <span style={{ marginLeft: 8 }}>{col.label}</span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
+            )}
         </Box>
     );
 };
