@@ -26,16 +26,42 @@ import {
     Tabs,
     Tab,
     Chip,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    RadioGroup,
+    FormControlLabel,
+    Radio,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import DownloadIcon from "@mui/icons-material/Download";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { UserContextHook } from "../../../contexts/UserContexts";
 import HospitalContext from "../../../contexts/HospitalContexts";
 import { FORMS_AVAILABLE_COLUMNS, getNestedValue } from "./PatientHistory";
 import moment from "moment";
+
+// Format date
+const formatDate = (dateString) => {
+    try {
+        return new Date(dateString).toLocaleDateString("en-IN", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    } catch {
+        return "N/A";
+    }
+};
 
 export const PatientHistory = () => {
     const [page, setPage] = useState(0);
@@ -45,6 +71,8 @@ export const PatientHistory = () => {
     const [endDate, setEndDate] = useState("");
     const [error, setError] = useState(null);
     const [formTypeFilter, setFormTypeFilter] = useState("all");
+    const [exportFormat, setExportFormat] = useState("csv");
+    const [exportDialogOpen, setExportDialogOpen] = useState(false);
     const [formsColumnFilterOpen, setFormsColumnFilterOpen] = useState(false);
     const [selectedFormColumns, setSelectedFormColumns] = useState([
         "patientName",
@@ -142,64 +170,124 @@ export const PatientHistory = () => {
         return filtered;
     }, [patients, searchName, startDate, endDate, formTypeFilter]);
 
-    // Export to CSV
+
+
+    // Export helpers
+    const exportHeaders = [
+        "Patient Name",
+        "Patient Mobile No.",
+        "Purpose",
+        "Form Type",
+        "Doctor",
+        "Department",
+        "Remarks",
+        "Date",
+    ];
+
+    const exportRows = filteredPatients.map((patient) => [
+        patient.patientName || "N/A",
+        patient.patientMobile || "N/A",
+        patient?.lastVisit?.purpose || "N/A",
+        patient?.lastVisit?.formType || "N/A",
+        patient?.lastVisit?.doctor?.name || "N/A",
+        patient?.lastVisit?.department?.name || "N/A",
+        patient?.lastVisit?.remarks || "N/A",
+        formatDate(patient.createdAt) || "N/A",
+    ]);
+
     const handleExportCSV = () => {
-        if (filteredVisits.length === 0) {
-            toast.warning("No data to export");
+        if (filteredPatients.length === 0) {
+            toast.error("No data to export");
             return;
         }
-
-        const headers = [
-            "Call Date",
-            "Doctor Name",
-            "Department",
-            "Purpose",
-            "Form Type",
-            "Call Status",
-        ];
-
-        const rows = filteredVisits.map((visit) => [
-            formatDate(visit.createdAt),
-            visit.doctorName,
-            visit.departmentName,
-            visit.purpose,
-            visit.formType,
-            visit.callStatus,
-        ]);
-
-        // Create CSV content
-        const csvContent = [
-            [
-                `Patient: ${patient.patientName}`,
-                `Mobile: ${patient.patientMobile}`,
-                `Age: ${patient.age}`,
-                `Gender: ${patient.gender}`,
-            ],
-            [],
-            headers,
-            ...rows,
-        ]
-            .map((row) => row.map((cell) => `"${cell}"`).join(","))
+        const csvContent = [exportHeaders, ...exportRows]
+            .map((row) =>
+                row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+            )
             .join("\n");
-
-        // Create blob and download
-        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a");
+        const blob = new Blob([csvContent], {
+            type: "text/csv;charset=utf-8;",
+        });
         const url = URL.createObjectURL(blob);
-
-        link.setAttribute("href", url);
-        link.setAttribute(
-            "download",
-            `${patient.patientName}_visits_${new Date().toISOString().split("T")[0]}.csv`
-        );
-        link.style.visibility = "hidden";
-
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `patients_${new Date().toISOString().split("T")[0]}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-
+        URL.revokeObjectURL(url);
         toast.success("CSV exported successfully!");
     };
+
+    const handleExportExcel = () => {
+        if (filteredPatients.length === 0) {
+            toast.error("No data to export");
+            return;
+        }
+        const ws = XLSX.utils.aoa_to_sheet([exportHeaders, ...exportRows]);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Patients");
+        XLSX.writeFile(wb, `patients_${new Date().toISOString().split("T")[0]}.xlsx`);
+        toast.success("Excel exported successfully!");
+    };
+
+    const handleExportPDF = () => {
+        if (filteredPatients.length === 0) {
+            toast.error("No data to export");
+            return;
+        }
+
+        const doc = new jsPDF();
+
+        // Title
+        doc.setFontSize(16);
+        doc.text("Patients Report", 14, 15);
+
+        // Date
+        doc.setFontSize(10);
+        doc.text(
+            `Export Date: ${moment().format("DD/MM/YYYY hh:mm A")}`,
+            14,
+            22
+        );
+
+        // Table
+        autoTable(doc, {
+            startY: 30,
+            head: [exportHeaders],
+            body: exportRows,
+            styles: {
+                fontSize: 8,
+                cellPadding: 2,
+            },
+            headStyles: {
+                fillColor: [33, 47, 61], // dark header
+                textColor: 255,
+                fontStyle: "bold",
+            },
+            alternateRowStyles: {
+                fillColor: [245, 245, 245],
+            },
+            margin: { top: 30 },
+        });
+
+        // Save
+        doc.save(
+            `patients_${new Date().toISOString().split("T")[0]}.pdf`
+        );
+
+        toast.success("PDF exported successfully!");
+    };
+
+
+    const handleExport = () => {
+        if (exportFormat === "csv") handleExportCSV();
+        else if (exportFormat === "excel") handleExportExcel();
+        else if (exportFormat === "pdf") handleExportPDF();
+        setExportDialogOpen(false);
+    };
+
+
 
     // Handle form type tab change
     const handleFormTypeChange = (event, newValue) => {
@@ -239,20 +327,7 @@ export const PatientHistory = () => {
         );
     }, [filteredPatients, page, rowsPerPage]);
 
-    // Format date
-    const formatDate = (dateString) => {
-        try {
-            return new Date(dateString).toLocaleDateString("en-IN", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-            });
-        } catch {
-            return "N/A";
-        }
-    };
+
 
     return (
         <Box sx={{ p: 3, backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
@@ -509,12 +584,28 @@ export const PatientHistory = () => {
                                 <Button
                                     variant="contained"
                                     color="warning"
-                                    startIcon={<FileDownloadIcon />}
-                                    onClick={handleExportCSV}
-
+                                    startIcon={<DownloadIcon />}
+                                    onClick={() => setExportDialogOpen(true)}
                                 >
-                                    Export CSV
+                                    Export
                                 </Button>
+                                <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)}>
+                                    <DialogTitle>Select Export Format</DialogTitle>
+                                    <DialogContent>
+                                        <RadioGroup
+                                            value={exportFormat}
+                                            onChange={e => setExportFormat(e.target.value)}
+                                        >
+                                            <FormControlLabel value="csv" control={<Radio />} label="CSV (.csv)" />
+                                            <FormControlLabel value="excel" control={<Radio />} label="Excel (.xlsx)" />
+                                            <FormControlLabel value="pdf" control={<Radio />} label="PDF (.pdf)" />
+                                        </RadioGroup>
+                                    </DialogContent>
+                                    <DialogActions>
+                                        <Button onClick={() => setExportDialogOpen(false)} color="secondary">Cancel</Button>
+                                        <Button onClick={handleExport} color="primary" variant="contained">Download</Button>
+                                    </DialogActions>
+                                </Dialog>
                             </Grid>
                         </Box>
 
