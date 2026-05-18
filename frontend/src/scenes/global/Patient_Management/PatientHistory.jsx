@@ -46,10 +46,29 @@ import { useNavigate } from "react-router-dom";
 import HospitalContext from "../../../contexts/HospitalContexts";
 import moment from "moment";
 
+export const statusStyles = {
+    pending: {
+        bg: "#ffcdd2",
+        color: "#c62828",
+    },
+    success: {
+        bg: "#c8e6c9",
+        color: "#2e7d32",
+    },
+    inbound: {
+        bg: "#c8e6c9",
+        color: "#2e7d32",
+    },
+    outbound: {
+        bg: "#ffccbc",
+        color: "#ef6c00",
+    },
+};
 export const FORMS_AVAILABLE_COLUMNS = [
     { key: "patientName", label: "Patient Name" },
     { key: "patientMobile", label: "Patient Mobile No" },
     { key: "lastVisit.purpose", label: "POC / Purpose" },
+    { key: "lastVisit.formData.appointmentSlot", label: "Appointment Slot" },
     { key: "lastVisit.formType", label: "Form Type" },
     { key: "lastVisit.doctor.name", label: "Doctor" },
     { key: "lastVisit.department.name", label: "Department" },
@@ -597,7 +616,12 @@ export const PatientHistory = () => {
                                     {loading?.patients ? <CircularProgress size={24} /> : "Refresh"}
                                 </Button>
 
-                                <Button
+                 
+                                <div
+                                    ref={columnFilterButtonRef}
+                                    style={{ position: "relative", display: "inline-block" }}
+                                >
+                                              <Button
                                     variant="outlined"
                                     color="secondary"
                                     ref={columnFilterButtonRef}
@@ -606,7 +630,52 @@ export const PatientHistory = () => {
                                 >
                                     <i className="fas fa-columns"></i> Select Fields (
                                     {selectedFormColumns.length})
+
+
                                 </Button>
+
+                                    {formsColumnFilterOpen && (
+                                        <div
+                                            ref={formsColumnFilterRef}
+                                            className="ff-column-filter-dropdown"
+                                            style={{
+                                                position: "absolute",
+                                                zIndex: 10,
+                                                top: "calc(100% + 8px)",
+                                                right: 0,
+                                                background: "#fff",
+                                                border: "1px solid #ccc",
+                                                borderRadius: 6,
+                                                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                                                padding: 12,
+                                                minWidth: 180,
+                                            }}
+                                        >
+                                            <div className="ff-column-checkboxes">
+                                                {FORMS_AVAILABLE_COLUMNS.map((col) => (
+                                                    <label
+                                                        key={col.key}
+                                                        className="ff-column-check"
+                                                        style={{
+                                                            display: "block",
+                                                            marginBottom: 6,
+                                                        }}
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedFormColumns.includes(col.key)}
+                                                            onChange={() => toggleFormColumn(col.key)}
+                                                        />
+
+                                                        <span style={{ marginLeft: 8 }}>
+                                                            {col.label}
+                                                        </span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                                 <Button
                                     variant="contained"
                                     color="warning"
@@ -673,7 +742,22 @@ export const PatientHistory = () => {
                                             {visibleFormColumns.map((col) => {
                                                 let val = getNestedValue(row, col.key);
 
-                                                if (val) {
+                                                // Handle appointmentSlot object
+                                                if (
+                                                    col.key === "lastVisit.formData.appointmentSlot" &&
+                                                    val
+                                                ) {
+                                                    const formattedDate = val?.date
+                                                        ? moment(val.date).format("dddd, DD MMM YYYY")
+                                                        : null;
+
+                                                    val = formattedDate
+                                                        ? `${formattedDate} | ${val.start} to ${val.end}`
+                                                        : `${val.start} to ${val.end}`;
+                                                }
+
+                                                // Handle dates
+                                                else if (val && typeof val === "string") {
                                                     const date = moment(val);
 
                                                     if (date.isValid()) {
@@ -681,7 +765,8 @@ export const PatientHistory = () => {
                                                     }
                                                 }
 
-                                                if (
+                                                // Handle generic objects
+                                                else if (
                                                     val &&
                                                     typeof val === "object" &&
                                                     !Array.isArray(val)
@@ -691,7 +776,24 @@ export const PatientHistory = () => {
 
                                                 return (
                                                     <TableCell key={col.key}>
-                                                        {val ?? "-"}
+                                                        {["followupStatus", "lastVisit.formType", "appointmentStatus"].includes(col.key) ? (
+                                                            <Chip
+                                                                label={val}
+                                                                size="small"
+                                                                sx={{
+                                                                    backgroundColor:
+                                                                        statusStyles[val]?.bg || "#e0e0e0",
+
+                                                                    color:
+                                                                        statusStyles[val]?.color || "#000",
+
+                                                                    fontWeight: 600,
+                                                                    minWidth: 90,
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            val ?? "-"
+                                                        )}
                                                     </TableCell>
                                                 );
                                             })}
@@ -843,38 +945,7 @@ export const PatientHistory = () => {
             )
             }
 
-            {/* Column Filter Dropdown */}
-            {formsColumnFilterOpen && (
-                <div
-                    ref={formsColumnFilterRef}
-                    className="ff-column-filter-dropdown"
-                    style={{
-                        position: "absolute",
-                        zIndex: 10,
-                        top: columnFilterButtonRef.current ? columnFilterButtonRef.current.getBoundingClientRect().bottom + window.scrollY + 8 : '100%',
-                        left: columnFilterButtonRef.current ? columnFilterButtonRef.current.getBoundingClientRect().left + window.scrollX : 0,
-                        background: "#fff",
-                        border: "1px solid #ccc",
-                        borderRadius: 6,
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                        padding: 12,
-                        minWidth: 180,
-                    }}
-                >
-                    <div className="ff-column-checkboxes">
-                        {FORMS_AVAILABLE_COLUMNS.map((col) => (
-                            <label key={col.key} className="ff-column-check" style={{ display: 'block', marginBottom: 6 }}>
-                                <input
-                                    type="checkbox"
-                                    checked={selectedFormColumns.includes(col.key)}
-                                    onChange={() => toggleFormColumn(col.key)}
-                                />
-                                <span style={{ marginLeft: 8 }}>{col.label}</span>
-                            </label>
-                        ))}
-                    </div>
-                </div>
-            )}
+
         </Box >
     );
 };

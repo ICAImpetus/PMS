@@ -33,15 +33,26 @@ import { toast } from "react-toastify";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { commonRoutes } from "../../../api/apiService";
 import { useApi } from "../../../api/useApi";
+import { getNestedValue, statusStyles } from "./PatientHistory";
+import moment from "moment";
+
 
 export const FORMS_AVAILABLE_COLUMNS = [
-    { key: "patientName", label: "Patient Name" },
-    { key: "patientMobile", label: "Patient Mobile No" },
-    { key: "lastVisit.purpose", label: "POC / Purpose" },
-    { key: "lastVisit.formType", label: "Form Type" },
-    { key: "lastVisit.doctor.name", label: "Doctor" },
-    { key: "lastVisit.department.name", label: "Department" },
-    { key: "createdAt", label: "Created At" },
+    { key: "createdAt", label: "Visit Date" },
+    { key: "purpose", label: "POC / Purpose" },
+    { key: "formType", label: "Form Type" },
+    { key: "doctor.name", label: "Doctor" },
+    { key: "department.name", label: "Department" },
+    { key: "formData.surgeryName", label: "Surgery Name" },
+    { key: "formData.healthPackageName", label: "Health Package" },
+    { key: "formData.department.name", label: "Health Scheme Name" },
+    { key: "formData.govertHealthSchemeName", label: "On-Govt Health Scheme Name" },
+    { key: "formData.nonGovtHealthSchemeName", label: "Non-Govt Health Scheme Name" },
+    { key: "formData.reportName", label: "Report Name" },
+    { key: "formData.callerType", label: "Caller Type" },
+    { key: "followupStatus", label: "Follow-up Status" },
+    { key: "formData.referenceFrom", label: "Reference From" },
+    { key: "formData.remarks", label: "Remarks" },
 ];
 export const SInglePatientDetails = () => {
     const navigate = useNavigate();
@@ -62,8 +73,13 @@ export const SInglePatientDetails = () => {
     const [selectedFormColumns, setSelectedFormColumns] = useState([
         "patientName",
         "patientMobile",
-        "lastVisit.purpose",
-        "lastVisit.formType",
+        "doctor.name",
+        "department.name",
+        "purpose",
+        "formType",
+        "followupStatus",
+        "formData.referenceFrom",
+        "formData.remarks",
         "createdAt",
     ]);
     const [error, setError] = useState(null)
@@ -119,7 +135,6 @@ export const SInglePatientDetails = () => {
         return filtered;
     }, [visits, searchTerm, startDate, endDate, formTypeFilter]);
 
-
     const toggleFormColumn = (colKey) => {
         setSelectedFormColumns((prev) =>
             prev.includes(colKey)
@@ -127,6 +142,10 @@ export const SInglePatientDetails = () => {
                 : [...prev, colKey]
         );
     };
+
+    const visibleFormColumns = FORMS_AVAILABLE_COLUMNS.filter((col) =>
+        selectedFormColumns.includes(col.key),
+    );
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (
@@ -546,92 +565,178 @@ export const SInglePatientDetails = () => {
                                     }}
                                 >
                                     <TableCell align="center">S.No</TableCell>
-                                    <TableCell>Call Date</TableCell>
-                                    <TableCell>Doctor Name</TableCell>
-                                    <TableCell>Department</TableCell>
-                                    <TableCell>Purpose</TableCell>
-                                    <TableCell>Form Type</TableCell>
-                                    <TableCell>Remarks</TableCell>
+
+                                    {visibleFormColumns.map((col) => (
+                                        <TableCell key={col.key}>
+                                            {col.label}
+                                        </TableCell>
+                                    ))}
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {paginatedData.length > 0 ? (
-                                    paginatedData.map((visit, index) => (
+                                {filteredVisits.length > 0 ? (
+                                    filteredVisits.map((row, index) => (
                                         <TableRow
-                                            key={visit._id}
+                                            key={row._id}
                                             sx={{
                                                 "&:hover": { backgroundColor: "#f0f0f0" },
                                                 "&:nth-of-type(odd)": { backgroundColor: "#fafafa" },
                                             }}
                                         >
                                             <TableCell align="center">
-                                                {page * rowsPerPage + index + 1}
+                                                {index + 1}
                                             </TableCell>
-                                            <TableCell sx={{ fontSize: "0.9rem" }}>
-                                                {formatDate(visit.createdAt)}
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: 500 }}>
-                                                {visit.doctor?.name || "N/A"}
-                                            </TableCell>
-                                            <TableCell>{visit.department?.name || "N/A"}</TableCell>
-                                            <TableCell>
-                                                <Box
-                                                    sx={{
-                                                        display: "inline-block",
-                                                        px: 1.5,
-                                                        py: 0.5,
-                                                        backgroundColor:
-                                                            visit.purpose === "Appointment"
-                                                                ? "#e3f2fd"
-                                                                : "#f3e5f5",
-                                                        borderRadius: 1,
-                                                        fontSize: "0.85rem",
-                                                        fontWeight: 500,
-                                                    }}
-                                                >
-                                                    {visit.purpose}
-                                                </Box>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Box
-                                                    sx={{
-                                                        display: "inline-block",
-                                                        px: 1.5,
-                                                        py: 0.5,
-                                                        backgroundColor:
-                                                            visit.formType === "inbound"
-                                                                ? "#c8e6c9"
-                                                                : "#ffccbc",
-                                                        borderRadius: 1,
-                                                        fontSize: "0.85rem",
-                                                        fontWeight: 500,
-                                                    }}
-                                                >
-                                                    {visit.formType}
-                                                </Box>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Box
-                                                    sx={{
-                                                        display: "inline-block",
-                                                        px: 1.5,
-                                                        py: 0.5,
-                                                        backgroundColor: "#fff9c4",
-                                                        borderRadius: 1,
-                                                        fontSize: "0.85rem",
-                                                        fontWeight: 500,
-                                                    }}
-                                                >
-                                                    {visit?.formData?.remarks || "N/A"}
-                                                </Box>
-                                            </TableCell>
+                                            {visibleFormColumns.map((col) => {
+                                                let val = getNestedValue(row, col.key);
+
+                                                // Handle appointmentSlot object
+                                                if (
+                                                    col.key === "lastVisit.formData.appointmentSlot" &&
+                                                    val
+                                                ) {
+                                                    const formattedDate = val?.date
+                                                        ? moment(val.date).format("dddd, DD MMM YYYY")
+                                                        : null;
+
+                                                    val = formattedDate
+                                                        ? `${formattedDate} | ${val.start} to ${val.end}`
+                                                        : `${val.start} to ${val.end}`;
+                                                }
+
+                                                // Handle dates
+                                                else if (val && typeof val === "string") {
+                                                    const date = moment(val);
+
+                                                    if (date.isValid()) {
+                                                        val = date.format("DD/MM/YYYY hh:mm A");
+                                                    }
+                                                }
+
+                                                // Handle generic objects
+                                                else if (
+                                                    val &&
+                                                    typeof val === "object" &&
+                                                    !Array.isArray(val)
+                                                ) {
+                                                    val = val.name || JSON.stringify(val);
+                                                }
+
+                                                return (
+                                                    <TableCell key={col.key}>
+                                                        {["followupStatus", "formType", "appointmentStatus"].includes(col.key) ? (
+                                                            <Chip
+                                                                label={val}
+                                                                size="small"
+                                                                sx={{
+                                                                    backgroundColor:
+                                                                        statusStyles[val]?.bg || "#e0e0e0",
+
+                                                                    color:
+                                                                        statusStyles[val]?.color || "#000",
+
+                                                                    fontWeight: 600,
+                                                                    minWidth: 90,
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            val ?? "-"
+                                                        )}
+                                                    </TableCell>
+                                                );
+                                            })}
+
                                         </TableRow>
+                                        // <TableRow
+                                        //     key={patient._id}
+                                        //     sx={{
+                                        //         "&:hover": { backgroundColor: "#f0f0f0" },
+                                        //         "&:nth-of-type(odd)": { backgroundColor: "#fafafa" },
+                                        //     }}
+                                        // >
+                                        //     <TableCell align="center">
+                                        //         {index + 1}
+                                        //     </TableCell>
+                                        //     <TableCell sx={{ fontWeight: 500 }}>
+                                        //         {patient.patientName || "N/A"}
+                                        //     </TableCell>
+                                        //     <TableCell>{patient.patientMobile || "N/A"}</TableCell>
+                                        //     <TableCell>
+                                        //         <Box
+                                        //             sx={{
+                                        //                 display: "inline-block",
+                                        //                 px: 1.5,
+                                        //                 py: 0.5,
+                                        //                 backgroundColor:
+                                        //                     patient.purpose === "Appointment"
+                                        //                         ? "#e3f2fd"
+                                        //                         : patient.purpose === "followup"
+                                        //                             ? "#f3e5f5"
+                                        //                             : "#fce4ec",
+                                        //                 borderRadius: 1,
+                                        //                 fontSize: "0.85rem",
+                                        //                 fontWeight: 500,
+                                        //             }}
+                                        //         >
+                                        //             {patient?.lastVisit?.purpose || "N/A"}
+                                        //         </Box>
+                                        //     </TableCell>
+                                        //     <TableCell>
+                                        //         <Box
+                                        //             sx={{
+                                        //                 display: "inline-block",
+                                        //                 px: 1.5,
+                                        //                 py: 0.5,
+                                        //                 backgroundColor:
+                                        //                     patient?.lastVisit?.formType === "inbound"
+                                        //                         ? "#c8e6c9"
+                                        //                         : "#ffccbc",
+                                        //                 borderRadius: 1,
+                                        //                 fontSize: "0.85rem",
+                                        //                 fontWeight: 500,
+                                        //             }}
+                                        //         >
+                                        //             {patient?.lastVisit?.formType || "N/A"}
+                                        //         </Box>
+                                        //     </TableCell>
+                                        //     <TableCell>{patient?.lastVisit?.doctor?.name || "N/A"}</TableCell>
+                                        //     <TableCell>{patient?.lastVisit?.department?.name || "N/A"}</TableCell>
+                                        //     <TableCell sx={{ fontSize: "0.9rem" }}>
+                                        //         {formatDate(patient.createdAt)}
+                                        //     </TableCell>
+                                        // <TableCell>
+                                        //     <Button
+                                        //         onClick={() => {
+                                        //             navigate(`/single-patient-history/${patient?._id}`, {
+                                        //                 state: {
+
+                                        //                     patient: {
+                                        //                         ...patient,
+                                        //                         hospitalId: selectedHostpital
+                                        //                     }
+                                        //                 }
+                                        //             })
+                                        //         }}
+                                        //         variant="contained"
+                                        //         color="success"
+                                        //         size="small"
+                                        //         sx={{
+                                        //             fontSize: "12px",
+                                        //             textTransform: "none", // keeps "View More" normal
+                                        //             minWidth: "auto",      // removes default large width
+                                        //             px: 1.5,               // horizontal padding
+                                        //             py: 0.5,               // vertical padding
+                                        //         }}
+                                        //     >
+                                        //         View More
+                                        //     </Button>
+                                        // </TableCell>
+                                        // </TableRow>
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                                        <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                                             <Typography variant="body2" sx={{ color: "#7c8fa3" }}>
-                                                No visits found matching your criteria
+                                                No patients found matching your criteria
                                             </Typography>
                                         </TableCell>
                                     </TableRow>
