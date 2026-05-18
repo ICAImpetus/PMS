@@ -942,10 +942,22 @@ const ExecutiveDashboard = () => {
                         {apt.patientName || "Unknown Patient"}
                       </div>
                       <div className="executive-appointment-details">
-                        {apt.doctorName || "N/A"} - {apt.departmentName || "General"}
+                        {apt?.doctorName || "N/A"} - {apt?.departmentName || "General"}
                       </div>
                       <div className="executive-appointment-time">
-                        {apt.createdAt ? new Date(apt.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "N/A"}
+                        {apt?.appointmentSlot ? (
+                          <>
+                            {new Date(apt.appointmentSlot.date).toLocaleDateString("en-GB", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                            {" | "}
+                            {apt?.appointmentSlot.start} - {apt?.appointmentSlot.end}
+                          </>
+                        ) : (
+                          "N/A"
+                        )}
                       </div>
                     </div>
                   </li>

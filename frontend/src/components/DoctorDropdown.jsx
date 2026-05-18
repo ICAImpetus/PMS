@@ -32,19 +32,27 @@ export default function DoctorDropdown({
 
     if (!selectedDay) return true;
 
+
     if (!doctor?.opdDays) return false;
 
     // Selected day name
-    const dayName =
-      dayjs(selectedDay).format("dddd");
+    // const dayName =
+    //   dayjs(selectedDay).format("dddd");
 
     // Selected full date
     const formattedDate =
       dayjs(selectedDay).format("YYYY-MM-DD");
 
     // OPD day check
+
+    // console.log("selectedDay:", selectedDay);
+    // console.log("doctor:", doctor);
+
     const isOpdDay =
-      doctor?.opdDays?.includes(dayName);
+      doctor?.opdDays?.includes(selectedDay);
+
+    // console.log("isOpdDay:", isOpdDay);
+    // console.log("dayName:", dayName);
 
     // Unavailable check
     const isUnavailable =

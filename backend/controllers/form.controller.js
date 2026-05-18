@@ -501,6 +501,8 @@ export const getFilledForms = async (req, res) => {
                 agentName: 1,
                 callStatus: 1,
 
+                appointmentSlot: "$formData.appointmentSlot",
+
                 callerType: "$formData.callerType",
 
                 // appointmentslot: "$formData?.appointmentSlot?.date"

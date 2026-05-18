@@ -516,20 +516,20 @@ function Forms() {
               </div>
 
             </div >
-            <div className="input-row full-width-row">
-              <div className="input-group">
-                <label className="required">Doctor Name</label>
 
-                <DoctorDropdown
-                  doctors={filteredDoctors || []}
-                  value={selectedDoctor}
-                  onChange={handleDoctorSelect}
-                  label="Select Doctor"
-                  selectedDay={selectedDay}
-                  required
-                />
-              </div>
+            <div className="input-group">
+              <label className="required">Doctor Name</label>
+
+              <DoctorDropdown
+                doctors={filteredDoctors || []}
+                value={selectedDoctor}
+                onChange={handleDoctorSelect}
+                label="Select Doctor"
+                selectedDay={selectedDay}
+                required
+              />
             </div>
+
 
             {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 

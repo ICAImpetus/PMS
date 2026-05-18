@@ -179,7 +179,7 @@ const AddDoctorModal = ({
     // New fields
     profilePicture: null,
     profilePreview: null,
-    title: "Dr.",
+    title: "",
     designation: "",
     department: null,
     specialization: "",
@@ -577,8 +577,8 @@ const AddDoctorModal = ({
     if (!currentDoctor.experience?.toString().trim())
       tempErrors.experience = "Experience is required.";
 
-    if (!currentDoctor.title?.trim())
-      tempErrors.title = "Title  is required.";
+    // if (!currentDoctor.title?.trim())
+    //   tempErrors.title = "Title  is required.";
 
     if (!currentDoctor.specialization?.trim())
       tempErrors.specialization = "Specialization is required.";
@@ -1394,10 +1394,11 @@ const AddDoctorModal = ({
                             value={currentDoctor.title}
                             onChange={handleChange}
                             variant="outlined"
-                            required
+                            // required
                             error={!!errors.title}
                             helperText={errors.title}
                           >
+                            {/* <MenuItem value="" defaultChecked>Select Title</MenuItem> */}
                             <MenuItem value="dr">Dr.</MenuItem>
                             <MenuItem value="profdr">Prof. Dr.</MenuItem>
                             <MenuItem value="assocprofdr">Assoc. Prof. Dr.</MenuItem>
