@@ -44,11 +44,7 @@ const ExecutiveDashboard = () => {
   const [callsTab, setCallsTab] = useState("all"); // "all" | "inbound" | "outbound"
   const [formsModalOpen, setFormsModalOpen] = useState(null);
   const [formsTypeFilter, setFormsTypeFilter] = useState("all"); // "all" | "inbound" | "outbound"
-  const [branchFollowups, setBranchFollowups] = useState({ data: [], total: 0, page: 1, limit: 10 });
   const [followupsPopupOpen, setFollowupsPopupOpen] = useState(false);
-  const [bfPage, setBfPage] = useState(1);
-  const [page, setPage] = useState(1);
-  const [hPage, setHPage] = useState(1); // Horizontal page (5 items per page)
   const [notesModalOpen, setNotesModalOpen] = useState(false);
   const [newNote, setNewNote] = useState({ heading: '', body: '' });
   const [expandedNote, setExpandedNote] = useState(null);
@@ -75,7 +71,8 @@ const ExecutiveDashboard = () => {
     filterOptions,
     refetchDashboard,
     refetchForms,
-    refetchPatients
+    refetchPatients,
+    branchFollowups
 
   } = useContext(HospitalContext);
 
@@ -729,14 +726,14 @@ const ExecutiveDashboard = () => {
       </div>
 
       {/* Pending Follow-ups (Branch) Section */}
-      <div className="executive-dashboard-section">
+      {/* <div className="executive-dashboard-section">
         <div className="pending-followups-section">
           <div className="pending-followups-header">
             <h2 className="executive-section-title">
               <PhoneCallbackIcon /> Pending Follow-ups (Branch)
             </h2>
             <div className="pending-followups-header-actions">
-              {(branchFollowups.total > 5 || branchFollowups.data?.length > 5) && (
+              {/* {(branchFollowups?.length > 5 || branchFollowups?.length > 5) && (
                 <div className="h-pagination-btns">
                   <button
                     className="h-page-btn"
@@ -759,14 +756,14 @@ const ExecutiveDashboard = () => {
                   <button
                     className="h-page-btn"
                     disabled={
-                      (((bfPage - 1) * 10) + (hPage * 5) >= (branchFollowups.total || 0)) &&
-                      (hPage * 5 >= (branchFollowups.data?.length || 0)) ||
+                      (((bfPage - 1) * 10) + (hPage * 5) >= (branchFollowups?.length || 0)) &&
+                      (hPage * 5 >= (branchFollowups?.length || 0)) ||
                       loading?.dashboard
                     }
                     onClick={() => {
-                      if (hPage < 2 && branchFollowups.data?.length > 5) {
+                      if (hPage < 2 && branchFollowups?.length > 5) {
                         setHPage(hPage + 1);
-                      } else if (bfPage * 10 < branchFollowups.total) {
+                      } else if (bfPage * 10 < branchFollowups?.length) {
                         setBfPage(bfPage + 1);
                         setHPage(1);
                       }
@@ -776,64 +773,24 @@ const ExecutiveDashboard = () => {
                     <ChevronRight size={18} />
                   </button>
                 </div>
-              )}
-              {branchFollowups.data?.length > 0 && (
+              )} */}
+      {/* {branchFollowups?.length > 0 && (
                 <button
                   className="pending-followups-more-btn"
                   onClick={() => setFollowupsPopupOpen(true)}
                 >
-                  More ({branchFollowups.total || branchFollowups.data?.length})
+                  More ({branchFollowups?.length || branchFollowups?.length})
                 </button>
               )}
             </div>
           </div>
-          {branchFollowups.data?.length === 0 ? (
+          {branchFollowups?.length === 0 && (
             <div className="pending-followups-empty">
               No pending follow-ups in this branch.
             </div>
-          ) : (
-            <div className="pending-followups-scroll">
-              {branchFollowups.data?.slice((hPage - 1) * 5, hPage * 5).map((fu, idx) => (
-                <div key={fu._id || idx} className="pending-followup-card">
-                  <div className="pf-card-top">
-                    <span className={`pf-type-badge pf-type-${fu.formType}`}>
-                      {fu.formType}
-                    </span>
-                    <span className="pf-date">
-                      {fu.createdAt
-                        ? new Date(fu.createdAt).toLocaleDateString("en-IN", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })
-                        : "N/A"}
-                    </span>
-                  </div>
-                  <div className="pf-patient-name">
-                    {fu.patientName || "Unknown Patient"}
-                  </div>
-                  <div className="pf-details">
-                    <span>{fu.patientMobile || "—"}</span>
-                  </div>
-                  <div className="pf-details">
-                    <span>{fu.doctorName || "—"}</span>
-                    <span className="pf-separator">•</span>
-                    <span>{fu.departmentName || "—"}</span>
-                  </div>
-                  <div className="pf-agent">
-                    Agent: {fu.agentName || "N/A"}
-                  </div>
-                  {fu.remarks && (
-                    <div className="pf-remarks" title={fu.remarks}>
-                      {fu.remarks.length > 50 ? fu.remarks.slice(0, 50) + "…" : fu.remarks}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
           )}
         </div>
-      </div>
+      </div>  */}
 
       <div className="executive-dashboard-section">
         <div className="data-grid row-3">
@@ -1114,6 +1071,7 @@ const ExecutiveDashboard = () => {
       {
         formsModalOpen && (
           <FilledFormsComponent
+            formsModalOpen={formsModalOpen}
             setFormsModalOpen={setFormsModalOpen}
             formsData={formsData}
             formsLoading={loading?.dashboard}
@@ -1171,9 +1129,9 @@ const ExecutiveDashboard = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {branchFollowups.data?.map((fu, idx) => (
+                        {branchFollowups?.map((fu, idx) => (
                           <tr key={fu._id || idx}>
-                            <td>{(branchFollowups.page - 1) * branchFollowups.limit + idx + 1}</td>
+                            <td>{(branchFollowups?.length - 1) * branchFollowups?.length + idx + 1}</td>
                             <td>{fu.patientName || "—"}</td>
                             <td>{fu.patientMobile || "—"}</td>
                             <td>
@@ -1207,12 +1165,12 @@ const ExecutiveDashboard = () => {
                   </div>
                 )}
               </div>
-              {branchFollowups.total > branchFollowups.limit && (
+              {branchFollowups?.length > 5 && (
                 <div className="executive-modal-footer pf-pagination">
                   <div className="pf-pagination-info">
-                    Showing {(branchFollowups.page - 1) * branchFollowups.limit + 1} to{" "}
-                    {Math.min(branchFollowups.page * branchFollowups.limit, branchFollowups.total)} of{" "}
-                    {branchFollowups.total}
+                    Showing {(branchFollowups?.length - 1) * branchFollowups?.length + 1} to{" "}
+                    {Math.min(branchFollowups?.length, branchFollowups?.length)} of{" "}
+                    {branchFollowups?.length}
                   </div>
                   <div className="pf-pagination-btns">
                     <button
@@ -1225,7 +1183,7 @@ const ExecutiveDashboard = () => {
                     <span className="pf-page-num">Page {bfPage}</span>
                     <button
                       className="pf-page-btn"
-                      disabled={bfPage * branchFollowups.limit >= branchFollowups.total || loading?.dashboard}
+                      disabled={bfPage * branchFollowups?.length >= branchFollowups?.length || loading?.dashboard}
                       onClick={() => setBfPage((p) => p + 1)}
                     >
                       Next

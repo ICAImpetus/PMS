@@ -78,7 +78,7 @@ export const SInglePatientDetails = () => {
         "purpose",
         "formType",
         "followupStatus",
-        "formData.referenceFrom",
+        // "formData.referenceFrom",
         "formData.remarks",
         "createdAt",
     ]);

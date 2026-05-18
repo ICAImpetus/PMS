@@ -25,10 +25,7 @@ const FORMS_AVAILABLE_COLUMNS = [
 ];
 
 const flattenFilledForm = (doc) => {
-  const formData = doc.formData || {};
-  const patient = formData.patientDetails || {};
-  const attendant = formData.attendantDetails || {};
-
+  console.log("doc", doc);
   return {
     _id: doc._id,
 
@@ -39,7 +36,8 @@ const flattenFilledForm = (doc) => {
     formType: doc.formType || "-",
     purpose: doc.purpose || "-",
 
-    appointmentslot: doc.appointmentslot || "-",
+
+    appointmentslot: doc?.appointmentSlot || "-",
 
     referenceFrom: doc.referenceFrom || "-",
     callerType: doc.callerType || "-",
@@ -70,6 +68,7 @@ const searchOptions = [
 
 
 const FilledFormsComponent = ({
+  formsModalOpen,
   setFormsModalOpen,
   formsData = [],
   formsTypeFilter,
@@ -78,6 +77,9 @@ const FilledFormsComponent = ({
   setPagination,
   formsLoading = false,
 }) => {
+
+
+
   const [formsColumnFilterOpen, setFormsColumnFilterOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("")
   const [index, setIndex] = useState(0);
@@ -86,39 +88,15 @@ const FilledFormsComponent = ({
     "callStatus",
     "patientName",
     "patientMobile",
-    "callerType",
     "purpose",
-    "formType",
+    ...(formsModalOpen === "Appointments"
+      ? ["appointmentslot", "department", "doctor"]
+      : []),
     "createdAt",
     "remarks"
+
   ]);
   const formsColumnFilterRef = useRef(null);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   const flattenedForms = React.useMemo(() => {
     return formsData?.map(flattenFilledForm);
@@ -390,7 +368,25 @@ const FilledFormsComponent = ({
                   {paginationData?.map((row) => (
                     <tr key={row._id}>
                       {visibleFormColumns.map((col) => {
+
+
+
                         let val = row[col.key];
+
+
+                        // Handle appointmentSlot object
+                        if (
+                          col.key === "appointmentslot" &&
+                          val
+                        ) {
+                          const formattedDate = val?.date
+                            ? moment(val.date).format("dddd, DD MMM YYYY")
+                            : null;
+
+                          val = formattedDate
+                            ? `${formattedDate} | ${val.start || "N/A"} to ${val.end || "N/A"}`
+                            : `${val.start || "N/A"} to ${val.end || "N/A"}`;
+                        }
                         if (val instanceof Date)
                           val = moment(val).format("DD/MM/YYYY hh:mm A");
 

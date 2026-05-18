@@ -567,7 +567,7 @@ export const getFilledForms = async (req, res) => {
                 createdAt: 1,
                 agentName: 1,
                 callStatus: 1,
-
+                appointmentSlot: "$formData.appointmentSlot",
                 callerType: "$formData.callerType",
 
                 patientName: "$patientDetails.patientName",
@@ -632,7 +632,7 @@ export const getFilledForms = async (req, res) => {
                 createdAt: 1,
                 agentName: 1,
                 callStatus: 1,
-
+                appointmentSlot: "$formData.appointmentSlot",
                 callerType: "$formData.callerType",
 
                 patientName: "$patientDetails.patientName",

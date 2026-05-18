@@ -1342,6 +1342,7 @@ const Dashboard = () => {
       {
         formsModalOpen && (
           <FilledFormsComponent
+          formsModalOpen={formsModalOpen}
             setFormsModalOpen={setFormsModalOpen}
             formsData={formsData}
             formsLoading={loading?.dashboardLoading}
