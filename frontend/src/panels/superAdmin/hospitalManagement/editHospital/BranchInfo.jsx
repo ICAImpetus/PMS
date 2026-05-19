@@ -67,6 +67,23 @@ import DeleteConfirmationModal from "../../../../components/DeleteConfirmationMo
 import ProgressPopup, { SpecialtiesCell } from "./UploadLoading";
 import DoctorAttendanceCalendar from "./DoctorAttendanceCalendar";
 
+const normalizeSuggestionValue = (value) => {
+  if (!value && value !== 0) return "";
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "object" && value !== null) {
+    if (typeof value.label === "string" && value.label.trim()) return value.label.trim();
+    if (typeof value.value === "string" && value.value.trim()) return value.value.trim();
+    if (typeof value.name === "string" && value.name.trim()) return value.name.trim();
+  }
+  return "";
+};
+export const normalizeSuggestionArray = (arr) => {
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map((item) => normalizeSuggestionValue(item))
+    .filter((item) => item);
+};
+
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
   return (

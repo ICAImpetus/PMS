@@ -1,6 +1,11 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
-import { TextField, Button, CircularProgress, MenuItem, FormControl, InputLabel, Select, Dialog, DialogTitle, DialogContent, DialogActions, Grid } from "@mui/material";
+import {
+  TextField, Button, CircularProgress, MenuItem,
+  FormControl, InputLabel, Select, Dialog, DialogTitle,
+  Typography,
+  DialogContent, DialogActions, Grid
+} from "@mui/material";
 import Chart from "chart.js/auto";
 import "./Executive.css";
 // import { useCallData } from "../../../hooks/useCallData";
@@ -278,32 +283,28 @@ const ExecutiveDashboard = () => {
         {/* Filters Section */}
         <div className="filters">
           <Grid container spacing={1} alignItems="center" gap={1}>
+
             {/* Branch Select */}
             <FormControl sx={{ width: "220px" }} size="small">
-              <InputLabel
-                id="hospital-label"
+
+              <Typography
+                variant="body2"
+                sx={{ mb: 0.5, fontWeight: 500 }}
               >
                 Select Branch
-              </InputLabel>
+              </Typography>
 
               <Select
                 labelId="hospital-label"
-                label="Select Branch"
                 value={selectedBranch}
                 onChange={(e) => setSelectedBranch(e.target.value)}
                 disabled={loading?.branchesLoading}
                 displayEmpty
                 sx={{
                   borderRadius: 2,
-                  backgroundColor: "black",
-                  color: "black",
-
+                  backgroundColor: "#fff",
                 }}
               >
-                {/* <MenuItem value="">
-                                               <em>Select Hospital</em>
-                                           </MenuItem> */}
-
                 {loading?.branchesLoading ? (
                   <MenuItem value="">
                     <CircularProgress size={20} sx={{ mr: 1 }} />
@@ -328,11 +329,16 @@ const ExecutiveDashboard = () => {
 
             {/* Filter Select */}
             <FormControl size="small" sx={{ minWidth: 180 }}>
-              <InputLabel id="filter-label">Select Filter</InputLabel>
+
+              <Typography
+                variant="body2"
+                sx={{ mb: 0.5, fontWeight: 500 }}
+              >
+                Select Filter
+              </Typography>
 
               <Select
                 labelId="filter-label"
-                label="Select Filter"
                 value={filter || ""}
                 onChange={(e) => setFilter(e.target.value)}
               >
@@ -383,7 +389,7 @@ const ExecutiveDashboard = () => {
               })
             }
           >
-            <ArticleOutlinedIcon /> Go to Forms
+            <ArticleOutlinedIcon />Forms
           </button>
 
           <button
@@ -397,7 +403,7 @@ const ExecutiveDashboard = () => {
             className="executiveannoucementbutton"
             onClick={() => setModalOpen("announcement")}
           >
-            <CampaignIcon sx={{ fontSize: 25 }} /> Go to Announcements
+            <CampaignIcon sx={{ fontSize: 25 }} />Announcements
           </button>
 
         </div>

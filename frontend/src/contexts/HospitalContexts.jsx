@@ -35,8 +35,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     const isSuperAdmin = role === "superadmin";
     const isSuperManager = role === "supermanager";
     const isExecutive = role === "executive";
-    const isAdmin = ["superadmin", "admin"].includes(role);
-    const isNonAdmin = ["supermanager", "teamleader", "executive"].includes(role);
+    const isAdmin = ["superadmin", "admin", "supermanager"].includes(role);
+    const isNonAdmin = ["teamleader", "executive"].includes(role);
 
 
 

@@ -347,12 +347,12 @@ const Dashboard = () => {
           <div className="hospital-stats">
             <div className="h-stat-box">
               <div className="h-stat-val">
-                {branches?.length || 5}
+                {branches?.length || 0}
               </div>
               <div className="h-stat-lbl">Branches</div>
             </div>
             <div className="h-stat-box">
-              <div className="h-stat-val">{selectedBranch?.beds || 120}</div>
+              <div className="h-stat-val">{selectedBranch?.beds || 0}</div>
               <div className="h-stat-lbl">Total Beds</div>
             </div>
           </div>
@@ -1342,7 +1342,7 @@ const Dashboard = () => {
       {
         formsModalOpen && (
           <FilledFormsComponent
-          formsModalOpen={formsModalOpen}
+            formsModalOpen={formsModalOpen}
             setFormsModalOpen={setFormsModalOpen}
             formsData={formsData}
             formsLoading={loading?.dashboardLoading}

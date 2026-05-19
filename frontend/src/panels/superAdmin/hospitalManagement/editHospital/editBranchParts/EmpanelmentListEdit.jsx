@@ -34,6 +34,7 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import { tokens } from "../../../../../theme";
 import toast from "react-hot-toast";
 import MultiSelectDropdown from "../../../userManagement/components/MultiSelectDropdown";
+import { normalizeSuggestionArray } from "../BranchInfo";
 
 /**
  * AddEmpanelmentListModal Component
@@ -617,62 +618,90 @@ const AddEmpanelmentListModal = ({
                       </Select>
                     </FormControl>
                   </Grid>
-
-                  {/* Treatable Areas Field */}
-                  <Grid item xs={12} sm={6}>
-                    <Autocomplete
-                      multiple
-                      fullWidth
-                      size="small"
-                      options={
-                        speciality?.map((item) => ({
-                          label: item.value,
-                          value: item._id,
-                        })) || []
-                      }
-                      value={selectedTreatableAreas || []}
-                      freeSolo
-                      getOptionLabel={(option) =>
-                        typeof option === "string" ? option : option.label
-                      }
-                      onChange={(event, newValue) => {
-                        setSelectedTreatableAreas(newValue);
-
-                        if (errors.treatableAreas) {
-                          setErrors((prev) => ({
-                            ...prev,
-                            treatableAreas: "",
-                          }));
+                  <Grid item xs={12} sm={12} height={80}>
+                    <Stack spacing={0.5}>
+                      <Autocomplete
+                        multiple
+                        freeSolo
+                        fullWidth
+                        size="small"
+                        options={
+                          speciality?.map((item) => ({
+                            label: item.value,
+                            value: item._id,
+                          })) || []
                         }
-                      }}
-                      renderTags={(value, getTagProps) =>
-                        value.map((option, index) => (
-                          <Chip
-                            variant="outlined"
-                            label={typeof option === "string" ? option : option.label}
-                            {...getTagProps({ index })}
-                            key={index}
-                            size="small"
-                            sx={{
-                              backgroundColor: colors.greenAccent[500],
-                              color: "white",
-                            }}
-                          />
-                        ))
-                      }
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Treatable Areas"
-                          placeholder="Select or type and press Enter"
-                          error={
-                            !!errors.treatableAreas &&
-                            (selectedTreatableAreas || []).length === 0
+                        value={selectedTreatableAreas || []}
+                        getOptionLabel={(option) =>
+                          typeof option === "string"
+                            ? option
+                            : option.label || ""
+                        }
+
+                        onChange={(event, newValue) => {
+                          let processedValues = [];
+
+                          newValue.forEach((item) => {
+                            if (typeof item === "string") {
+                              const splitValues = item
+                                .split(",")
+                                .map((val) => val.trim())
+                                .filter(Boolean);
+
+                              processedValues.push(...splitValues);
+                            } else {
+                              processedValues.push(item);
+                            }
+                          });
+
+                          setSelectedTreatableAreas(
+                            normalizeSuggestionArray(processedValues)
+                          );
+
+                          if (errors.treatableAreas) {
+                            setErrors((prev) => ({
+                              ...prev,
+                              treatableAreas: "",
+                            }));
                           }
-                        />
-                      )}
-                    />
+                        }}
+
+                        renderTags={(value, getTagProps) =>
+                          value.map((option, index) => (
+                            <Chip
+                              variant="outlined"
+                              label={
+                                typeof option === "string"
+                                  ? option
+                                  : option.label || option.value
+                              }
+                              {...getTagProps({ index })}
+                              key={index}
+                              size="small"
+                              sx={{
+                                backgroundColor: colors.greenAccent[500],
+                                color: "white",
+                              }}
+                            />
+                          ))
+                        }
+
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Treatable Areas"
+                            placeholder="Select or type and press Enter"
+                            error={
+                              !!errors.treatableAreas &&
+                              (selectedTreatableAreas || []).length === 0
+                            }
+                          />
+                        )}
+                      />
+                    </Stack>
                   </Grid>
+
+
 
                   {/* Add Coverage Button */}
                   <Grid item xs={12}>

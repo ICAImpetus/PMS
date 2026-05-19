@@ -128,18 +128,24 @@ const TeamDashboard = () => {
 
   const statusClasses = ["info", "success", "warning"];
   const callDistributionData = {
-    labels: analytics?.callsDistribution?.labels,
+    labels: Array.isArray(analytics?.callsDistribution?.labels)
+      ? analytics.callsDistribution.labels
+      : [],
 
     datasets: [
       {
-        data: analytics?.callsDistribution?.callData,
+        data: Array.isArray(analytics?.callsDistribution?.callData)
+          ? analytics.callsDistribution.callData
+          : [],
+
         backgroundColor: [
-          "#fee2e2", // Soft Red
-          "#ffedd5", // Soft Orange
-          "#fef9c3", // Soft Yellow
-          "#fce7f3", // Soft Pink
-          "#f5f3ff"  // Soft Purple
+          "#fee2e2",
+          "#ffedd5",
+          "#fef9c3",
+          "#fce7f3",
+          "#f5f3ff"
         ],
+
         borderWidth: 1
       }
     ]
@@ -504,7 +510,7 @@ const TeamDashboard = () => {
       </div>
 
       {/* Pending Follow-ups (Branch) Section */}
-      <div className="executive-dashboard-section">
+      {/* <div className="executive-dashboard-section">
         <div className="pending-followups-section">
           <div className="pending-followups-header">
             <h2 className="executive-section-title">
@@ -608,7 +614,7 @@ const TeamDashboard = () => {
             </div>
           )}
         </div>
-      </div>
+      </div> */}
       {/* --- TEAM PERFORMANCE & LIST --- */}
       <div className="tld-section-wrapper">
         <div className="tld-section-top">
@@ -620,9 +626,9 @@ const TeamDashboard = () => {
         <div className="tld-analytics-wrapper">
           <div className="tld-split-grid">
             <div className="tld-team-list-container">
-              {analytics?.teamOverview && analytics?.teamOverview.length > 0 ? (
+              {analytics?.teamOverview && analytics?.teamOverview?.length > 0 ? (
                 analytics.teamOverview.map((item, i) => {
-                  const status = statusClasses[i % statusClasses.length];
+                  const status = statusClasses[i % statusClasses?.length];
                   return (
                     <div key={i} className="tld-team-member-card">
                       <div className="tld-member-avatar">
@@ -639,7 +645,7 @@ const TeamDashboard = () => {
                   );
                 })
               ) : (
-                <div className="tld-no-data">No team members found</div>
+                <div className="tld-no-data">No team member has submitted any forms yet.</div>
               )}
             </div>
 
@@ -700,7 +706,7 @@ const TeamDashboard = () => {
                 <div>No Data Are Found</div>
               </div>
             ) : (
-              analytics?.topInboundPurpose?.map((item, i) => {
+              analytics?.topOutboundPurpose?.map((item, i) => {
                 return <div key={i} className="executive-lead-source">
                   <div className="executive-source-name">
                     <LabelIcon sx={{ fontSize: 16 }} /> {item?.purpose || "-"}

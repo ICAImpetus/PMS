@@ -45,6 +45,7 @@ import { commonRoutes } from "../../../../../api/apiService";
 // import { getDataFunc } from "../../../../../utils/services";
 import { Toaster, toast } from "react-hot-toast";
 import countryCodes from "./code.js";
+import { normalizeSuggestionArray } from "../BranchInfo.jsx";
 
 // Predefined degree options
 const predefinedDegrees = [
@@ -215,23 +216,8 @@ const AddDoctorModal = ({
     surgeries: [],
   });
 
-  const normalizeSuggestionValue = (value) => {
-    if (!value && value !== 0) return "";
-    if (typeof value === "string") return value.trim();
-    if (typeof value === "object" && value !== null) {
-      if (typeof value.label === "string" && value.label.trim()) return value.label.trim();
-      if (typeof value.value === "string" && value.value.trim()) return value.value.trim();
-      if (typeof value.name === "string" && value.name.trim()) return value.name.trim();
-    }
-    return "";
-  };
+ 
 
-  const normalizeSuggestionArray = (arr) => {
-    if (!Array.isArray(arr)) return [];
-    return arr
-      .map((item) => normalizeSuggestionValue(item))
-      .filter((item) => item);
-  };
 
   useEffect(() => {
     if (availableDepartments) {
