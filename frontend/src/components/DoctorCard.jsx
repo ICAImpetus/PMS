@@ -98,7 +98,7 @@ const DoctorProfileCard = ({ doctor, hosId }) => {
                     <Grid item xs>
 
                         <Typography fontSize={15} fontWeight={600}>
-                            {data?.title} {data?.name} ({data?.masters})
+                            {data?.title} {data?.name}  {data?.masters ? `(${data?.masters})` : ""}
                         </Typography>
 
                         <Typography fontSize={12} color="text.secondary">

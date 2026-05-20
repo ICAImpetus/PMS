@@ -152,7 +152,7 @@ export const PatientHistory = () => {
     const filteredPatients = useMemo(() => {
         let filtered = [...patients];
 
-        // Search by patient name OR mobile
+        // Search by patient name OR mobile OR purpose in last visit
         if (searchName.trim()) {
             const searchValue = searchName.toLowerCase().trim();
 
@@ -160,6 +160,11 @@ export const PatientHistory = () => {
                 patient.patientName
                     ?.toLowerCase()
                     .includes(searchValue) ||
+
+                patient.lastVisit?.purpose
+                    ?.toLowerCase()
+                    .includes(searchValue) ||
+
                 patient.patientMobile
                     ?.toString()
                     .includes(searchValue)
@@ -312,8 +317,6 @@ export const PatientHistory = () => {
         else if (exportFormat === "pdf") handleExportPDF();
         setExportDialogOpen(false);
     };
-
-
     // Handle form type tab change
     const handleFormTypeChange = (event, newValue) => {
         setFormTypeFilter(newValue);
@@ -447,7 +450,7 @@ export const PatientHistory = () => {
                         <Grid item xs={12} sm={6} md={3}>
                             <TextField
                                 fullWidth
-                                label="Search by Name"
+                                label="Search by Name/Phone No./Purpose"
                                 variant="outlined"
                                 size="small"
                                 value={searchName}
@@ -459,7 +462,7 @@ export const PatientHistory = () => {
                                         </InputAdornment>
                                     ),
                                 }}
-                                placeholder="Enter Patient Name,PhoneNo"
+                                placeholder="Enter Patient Name,PhoneNo or Purpose"
                             />
                         </Grid>
                         {/* Start Date */}
@@ -616,8 +619,8 @@ export const PatientHistory = () => {
                                     {loading?.patients ? <CircularProgress size={24} /> : "Refresh"}
                                 </Button>
 
-                 
-                                <div
+
+                                {/* <div
                                     ref={columnFilterButtonRef}
                                     style={{ position: "relative", display: "inline-block" }}
                                 >
@@ -675,7 +678,7 @@ export const PatientHistory = () => {
                                             </div>
                                         </div>
                                     )}
-                                </div>
+                                </div> */}
                                 <Button
                                     variant="contained"
                                     color="warning"
@@ -684,7 +687,7 @@ export const PatientHistory = () => {
                                 >
                                     Export
                                 </Button>
-                                {/* Export Format Dialog (moved outside main Box for correct rendering) */}
+
                                 <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)}>
                                     <DialogTitle>Select Export Format</DialogTitle>
                                     <DialogContent>

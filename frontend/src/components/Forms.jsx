@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef, useMemo } from "react";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -29,7 +29,6 @@ import {
   IndianStatesWithDistricts, initialFormState, OUTBOUND_PURPOSE_OPTIONS,
   REFERENCE_OPTIONS, initialFormData
 } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
-import { useMemo } from "react";
 
 const getPatientArrivalDateTime = (
   appointmentSlot,
@@ -123,6 +122,7 @@ function Forms() {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [liveTime, setLiveTime] = useState("");
   const [bookedSlotModal, setBookedSlotModal] = useState({ open: false, slot: null, });
+  const doctorDepartmentChangeFromSelect = useRef(false);
   const [bookedSlotAction, setBookedSlotAction] = useState("");
   const [cancelReason, setCancelReason] = useState("");
   const [form, setForm] = useState(initialFormState);
@@ -304,6 +304,7 @@ function Forms() {
 
     if (depId) {
       // department set
+      doctorDepartmentChangeFromSelect.current = true;
       handleChange("department", depId);
     }
   };
@@ -357,6 +358,11 @@ function Forms() {
 
 
   useEffect(() => {
+    if (doctorDepartmentChangeFromSelect.current) {
+      doctorDepartmentChangeFromSelect.current = false;
+      return;
+    }
+
     handleChange("doctor", null)
     // handleChange("purpose", "")
     setSelectedDoctor(null)
