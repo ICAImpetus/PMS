@@ -297,7 +297,7 @@ const UserFormAdmin = ({
     <Formik
       initialValues={initialValues}
       enableReinitialize
-      validationSchema={validationSchema}
+      // validationSchema={validationSchema}
       context={{ isUpdateComp }}
       onSubmit={async (values, formikHelpers) => {
         await handleSubmitForm(values, formikHelpers);

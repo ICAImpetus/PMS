@@ -260,7 +260,7 @@ const UserForm = ({
       <Formik
         initialValues={initialValues}
         enableReinitialize={true}
-        validationSchema={validationSchema}
+        // validationSchema={validationSchema}
         validationContext={{ $isUpdateComp: isUpdateComp }}
         validateOnChange={false}
         validateOnBlur={true}

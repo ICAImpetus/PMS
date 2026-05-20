@@ -231,7 +231,7 @@ const UserFormTeamLeader = ({ initialState = null, hospitalId, onClose, refetchU
     <Formik
       initialValues={initialValues}
       enableReinitialize={true}
-      validationSchema={validationSchema}
+      // validationSchema={validationSchema}
       validationContext={{ isUpdateComp }}
       validateOnChange={false}
       validateOnBlur={true}

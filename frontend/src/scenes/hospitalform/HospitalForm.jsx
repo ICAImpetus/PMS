@@ -165,7 +165,7 @@ const HospitalForm = () => {
   return (
     <Formik
       initialValues={initialValues}
-      validationSchema={validationSchema}
+      // validationSchema={validationSchema}
       validateOnChange={true}
       validateOnBlur={true}
       onSubmit={handleSubmit} // Connected the updated submit handler

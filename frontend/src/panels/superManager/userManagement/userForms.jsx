@@ -231,7 +231,7 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
     <Formik
       initialValues={initialValues}
       enableReinitialize={true}
-      validationSchema={validationSchema}
+      // validationSchema={validationSchema}
       validationContext={{ isUpdateComp }}
       validateOnChange={false}
       validateOnBlur={true}
