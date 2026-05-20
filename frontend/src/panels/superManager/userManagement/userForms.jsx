@@ -23,27 +23,67 @@ import { useApi } from "../../../api/useApi";
 
 // Validation Schema
 const validationSchema = Yup.object().shape({
-  name: Yup.string().required("Name is required"),
-  username: Yup.string().required("Username is required"),
-  email: Yup.string().email("Invalid email").required("Email is required"),
-  password: Yup.string().when('$isUpdateComp', {
-    is: false,
-    then: (schema) => schema.min(6, "Password must be at least 6 characters").required("Password is required"),
-    otherwise: (schema) => schema.notRequired()
+  name: Yup.string()
+    .min(2, "Name must be at least 2 characters")
+    .required("Full Name is required"),
+
+  email: Yup.string()
+    .email("Enter a valid email address")
+    .required("Email is required"),
+
+  username: Yup.string()
+    .min(3, "Username must be at least 3 characters")
+    .matches(
+      /^[a-zA-Z0-9_]+$/,
+      "Username can only contain letters, numbers, and underscores",
+    )
+    .required("Username is required"),
+
+  password: Yup.string().when("$isUpdateComp", {
+    is: true,
+    then: (schema) => schema.notRequired(),
+    otherwise: (schema) =>
+      schema
+        .min(8, "Password must be at least 8 characters")
+        .matches(
+          /^(?=.*[a-z])/,
+          "Password must contain at least one lowercase letter"
+        )
+        .matches(
+          /^(?=.*[A-Z])/,
+          "Password must contain at least one uppercase letter"
+        )
+        .matches(
+          /^(?=.*\d)/,
+          "Password must contain at least one number"
+        )
+        .matches(
+          /^(?=.*[@$!%*#?&])/,
+          "Password must contain at least one special character"
+        )
+        .required("Password is required")
   }),
-  type: Yup.string().oneOf(['teamleader', 'executive'], "Invalid user type").required("User Type is required"),
+
+  type: Yup.string()
+    .oneOf(
+      ["admin", "supermanager", "teamleader", "executive"],
+      "Please select a valid user type",
+    )
+    .required("User Type is required"),
+
   // hospitalName: Yup.array()
   //   .of(
   //     Yup.object().shape({
-  //       _id: Yup.string().required("Hospital id required"),
-  //       name: Yup.string().required("Hospital name required"),
-  //     })
+  //       _id: Yup.string().required(),
+  //     }),
   //   )
-  //   .min(1, "At least one hospital is required")
-  //   .required("Hospital is required"),
+  //   .min(1, "At least one hospital is required"),
   selectedBranch: Yup.array().when("type", {
-    then: (schema) =>
-      schema.min(1, "At least one branch is required"),
+    is: (type) =>
+      type?.toLowerCase() === "teamleader" ||
+      type?.toLowerCase() === "teamLeader" ||
+      type?.toLowerCase() === "executive",
+    then: (schema) => schema.min(1, "At least one branch is required"),
     otherwise: (schema) => schema.notRequired(),
   }),
 
