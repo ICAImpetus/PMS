@@ -114,7 +114,7 @@ const UserForm = ({
     email: initialState?.email ?? "",
     username: initialState?.username ?? "",
     password: "",
-    type: "admin",
+    type: initialState?.type ?? "admin",
     hospitalName: Array.isArray(initialState?.hospitals)
       ? initialState.hospitals
       : (initialState?.hospitals ? [initialState.hospitals] : []),
@@ -203,23 +203,33 @@ const UserForm = ({
       ) || [];
 
 
+      console.log("errors", isUpdateComp, valuesToSubmit);
+
+      let didClose = false;
+
       if (isUpdateComp) {
         const response = await updateUser(initialState?._id, valuesToSubmit);
         if (response?.success) {
-
-          if (refetchAdmins) await refetchAdmins()
+          if (refetchAdmins) await refetchAdmins();
           toast.success("Profile Updated");
+          didClose = true;
+        } else {
+          toast.error(response?.message || "Failed to update user");
         }
       } else {
         const data = await addUser(valuesToSubmit);
         if (data?.success) {
-          if (refetchAdmins) await refetchAdmins()
-          toast.success("New User Added")
+          if (refetchAdmins) await refetchAdmins();
+          toast.success("New User Added");
+          didClose = true;
+        } else {
+          toast.error(data?.message || "Failed to create user");
         }
-
       }
 
-      onClose();
+      if (didClose && onClose) {
+        onClose();
+      }
 
     } catch (error) {
       console.error("Submit error:", error);
@@ -258,7 +268,7 @@ const UserForm = ({
       <Formik
         initialValues={initialValues}
         enableReinitialize={true}
-        validationSchema={validationSchema}
+        // validationSchema={validationSchema}
         validationContext={{ $isUpdateComp: isUpdateComp }}
         validateOnChange={false}
         validateOnBlur={true}
@@ -270,11 +280,14 @@ const UserForm = ({
           if (!values.hospitalName || values.hospitalName.length === 0) {
             errors.hospitalName = "At least one hospital is required";
           }
+
+          console.log("errors", errors);
+
           return errors;
         }}
         onSubmit={async (values, { resetForm, setSubmitting }) => {
 
-
+          console.log("submit values", values);
           await handleSubmitForm(values, { setSubmitting });
           if (!isUpdateComp) {
             resetForm();
