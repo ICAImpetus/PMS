@@ -54,13 +54,29 @@ const validationSchema = Yup.object().shape({
     then: (schema) => schema.notRequired(),
     otherwise: (schema) =>
       schema
-        .min(6, "Password must be at least 6 characters")
-        .required("Password is required"),
+        .min(8, "Password must be at least 8 characters")
+        .matches(
+          /^(?=.*[a-z])/,
+          "Password must contain at least one lowercase letter"
+        )
+        .matches(
+          /^(?=.*[A-Z])/,
+          "Password must contain at least one uppercase letter"
+        )
+        .matches(
+          /^(?=.*\d)/,
+          "Password must contain at least one number"
+        )
+        .matches(
+          /^(?=.*[@$!%*#?&])/,
+          "Password must contain at least one special character"
+        )
+        .required("Password is required")
   }),
 
   type: Yup.string()
     .oneOf(
-      ["admin", "supermanager", "teamLeader", "executive"],
+      ["admin", "supermanager", "teamleader", "executive"],
       "Please select a valid user type",
     )
     .required("User Type is required"),
@@ -72,14 +88,6 @@ const validationSchema = Yup.object().shape({
       }),
     )
     .min(1, "At least one hospital is required"),
-  selectedBranch: Yup.array().when("type", {
-    is: (type) =>
-      type?.toLowerCase() === "teamleader" ||
-      type?.toLowerCase() === "teamLeader" ||
-      type?.toLowerCase() === "executive",
-    then: (schema) => schema.min(1, "At least one branch is required"),
-    otherwise: (schema) => schema.notRequired(),
-  }),
 
   canDelete: Yup.boolean().default(false),
 });
@@ -250,7 +258,7 @@ const UserForm = ({
       <Formik
         initialValues={initialValues}
         enableReinitialize={true}
-        // validationSchema={validationSchema}
+        validationSchema={validationSchema}
         validationContext={{ $isUpdateComp: isUpdateComp }}
         validateOnChange={false}
         validateOnBlur={true}
