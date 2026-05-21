@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import Papa from "papaparse";
 import {
   Box,
   Button,
@@ -29,11 +30,15 @@ import {
   CircularProgress,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import DownloadIcon from "@mui/icons-material/Download";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Toaster, toast } from "react-hot-toast";
 import { tokens } from "../../../../theme";
 import { UserContextHook } from "../../../../contexts/UserContexts";
 import SectionLoader from "../../../../components/SectionLoader";
+import { doctorValidation } from "./Schemas/doctor";
+import { cleanCSVRows, validateCSVRows } from "./Schemas/validation";
+
 
 // Components
 import Header from "../../../../components/HeaderNew";
@@ -98,6 +103,7 @@ function CustomTabPanel(props) {
   );
 }
 
+const showUploadCSV = ["doctor"];
 // Move TabHeader outside to prevent re-renders
 const TabHeader = ({
   title,
@@ -109,6 +115,7 @@ const TabHeader = ({
   handleSearchChange,
   // setSearchTerm,
   uploadCSV = null,
+  downloadTemplate = null,
   isShowAction,
   handleOpenModal,
 }) => (
@@ -189,7 +196,7 @@ const TabHeader = ({
             {btnText}
           </Button>
           {
-            ["doctor", "department", "empanelment", "testLab"].includes(type) && (
+            showUploadCSV.includes(type) && (
               <IconButton
                 component="label"
                 className="ff-btn export"
@@ -211,17 +218,24 @@ const TabHeader = ({
                   hidden
                   accept=".csv"
                   onChange={(e) => {
-                    const file = e.target.files?.[0];
+                    const input = e.target;
+                    const file = input.files?.[0];
                     if (!file) return;
 
                     if (file.size > 5 * 1024 * 1024) { // 5MB limit  
                       toast.error("File size exceeds 5MB limit");
-                    } else if (!file.name.endsWith(".csv")) {
+                      input.value = "";
+                      return;
+                    }
+
+                    if (!file.name.toLowerCase().endsWith(".csv")) {
                       toast.error("Invalid file type. Please upload a CSV file.");
+                      input.value = "";
+                      return;
                     }
 
                     if (uploadCSV) uploadCSV(type, file);
-
+                    input.value = "";
                   }}
                 />
 
@@ -230,6 +244,37 @@ const TabHeader = ({
               </IconButton>
             )
           }
+
+          {/* Download template button */}
+          {(showUploadCSV.includes(type)) && (
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={() => {
+                if (!downloadTemplate) return;
+                const format = window.prompt("Which format to download? (csv)", "csv");
+                if (!format) return;
+                if (format.trim().toLowerCase() !== "csv") {
+                  toast.error("Only CSV format is supported.");
+                  return;
+                }
+                downloadTemplate(type, "csv");
+              }}
+              sx={{
+                borderRadius: 2,
+                height: 36,
+                padding: "0 12px",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                color: "#2e7d32",
+                borderColor: "#2e7d32",
+                backgroundColor: "#fff",
+                textTransform: "none",
+              }}
+            >
+              Download Format
+            </Button>
+          )}
 
 
         </>
@@ -1064,38 +1109,138 @@ const BranchInfo = () => {
     }));
   };
 
+  // Returns required headers for each CSV type (lowercase)
+  const getRequiredHeaders = (type) => {
+    const map = {
+      doctor: ["name", "email", "phone", "department", "specialties"],
+      department: ["name", "code"],
+      empanelment: ["name", "policyname"],
+      testLab: ["testname", "code", "charge"],
+    };
+    return map[type] || ["name"];
+  };
+
+  const handleDownloadTemplate = (type, format = "csv") => {
+    const headers = getRequiredHeaders(type);
+    const csv = headers.join(",") + "\n";
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${type}_template.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast.success("Template downloaded");
+  };
+
+  const validateCSVHeaders = async (type, file) => {
+    try {
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+      if (!lines.length) {
+        toast.error("CSV file is empty");
+        return false;
+      }
+      const headerLine = lines[0];
+      const fileHeaders = headerLine.split(",").map((h) => h.replace(/^\s*"|"\s*$/g, "").trim().toLowerCase());
+      const required = getRequiredHeaders(type).map((h) => h.toLowerCase());
+      const missing = required.filter((h) => !fileHeaders.includes(h));
+      if (missing.length) {
+        toast.error(`Missing or mismatched headers: ${missing.join(", ")}`);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.error("CSV validation error", err);
+      toast.error("Failed to read CSV for validation");
+      return false;
+    }
+  };
+
 
   const handleUploadCSV = async (type, file) => {
-    const formdata = new FormData();
-    formdata.append("csv", file);
-    formdata.append("type", type);
+    console.log("handleUploadCSV", type, file);
 
-    setOpen(true);
-    setProgress(0);
 
-    try {
-      const res = await uploadCSVApi(hosId, id, formdata);
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
 
-      if (res?.success) {
-        toast.success(res?.message || "CSV uploaded successfully!");
-        await fetchAllData(); // Refresh data after upload
-      }
-      setProgress(100);
-    } catch (error) {
-      console.error("CSV Upload Error:", error);
-      const backendMsg =
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error?.message ||
-        "Failed to upload CSV";
-      // toast.error(backendMsg);
-      setOpen(false)
-    }
-    finally {
-      setOpen(false);
-    }
-  }
+      complete: async (results) => {
 
+        let validations = {};
+
+        if (type === "doctor") {
+          validations = doctorValidation;
+        }
+
+        const cleanedData = cleanCSVRows(results.data);
+
+        const validation = validateCSVRows({
+          rows: cleanedData,
+          validations,
+        });
+
+
+
+        // Stop upload if invalid
+        if (!validation.success) {
+          toast.error(validation.message);
+          return;
+        }
+
+        console.log("CSV parsed successfully, starting upload...", validation);
+
+        // Continue upload
+        const formdata = new FormData();
+        formdata.append("csv", file);
+        formdata.append("type", type);
+
+        setOpen(true);
+        setProgress(0);
+
+        try {
+          const res = await uploadCSVApi(
+            hosId,
+            id,
+            formdata
+          );
+
+          if (res?.success) {
+            toast.success(
+              res?.message ||
+              "CSV uploaded successfully!"
+            );
+
+            await fetchAllData();
+          }
+
+          setProgress(100);
+
+        } catch (error) {
+
+          console.error("CSV Upload Error:", error);
+
+          const backendMsg =
+            error?.response?.data?.message ||
+            error?.response?.data?.error ||
+            error?.message ||
+            "Failed to upload CSV";
+
+          toast.error(backendMsg);
+
+        } finally {
+          setOpen(false);
+        }
+      },
+
+      error: () => {
+        toast.error("Failed to parse CSV file");
+      },
+    });
+  };
   React.useEffect(() => {
 
     if (selectedDoctorData) {
@@ -1357,7 +1502,8 @@ const BranchInfo = () => {
           {isShowAction && (
             <TabHeader
               key={tabValue}
-              uploadCSV={handleUploadCSV}
+              // uploadCSV={handleUploadCSV}
+              // downloadTemplate={handleDownloadTemplate}
               title="Departments"
               btnText="Add Department"
               type="department"
@@ -1475,6 +1621,7 @@ const BranchInfo = () => {
             <TabHeader
               key={tabValue}
               uploadCSV={handleUploadCSV}
+              downloadTemplate={handleDownloadTemplate}
               title="Doctors List"
               btnText="Add Doctor"
               type="doctor"
@@ -1708,7 +1855,8 @@ const BranchInfo = () => {
           {isShowAction && (
             <TabHeader
               key={tabValue}
-              uploadCSV={handleUploadCSV}
+              // uploadCSV={handleUploadCSV}
+              // downloadTemplate={handleDownloadTemplate}
               title="Empanelment"
               btnText="Add Policy"
               type="empanelment"
@@ -1836,7 +1984,8 @@ const BranchInfo = () => {
         <CustomTabPanel value={tabValue} index={4}>
           {isShowAction && (<TabHeader
             key={tabValue}
-            uploadCSV={handleUploadCSV}
+            // uploadCSV={handleUploadCSV}
+            // downloadTemplate={handleDownloadTemplate}
             title="Test Labs"
             btnText="Add Lab"
             type="testLab"
@@ -1945,6 +2094,7 @@ const BranchInfo = () => {
             <TabHeader
               title="IPD Details"
               btnText="Add IPD"
+              downloadTemplate={handleDownloadTemplate}
               type="ipd"
               handleSearchChange={handleSearchChange}
               searchTerm={searchTerms}
@@ -2053,6 +2203,7 @@ const BranchInfo = () => {
             <TabHeader
               title="Day Care"
               btnText="Add Day Care"
+              downloadTemplate={handleDownloadTemplate}
               type="dayCare"
               handleSearchChange={handleSearchChange}
               searchTerm={searchTerms}
@@ -2161,6 +2312,7 @@ const BranchInfo = () => {
             <TabHeader
               title="Procedures/Surgeries"
               btnText="Add Procedure/Surgery"
+              downloadTemplate={handleDownloadTemplate}
               type="procedure"
               handleSearchChange={handleSearchChange}
               searchTerm={searchTerms}
@@ -2268,6 +2420,7 @@ const BranchInfo = () => {
             <TabHeader
               title="In-Charge"
               btnText="Add In-Charge"
+              downloadTemplate={handleDownloadTemplate}
               type="incharge"
               handleSearchChange={handleSearchChange}
               searchTerm={searchTerms}
@@ -2375,6 +2528,7 @@ const BranchInfo = () => {
             <TabHeader
               title="Code Alerts"
               btnText="Add Alert"
+              downloadTemplate={handleDownloadTemplate}
               type="codeAlert"
               handleSearchChange={handleSearchChange}
               searchTerm={searchTerms}

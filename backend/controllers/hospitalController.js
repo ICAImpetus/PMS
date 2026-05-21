@@ -7691,3 +7691,70 @@ export const singlePatientHistory = async (req, res) => {
   }
 };
 
+
+
+export const getPatientByNumber = async (req, res) => {
+  try {
+    const { hospitalId, branchId, patientMobile } = req.query;
+
+    if (!patientMobile) {
+      return res.status(400).json({
+        success: false,
+        message: "Patient mobile number is required",
+      });
+    }
+
+    // Validate hospitalId
+    if (!hospitalId || !branchId || !mongoose.isValidObjectId(hospitalId) || !mongoose.isValidObjectId(branchId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid Hospital Id and Branch Id are required",
+      });
+    }
+
+    // Get hospital
+    const hospital = await HospitalModel.findById(hospitalId)
+      .select("trimmedName")
+      .lean();
+
+    if (!hospital) {
+      return res.status(404).json({
+        success: false,
+        message: "Hospital not found",
+      });
+    }
+
+    // Multi-tenant connection
+    const conn = await getConnection(hospital.trimmedName);
+    const PatientModel = getPatientModel(conn);
+
+
+    const patient = await PatientModel.findOne({
+      patientMobile,
+      isDeleted: false,
+    }).select("-lastVisit").lean();
+
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: "Patient not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Patient fetched successfully",
+      data: patient,
+    });
+
+  } catch (error) {
+    console.error("Get Patient Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+

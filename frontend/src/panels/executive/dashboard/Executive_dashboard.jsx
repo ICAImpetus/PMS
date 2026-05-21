@@ -905,21 +905,32 @@ const ExecutiveDashboard = () => {
                         {apt.patientName || "Unknown Patient"}
                       </div>
                       <div className="executive-appointment-details">
-                        {apt?.doctorName || "N/A"} - {apt?.departmentName || "General"}
+                        {apt?.doctorName ?? apt?.doctorName} - {apt?.departmentName ?? apt?.departmentName}
                       </div>
                       <div className="executive-appointment-time">
                         {apt?.appointmentSlot ? (
                           <>
-                            {new Date(apt.appointmentSlot.date).toLocaleDateString("en-GB", {
+                            {new Date(
+                              apt.appointmentSlot.date
+                            ).toLocaleDateString("en-GB", {
                               day: "2-digit",
                               month: "short",
                               year: "numeric",
                             })}
+
                             {" | "}
-                            {apt?.appointmentSlot.start} - {apt?.appointmentSlot.end}
+
+                            {apt?.appointmentSlot.start} -{" "}
+                            {apt?.appointmentSlot.end}
                           </>
                         ) : (
-                          "N/A"
+                          `Arrival Time: ${new Date(
+                            apt.dateTime
+                          ).toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })} ${apt?.patientArrivalTime || "-"}`
                         )}
                       </div>
                     </div>

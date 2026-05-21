@@ -376,16 +376,37 @@ const FilledFormsComponent = ({
 
                         // Handle appointmentSlot object
                         if (
-                          col.key === "appointmentslot" &&
-                          val
+                          col.key === "appointmentslot"
                         ) {
-                          const formattedDate = val?.date
-                            ? moment(val.date).format("dddd, DD MMM YYYY")
-                            : null;
 
-                          val = formattedDate
-                            ? `${formattedDate} | ${val.start || "N/A"} to ${val.end || "N/A"}`
-                            : `${val.start || "N/A"} to ${val.end || "N/A"}`;
+                          if (val) {
+
+                            const formattedDate = val?.date
+                              ? moment(val.date).format(
+                                "dddd, DD MMM YYYY"
+                              )
+                              : null;
+
+                            val = formattedDate
+                              ? `${formattedDate} | ${val.start || "N/A"
+                              } to ${val.end || "N/A"}`
+                              : `${val.start || "N/A"} to ${val.end || "N/A"
+                              }`;
+
+                          } else {
+
+                            const formattedDate = row?.dateTime
+                              ? moment(row.dateTime).format(
+                                "dddd, DD MMM YYYY"
+                              )
+                              : null;
+
+                            val = formattedDate
+                              ? `${formattedDate} | Arrival Time: ${row?.patientArrivalTime || "-"
+                              }`
+                              : `Arrival Time: ${row?.patientArrivalTime || "-"
+                              }`;
+                          }
                         }
                         if (val instanceof Date)
                           val = moment(val).format("DD/MM/YYYY hh:mm A");

@@ -137,6 +137,7 @@ export const FilledFormSchema = new mongoose.Schema(
         opdNumber: String,
         questions: [feedbackQuestionSchema],
       },
+      patientArrivalTime: { type: String, default: "" },
       appointmentSlot: {
         date: {
           type: Date,

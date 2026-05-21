@@ -378,6 +378,16 @@ export const commonRoutes = {
       }
     }),
 
+  getPatientByMobile: (hospitalId, branchId, patientMobile) =>
+    API.get(`api/getpatientByMobile`, {
+      params: {
+        hospitalId,
+        branchId,
+        patientMobile
+      }
+    }),
+
+
 
 
   // addDoctor: (branchid, data) => API.post(`api/add-doctor/${branchid}`, data),

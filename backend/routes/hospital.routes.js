@@ -189,6 +189,7 @@ router.delete("/clear-notifications", auth, hospitalController.clearNotification
 
 // patient
 router.get("/get-patients", auth, hospitalController.getPatientByRole);
+router.get("/getpatientByMobile", hospitalController.getPatientByNumber);
 router.get("/single-patient-history", auth, hospitalController.singlePatientHistory);
 
 export default router;

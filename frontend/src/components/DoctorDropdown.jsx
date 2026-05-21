@@ -1,22 +1,68 @@
-import React from "react";
+import React, { useMemo } from "react";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import "./DoctorDropdown.css";
 import dayjs from "dayjs";
 import { Tooltip } from "@mui/material";
 
+function convertTo12Hour(time) {
+  if (!time) return "";
+
+  const [hour, minute] = time.split(":");
+
+  let h = parseInt(hour, 10);
+  const ampm = h >= 12 ? "PM" : "AM";
+
+  h = h % 12;
+  h = h ? h : 12;
+
+  return `${h}:${minute} ${ampm}`;
+}
+
 function formatSchedule(timings) {
   if (!timings) return "";
+
   const parts = [];
-  if (timings.morning?.start && timings.morning?.end) {
-    parts.push(`${timings.morning.start}-${timings.morning.end}`);
+
+  if (
+    timings.morning?.start &&
+    timings.morning?.end
+  ) {
+    parts.push(
+      `${convertTo12Hour(
+        timings.morning.start
+      )} - ${convertTo12Hour(
+        timings.morning.end
+      )}`
+    );
   }
-  if (timings.evening?.start && timings.evening?.end) {
-    parts.push(`${timings.evening.start}-${timings.evening.end}`);
+
+  if (
+    timings.evening?.start &&
+    timings.evening?.end
+  ) {
+    parts.push(
+      `${convertTo12Hour(
+        timings.evening.start
+      )} - ${convertTo12Hour(
+        timings.evening.end
+      )}`
+    );
   }
-  if (timings.custom?.start && timings.custom?.end) {
-    parts.push(`${timings.custom.start}-${timings.custom.end}`);
+
+  if (
+    timings.custom?.start &&
+    timings.custom?.end
+  ) {
+    parts.push(
+      `${convertTo12Hour(
+        timings.custom.start
+      )} - ${convertTo12Hour(
+        timings.custom.end
+      )}`
+    );
   }
+
   return parts.join(", ");
 }
 
@@ -101,7 +147,7 @@ export default function DoctorDropdown({
               </li>
             );
           }
-          const schedule = formatSchedule(option.timings);
+          const schedule = formatSchedule(option.timings)
           const opdDaysStr = option.opdDays && option.opdDays.length > 0 ? option.opdDays.join(", ") : "";
           const degsStr = option.degrees && option.degrees.length > 0 ? `(${option.degrees.join(", ")})` : "";
           const disabled = !isDoctorAvailableOnDay(option);
@@ -110,24 +156,14 @@ export default function DoctorDropdown({
             <li {...props} key={option._id}>
               <Tooltip title={disabled ? `Doctor not available on ${selectedDay || ""}` : ""} placement="top" arrow>
                 <div className={`doctor-option ${disabled ? "disabled" : ""}`}>
-
-                  {/* LEFT */}
-                  <div className="doctor-option-left">
-                    {option.title && (
-                      <span className="doctor-option-title">{option.title}</span>
-                    )}
-
+                  {/* RIGHT */}
+                  <div className="doctor-option-right">
                     <span className="doctor-option-name">
                       {option.name || "Unknown"}{" "}
                       {degsStr && (
                         <span className="doctor-option-degrees">{degsStr}</span>
                       )}
                     </span>
-                  </div>
-
-                  {/* RIGHT */}
-                  <div className="doctor-option-right">
-
                     {option.experience != null && (
                       <span className="doctor-info-tag">
                         <span className="tag-label">Exp:</span>

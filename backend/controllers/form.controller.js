@@ -502,6 +502,8 @@ export const getFilledForms = async (req, res) => {
                 callStatus: 1,
 
                 appointmentSlot: "$formData.appointmentSlot",
+                patientArrivalTime: "$formData.patientArrivalTime",
+                dateTime: "$formData.dateTime",
 
                 callerType: "$formData.callerType",
 

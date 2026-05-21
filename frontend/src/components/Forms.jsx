@@ -143,6 +143,15 @@ function Forms() {
   } = useApi(
     commonRoutes.updateFormApi
   );
+
+  const {
+    request: getSinglePatientApi,
+    error: getSinglePatientError,
+    loading: getSinglePatientLoading,
+  } = useApi(
+    commonRoutes.getPatientByMobile
+  );
+
   const {
     loading,
     selectedBranch,
@@ -167,6 +176,110 @@ function Forms() {
       fetchBranchAndDetails();
     }
   }, [selectedHostpital, selectedBranch]);
+
+
+  useEffect(() => {
+
+    const fetchPatient = async () => {
+
+      try {
+
+        const number =
+          form.formData.patientDetails.patientMobile;
+
+        if (
+          !number ||
+          (number.length !== 10 &&
+            number.length !== 12)
+        ) {
+          return;
+        }
+
+        const res = await getSinglePatientApi(
+          selectedHostpital,
+          selectedBranch,
+          number
+        );
+
+        if (res?.success) {
+
+          const patient = res.data;
+
+          setForm((prev) => ({
+            ...prev,
+
+            formData: {
+              ...prev.formData,
+
+              patientDetails: {
+                ...prev.formData.patientDetails,
+
+                patientName:
+                  patient?.patientName || "",
+
+                patientAge:
+                  patient?.patientAge || "",
+
+                gender:
+                  patient?.gender || "",
+
+                alternateMobile:
+                  patient?.alternateMobile || "",
+
+                location:
+                  patient?.location || "",
+
+                category:
+                  patient?.category || "",
+              },
+            },
+          }));
+
+          toast.success("Patient details auto-filled based on mobile number.");
+          return;
+        }
+        else {
+          toast.error(" No patient details found.");
+          setForm((prev) => ({
+            ...prev,
+
+            formData: {
+              ...prev.formData,
+
+              patientDetails: {
+                ...prev.formData.patientDetails,
+
+                patientName: "",
+
+                patientAge: "",
+
+                gender: "",
+
+                alternateMobile: "",
+
+                location: "",
+
+                category: "",
+              },
+            },
+          }));
+          return
+        }
+
+      } catch (error) {
+
+        console.error(
+          "Fetch Patient Error:",
+          error
+        );
+      }
+    };
+
+    fetchPatient();
+
+  }, [
+    form.formData.patientDetails.patientMobile,
+  ]);
 
   const fetchBookedSlots = async () => {
     try {
@@ -822,6 +935,7 @@ function Forms() {
                         e.target.value
                       )
                     }
+                    required
                     className="time-input"
                   />
 

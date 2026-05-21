@@ -35,6 +35,8 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
+    min-width: 650px;
+    /* ensure long rows can scroll horizontally */
     padding: 8px 4px;
     gap: 16px;
 }
@@ -75,8 +77,10 @@
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    /* keep tags on one line so horizontal scroll appears */
     justify-content: flex-end;
+    overflow-x: auto;
 }
 
 .doctor-info-tag {
@@ -144,6 +148,8 @@
 .doctor-dropdown-popper .MuiAutocomplete-listbox {
     padding: 4px;
     max-height: 350px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .doctor-dropdown-popper .MuiAutocomplete-option {
