@@ -269,22 +269,9 @@ const UserForm = ({
         initialValues={initialValues}
         enableReinitialize={true}
         // validationSchema={validationSchema}
-        validationContext={{ $isUpdateComp: isUpdateComp }}
+        // validationContext={{ isUpdateComp }}
         validateOnChange={false}
         validateOnBlur={true}
-        validate={(values) => {
-          // ... (validate function is unchanged) .
-          // lo..
-          const errors = {};
-
-          if (!values.hospitalName || values.hospitalName.length === 0) {
-            errors.hospitalName = "At least one hospital is required";
-          }
-
-          console.log("errors", errors);
-
-          return errors;
-        }}
         onSubmit={async (values, { resetForm, setSubmitting }) => {
 
           console.log("submit values", values);
