@@ -149,7 +149,7 @@ const HospitalBasicDetailAccrodian = ({
                       onChange={(e) =>
                         setFieldValue("itsBranch", e.target.checked)
                       }
-                      color="warning"
+                      color="success"
                       size="small"
                     />
                   }

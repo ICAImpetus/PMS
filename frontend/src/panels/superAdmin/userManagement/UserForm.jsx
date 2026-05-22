@@ -12,10 +12,11 @@ import {
   Grid,
   Typography,
   Switch,
-  FormControlLabel,
+  FormControlLabel, Tooltip
 
 } from "@mui/material";
 import { Visibility, VisibilityOff, Delete } from "@mui/icons-material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Header from "../../../components/Header";
 import { getDataFunc, sendDataApiFunc } from "../../../utils/services";
 import { Toaster, toast } from "react-hot-toast";
@@ -23,75 +24,8 @@ import { tokens } from "../../../theme";
 import MultiSelectDropdown from "./components/MultiSelectDropdown"; // Assuming this component is in this location
 import { useApi } from "../../../api/useApi";
 import { commonRoutes, superAdminRoutes } from "../../../api/apiService";
+import { getValidationSchema } from "../.././Schemas/validation";
 
-// Validation Schema
-const validationSchema = Yup.object().shape({
-  name: Yup.string()
-    .min(2, "Name must be at least 2 characters")
-    .required("Full Name is required"),
-
-  email: Yup.string()
-    .email("Enter a valid email address")
-    .required("Email is required"),
-
-  username: Yup.string()
-    .min(3, "Username must be at least 3 characters")
-    .matches(
-      /^[a-zA-Z0-9_]+$/,
-      "Username can only contain letters, numbers, and underscores",
-    )
-    .required("Username is required"),
-
-  password: Yup.string().when("$isUpdateComp", {
-    is: true,
-    then: (schema) => schema.notRequired(),
-    otherwise: (schema) =>
-      schema
-        .min(8, "Password must be at least 8 characters")
-        .matches(
-          /^(?=.*[a-z])/,
-          "Password must contain at least one lowercase letter"
-        )
-        .matches(
-          /^(?=.*[A-Z])/,
-          "Password must contain at least one uppercase letter"
-        )
-        .matches(
-          /^(?=.*\d)/,
-          "Password must contain at least one number"
-        )
-        .matches(
-          /^(?=.*[@$!%*#?&])/,
-          "Password must contain at least one special character"
-        )
-        .required("Password is required")
-  }),
-
-  type: Yup.string()
-    .oneOf(
-      ["admin", "supermanager", "teamleader", "executive"],
-      "Please select a valid user type",
-    )
-    .required("User Type is required"),
-
-  hospitalName: Yup.array()
-    .of(
-      Yup.object().shape({
-        _id: Yup.string().required(),
-      }),
-    )
-    .min(1, "At least one hospital is required"),
-  selectedBranch: Yup.array().when("type", {
-    is: (type) =>
-      type?.toLowerCase() === "teamleader" ||
-      type?.toLowerCase() === "teamLeader" ||
-      type?.toLowerCase() === "executive",
-    then: (schema) => schema.min(1, "At least one branch is required"),
-    otherwise: (schema) => schema.notRequired(),
-  }),
-
-  canDelete: Yup.boolean().default(false),
-});
 
 const UserForm = ({
   initialState = null,
@@ -260,8 +194,9 @@ const UserForm = ({
       <Formik
         initialValues={initialValues}
         enableReinitialize={true}
-        // validationSchema={validationSchema}
-        validationContext={{ $isUpdateComp: isUpdateComp }}
+        validationSchema={getValidationSchema(
+          isUpdateComp
+        )}
         validateOnChange={false}
         validateOnBlur={true}
         validate={(values) => {
@@ -412,46 +347,6 @@ const UserForm = ({
                   overflowY: "auto",
                 }}
               >
-                {/* Can Delete Toggle - Only for admin updates - Top Right */}
-                {isUpdateComp && values.type?.toLowerCase() === "admin" && (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "flex-end",
-                      alignItems: "center",
-                      gap: 2,
-                      mb: 2,
-                    }}
-                  >
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={values.canDelete || false}
-                          onChange={(e) =>
-                            setFieldValue("canDelete", e.target.checked)
-                          }
-                          color="warning"
-                          size="small"
-                        />
-                      }
-                      label={
-                        <Typography
-                          sx={{ color: colors.grey[100], fontSize: "0.9rem" }}
-                        >
-                          Can Delete
-                        </Typography>
-                      }
-                    />
-                    <Typography
-                      variant="caption"
-                      sx={{ color: colors.grey[400] }}
-                    >
-                      {values.canDelete
-                        ? "Can delete users"
-                        : "Cannot delete users"}
-                    </Typography>
-                  </Box>
-                )}
 
                 <Grid container spacing={3}>
                   {/* All your form fields (Name, Email, etc.) are unchanged */}
@@ -506,17 +401,40 @@ const UserForm = ({
                         name="password"
                         type={showPassword ? "text" : "password"}
                         value={values.password}
+                        autoComplete="new-password"
                         onChange={customHandleChange}
                         onBlur={handleBlur}
-                        error={touched.password && Boolean(errors.password)}
-                        helperText={touched.password && errors.password}
+                        error={
+                          touched.password &&
+                          Boolean(errors.password)
+                        }
+                        helperText={
+                          touched.password &&
+                          errors.password
+                        }
                         fullWidth
-                        autoComplete="new-password"
                         InputProps={{
                           endAdornment: (
                             <InputAdornment position="end">
+
+                              <Tooltip
+                                title="Password must contain uppercase, lowercase, number and special character"
+                                arrow
+                              >
+                                <InfoOutlinedIcon
+                                  fontSize="small"
+                                  sx={{
+                                    mr: 1,
+                                    color: "text.secondary",
+                                    cursor: "pointer",
+                                  }}
+                                />
+                              </Tooltip>
+
                               <IconButton
-                                onClick={() => setShowPassword(!showPassword)}
+                                onClick={() =>
+                                  setShowPassword(!showPassword)
+                                }
                                 edge="end"
                               >
                                 {showPassword ? (
@@ -525,6 +443,7 @@ const UserForm = ({
                                   <Visibility />
                                 )}
                               </IconButton>
+
                             </InputAdornment>
                           ),
                         }}
@@ -549,8 +468,6 @@ const UserForm = ({
                       {isUpdateComp ? <MenuItem value={values.type}>{values.type}</MenuItem> :
                         <MenuItem value="supermanager">Super Manager</MenuItem>}
                       {/* future ke liye */}
-
-
                     </TextField>
                   </Grid>
 
@@ -561,9 +478,12 @@ const UserForm = ({
 
                       <>
 
+                        {console.log("branch options are :", errors?.selectedBranch, values.selectedBranch, branchOptions)} {/* Debug log */}
+
                         <Grid item xs={12}>
                           <MultiSelectDropdown
                             options={branchOptions}
+                            name="selectedBranch"
                             selectedOptions={values.selectedBranch}
                             setSelectedOptions={(val) =>
                               setFieldValue("selectedBranch", val)
@@ -571,8 +491,20 @@ const UserForm = ({
                             label="Select Branch(s)"
                             role={values.type}
                             currentId={initialState?._id}
-                          // isSingleSelect={values.type === "executive"} //clean
+
                           />
+                          {touched.selectedBranch && errors.selectedBranch && (
+                            <div
+                              style={{
+                                color: "#f44336",
+                                fontSize: "0.75rem",
+                                marginTop: "3px",
+                                marginLeft: "14px",
+                              }}
+                            >
+                              {errors.selectedBranch}
+                            </div>
+                          )}
                         </Grid>
                       </>
 

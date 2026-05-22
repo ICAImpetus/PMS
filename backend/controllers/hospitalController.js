@@ -149,6 +149,8 @@ export const AddHospital = async (req, res) => {
   let uploadedPublicId = null;
   let uploadedImageUrl = null;
 
+  console.log("Received hospital data:", req.body);
+ 
   try {
     let hospitalData = sanitizeHospitalPayload(req.body || {});
 

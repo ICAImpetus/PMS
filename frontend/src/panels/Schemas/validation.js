@@ -1,3 +1,79 @@
+import * as Yup from "yup";
+export const getValidationSchema = (isUpdateComp = false) =>
+    Yup.object().shape({
+        name: Yup.string()
+            .min(2, "Name must be at least 2 characters")
+            .required("Full Name is required"),
+
+        email: Yup.string()
+            .email("Enter a valid email address")
+            .required("Email is required"),
+
+        username: Yup.string()
+            .min(3, "Username must be at least 3 characters")
+            .matches(
+                /^[a-zA-Z0-9_]+$/,
+                "Username can only contain letters, numbers, and underscores"
+            )
+            .required("Username is required"),
+
+        password: isUpdateComp
+            ? Yup.string().notRequired()
+            : Yup.string()
+                .min(
+                    8,
+                    "Password must be at least 8 characters"
+                )
+                .matches(
+                    /^(?=.*[a-z])/,
+                    "Password must contain at least one lowercase letter"
+                )
+                .matches(
+                    /^(?=.*[A-Z])/,
+                    "Password must contain at least one uppercase letter"
+                )
+                .matches(
+                    /^(?=.*\d)/,
+                    "Password must contain at least one number"
+                )
+                .matches(
+                    /^(?=.*[@$!%*#?&])/,
+                    "Password must contain at least one special character"
+                )
+                .required("Password is required"),
+
+        type: Yup.string()
+            .oneOf(
+                [
+                    "admin",
+                    "supermanager",
+                    "teamleader",
+                    "executive",
+                ],
+                "Please select a valid user type"
+            )
+            .required("User Type is required"),
+
+        hospitalName: Yup.array()
+            .of(
+                Yup.object().shape({
+                    _id: Yup.string().required(),
+                })
+            )
+            .min(
+                1,
+                "At least one hospital is required"
+            ),
+        selectedBranch: Yup.array().when("type", {
+            is: (type) =>
+                type?.toLowerCase() === "teamleader" ||
+                type?.toLowerCase() === "teamLeader" ||
+                type?.toLowerCase() === "executive",
+            then: (schema) => schema.min(1, "At least one branch is required"),
+            otherwise: (schema) => schema.notRequired(),
+        }),
+        canDelete: Yup.boolean().default(false),
+    });
 export const cleanCSVRows = (rows = []) => {
     return rows.map((row) => {
         const cleaned = {};

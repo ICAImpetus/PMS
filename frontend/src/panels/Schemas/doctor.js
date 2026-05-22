@@ -28,7 +28,7 @@ export const doctorValidation = {
     contactNumber: {
         required: true,
         type: "number",
-        min: 10,
+        // min: 10,
         max: 12,
     },
 

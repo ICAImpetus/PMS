@@ -1,9 +1,12 @@
 // LoginPage.jsx
 import React, { useEffect, useState } from 'react';
-import { Container, Box, Typography, IconButton, TextField, CssBaseline, Button, MenuItem, InputAdornment, CircularProgress, Avatar } from '@mui/material';
+import {
+    Container, Box, Typography, IconButton, TextField, CssBaseline, Button, MenuItem, InputAdornment,
+    CircularProgress, Avatar
+} from '@mui/material';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
-import { Visibility, VisibilityOff, DarkMode, LightMode, ArrowBack } from '@mui/icons-material';
+import { Visibility, DarkMode, LightMode, ArrowBack, Info } from '@mui/icons-material';
 import { useMode } from '../../theme';
 import { tokens } from '../../theme';
 import { postDatatoServer } from '../../utils/services';

@@ -36,8 +36,8 @@ import { Toaster, toast } from "react-hot-toast";
 import { tokens } from "../../../../theme";
 import { UserContextHook } from "../../../../contexts/UserContexts";
 import SectionLoader from "../../../../components/SectionLoader";
-import { doctorValidation } from "./Schemas/doctor";
-import { cleanCSVRows, validateCSVRows } from "./Schemas/validation";
+import { doctorValidation } from "../../../Schemas/doctor";
+import { cleanCSVRows, validateCSVRows } from "../../../Schemas/validation";
 
 
 // Components

@@ -18,81 +18,14 @@ import {
   Tooltip
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material"
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Header from "../../../components/Header";
 import { tokens } from "../../../theme";
 import MultiSelectDropdown from "../../superAdmin/userManagement/components/MultiSelectDropdown";
 import { useApi } from "../../../api/useApi";
 import { commonRoutes } from "../../../api/apiService";
 import toast from "react-hot-toast";
-
-// Validation Schema
-const validationSchema = Yup.object().shape({
-  name: Yup.string()
-    .min(2, "Name must be at least 2 characters")
-    .required("Full Name is required"),
-
-  email: Yup.string()
-    .email("Enter a valid email address")
-    .required("Email is required"),
-
-  username: Yup.string()
-    .min(3, "Username must be at least 3 characters")
-    .matches(
-      /^[a-zA-Z0-9_]+$/,
-      "Username can only contain letters, numbers, and underscores",
-    )
-    .required("Username is required"),
-
-  password: Yup.string().when("$isUpdateComp", {
-    is: true,
-    then: (schema) => schema.notRequired(),
-    otherwise: (schema) =>
-      schema
-        .min(8, "Password must be at least 8 characters")
-        .matches(
-          /^(?=.*[a-z])/,
-          "Password must contain at least one lowercase letter"
-        )
-        .matches(
-          /^(?=.*[A-Z])/,
-          "Password must contain at least one uppercase letter"
-        )
-        .matches(
-          /^(?=.*\d)/,
-          "Password must contain at least one number"
-        )
-        .matches(
-          /^(?=.*[@$!%*#?&])/,
-          "Password must contain at least one special character"
-        )
-        .required("Password is required")
-  }),
-
-  type: Yup.string()
-    .oneOf(
-      ["admin", "supermanager", "teamleader", "executive"],
-      "Please select a valid user type",
-    )
-    .required("User Type is required"),
-
-  hospitalName: Yup.array()
-    .of(
-      Yup.object().shape({
-        _id: Yup.string().required(),
-      }),
-    )
-    .min(1, "At least one hospital is required"),
-  selectedBranch: Yup.array().when("type", {
-    is: (type) =>
-      type?.toLowerCase() === "teamleader" ||
-      type?.toLowerCase() === "teamLeader" ||
-      type?.toLowerCase() === "executive",
-    then: (schema) => schema.min(1, "At least one branch is required"),
-    otherwise: (schema) => schema.notRequired(),
-  }),
-
-  canDelete: Yup.boolean().default(false),
-});
+import { getValidationSchema } from "../.././Schemas/validation";
 
 const UserFormAdmin = ({
   initialState = null,
@@ -297,8 +230,7 @@ const UserFormAdmin = ({
     <Formik
       initialValues={initialValues}
       enableReinitialize
-      // validationSchema={validationSchema}
-      context={{ isUpdateComp }}
+      validationSchema={getValidationSchema(isUpdateComp)}
       onSubmit={async (values, formikHelpers) => {
         await handleSubmitForm(values, formikHelpers);
       }}
@@ -537,37 +469,59 @@ const UserFormAdmin = ({
                 </Grid>
 
                 {!isUpdateComp && (
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      variant="standard"
-                      label="Password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      value={values.password}
-                      autoComplete="new-password"
-                      onChange={customHandleChange}
-                      onBlur={handleBlur}
-                      error={touched.password && Boolean(errors.password)}
-                      helperText={touched.password && errors.password}
-                      fullWidth
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                              onClick={() => setShowPassword(!showPassword)}
-                              edge="end"
-                            >
-                              {showPassword ? (
-                                <VisibilityOff />
-                              ) : (
-                                <Visibility />
-                              )}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  </Grid>
+                  <TextField
+                    variant="standard"
+                    label="Password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    value={values.password}
+                    autoComplete="new-password"
+                    onChange={customHandleChange}
+                    onBlur={handleBlur}
+                    error={
+                      touched.password &&
+                      Boolean(errors.password)
+                    }
+                    helperText={
+                      touched.password &&
+                      errors.password
+                    }
+                    fullWidth
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+
+                          <Tooltip
+                            title="Password must contain uppercase, lowercase, number and special character"
+                            arrow
+                          >
+                            <InfoOutlinedIcon
+                              fontSize="small"
+                              sx={{
+                                mr: 1,
+                                color: "text.secondary",
+                                cursor: "pointer",
+                              }}
+                            />
+                          </Tooltip>
+
+                          <IconButton
+                            onClick={() =>
+                              setShowPassword(!showPassword)
+                            }
+                            edge="end"
+                          >
+                            {showPassword ? (
+                              <VisibilityOff />
+                            ) : (
+                              <Visibility />
+                            )}
+                          </IconButton>
+
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
                 )}
                 <Grid item xs={12} sm={12}>
                   <TextField
