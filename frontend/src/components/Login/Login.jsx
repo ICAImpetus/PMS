@@ -6,7 +6,7 @@ import {
 } from '@mui/material';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
-import { Visibility, DarkMode, LightMode, ArrowBack, Info } from '@mui/icons-material';
+import { Visibility, DarkMode, LightMode, ArrowBack, Info, VisibilityOff } from '@mui/icons-material';
 import { useMode } from '../../theme';
 import { tokens } from '../../theme';
 import { postDatatoServer } from '../../utils/services';

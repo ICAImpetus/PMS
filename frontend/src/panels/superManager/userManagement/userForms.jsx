@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useContext } from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import {
@@ -19,7 +19,7 @@ import Header from "../../../components/Header";
 import { toast } from "react-hot-toast";
 import { tokens } from "../../../theme";
 import MultiSelectDropdown from "../../superAdmin/userManagement/components/MultiSelectDropdown";
-
+import { HospitalContext } from "../../../contexts/HospitalContexts";
 import { commonRoutes } from "../../../api/apiService";
 import { useApi } from "../../../api/useApi";
 import { getValidationSchema } from "../.././Schemas/validation";
@@ -38,7 +38,6 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
     return initialState?.hospitalNames || [];
   }, [initialState]);
 
-  const [hospitals, setHospitals] = useState([]);
   const [branchOptions, setBranchOptions] = useState([]);
   const [selectedParentUsers, setSelectedParentUsers] = useState(initialState?.parentUsers || []);
 
@@ -81,12 +80,6 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
   } = useApi(commonRoutes.getSelectedBranches);
 
   const {
-    request: allHospital,
-    loading: hosApiLoading,
-    error: hosApiError,
-  } = useApi(commonRoutes.getAllHospital);
-
-  const {
     request: addUser,
     loading: userLoading,
     error: userError,
@@ -97,24 +90,28 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
     error: userUpdate,
   } = useApi(commonRoutes.updateUser);
 
+  const { selectedHostpital } = useContext(HospitalContext);
 
 
   useEffect(() => {
-    setHospitals(initialHospitals);
-    setSelectedParentUsers(initialState?.parentUsers || []);
-  }, [initialHospitals, initialState]);
+    const fetchBranches = async () => {
+      try {
+        // //  ALWAYS convert to pure ID array
+        // console.log("Selected Hospital in useEffect:", selectedHostpital);
+        if (!selectedHostpital) return;
 
+        const response = await getBranches(selectedHostpital);
 
-  useEffect(() => {
-    const fetchHospitals = async () => {
-      const response = await allHospital();
-      // setHospitalNames(response?.data);
-      setHospitals(response?.data);
+        setBranchOptions(response?.data || []);
 
+      } catch (error) {
+        console.error("Branch fetch error:", error);
+      }
     };
-    fetchHospitals();
-  }, []);
 
+    fetchBranches();
+
+  }, [selectedHostpital]);
   const handleSubmitForm = async (values) => {
     try {
 
@@ -123,7 +120,7 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
 
 
       let valuesToSubmit = { ...values };
-      valuesToSubmit.hospitalName = [hospitalId]
+      valuesToSubmit.hospitalName = [selectedHostpital]
 
       valuesToSubmit.selectedBranch = valuesToSubmit?.selectedBranch?.map(
         (item) => isUpdateComp ? item?.branchId : item?._id
@@ -178,6 +175,7 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
       //   return errors;
       // }}
       onSubmit={async (values, { resetForm }) => {
+        console.log("Form values on submit:", values);
         await handleSubmitForm(values);
         if (!isUpdateComp) {
           resetForm();
@@ -198,24 +196,6 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
           }
         };
 
-        useEffect(() => {
-          const fetchBranches = async () => {
-            try {
-              //  ALWAYS convert to pure ID array
-              if (!hospitalId) return;
-
-              const response = await getBranches(hospitalId);
-
-              setBranchOptions(response?.data || []);
-
-            } catch (error) {
-              console.error("Branch fetch error:", error);
-            }
-          };
-
-          fetchBranches();
-
-        }, [hospitalId]);
 
         return (
           <Form>

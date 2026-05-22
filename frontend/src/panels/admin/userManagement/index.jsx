@@ -397,7 +397,7 @@ function UserManagentAdmin() {
                   allUsers={userData}
                   refetchUsers={refetchUsers}
                   hospitalId={selectedHostpital}
-                  anyFieldDisabled={isSuperManager}
+                  anyFieldDisabled={isSuperManager === null ? false : true}
                 />
               ) : updateOpen && userUpdateData ? (
                 <UserFormAdmin
@@ -406,7 +406,7 @@ function UserManagentAdmin() {
                   allUsers={userData}
                   refetchUsers={refetchUsers}
                   hospitalId={selectedHostpital}
-                  anyFieldDisabled={isSuperManager}
+                  anyFieldDisabled={isSuperManager === null ? false : true}
                 />
               ) : null}
             </Box>

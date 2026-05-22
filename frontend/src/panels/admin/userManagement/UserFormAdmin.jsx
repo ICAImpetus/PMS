@@ -42,6 +42,9 @@ const UserFormAdmin = ({
   const [branchOptions, setBranchOptions] = useState([]);
   const [open, setOpen] = useState(false);
 
+
+  console.log("UserFormAdmin", anyFieldDisabled);
+
   const isUpdateComp = !!initialState;
 
   const initialValues = useMemo(() => ({
@@ -452,7 +455,7 @@ const UserFormAdmin = ({
                   />{" "}
                 </Grid>
                 <Grid item xs={12} sm={isUpdateComp ? 12 : 6}>
-                  {" "}
+
                   <TextField
                     variant="standard"
                     label="Username"
@@ -465,64 +468,67 @@ const UserFormAdmin = ({
                     error={touched.username && Boolean(errors.username)}
                     helperText={touched.username && errors.username}
                     fullWidth
-                  />{" "}
-                </Grid>
-
-                {!isUpdateComp && (
-                  <TextField
-                    variant="standard"
-                    label="Password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    value={values.password}
-                    autoComplete="new-password"
-                    onChange={customHandleChange}
-                    onBlur={handleBlur}
-                    error={
-                      touched.password &&
-                      Boolean(errors.password)
-                    }
-                    helperText={
-                      touched.password &&
-                      errors.password
-                    }
-                    fullWidth
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-
-                          <Tooltip
-                            title="Password must contain uppercase, lowercase, number and special character"
-                            arrow
-                          >
-                            <InfoOutlinedIcon
-                              fontSize="small"
-                              sx={{
-                                mr: 1,
-                                color: "text.secondary",
-                                cursor: "pointer",
-                              }}
-                            />
-                          </Tooltip>
-
-                          <IconButton
-                            onClick={() =>
-                              setShowPassword(!showPassword)
-                            }
-                            edge="end"
-                          >
-                            {showPassword ? (
-                              <VisibilityOff />
-                            ) : (
-                              <Visibility />
-                            )}
-                          </IconButton>
-
-                        </InputAdornment>
-                      ),
-                    }}
                   />
+
+                </Grid>
+                {!isUpdateComp && (
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      variant="standard"
+                      label="Password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      value={values.password}
+                      autoComplete="new-password"
+                      onChange={customHandleChange}
+                      onBlur={handleBlur}
+                      error={
+                        touched.password &&
+                        Boolean(errors.password)
+                      }
+                      helperText={
+                        touched.password &&
+                        errors.password
+                      }
+                      fullWidth
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+
+                            <Tooltip
+                              title="Password must contain uppercase, lowercase, number and special character"
+                              arrow
+                            >
+                              <InfoOutlinedIcon
+                                fontSize="small"
+                                sx={{
+                                  mr: 1,
+                                  color: "text.secondary",
+                                  cursor: "pointer",
+                                }}
+                              />
+                            </Tooltip>
+
+                            <IconButton
+                              onClick={() =>
+                                setShowPassword(!showPassword)
+                              }
+                              edge="end"
+                            >
+                              {showPassword ? (
+                                <VisibilityOff />
+                              ) : (
+                                <Visibility />
+                              )}
+                            </IconButton>
+
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Grid>
                 )}
+
                 <Grid item xs={12} sm={12}>
                   <TextField
                     variant="standard"
@@ -538,15 +544,18 @@ const UserFormAdmin = ({
                     disabled={isUpdateComp}
                   >
                     <MenuItem value="">Select User Type</MenuItem>
-                    <Tooltip title={anyFieldDisabled ? "Super Managers Already Created " : ""}>
-                      <span>
-                        <MenuItem value="supermanager" disabled={anyFieldDisabled}>
-                          Super Manager
-                        </MenuItem>
-                      </span>
-                    </Tooltip>
-                    {isUpdateComp && values.type === "supermanager" && (
-                      <MenuItem value="supermanager">
+
+                    {anyFieldDisabled ? (
+
+                      <Tooltip title={anyFieldDisabled ? "Super Managers Already Created " : ""}>
+                        <span>
+                          <MenuItem value="supermanager" >
+                            Super Manager
+                          </MenuItem>
+                        </span>
+                      </Tooltip>
+                    ) : (
+                      <MenuItem value="supermanager" >
                         Super Manager
                       </MenuItem>
                     )}
