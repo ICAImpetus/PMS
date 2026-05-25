@@ -18,6 +18,11 @@ import LocalHospitalOutlinedIcon from "@mui/icons-material/LocalHospitalOutlined
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import AssignmentIndOutlinedIcon from "@mui/icons-material/AssignmentIndOutlined";
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import EventNoteIcon from "@mui/icons-material/EventNote";
+import PersonIcon from "@mui/icons-material/Person";
+import WarningIcon from "@mui/icons-material/Warning";
+import DescriptionIcon from "@mui/icons-material/Description";
+import ScheduleIcon from "@mui/icons-material/Schedule";
 // Assets
 import adminImage from "../../assets/adminNew.jpg";
 import adminImage3 from "../../assets/adminFemaleNew.jpeg";
@@ -66,9 +71,10 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
   const isTeamLeader = userType === "teamLeader" || userType === "teamleader";
   const isExecutive = userType === "executive";
   const isHospital = userType === "hospital";
+  const isDoctor = userType === "doctor";
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const [isCollapsed, setIsCollapsed] = useState(isExecutive ? false : true);
+  const [isCollapsed, setIsCollapsed] = useState(isExecutive || isDoctor ? false : true);
 
   // Initialize state with current URL path
   const location = useLocation();
@@ -234,6 +240,54 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                 selected={selected}
                 setSelected={setSelected}
               />
+
+              {/* --- DOCTOR ITEMS --- */}
+              {isDoctor && (
+                <>
+                  <Item
+                    title="My Profile"
+                    to="/profile"
+                    icon={<PersonIcon />}
+                    selected={selected}
+                    setSelected={setSelected}
+                  />
+                  <Item
+                    title="Appointments"
+                    to="/appointments"
+                    icon={<EventNoteIcon />}
+                    selected={selected}
+                    setSelected={setSelected}
+                  />
+                  <Item
+                    title="Consultations"
+                    to="/consultations"
+                    icon={<AssignmentIndOutlinedIcon />}
+                    selected={selected}
+                    setSelected={setSelected}
+                  />
+                  <Item
+                    title="Schedule"
+                    to="/schedule"
+                    icon={<ScheduleIcon />}
+                    selected={selected}
+                    setSelected={setSelected}
+                  />
+                  <Item
+                    title="Emergency Alerts"
+                    to="/emergency-alerts"
+                    icon={<WarningIcon />}
+                    selected={selected}
+                    setSelected={setSelected}
+                  />
+                  <Item
+                    title="Clinical Records"
+                    to="/clinical-records"
+                    icon={<DescriptionIcon />}
+                    selected={selected}
+                    setSelected={setSelected}
+                  />
+                </>
+              )}
 
               {/* --- EXECUTIVE ITEMS --- */}
               {isExecutive && (
