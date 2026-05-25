@@ -237,6 +237,12 @@ const AddDoctorModal = ({
       // already dayjs object
       if (dayjs.isDayjs(time)) return time;
 
+      // Try parsing as ISO string first (with date)
+      const isoDate = dayjs(time);
+      if (isoDate.isValid() && time.toString().includes("T")) {
+        return isoDate;
+      }
+
       // support both formats:
       // 10:25 AM
       // 14:30
@@ -570,7 +576,22 @@ const AddDoctorModal = ({
       // already dayjs object
       if (dayjs.isDayjs(time)) return time;
 
-      return dayjs(time, "hh:mm A");
+      // Try parsing as ISO string first (with date)
+      const isoDate = dayjs(time);
+      if (isoDate.isValid() && time.includes("T")) {
+        return isoDate;
+      }
+
+      // Try 12-hour format (hh:mm A)
+      const parsed12 = dayjs(time, "hh:mm A", true);
+      if (parsed12.isValid()) return parsed12;
+
+      // Try 24-hour format (HH:mm)
+      const parsed24 = dayjs(time, "HH:mm", true);
+      if (parsed24.isValid()) return parsed24;
+
+      // Fallback to parse any format
+      return dayjs(time);
     };
 
     const timings = currentDoctor.timings;
@@ -794,20 +815,25 @@ const AddDoctorModal = ({
     // SAVE VALUE
     // =========================
 
-    setCurrentDoctor((prev) => ({
-      ...prev,
-      timings: {
-        ...prev.timings,
-        [period]: {
-          ...prev.timings[period],
+    setCurrentDoctor((prev) => {
+      const updatedTimings = {
+        morning: { ...prev.timings?.morning },
+        evening: { ...prev.timings?.evening },
+        custom: { ...prev.timings?.custom },
+      };
 
-          // SAVE AS STRING
-          [type]: newValue.format(
-            "hh:mm A"
-          ),
-        },
-      },
-    }));
+      // Update the specific period and type
+      if (!updatedTimings[period]) {
+        updatedTimings[period] = {};
+      }
+
+      updatedTimings[period][type] = newValue.format("hh:mm A");
+
+      return {
+        ...prev,
+        timings: updatedTimings,
+      };
+    });
 
     // =========================
     // CLEAR ERROR
@@ -931,26 +957,54 @@ const AddDoctorModal = ({
     if (selectedOpdDays.length === 0)
       tempErrors.opdDays = "Please select at least one OPD day.";
 
+
     // ── Morning Shift (optional) ───────────────────────────────────────────
     const mFrom = currentDoctor.timings?.morning?.from;
     const mTo = currentDoctor.timings?.morning?.to;
 
-    // Only validate morning shift if at least one time is provided
+    console.log("mFrom =>", mFrom);
+    console.log("mTo =>", mTo);
+
+    // Strict parsing
+    const start = mFrom
+      ? dayjs(mFrom, "hh:mm A", true)
+      : null;
+
+    const end = mTo
+      ? dayjs(mTo, "hh:mm A", true)
+      : null;
+
+    console.log("start =>", start?.format());
+    console.log("end =>", end?.format());
+
+    // Validate only if at least one value exists
     if (mFrom || mTo) {
-      if (!mFrom || !dayjs(mFrom).isValid())
+
+      // Morning start required
+      if (!mFrom || !start?.isValid()) {
         tempErrors["timings.morning.from"] =
           "Morning start time is required when end time is provided.";
+      }
 
-      if (!mTo || !dayjs(mTo).isValid()) {
+      // Morning end required
+      if (!mTo || !end?.isValid()) {
         tempErrors["timings.morning.to"] =
           "Morning end time is required when start time is provided.";
-      } else if (
+      }
+
+      // Compare times only if both valid
+      if (
         mFrom &&
-        dayjs(mFrom).isValid() &&
-        dayjs(mTo).isBefore(dayjs(mFrom))
+        mTo &&
+        start?.isValid() &&
+        end?.isValid()
       ) {
-        tempErrors["timings.morning.to"] =
-          "Morning end time must be after start time.";
+
+        // End must be after start
+        if (end.isBefore(start) || end.isSame(start)) {
+          tempErrors["timings.morning.to"] =
+            "Morning end time must be after start time.";
+        }
       }
     }
 
@@ -1043,6 +1097,32 @@ const AddDoctorModal = ({
       //  Format nested timing objects to strings
 
       console.log("Saving doctor with data:", currentDoctor);
+
+      // Helper function to normalize time to "hh:mm A" format
+      const normalizeTime = (time) => {
+        if (!time) return "";
+
+        // If it's a dayjs object, format it
+        if (dayjs.isDayjs(time)) {
+          return time.format("hh:mm A");
+        }
+
+        // If it's already a string in "hh:mm A" format, return it
+        if (typeof time === "string" && time.match(/^\d{1,2}:\d{2}\s(AM|PM)$/i)) {
+          return time;
+        }
+
+        // If it's an ISO string or other format, try to parse and format
+        if (typeof time === "string") {
+          const parsed = dayjs(time);
+          if (parsed.isValid()) {
+            return parsed.format("hh:mm A");
+          }
+        }
+
+        return "";
+      };
+
       const doctorToSave = {
         ...currentDoctor,
         _id: doctorData?._id,
@@ -1050,48 +1130,33 @@ const AddDoctorModal = ({
         surgeries: normalizeSuggestionArray(currentDoctor.surgeries),
         timings: {
           morning: {
-            from: currentDoctor.timings.morning.from
-              ? currentDoctor.timings.morning.from?.format("hh:mm A")
-              : "",
-
-            to: currentDoctor.timings.morning.to
-              ? currentDoctor.timings.morning.to.format("hh:mm A")
-              : "",
+            from: normalizeTime(currentDoctor.timings.morning.from),
+            to: normalizeTime(currentDoctor.timings.morning.to),
           },
 
           evening: {
-            from: currentDoctor.timings.evening.from
-              ? currentDoctor.timings.evening.from?.format("hh:mm A")
-              : "",
-
-            to: currentDoctor.timings.evening.to
-              ? currentDoctor.timings.evening.to?.format("hh:mm A")
-              : "",
+            from: normalizeTime(currentDoctor.timings.evening.from),
+            to: normalizeTime(currentDoctor.timings.evening.to),
           },
 
           custom: {
-            from: currentDoctor.timings.custom.from
-              ? currentDoctor.timings.custom.from?.format("hh:mm A")
-              : "",
-
-            to: currentDoctor.timings.custom.to
-              ? currentDoctor.timings.custom.to?.format("hh:mm A")
-              : "",
+            from: normalizeTime(currentDoctor.timings.custom.from),
+            to: normalizeTime(currentDoctor.timings.custom.to),
           },
         },
         videoConsultation: {
           ...currentDoctor.videoConsultation,
           startTime: currentDoctor.videoConsultation.startTime
-            ? currentDoctor.videoConsultation.startTime?.format("HH:mm")
+            ? currentDoctor.videoConsultation.startTime
             : null,
           endTime: currentDoctor.videoConsultation.endTime
-            ? currentDoctor.videoConsultation.endTime?.format("HH:mm")
+            ? currentDoctor.videoConsultation.endTime
             : null,
           timeSlot:
             currentDoctor.videoConsultation.enabled &&
               currentDoctor.videoConsultation.startTime &&
               currentDoctor.videoConsultation.endTime
-              ? `${currentDoctor.videoConsultation.startTime?.format("HH:mm")} - ${currentDoctor.videoConsultation.endTime?.format("HH:mm")}`
+              ? `${currentDoctor.videoConsultation.startTime} - ${currentDoctor.videoConsultation.endTime}`
               : "",
         },
       };

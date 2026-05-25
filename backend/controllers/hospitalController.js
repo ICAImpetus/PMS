@@ -17,48 +17,34 @@ const HospitalModel = getHospitalModel(MasterConn)
 const AdminAndAgentModel = getAdminAgentModel(MasterConn)
 const AuditLog = getAuditLogModel(MasterConn)
 
-const parseJSON = (value, fallback) => {
-  try {
-    if (!value) return fallback;
-    if (typeof value === "object") return value;
-    if (typeof value === "string" && (value.startsWith("{") || value.startsWith("["))) {
-      return JSON.parse(value);
-    }
-    return value;
-  } catch {
-    return fallback;
-  }
-};
 
 function generateSlots(
   start,
   end,
   slotMinutes,
-  maxPatients
+  sessionName = "General"
 ) {
-  // DO NOT CALCULATE
-  // if required values missing
-
   if (
     !start ||
     !end ||
-    !slotMinutes ||
-    !maxPatients
+    !slotMinutes
   ) {
     return [];
   }
 
   const startTime = dayjs(
     start,
-    "hh:mm A"
+    "hh:mm A",
+    true
   );
 
   const endTime = dayjs(
     end,
-    "hh:mm A"
+    "hh:mm A",
+    true
   );
 
-  // invalid time
+  // Invalid times
   if (
     !startTime.isValid() ||
     !endTime.isValid()
@@ -66,7 +52,7 @@ function generateSlots(
     return [];
   }
 
-  // invalid range
+  // Invalid range
   if (
     endTime.isBefore(startTime) ||
     endTime.isSame(startTime)
@@ -77,18 +63,14 @@ function generateSlots(
   const slots = [];
 
   let current = startTime;
-  let count = 0;
 
-  while (
-    current.isBefore(endTime) &&
-    count < maxPatients
-  ) {
+  while (current.isBefore(endTime)) {
     const next = current.add(
-      slotMinutes,
+      Number(slotMinutes),
       "minute"
     );
 
-    // stop overflow
+    // Prevent overflow
     if (next.isAfter(endTime)) {
       break;
     }
@@ -102,27 +84,16 @@ function generateSlots(
         "hh:mm A"
       ),
 
-      session:
-        current.hour() < 12
-          ? "Morning"
-          : current.hour() < 17
-            ? "Afternoon"
-            : "Evening",
+      session: sessionName,
 
       isBooked: false,
     });
 
     current = next;
-    count++;
   }
 
   return slots;
 }
-
-// ==============================
-// GENERATE ALL DOCTOR SLOTS
-// ==============================
-
 export function generateDoctorSlots(
   doctor
 ) {
@@ -134,81 +105,86 @@ export function generateDoctorSlots(
     doctor?.averagePatientTime
   );
 
-  const maxPatients = Number(
-    doctor?.maxPatientsHandled
-  );
-
-  // REQUIRED
-  // if not configured -> return
-
   if (
-    !slotMinutes ||
-    !maxPatients
+    !slotMinutes
   ) {
     return [];
   }
 
-  const allSlots = [];
+  let allSlots = [];
 
-  // ==============================
-  // SHIFT 1
-  // ==============================
+  // =========================
+  // MORNING SHIFT
+  // =========================
 
   if (
     doctor.timings?.morning?.start &&
     doctor.timings?.morning?.end
   ) {
-    allSlots.push(
+    allSlots = [
+      ...allSlots,
       ...generateSlots(
         doctor.timings.morning.start,
         doctor.timings.morning.end,
         slotMinutes,
-        maxPatients
-      )
-    );
+        "Morning"
+      ),
+    ];
   }
 
-  // ==============================
-  // SHIFT 2
-  // ==============================
+  // =========================
+  // EVENING SHIFT
+  // =========================
 
   if (
     doctor.timings?.evening?.start &&
     doctor.timings?.evening?.end
   ) {
-    allSlots.push(
+    allSlots = [
+      ...allSlots,
       ...generateSlots(
         doctor.timings.evening.start,
         doctor.timings.evening.end,
         slotMinutes,
-        maxPatients
-      )
-    );
+        "Evening"
+      ),
+    ];
   }
 
-  // ==============================
+  // =========================
   // CUSTOM SHIFT
-  // ==============================
+  // =========================
 
   if (
     doctor.timings?.custom?.start &&
     doctor.timings?.custom?.end
   ) {
-    allSlots.push(
+    allSlots = [
+      ...allSlots,
       ...generateSlots(
         doctor.timings.custom.start,
         doctor.timings.custom.end,
         slotMinutes,
-        maxPatients
-      )
-    );
+        maxPatients,
+        "Custom"
+      ),
+    ];
   }
 
   return allSlots;
 }
-
-
-
+const parseJSON = (value, fallback) => {
+  try {
+    if (!value) return fallback;
+    if (typeof value === "object") return value;
+    if (typeof value === "string" && (value.startsWith("{") || value.startsWith("["))) {
+      return JSON.parse(value);
+    }
+    return value;
+  } catch {
+    return fallback;
+  }
+};
 
 export const getLogs = async (req, res) => {
   try {
@@ -1708,6 +1684,11 @@ export const updateDoctor = async (req, res) => {
     const actorRole = req.user?.type || "Unknown";
     const actorName = req.user?.name || "Unknown User";
 
+    await doctor.save();
+
+    // const populatedDoctor =
+    //   await DoctorModel.findById(id).populate("department");
+
     //  Audit Log
     auditLog({
       action: "UPDATE_DOCTOR",
@@ -1721,15 +1702,10 @@ export const updateDoctor = async (req, res) => {
       userAgent: req.headers["user-agent"],
     });
 
-    await doctor.save();
-
-    const populatedDoctor =
-      await DoctorModel.findById(id).populate("department");
-
     return res.status(200).json({
       success: true,
       message: "Doctor updated successfully",
-      data: populatedDoctor,
+      // data: populatedDoctor,
     });
   } catch (error) {
 

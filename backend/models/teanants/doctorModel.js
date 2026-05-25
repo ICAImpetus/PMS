@@ -25,7 +25,7 @@ const SlotSchema = new mongoose.Schema(
 
     session: {
       type: String,
-      enum: ["Morning", "Evening", "Custom"],
+      // enum: ["Morning", "Evening", "Custom"],
     },
 
     isBooked: {
