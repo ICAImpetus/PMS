@@ -41,7 +41,7 @@ const UserFormTeamLeader = ({ initialState = null, hospitalId, onClose, refetchU
         ? initialState.hospitals
         : initialState.hospitals
           ? [initialState.hospitals]
-          : [],
+          : [hospitalId],
       selectedBranch: Array.isArray(initialState.branches)
         ? initialState?.branches
         : initialState?.branches
@@ -56,7 +56,7 @@ const UserFormTeamLeader = ({ initialState = null, hospitalId, onClose, refetchU
       username: "",
       password: "",
       type: "executive",
-      hospitalName: [],
+      hospitalName: [hospitalId],
       selectedBranch: [],
       totalLoginTime: 0,
       dailyAccumulatedTime: 0,
@@ -104,7 +104,7 @@ const UserFormTeamLeader = ({ initialState = null, hospitalId, onClose, refetchU
     try {
       // console.log("values are :", values);
       let valuesToSubmit = { ...values };
-      valuesToSubmit.hospitalName = [hospitalId]
+      // valuesToSubmit.hospitalName = [hospitalId]
 
       valuesToSubmit.selectedBranch = valuesToSubmit?.selectedBranch?.map(
         (item) => item?._id
@@ -188,6 +188,7 @@ const UserFormTeamLeader = ({ initialState = null, hospitalId, onClose, refetchU
         handleBlur,
         setFieldValue,
       }) => {
+        // console.log("Formik Errors:", errors);
         // Custom handler to fetch branches when hospital changes
         const customHandleChange = (event) => {
           const { name, value } = event.target;

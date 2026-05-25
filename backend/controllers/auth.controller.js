@@ -112,7 +112,7 @@ export const userLogin = async (req, res, next) => {
     if (!userData) {
       return res.status(400).json({
         success: false,
-        message: "Invalid username or password",
+        message: "Invalid Username",
       });
     }
 
@@ -142,7 +142,7 @@ export const userLogin = async (req, res, next) => {
     if (!isPasswordValid) {
       return res.status(400).json({
         success: false,
-        message: "Invalid username or password",
+        message: "Invalid Password",
       });
     }
     const tokenPayload = {
@@ -159,8 +159,6 @@ export const userLogin = async (req, res, next) => {
     };
 
     const token = jwt.sign(tokenPayload, env.jwtSecret);
-
-
 
     const result = {
       id: userData.ID,

@@ -64,7 +64,7 @@ export const DoctorSchema = new mongoose.Schema(
     name: {
       type: String,
       trim: true,
-      set: toTitleCase,
+      // set: toTitleCase,
     },
     averagePatientTime: {
       type: String,
@@ -139,34 +139,6 @@ export const DoctorSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    empanelmentList: [
-      {
-        empanelmentId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Empanelment",
-          default: null,
-        },
-        policyName: String,
-        // departmentId: ObjectId,
-        treatableAreas: [
-          {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Suggestion",
-          }
-        ],
-        service: [String],
-        coverageLimit: {
-          maxAmount: Number,
-          perVisitLimit: Number,
-        },
-        coPayPercentage: Number,
-        preAuthRequired: Boolean,
-        typeOfCoverage: String,
-        validFrom: Date,
-        validTill: Date,
-        isActive: { type: Boolean, default: true },
-      },
-    ],
     videoConsultation: {
       enabled: {
         type: Boolean,
@@ -205,11 +177,13 @@ export const DoctorSchema = new mongoose.Schema(
 
     title: {
       type: String,
-
+      trim: true,
+      set: toTitleCase,
     },
     designation: {
       type: String,
-
+      trim: true,
+      set: toTitleCase,
     },
     teleMedicine: {
       type: String,

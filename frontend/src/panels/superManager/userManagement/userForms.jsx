@@ -50,7 +50,7 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
         ? initialState.hospitals
         : initialState.hospitals
           ? [initialState.hospitals]
-          : [],
+          : [hospitalId],
       selectedBranch: Array.isArray(initialState.branches)
         ? initialState?.branches
         : initialState?.branches
@@ -65,7 +65,7 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
       username: "",
       password: "",
       type: "",
-      hospitalName: [],
+      hospitalName: [hospitalId],
       selectedBranch: [],
       totalLoginTime: 0,
       dailyAccumulatedTime: 0,
@@ -90,17 +90,16 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
     error: userUpdate,
   } = useApi(commonRoutes.updateUser);
 
-  const { selectedHostpital } = useContext(HospitalContext);
 
 
   useEffect(() => {
     const fetchBranches = async () => {
       try {
         // //  ALWAYS convert to pure ID array
-        // console.log("Selected Hospital in useEffect:", selectedHostpital);
-        if (!selectedHostpital) return;
+        // console.log("Selected Hospital in useEffect:", hospitalId);
+        if (!hospitalId) return;
 
-        const response = await getBranches(selectedHostpital);
+        const response = await getBranches(hospitalId);
 
         setBranchOptions(response?.data || []);
 
@@ -111,7 +110,7 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
 
     fetchBranches();
 
-  }, [selectedHostpital]);
+  }, [hospitalId]);
   const handleSubmitForm = async (values) => {
     try {
 
@@ -120,7 +119,7 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
 
 
       let valuesToSubmit = { ...values };
-      valuesToSubmit.hospitalName = [selectedHostpital]
+      // valuesToSubmit.hospitalName = [hospitalId]
 
       valuesToSubmit.selectedBranch = valuesToSubmit?.selectedBranch?.map(
         (item) => isUpdateComp ? item?.branchId : item?._id
@@ -167,13 +166,11 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
       )}
       validateOnChange={false}
       validateOnBlur={true}
-      // validate={(values) => {
-      //   const errors = {};
-      //   if (hospitals.length === 0) {
-      //     errors.hospitalName = "At least one hospital is required";
-      //   }
-      //   return errors;
-      // }}
+      validate={(values) => {
+        const validationSchema = getValidationSchema(isUpdateComp);
+        console.log("validationSchema", validationSchema);
+        console.log("values", values);
+      }}
       onSubmit={async (values, { resetForm }) => {
         console.log("Form values on submit:", values);
         await handleSubmitForm(values);
@@ -183,6 +180,9 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
       }}
     >
       {({ values, errors, touched, handleChange, handleBlur, setFieldValue }) => {
+        // console.log(errors);
+        // console.log(touched);
+
 
         const customHandleChange = (event) => {
           const { name, value } = event.target;

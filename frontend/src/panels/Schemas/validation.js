@@ -55,15 +55,8 @@ export const getValidationSchema = (isUpdateComp = false) =>
             .required("User Type is required"),
 
         hospitalName: Yup.array()
-            .of(
-                Yup.object().shape({
-                    _id: Yup.string().required(),
-                })
-            )
-            .min(
-                1,
-                "At least one hospital is required"
-            ),
+            .of(Yup.string().required())
+            .min(1, "At least one hospital is required"),
         selectedBranch: Yup.array().when("type", {
             is: (type) =>
                 type?.toLowerCase() === "teamleader" ||

@@ -42,7 +42,6 @@ import { cleanCSVRows, validateCSVRows } from "../../../Schemas/validation";
 
 // Components
 import Header from "../../../../components/HeaderNew";
-// Icons
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import CancelIcon from "@mui/icons-material/Cancel";
@@ -71,7 +70,7 @@ import { commonRoutes } from "../../../../api/apiService";
 import DeleteConfirmationModal from "../../../../components/DeleteConfirmationModal";
 import ProgressPopup, { SpecialtiesCell } from "./UploadLoading";
 import DoctorAttendanceCalendar from "./DoctorAttendanceCalendar";
-
+import { getRequiredHeaders, getDummyData } from "../../../Schemas/doctor";
 const normalizeSuggestionValue = (value) => {
   if (!value && value !== 0) return "";
   if (typeof value === "string") return value.trim();
@@ -252,12 +251,12 @@ const TabHeader = ({
               startIcon={<DownloadIcon />}
               onClick={() => {
                 if (!downloadTemplate) return;
-                const format = window.prompt("Which format to download? (csv)", "csv");
-                if (!format) return;
-                if (format.trim().toLowerCase() !== "csv") {
-                  toast.error("Only CSV format is supported.");
-                  return;
-                }
+                // const format = window.prompt("Which format to download? (csv)", "csv");
+                // if (!format) return;
+                // if (format.trim().toLowerCase() !== "csv") {
+                //   toast.error("Only CSV format is supported.");
+                //   return;
+                // }
                 downloadTemplate(type, "csv");
               }}
               sx={{
@@ -1110,29 +1109,32 @@ const BranchInfo = () => {
   };
 
   // Returns required headers for each CSV type (lowercase)
-  const getRequiredHeaders = (type) => {
-    const map = {
-      doctor: ["name", "email", "phone", "department", "specialties"],
-      department: ["name", "code"],
-      empanelment: ["name", "policyname"],
-      testLab: ["testname", "code", "charge"],
-    };
-    return map[type] || ["name"];
-  };
 
   const handleDownloadTemplate = (type, format = "csv") => {
     const headers = getRequiredHeaders(type);
-    const csv = headers.join(",") + "\n";
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const dummyData = getDummyData(type);
+
+    const csv = [
+      headers.join(","),
+      dummyData.join(",")
+    ].join("\n");
+
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8;"
+    });
+
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement("a");
     a.href = url;
     a.download = `${type}_template.${format}`;
+
     document.body.appendChild(a);
     a.click();
+
     a.remove();
     URL.revokeObjectURL(url);
-    toast.success("Template downloaded");
+    toast.success("Template downloaded Successfully!");
   };
 
   const validateCSVHeaders = async (type, file) => {
@@ -1707,7 +1709,7 @@ const BranchInfo = () => {
                               : "")
                           } />
                           <span>
-                            {row?.title} {row?.name}
+                            {row?.title ?? row?.title} {row?.name}
                           </span>
                         </Box>
                       </TableCell>

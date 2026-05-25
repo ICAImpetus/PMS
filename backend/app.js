@@ -1,19 +1,3 @@
-/**
- * ========================================
- * APPLICATION SETUP
- * ========================================
- *
- * This file configures the Express application with all middleware and routes.
- *
- * SECURITY FEATURES:
- * -----------------
- * - Helmet for secure HTTP headers
- * - Rate limiting to prevent brute force
- * - MongoDB injection protection
- * - Input sanitization
- * - XSS protection
- */
-
 import path from "path";
 import express from "express";
 import cors from "cors";
@@ -34,7 +18,7 @@ import requestLogger from "./middlewares/apiLogger.middleware.js";
 
 const app = express();
 
-app.set("trust proxy", true);
+app.set("trust proxy", 1);
 // ===== SECURITY MIDDLEWARE (Applied First) =====
 // 1. Secure HTTP Headers
 // app.use(securityHeaders);

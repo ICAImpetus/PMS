@@ -8,7 +8,10 @@ import { updateSuggestions } from "../utils/updateSuggestions.js";
 import { toObjectId } from "../utils/toObjectId.js";
 import cloudinary from "../utils/cloudinary.js";
 import { NotificationSchema } from "../models/master.models/NotiificationModel.js";
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat.js";
 
+dayjs.extend(customParseFormat);
 
 const HospitalModel = getHospitalModel(MasterConn)
 const AdminAndAgentModel = getAdminAgentModel(MasterConn)
@@ -27,39 +30,86 @@ const parseJSON = (value, fallback) => {
   }
 };
 
+function generateSlots(
+  start,
+  end,
+  slotMinutes,
+  maxPatients
+) {
+  // DO NOT CALCULATE
+  // if required values missing
 
+  if (
+    !start ||
+    !end ||
+    !slotMinutes ||
+    !maxPatients
+  ) {
+    return [];
+  }
 
-function generateSlots(start, end, slotMinutes = 20, maxPatients = 10) {
-  if (!start || !end || start === "00:00" || end === "00:00") {
+  const startTime = dayjs(
+    start,
+    "hh:mm A"
+  );
+
+  const endTime = dayjs(
+    end,
+    "hh:mm A"
+  );
+
+  // invalid time
+  if (
+    !startTime.isValid() ||
+    !endTime.isValid()
+  ) {
+    return [];
+  }
+
+  // invalid range
+  if (
+    endTime.isBefore(startTime) ||
+    endTime.isSame(startTime)
+  ) {
     return [];
   }
 
   const slots = [];
 
-  const [sh, sm] = start.split(":").map(Number);
-  const [eh, em] = end.split(":").map(Number);
-
-  const startDate = new Date();
-  startDate.setHours(sh, sm, 0, 0);
-
-  const endDate = new Date();
-  endDate.setHours(eh, em, 0, 0);
-
-  let current = new Date(startDate);
+  let current = startTime;
   let count = 0;
 
-  while (current < endDate && count < maxPatients) {
-    const slotStart = current.toTimeString().slice(0, 5);
+  while (
+    current.isBefore(endTime) &&
+    count < maxPatients
+  ) {
+    const next = current.add(
+      slotMinutes,
+      "minute"
+    );
 
-    const next = new Date(current.getTime() + slotMinutes * 60000);
-
-    if (next > endDate) break;
-
-    const slotEnd = next.toTimeString().slice(0, 5);
+    // stop overflow
+    if (next.isAfter(endTime)) {
+      break;
+    }
 
     slots.push({
-      start: slotStart,
-      end: slotEnd,
+      start: current.format(
+        "hh:mm A"
+      ),
+
+      end: next.format(
+        "hh:mm A"
+      ),
+
+      session:
+        current.hour() < 12
+          ? "Morning"
+          : current.hour() < 17
+            ? "Afternoon"
+            : "Evening",
+
+      isBooked: false,
     });
 
     current = next;
@@ -69,16 +119,41 @@ function generateSlots(start, end, slotMinutes = 20, maxPatients = 10) {
   return slots;
 }
 
-function generateDoctorSlots(doctor) {
-  if (!doctor?.timings) return [];
+// ==============================
+// GENERATE ALL DOCTOR SLOTS
+// ==============================
 
-  const slotMinutes = parseInt(doctor?.averagePatientTime || 10)
+export function generateDoctorSlots(
+  doctor
+) {
+  if (!doctor?.timings) {
+    return [];
+  }
 
-  const maxPatients = doctor?.maxPatientsHandled || 10;
+  const slotMinutes = Number(
+    doctor?.averagePatientTime
+  );
+
+  const maxPatients = Number(
+    doctor?.maxPatientsHandled
+  );
+
+  // REQUIRED
+  // if not configured -> return
+
+  if (
+    !slotMinutes ||
+    !maxPatients
+  ) {
+    return [];
+  }
 
   const allSlots = [];
 
-  // Morning slots
+  // ==============================
+  // SHIFT 1
+  // ==============================
+
   if (
     doctor.timings?.morning?.start &&
     doctor.timings?.morning?.end
@@ -93,7 +168,10 @@ function generateDoctorSlots(doctor) {
     );
   }
 
-  // Evening slots
+  // ==============================
+  // SHIFT 2
+  // ==============================
+
   if (
     doctor.timings?.evening?.start &&
     doctor.timings?.evening?.end
@@ -108,8 +186,29 @@ function generateDoctorSlots(doctor) {
     );
   }
 
+  // ==============================
+  // CUSTOM SHIFT
+  // ==============================
+
+  if (
+    doctor.timings?.custom?.start &&
+    doctor.timings?.custom?.end
+  ) {
+    allSlots.push(
+      ...generateSlots(
+        doctor.timings.custom.start,
+        doctor.timings.custom.end,
+        slotMinutes,
+        maxPatients
+      )
+    );
+  }
+
   return allSlots;
 }
+
+
+
 
 export const getLogs = async (req, res) => {
   try {
@@ -150,7 +249,7 @@ export const AddHospital = async (req, res) => {
   let uploadedImageUrl = null;
 
   console.log("Received hospital data:", req.body);
- 
+
   try {
     let hospitalData = sanitizeHospitalPayload(req.body || {});
 
@@ -890,7 +989,6 @@ export const getSingleBranch = async (req, res) => {
 
       // Doctors (MAIN FIX HERE)
       Doctor.find({ branch: id, isDeleted: false })
-        .populate(pop("empanelmentList.treatableAreas", Suggestion))
         .populate(pop("department", Department))
         .populate(pop("specialties", Suggestion))
         .populate(pop("surgeries", Suggestion))
@@ -933,7 +1031,6 @@ export const getSingleBranch = async (req, res) => {
       Procedure.find({ branch: id, isDeleted: false })
         .populate(pop("doctorIds", Doctor))
         .populate(pop("category", Suggestion)) //  adjust if needed
-        .populate(pop("empanelmentType", Suggestion)) //  adjust
         .sort({ createdAt: -1 })
         .lean(),
 
@@ -1398,6 +1495,7 @@ export const updateDoctor = async (req, res) => {
   let uploadedImageUrl = null;
 
 
+  console.log("doctor", req.body);
 
   try {
     const { id } = req.params;
@@ -6680,11 +6778,10 @@ const uploadDoctorCSV = async ({
 
     const branchObjectId =
       toObjectId(branchId);
-
-    const splitComma = (val) =>
+    const splitPipe = (val) =>
       val
         ? val
-          .split(",")
+          .split("|")
           .map((v) => v.trim())
           .filter(Boolean)
         : [];
@@ -6874,7 +6971,8 @@ const uploadDoctorCSV = async ({
           }
         );
 
-        doctorsToInsert.push({
+        let doc =
+        {
           branch: branchObjectId,
 
           department:
@@ -7019,7 +7117,10 @@ const uploadDoctorCSV = async ({
               )
               .filter(Boolean)
             : [],
-        });
+        }
+
+        doc.slots = generateDoctorSlots(doctor);
+        doctorsToInsert.push(doc);
       } catch (innerError) {
         console.log(
           "ROW PROCESS ERROR =>",

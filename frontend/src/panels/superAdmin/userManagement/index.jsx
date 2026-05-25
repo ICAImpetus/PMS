@@ -109,11 +109,15 @@ function UserManageMent() {
   }, [userData])
 
   const deleteUser = async () => {
-    await deleteUserById(deleteUserId);
-    if (refetchUsers) await refetchUsers()
-    setDeleteOpen(false);
-    setDeleteUserId(null);
-    toast.success("User Deleted");
+    const response = await deleteUserById(deleteUserId);
+    if (response?.success) {
+      if (refetchUsers) await refetchUsers()
+      setDeleteOpen(false);
+      setDeleteUserId(null);
+      refetchUsers();
+      toast.success("User deleted successfully");
+    }
+
   };
 
   const handleDeleteUser = async (userId) => {

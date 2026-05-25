@@ -37,6 +37,7 @@ export const getMasterConnection = async () => {
 export const MasterConn = await getMasterConnection()
 
 export const getConnection = async (dbName) => {
+    console.log("Getting connection for DB:", dbName);
     if (!dbName) {
         throw new Error("DB name is required");
     }

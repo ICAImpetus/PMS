@@ -39,6 +39,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat.js";
 import { tokens } from "../../../../../theme";
 import { useApi } from "../../../../../api/useApi";
 import { commonRoutes } from "../../../../../api/apiService";
@@ -47,6 +48,7 @@ import { Toaster, toast } from "react-hot-toast";
 import countryCodes from "./code.js";
 import { normalizeSuggestionArray } from "../BranchInfo.jsx";
 
+dayjs.extend(customParseFormat);
 // Predefined degree options
 const predefinedDegrees = [
   "MBBS",
@@ -216,7 +218,7 @@ const AddDoctorModal = ({
     surgeries: [],
   });
 
- 
+
 
 
   useEffect(() => {
@@ -226,161 +228,290 @@ const AddDoctorModal = ({
   }, [availableDepartments]);
 
   useEffect(() => {
-    if (open) {
-      if (doctorData) {
-        // Safe check for existing timing structure or initialize new
-        const morningFrom =
-          doctorData.timings?.morning?.from ||
-          doctorData.timings?.morning?.start ||
-          doctorData.timings?.morning; // Handle backward compatibility if it was a string
-        const morningTo =
-          doctorData.timings?.morning?.to ||
-          doctorData.timings?.morning?.end ||
-          null;
+    if (!open) return;
 
-        const eveningFrom =
-          doctorData.timings?.evening?.from ||
-          doctorData.timings?.evening?.start ||
-          doctorData.timings?.evening;
-        const eveningTo =
-          doctorData.timings?.evening?.to ||
-          doctorData.timings?.evening?.end ||
-          null;
+    // helper function
+    const parseTime = (time) => {
+      if (!time) return null;
 
-        const customFrom =
-          doctorData.timings?.custom?.from ||
-          doctorData.timings?.custom?.start ||
-          null;
-        const customTo =
-          doctorData.timings?.custom?.to ||
-          doctorData.timings?.custom?.end ||
-          null;
+      // already dayjs object
+      if (dayjs.isDayjs(time)) return time;
 
-        setCurrentDoctor({
+      // support both formats:
+      // 10:25 AM
+      // 14:30
+      const parsed12 = dayjs(time, "hh:mm A", true);
+      if (parsed12.isValid()) return parsed12;
 
-          ...doctorData,
-          department: doctorData?.department?._id || doctorData?.department,
-          profilePicture: doctorData?.profilePicture?.imagePath,
-          // profilePreview: doctorData?.profilePicture?.imagePath,
-          timings: {
-            morning: {
-              from: morningFrom ? dayjs(morningFrom, "HH:mm") : null,
-              to: morningTo ? dayjs(morningTo, "HH:mm") : null,
-            },
-            evening: {
-              from:
-                eveningFrom && dayjs(eveningFrom, "HH:mm").isValid()
-                  ? dayjs(eveningFrom, "HH:mm")
-                  : null,
-              to:
-                eveningTo && dayjs(eveningTo, "HH:mm").isValid()
-                  ? dayjs(eveningTo, "HH:mm")
-                  : null,
-            },
-            custom: {
-              from: customFrom ? dayjs(customFrom, "HH:mm") : null,
-              to: customTo ? dayjs(customTo, "HH:mm") : null,
-            },
+      const parsed24 = dayjs(time, "HH:mm", true);
+      if (parsed24.isValid()) return parsed24;
+
+      return null;
+    };
+
+    if (doctorData) {
+      // =========================
+      // TIMINGS
+      // =========================
+
+      const morningFrom =
+        doctorData?.timings?.morning?.from ||
+        doctorData?.timings?.morning?.start ||
+        null;
+
+      const morningTo =
+        doctorData?.timings?.morning?.to ||
+        doctorData?.timings?.morning?.end ||
+        null;
+
+      const eveningFrom =
+        doctorData?.timings?.evening?.from ||
+        doctorData?.timings?.evening?.start ||
+        null;
+
+      const eveningTo =
+        doctorData?.timings?.evening?.to ||
+        doctorData?.timings?.evening?.end ||
+        null;
+
+      const customFrom =
+        doctorData?.timings?.custom?.from ||
+        doctorData?.timings?.custom?.start ||
+        null;
+
+      const customTo =
+        doctorData?.timings?.custom?.to ||
+        doctorData?.timings?.custom?.end ||
+        null;
+
+      setCurrentDoctor({
+        ...doctorData,
+
+        department:
+          doctorData?.department?._id ||
+          doctorData?.department ||
+          "",
+
+        profilePicture:
+          doctorData?.profilePicture?.imagePath || "",
+
+        timings: {
+          morning: {
+            from: parseTime(morningFrom),
+            to: parseTime(morningTo),
           },
-          specialties: normalizeSuggestionArray(doctorData.specialties || []),
-          surgeries: normalizeSuggestionArray(doctorData.surgeries || []),
-          videoConsultation: {
-            enabled: doctorData.videoConsultation?.enabled || false,
-            startTime: doctorData.videoConsultation?.timeSlot?.start
-              ? dayjs(doctorData.videoConsultation.timeSlot.start, "HH:mm")
-              : doctorData.videoConsultation?.startTime
-                ? dayjs(doctorData.videoConsultation.startTime, "HH:mm")
-                : null,
-            endTime: doctorData.videoConsultation?.timeSlot?.end
-              ? dayjs(doctorData.videoConsultation.timeSlot.end, "HH:mm")
-              : doctorData.videoConsultation?.endTime
-                ? dayjs(doctorData.videoConsultation.endTime, "HH:mm")
-                : null,
-            charges: doctorData.videoConsultation?.charges || "",
-            days: Array.isArray(doctorData.videoConsultation?.days)
-              ? doctorData.videoConsultation.days.join(", ")
-              : doctorData.videoConsultation?.days || "",
+
+          evening: {
+            from: parseTime(eveningFrom),
+            to: parseTime(eveningTo),
           },
-          isEnabled: doctorData.isEnabled ?? true,
-          name: doctorData.name || "",
-          opdNo: doctorData.opdNo || "",
-          opdDays: Array.isArray(doctorData.opdDays)
-            ? doctorData.opdDays.join(", ")
-            : doctorData.opdDays || "",
-          experience: doctorData.experience || "",
-          countryCode: doctorData.countryCode || "+91",
-          contactNumber: doctorData.contactNumber || "",
-          extensionNumber: doctorData.extensionNumber || "",
-          paName: doctorData.paName || "",
-          paContactNumber: doctorData.paContactNumber || "",
-          consultationCharges: doctorData.consultationCharges || "",
-          teleMedicine: doctorData.teleMedicine || "",
-          additionalInfo: doctorData.additionalInfo || "",
-          type: doctorData.type || "",
-          degrees: doctorData.degrees || [],
-          customDegrees: doctorData.customDegrees || [],
-          subDepartment: doctorData.subDepartment || "",
-          whatsappNumber: doctorData.whatsappNumber || "",
-          averagePatientTime: doctorData.averagePatientTime,
-          maxPatientsHandled: doctorData.maxPatientsHandled,
-        });
-        setWhatsappOption(
-          doctorData.whatsappNumber === doctorData.contactNumber
-            ? "same"
-            : "custom",
-        );
-      } else {
-        // Reset for new doctor
-        setCurrentDoctor({
-          name: "",
-          opdNo: "",
-          specialties: [],
-          timings: {
-            morning: { from: null, to: null },
-            evening: { from: null, to: null },
-            custom: { from: null, to: null },
+
+          custom: {
+            from: parseTime(customFrom),
+            to: parseTime(customTo),
           },
-          opdDays: "",
-          experience: "",
-          countryCode: "+91",
-          contactNumber: "",
-          extensionNumber: "",
-          paName: "",
-          paContactNumber: "",
-          consultationCharges: "",
-          videoConsultation: {
-            enabled: false,
-            startTime: null,
-            endTime: null,
-            charges: "",
-            days: "",
+        },
+
+        specialties: normalizeSuggestionArray(
+          doctorData?.specialties || []
+        ),
+
+        surgeries: normalizeSuggestionArray(
+          doctorData?.surgeries || []
+        ),
+
+        videoConsultation: {
+          enabled:
+            doctorData?.videoConsultation?.enabled || false,
+
+          startTime: parseTime(
+            doctorData?.videoConsultation?.timeSlot?.start ||
+            doctorData?.videoConsultation?.startTime
+          ),
+
+          endTime: parseTime(
+            doctorData?.videoConsultation?.timeSlot?.end ||
+            doctorData?.videoConsultation?.endTime
+          ),
+
+          charges:
+            doctorData?.videoConsultation?.charges || "",
+
+          days: Array.isArray(
+            doctorData?.videoConsultation?.days
+          )
+            ? doctorData.videoConsultation.days.join(", ")
+            : doctorData?.videoConsultation?.days || "",
+        },
+
+        isEnabled: doctorData?.isEnabled ?? true,
+
+        name: doctorData?.name || "",
+
+        opdNo: doctorData?.opdNo || "",
+
+        opdDays: Array.isArray(doctorData?.opdDays)
+          ? doctorData.opdDays.join(", ")
+          : doctorData?.opdDays || "",
+
+        experience: doctorData?.experience || "",
+
+        countryCode:
+          doctorData?.countryCode || "+91",
+
+        contactNumber:
+          doctorData?.contactNumber || "",
+
+        extensionNumber:
+          doctorData?.extensionNumber || "",
+
+        paName: doctorData?.paName || "",
+
+        paContactNumber:
+          doctorData?.paContactNumber || "",
+
+        consultationCharges:
+          doctorData?.consultationCharges || "",
+
+        teleMedicine:
+          doctorData?.teleMedicine || "",
+
+        additionalInfo:
+          doctorData?.additionalInfo || "",
+
+        type: doctorData?.type || "Dr.",
+
+        designation:
+          doctorData?.designation || "",
+
+        degrees: doctorData?.degrees || [],
+
+        customDegrees:
+          doctorData?.customDegrees || [],
+
+        subDepartment:
+          doctorData?.subDepartment || "",
+
+        whatsappNumber:
+          doctorData?.whatsappNumber || "",
+
+        averagePatientTime:
+          doctorData?.averagePatientTime || "",
+
+        maxPatientsHandled:
+          doctorData?.maxPatientsHandled || "",
+
+        floor: doctorData?.floor || "",
+
+        specialization:
+          doctorData?.specialization || "",
+
+        title: doctorData?.title || "",
+      });
+
+      setWhatsappOption(
+        doctorData?.whatsappNumber ===
+          doctorData?.contactNumber
+          ? "same"
+          : "custom"
+      );
+    } else {
+      // =========================
+      // NEW DOCTOR DEFAULTS
+      // =========================
+
+      setCurrentDoctor({
+        name: "",
+        opdNo: "",
+
+        specialties: [],
+
+        timings: {
+          morning: {
+            from: null,
+            to: null,
           },
-          teleMedicine: "",
-          additionalInfo: "",
-          isEnabled: true,
-          type: "Dr.",
-          designation: "",
-          degrees: [],
-          customDegrees: [],
-          department: null,
-          surgeries: [],
-          whatsappNumber: "",
-          averagePatientTime: "10m",
-          maxPatientsHandled: 1,
-          floor: "",
-          specialization: "",
-          title: "",
-        });
-        setWhatsappOption("same");
-      }
-      setErrors({});
-      setCurrentSpecialtyInput("");
-      setCurrentSurgeryInput("");
-      setNewDepartment("");
-      setNewSubDepartment("");
+
+          evening: {
+            from: null,
+            to: null,
+          },
+
+          custom: {
+            from: null,
+            to: null,
+          },
+        },
+
+        opdDays: "",
+
+        experience: "",
+
+        countryCode: "+91",
+
+        contactNumber: "",
+
+        extensionNumber: "",
+
+        paName: "",
+
+        paContactNumber: "",
+
+        consultationCharges: "",
+
+        videoConsultation: {
+          enabled: false,
+          startTime: null,
+          endTime: null,
+          charges: "",
+          days: "",
+        },
+
+        teleMedicine: "",
+
+        additionalInfo: "",
+
+        isEnabled: true,
+
+        type: "Dr.",
+
+        designation: "",
+
+        degrees: [],
+
+        customDegrees: [],
+
+        department: "",
+
+        surgeries: [],
+
+        whatsappNumber: "",
+
+        averagePatientTime: "",
+
+        maxPatientsHandled: "",
+
+        floor: "",
+
+        specialization: "",
+
+        title: "",
+      });
+
+      setWhatsappOption("same");
     }
-  }, [open, doctorData]);
 
+    // =========================
+    // RESET STATES
+    // =========================
+
+    setErrors({});
+    setCurrentSpecialtyInput("");
+    setCurrentSurgeryInput("");
+    setNewDepartment("");
+    setNewSubDepartment("");
+
+  }, [open, doctorData]);
   // Handle changes for standard text fields
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -422,97 +553,273 @@ const AddDoctorModal = ({
 
 
   //  Updated Timings Handler for From/To
-  const handleTimingsChange = (newValue, period, type) => {
+  const handleTimingsChange = (
+    newValue,
+    period,
+    type
+  ) => {
     if (!newValue) return;
+
+    // =========================
+    // CONVERT STRING -> DAYJS
+    // =========================
+
+    const parseTime = (time) => {
+      if (!time) return null;
+
+      // already dayjs object
+      if (dayjs.isDayjs(time)) return time;
+
+      return dayjs(time, "hh:mm A");
+    };
 
     const timings = currentDoctor.timings;
 
-    const mFrom = timings.morning.from;
-    const mTo = timings.morning.to;
+    const mFrom = parseTime(
+      timings.morning.from
+    );
 
-    const eFrom = timings.evening.from;
-    const eTo = timings.evening.to;
+    const mTo = parseTime(
+      timings.morning.to
+    );
 
-    const cFrom = timings.custom.from;
-    const cTo = timings.custom.to;
+    const eFrom = parseTime(
+      timings.evening.from
+    );
 
-    // ---- MORNING RULES ----
+    const eTo = parseTime(
+      timings.evening.to
+    );
+
+    const cFrom = parseTime(
+      timings.custom.from
+    );
+
+    const cTo = parseTime(
+      timings.custom.to
+    );
+
+    // helper
+    const MAX_SHIFT_HOURS = 12;
+
+    // =========================
+    // SHIFT 1 RULES
+    // =========================
+
     if (period === "morning") {
+      // TO validation
       if (type === "to" && mFrom) {
-        const max = mFrom.add(6, "hour");
+        const max = mFrom.add(
+          MAX_SHIFT_HOURS,
+          "hour"
+        );
 
         if (newValue.isBefore(mFrom)) {
-          toast.error("Morning end time cannot be before start");
+          toast.error(
+            "Shift 1 end time cannot be before start time"
+          );
+
           return;
         }
 
         if (newValue.isAfter(max)) {
-          toast.error("Morning shift cannot exceed 6 hours");
+          toast.error(
+            `Shift 1 cannot exceed ${MAX_SHIFT_HOURS} hours`
+          );
+
           return;
         }
       }
-    }
 
-    // ---- EVENING RULES ----
-    if (period === "evening") {
+      // FROM validation
       if (type === "from" && mTo) {
-        if (newValue.isBefore(mTo)) {
-          toast.error("Evening shift must start after Morning shift");
-          return;
-        }
-      }
+        if (newValue.isAfter(mTo)) {
+          toast.error(
+            "Shift 1 start cannot be after end time"
+          );
 
-      if (type === "to" && eFrom) {
-        if (newValue.isBefore(eFrom)) {
-          toast.error("Evening end must be after start");
           return;
         }
       }
     }
 
-    // ---- CUSTOM RULES ----
+    // =========================
+    // SHIFT 2 RULES
+    // =========================
+
+    if (period === "evening") {
+      // must start after shift 1
+      if (type === "from" && mTo) {
+        if (
+          newValue.isBefore(mTo) ||
+          newValue.isSame(mTo)
+        ) {
+          toast.error(
+            "Shift 2 must start after Shift 1"
+          );
+
+          return;
+        }
+      }
+
+      // TO validation
+      if (type === "to" && eFrom) {
+        const max = eFrom.add(
+          MAX_SHIFT_HOURS,
+          "hour"
+        );
+
+        if (newValue.isBefore(eFrom)) {
+          toast.error(
+            "Shift 2 end must be after start"
+          );
+
+          return;
+        }
+
+        if (newValue.isAfter(max)) {
+          toast.error(
+            `Shift 2 cannot exceed ${MAX_SHIFT_HOURS} hours`
+          );
+
+          return;
+        }
+      }
+
+      // FROM validation
+      if (type === "from" && eTo) {
+        if (newValue.isAfter(eTo)) {
+          toast.error(
+            "Shift 2 start cannot be after end"
+          );
+
+          return;
+        }
+      }
+    }
+
+    // =========================
+    // CUSTOM SHIFT RULES
+    // =========================
+
     if (period === "custom") {
+      // FROM overlap validation
       if (type === "from") {
         if (
-          (mFrom && mTo && newValue.isBetween(mFrom, mTo, null, "[)")) ||
-          (eFrom && eTo && newValue.isBetween(eFrom, eTo, null, "[)"))
+          (mFrom &&
+            mTo &&
+            newValue.isBetween(
+              mFrom,
+              mTo,
+              null,
+              "[)"
+            )) ||
+          (eFrom &&
+            eTo &&
+            newValue.isBetween(
+              eFrom,
+              eTo,
+              null,
+              "[)"
+            ))
         ) {
-          toast.error("Custom shift overlaps with existing shift");
+          toast.error(
+            "Custom shift overlaps with another shift"
+          );
+
+          return;
+        }
+
+        if (cTo && newValue.isAfter(cTo)) {
+          toast.error(
+            "Custom start cannot be after end"
+          );
+
           return;
         }
       }
 
+      // TO validation
       if (type === "to" && cFrom) {
+        const max = cFrom.add(
+          MAX_SHIFT_HOURS,
+          "hour"
+        );
+
         if (newValue.isBefore(cFrom)) {
-          toast.error("Custom end must be after start");
+          toast.error(
+            "Custom end must be after start"
+          );
+
           return;
         }
 
+        if (newValue.isAfter(max)) {
+          toast.error(
+            `Custom shift cannot exceed ${MAX_SHIFT_HOURS} hours`
+          );
+
+          return;
+        }
+
+        // overlap validation
         if (
-          (mFrom && mTo && newValue.isBetween(mFrom, mTo, null, "(]")) ||
-          (eFrom && eTo && newValue.isBetween(eFrom, eTo, null, "(]"))
+          (mFrom &&
+            mTo &&
+            newValue.isBetween(
+              mFrom,
+              mTo,
+              null,
+              "(]"
+            )) ||
+          (eFrom &&
+            eTo &&
+            newValue.isBetween(
+              eFrom,
+              eTo,
+              null,
+              "(]"
+            ))
         ) {
-          toast.error("Custom shift overlaps with existing shift");
+          toast.error(
+            "Custom shift overlaps with another shift"
+          );
+
           return;
         }
       }
     }
 
-    // ---- SAVE VALUE ----
+    // =========================
+    // SAVE VALUE
+    // =========================
+
     setCurrentDoctor((prev) => ({
       ...prev,
       timings: {
         ...prev.timings,
         [period]: {
           ...prev.timings[period],
-          [type]: newValue,
+
+          // SAVE AS STRING
+          [type]: newValue.format(
+            "hh:mm A"
+          ),
         },
       },
     }));
 
+    // =========================
+    // CLEAR ERROR
+    // =========================
+
     const errorKey = `timings.${period}.${type}`;
+
     if (errors[errorKey]) {
-      setErrors((prev) => ({ ...prev, [errorKey]: "" }));
+      setErrors((prev) => ({
+        ...prev,
+        [errorKey]: "",
+      }));
     }
   };
 
@@ -557,8 +864,8 @@ const AddDoctorModal = ({
     if (!currentDoctor.name?.trim())
       tempErrors.name = "Doctor name is required.";
 
-    if (!currentDoctor.opdNo?.toString().trim())
-      tempErrors.opdNo = "OPD number is required.";
+    // if (!currentDoctor.opdNo?.toString().trim())
+    //   tempErrors.opdNo = "OPD number is required.";
 
     if (!currentDoctor.experience?.toString().trim())
       tempErrors.experience = "Experience is required.";
@@ -734,6 +1041,8 @@ const AddDoctorModal = ({
   const handleSave = () => {
     if (validateForm()) {
       //  Format nested timing objects to strings
+
+      console.log("Saving doctor with data:", currentDoctor);
       const doctorToSave = {
         ...currentDoctor,
         _id: doctorData?._id,
@@ -742,42 +1051,47 @@ const AddDoctorModal = ({
         timings: {
           morning: {
             from: currentDoctor.timings.morning.from
-              ? currentDoctor.timings.morning.from.format("HH:mm")
+              ? currentDoctor.timings.morning.from?.format("hh:mm A")
               : "",
+
             to: currentDoctor.timings.morning.to
-              ? currentDoctor.timings.morning.to.format("HH:mm")
+              ? currentDoctor.timings.morning.to.format("hh:mm A")
               : "",
           },
+
           evening: {
             from: currentDoctor.timings.evening.from
-              ? currentDoctor.timings.evening.from.format("HH:mm")
+              ? currentDoctor.timings.evening.from?.format("hh:mm A")
               : "",
+
             to: currentDoctor.timings.evening.to
-              ? currentDoctor.timings.evening.to.format("HH:mm")
+              ? currentDoctor.timings.evening.to?.format("hh:mm A")
               : "",
           },
+
           custom: {
             from: currentDoctor.timings.custom.from
-              ? currentDoctor.timings.custom.from.format("HH:mm")
+              ? currentDoctor.timings.custom.from?.format("hh:mm A")
               : "",
+
             to: currentDoctor.timings.custom.to
-              ? currentDoctor.timings.custom.to.format("HH:mm")
+              ? currentDoctor.timings.custom.to?.format("hh:mm A")
               : "",
           },
         },
         videoConsultation: {
           ...currentDoctor.videoConsultation,
           startTime: currentDoctor.videoConsultation.startTime
-            ? currentDoctor.videoConsultation.startTime.format("HH:mm")
+            ? currentDoctor.videoConsultation.startTime?.format("HH:mm")
             : null,
           endTime: currentDoctor.videoConsultation.endTime
-            ? currentDoctor.videoConsultation.endTime.format("HH:mm")
+            ? currentDoctor.videoConsultation.endTime?.format("HH:mm")
             : null,
           timeSlot:
             currentDoctor.videoConsultation.enabled &&
               currentDoctor.videoConsultation.startTime &&
               currentDoctor.videoConsultation.endTime
-              ? `${currentDoctor.videoConsultation.startTime.format("HH:mm")} - ${currentDoctor.videoConsultation.endTime.format("HH:mm")}`
+              ? `${currentDoctor.videoConsultation.startTime?.format("HH:mm")} - ${currentDoctor.videoConsultation.endTime?.format("HH:mm")}`
               : "",
         },
       };
@@ -813,12 +1127,17 @@ const AddDoctorModal = ({
       );
     }
   };
-  const speciality = (globalSuggestion || [])?.filter(
+  const suggestionList = Array.isArray(globalSuggestion)
+    ? globalSuggestion
+    : [];
+
+  const speciality = suggestionList.filter(
     (item) => item?.type === "speciality"
   );
-  const surgery = (globalSuggestion || [])?.filter(
+
+  const surgery = suggestionList.filter(
     (item) => item?.type === "surgery"
-  ) || [];
+  );
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Toaster
@@ -1430,7 +1749,7 @@ const AddDoctorModal = ({
                         value={currentDoctor.opdNo}
                         onChange={(e) => handleNumberChange(e, 10)}
                         variant="outlined"
-                        required
+
                         error={!!errors.opdNo}
                         helperText={errors.opdNo}
                         inputProps={{ inputMode: "numeric" }}
@@ -1810,7 +2129,7 @@ const AddDoctorModal = ({
                   </Box>
 
                   <Grid container spacing={3}>
-                    {/* Morning Row */}
+                    {/* SHIFT 1 */}
                     <Grid item xs={12}>
                       <Typography
                         variant="caption"
@@ -1821,7 +2140,7 @@ const AddDoctorModal = ({
                           mb: 1,
                         }}
                       >
-                        MORNING SHIFT
+                        SHIFT 1
                       </Typography>
 
                       <Grid container spacing={2}>
@@ -1831,15 +2150,30 @@ const AddDoctorModal = ({
                             ampm
                             ampmInClock
                             views={["hours", "minutes"]}
-                            value={currentDoctor.timings.morning.from}
-                            referenceDate={dayjs().hour(5).minute(0)}
+                            value={
+                              currentDoctor.timings.morning.from
+                                ? dayjs(
+                                  currentDoctor.timings.morning.from,
+                                  "hh:mm A"
+                                )
+                                : null
+                            }
+                            referenceDate={dayjs()}
                             minTime={dayjs().hour(5).minute(0)}
-                            maxTime={dayjs().hour(12).minute(0)}
+                            maxTime={dayjs().hour(23).minute(59)}
                             minutesStep={5}
                             onChange={(newValue) =>
-                              handleTimingsChange(newValue, "morning", "from")
+                              handleTimingsChange(
+                                newValue,
+                                "morning",
+                                "from"
+                              )
                             }
-                            slotProps={{ textField: { fullWidth: true } }}
+                            slotProps={{
+                              textField: {
+                                fullWidth: true,
+                              },
+                            }}
                           />
                         </Grid>
 
@@ -1849,24 +2183,50 @@ const AddDoctorModal = ({
                             ampm
                             ampmInClock
                             views={["hours", "minutes"]}
-                            value={currentDoctor.timings.morning.to}
-                            minTime={currentDoctor.timings.morning.from || dayjs().hour(5).minute(0)}
+                            value={
+                              currentDoctor.timings.morning.to
+                                ? dayjs(
+                                  currentDoctor.timings.morning.to,
+                                  "hh:mm A"
+                                )
+                                : null
+                            }
+                            referenceDate={dayjs()}
+                            minTime={
+                              currentDoctor.timings.morning.from
+                                ? dayjs(
+                                  currentDoctor.timings.morning.from,
+                                  "hh:mm A"
+                                )
+                                : dayjs().hour(5).minute(0)
+                            }
                             maxTime={
                               currentDoctor.timings.morning.from
-                                ? currentDoctor.timings.morning.from.add(6, "hour").minute(0)
-                                : dayjs().hour(12).minute(0)
+                                ? dayjs(
+                                  currentDoctor.timings.morning.from,
+                                  "hh:mm A"
+                                ).add(12, "hour")
+                                : dayjs().hour(23).minute(59)
                             }
                             minutesStep={5}
                             onChange={(newValue) =>
-                              handleTimingsChange(newValue, "morning", "to")
+                              handleTimingsChange(
+                                newValue,
+                                "morning",
+                                "to"
+                              )
                             }
-                            slotProps={{ textField: { fullWidth: true } }}
+                            slotProps={{
+                              textField: {
+                                fullWidth: true,
+                              },
+                            }}
                           />
                         </Grid>
                       </Grid>
                     </Grid>
 
-                    {/* Evening Row */}
+                    {/* SHIFT 2 */}
                     <Grid item xs={12}>
                       <Typography
                         variant="caption"
@@ -1877,49 +2237,113 @@ const AddDoctorModal = ({
                           mb: 1,
                         }}
                       >
-                        EVENING SHIFT (Optional)
+                        SHIFT 2 (Optional)
                       </Typography>
 
                       <Grid container spacing={2}>
+                        {/* FROM */}
                         <Grid item xs={6}>
                           <TimePicker
                             label="From"
                             ampm
                             ampmInClock
                             views={["hours", "minutes"]}
-                            value={currentDoctor.timings.evening.from}
-                            referenceDate={dayjs().hour(13)}
-                            minTime={currentDoctor.timings.morning.to || dayjs().hour(12)}
-                            maxTime={dayjs().hour(22)}
+                            value={
+                              currentDoctor.timings.evening.from
+                                ? dayjs(
+                                  currentDoctor.timings.evening.from,
+                                  "hh:mm A"
+                                )
+                                : null
+                            }
+                            referenceDate={dayjs()}
+                            minTime={
+                              currentDoctor.timings.morning.to
+                                ? dayjs(
+                                  currentDoctor.timings.morning.to,
+                                  "hh:mm A"
+                                )
+                                : dayjs().hour(5).minute(0)
+                            }
+                            maxTime={dayjs().hour(23).minute(59)}
                             minutesStep={5}
                             onChange={(newValue) =>
-                              handleTimingsChange(newValue, "evening", "from")
+                              handleTimingsChange(
+                                newValue,
+                                "evening",
+                                "from"
+                              )
                             }
-                            slotProps={{ textField: { fullWidth: true } }}
+                            slotProps={{
+                              textField: {
+                                fullWidth: true,
+                              },
+                            }}
                           />
                         </Grid>
 
+                        {/* TO */}
                         <Grid item xs={6}>
                           <TimePicker
                             label="To"
                             ampm
                             ampmInClock
                             views={["hours", "minutes"]}
-                            value={currentDoctor.timings.evening.to}
-                            referenceDate={dayjs().hour(14)}
-                            minTime={currentDoctor.timings.evening.from || dayjs().hour(12)}
-                            maxTime={dayjs().hour(23)}
-                            minutesStep={5}
-                            onChange={(newValue) =>
-                              handleTimingsChange(newValue, "evening", "to")
+                            value={
+                              currentDoctor.timings.evening.to
+                                ? dayjs(
+                                  currentDoctor.timings.evening.to,
+                                  "hh:mm A"
+                                )
+                                : null
                             }
-                            slotProps={{ textField: { fullWidth: true } }}
+                            referenceDate={dayjs()}
+                            minTime={
+                              currentDoctor.timings.evening.from
+                                ? dayjs(
+                                  currentDoctor.timings.evening.from,
+                                  "hh:mm A"
+                                )
+                                : undefined
+                            }
+                            minutesStep={5}
+                            shouldDisableTime={(value, view) => {
+                              if (!currentDoctor.timings.evening.from)
+                                return false;
+
+                              const fromTime = dayjs(
+                                currentDoctor.timings.evening.from,
+                                "hh:mm A"
+                              );
+
+                              if (view === "hours") {
+                                const selectedHour = dayjs()
+                                  .hour(value)
+                                  .minute(0);
+
+                                return selectedHour.isBefore(fromTime);
+                              }
+
+                              return false;
+                            }}
+                            onChange={(newValue) =>
+                              handleTimingsChange(
+                                newValue,
+                                "evening",
+                                "to"
+                              )
+                            }
+                            slotProps={{
+                              textField: {
+                                fullWidth: true,
+                              },
+                            }}
                           />
                         </Grid>
                       </Grid>
                     </Grid>
 
-                    {/* Custom Row */}
+                    {/* CUSTOM SHIFT */}
                     <Grid item xs={12}>
                       <Typography
                         variant="caption"
@@ -1934,75 +2358,161 @@ const AddDoctorModal = ({
                       </Typography>
 
                       <Grid container spacing={2}>
+                        {/* FROM */}
                         <Grid item xs={6}>
                           <TimePicker
                             label="From"
                             ampm
                             ampmInClock
                             views={["hours", "minutes"]}
-                            value={currentDoctor.timings.custom.from}
-                            referenceDate={dayjs().hour(15)}
+                            value={
+                              currentDoctor.timings.custom.from
+                                ? dayjs(
+                                  currentDoctor.timings.custom.from,
+                                  "hh:mm A"
+                                )
+                                : null
+                            }
+                            referenceDate={dayjs()}
                             minutesStep={5}
                             onChange={(newValue) =>
-                              handleTimingsChange(newValue, "custom", "from")
+                              handleTimingsChange(
+                                newValue,
+                                "custom",
+                                "from"
+                              )
                             }
                             shouldDisableTime={(value, view) => {
+                              const mFrom =
+                                currentDoctor.timings.morning.from
+                                  ? dayjs(
+                                    currentDoctor.timings.morning.from,
+                                    "hh:mm A"
+                                  )
+                                  : null;
 
-                              const mFrom = currentDoctor.timings.morning.from;
-                              const mTo = currentDoctor.timings.morning.to;
+                              const mTo =
+                                currentDoctor.timings.morning.to
+                                  ? dayjs(
+                                    currentDoctor.timings.morning.to,
+                                    "hh:mm A"
+                                  )
+                                  : null;
 
-                              const eFrom = currentDoctor.timings.evening.from;
-                              const eTo = currentDoctor.timings.evening.to;
+                              const eFrom =
+                                currentDoctor.timings.evening.from
+                                  ? dayjs(
+                                    currentDoctor.timings.evening.from,
+                                    "hh:mm A"
+                                  )
+                                  : null;
+
+                              const eTo =
+                                currentDoctor.timings.evening.to
+                                  ? dayjs(
+                                    currentDoctor.timings.evening.to,
+                                    "hh:mm A"
+                                  )
+                                  : null;
 
                               if (view === "hours") {
-                                const hourTime = dayjs().hour(value).minute(0);
+                                const hourTime = dayjs()
+                                  .hour(value)
+                                  .minute(0);
 
-                                if (mFrom && mTo && hourTime.isBetween(mFrom, mTo, null, "[)")) {
+                                if (
+                                  mFrom &&
+                                  mTo &&
+                                  hourTime.isBetween(
+                                    mFrom,
+                                    mTo,
+                                    null,
+                                    "[)"
+                                  )
+                                ) {
                                   return true;
                                 }
 
-                                if (eFrom && eTo && hourTime.isBetween(eFrom, eTo, null, "[)")) {
-                                  return true;
-                                }
-                              }
-
-                              if (view === "minutes") {
-                                const selectedHour = currentDoctor.timings.custom.from?.hour();
-
-                                if (selectedHour === undefined) return false;
-
-                                const minuteTime = dayjs()
-                                  .hour(selectedHour)
-                                  .minute(value);
-
-                                if (mFrom && mTo && minuteTime.isBetween(mFrom, mTo, null, "[)")) {
-                                  return true;
-                                }
-
-                                if (eFrom && eTo && minuteTime.isBetween(eFrom, eTo, null, "[)")) {
+                                if (
+                                  eFrom &&
+                                  eTo &&
+                                  hourTime.isBetween(
+                                    eFrom,
+                                    eTo,
+                                    null,
+                                    "[)"
+                                  )
+                                ) {
                                   return true;
                                 }
                               }
 
                               return false;
                             }}
-                            slotProps={{ textField: { fullWidth: true } }}
+                            slotProps={{
+                              textField: {
+                                fullWidth: true,
+                              },
+                            }}
                           />
                         </Grid>
 
+                        {/* TO */}
                         <Grid item xs={6}>
                           <TimePicker
                             label="To"
                             ampm
                             ampmInClock
                             views={["hours", "minutes"]}
-                            value={currentDoctor.timings.custom.to}
-                            referenceDate={dayjs().hour(16)}
-                            minutesStep={5}
-                            onChange={(newValue) =>
-                              handleTimingsChange(newValue, "custom", "to")
+                            value={
+                              currentDoctor.timings.custom.to
+                                ? dayjs(
+                                  currentDoctor.timings.custom.to,
+                                  "hh:mm A"
+                                )
+                                : null
                             }
-                            slotProps={{ textField: { fullWidth: true } }}
+                            referenceDate={dayjs()}
+                            minTime={
+                              currentDoctor.timings.custom.from
+                                ? dayjs(
+                                  currentDoctor.timings.custom.from,
+                                  "hh:mm A"
+                                )
+                                : undefined
+                            }
+                            minutesStep={5}
+                            shouldDisableTime={(value, view) => {
+                              if (!currentDoctor.timings.custom.from)
+                                return false;
+
+                              const fromTime = dayjs(
+                                currentDoctor.timings.custom.from,
+                                "hh:mm A"
+                              );
+
+                              if (view === "hours") {
+                                const selectedHour = dayjs()
+                                  .hour(value)
+                                  .minute(0);
+
+                                return selectedHour.isBefore(fromTime);
+                              }
+
+                              return false;
+                            }}
+                            onChange={(newValue) =>
+                              handleTimingsChange(
+                                newValue,
+                                "custom",
+                                "to"
+                              )
+                            }
+                            slotProps={{
+                              textField: {
+                                fullWidth: true,
+                              },
+                            }}
                           />
                         </Grid>
                       </Grid>
@@ -2125,16 +2635,47 @@ const AddDoctorModal = ({
                         })()}
 
                         {currentDoctor.opdDays && (
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              mt: 2,
-                              fontWeight: 600,
-                              color: colors.blueAccent[500],
-                            }}
-                          >
-                            Selected: {currentDoctor.opdDays}
-                          </Typography>
+                          <Box sx={{ mt: 2 }}>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                mb: 1,
+                                fontWeight: 600,
+                                color: colors.blueAccent[500],
+                              }}
+                            >
+                              Selected Days:
+                            </Typography>
+
+                            <Stack
+                              direction="row"
+                              spacing={1}
+                              flexWrap="wrap"
+                              useFlexGap
+                            >
+                              {currentDoctor.opdDays
+                                .split(", ")
+                                .filter(Boolean)
+                                .map((day) => (
+                                  <Chip
+                                    key={day}
+                                    label={day}
+                                    color="secondary"
+                                    onDelete={() => {
+                                      const updatedDays =
+                                        currentDoctor.opdDays
+                                          .split(", ")
+                                          .filter((d) => d !== day);
+
+                                      setCurrentDoctor((prev) => ({
+                                        ...prev,
+                                        opdDays: updatedDays.join(", "),
+                                      }));
+                                    }}
+                                  />
+                                ))}
+                            </Stack>
+                          </Box>
                         )}
                         {errors.opdDays && (
                           <Typography

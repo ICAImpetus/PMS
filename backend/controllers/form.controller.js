@@ -453,7 +453,7 @@ export const getFilledForms = async (req, res) => {
             },
           ],
           appointmentData: [
-            { $match: { purpose: "Appointment" } },
+            { $match: { purpose: "Appointment", callStatus: "Connected" } },
             { $sort: { createdAt: -1 } },
             { $skip: skip },
             { $limit: PAGE_LIMIT },

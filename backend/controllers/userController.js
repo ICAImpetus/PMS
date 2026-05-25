@@ -701,26 +701,29 @@ export const deleteUserById = async (req, res) => {
     // ===================== BRANCH LEVEL =====================
     if (["teamleader", "executive"].includes(role)) {
       // loop per hospital (multi-tenant)
-      for (const hospital of user.hospitals || []) {
-        const conn = await getConnection(hospital.trimmedName || "");
-        const BranchModel = await getBranchModel(conn);
-
-        const branchIds =
-          user.branches?.map((b) => b.branchId) || [];
-
-        const field =
-          role === "teamleader"
-            ? "assignedToTeamLeader"
-            : "assignedToExecutive";
-
-        await BranchModel.updateMany(
-          {
-            _id: { $in: branchIds },
-            [`${field}.userId`]: user._id,
-          },
-          { $set: { [field]: null } }
-        );
+      if (!hospitalIds.length) {
+        return res.status(400).json({ success: false, message: "No hospitals assigned to user" });
       }
+
+      const hospital = await HospitalModel.findById(hospitalIds[0]).select("trimmedName");
+      const conn = await getConnection(hospital.trimmedName || "");
+      const BranchModel = await getBranchModel(conn);
+
+      const branchIds =
+        user.branches?.map((b) => b.branchId) || [];
+
+      const field =
+        role === "teamleader"
+          ? "assignedToTeamLeader"
+          : "assignedToExecutive";
+
+      await BranchModel.updateMany(
+        {
+          _id: { $in: branchIds },
+          [`${field}.userId`]: user._id,
+        },
+        { $set: { [field]: null } }
+      );
     }
 
     // ===================== SOFT DELETE =====================

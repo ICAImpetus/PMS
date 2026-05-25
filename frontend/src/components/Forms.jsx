@@ -2237,19 +2237,16 @@ function Forms() {
                 />
               </div>
             </div>
+            <div className="input-group">
+              <label className="required">Doctor Name</label>
 
-            <div className="input-row full-width-row">
-              <div className="input-group">
-                <label className="required">Doctor Name</label>
-
-                <DoctorDropdown
-                  doctors={filteredDoctors || []}
-                  value={selectedDoctor}
-                  onChange={handleDoctorSelect}
-                  label="Select Doctor"
-                // selectedDay={selectedDay}
-                />
-              </div>
+              <DoctorDropdown
+                doctors={filteredDoctors || []}
+                value={selectedDoctor}
+                onChange={handleDoctorSelect}
+                label="Select Doctor"
+              // selectedDay={selectedDay}
+              />
             </div>
 
             {selectedDoctor && <DoctorProfileCard doctor={selectedDoctor} />}
@@ -3467,19 +3464,6 @@ function Forms() {
 
             <div className="input-row">
               <div className="input-group">
-                <label className={isRequired ? "required" : ""} >Patient Name</label>
-                <input
-                  type="text"
-                  className="input-field"
-                  value={form.formData.patientDetails.patientName}
-                  onChange={(e) =>
-                    handleChange("formData.patientDetails.patientName", e.target.value)
-                  }
-                  required={isRequired}
-                />
-              </div>
-
-              <div className="input-group">
                 <label className="required">Mobile Number</label>
                 <input
                   type="tel"
@@ -3503,7 +3487,18 @@ function Forms() {
                   placeholder="10-12 digit number"
                 />
               </div>
-
+              <div className="input-group">
+                <label className={isRequired ? "required" : ""} >Patient Name</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  value={form.formData.patientDetails.patientName}
+                  onChange={(e) =>
+                    handleChange("formData.patientDetails.patientName", e.target.value)
+                  }
+                  required={isRequired}
+                />
+              </div>
               <div className="input-group">
                 <label>Alternate Mobile</label>
                 <input
@@ -3864,7 +3859,7 @@ function Forms() {
         </div>
       )}
 
-      {form.callStatus === "Connected" && form.purpose !== "" && form.formType !== "outbound" && (
+      {(form.callStatus === "Connected" && form.purpose !== "" || (form.callStatus === "Call-Drop")) && form.formType !== "outbound" && (
         <div className="button-group">
           <button
             disabled={saveFilledFormLoading}
@@ -3892,20 +3887,6 @@ function Forms() {
 
         <div className="input-row">
           <div className="input-group">
-            <label className="required">Patient Name</label>
-
-            <input
-              type="text"
-              className="input-field"
-              value={form.formData.patientDetails.patientName}
-              onChange={(e) =>
-                handleChange("formData.patientDetails.patientName", e.target.value)
-              }
-              required
-            />
-          </div>
-
-          <div className="input-group">
             <label className="required">Mobile Number</label>
 
             <input
@@ -3924,7 +3905,19 @@ function Forms() {
               placeholder="10-12 digit number"
             />
           </div>
+          <div className="input-group">
+            <label className="required">Patient Name</label>
 
+            <input
+              type="text"
+              className="input-field"
+              value={form.formData.patientDetails.patientName}
+              onChange={(e) =>
+                handleChange("formData.patientDetails.patientName", e.target.value)
+              }
+              required
+            />
+          </div>
           <div className="input-group">
             <label className="required">Purpose</label>
 

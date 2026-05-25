@@ -108,10 +108,10 @@ const UpdatePasswordForm = ({ user, onClose }) => {
       else if (['123456', 'abcdef', 'qwerty', '987654'].some(seq => newPassword.toLowerCase().includes(seq))) {
         newErrors.newPassword = "Password cannot contain sequential characters.";
       }
-      // Username in password check
-      else if (user?.username && newPassword.toLowerCase().includes(user.username.toLowerCase())) {
-        newErrors.newPassword = "Password cannot contain your username.";
-      }
+      // // Username in password check
+      // else if (user?.username && newPassword.toLowerCase().includes(user.username.toLowerCase())) {
+      //   newErrors.newPassword = "Password cannot contain your username.";
+      // }
     }
 
     // Confirm Password Validation

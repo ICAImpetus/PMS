@@ -24,7 +24,6 @@ export const AdminAgentSchema = new mongoose.Schema(
       type: String,
       required: [true, "Username is required"],
       trim: true,
-      lowercase: true,
       minlength: [3, "Username must be at least 3 characters"],
     },
     password: {
