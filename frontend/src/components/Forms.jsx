@@ -49,25 +49,123 @@ const getPatientArrivalDateTime = (
   return new Date(fullDateTime);
 };
 
+
+const getSession = (timeString) => {
+  if (!timeString) {
+    return "Morning";
+  }
+
+  const [time, meridian] =
+    timeString.split(" ");
+
+  let hour = Number(
+    time.split(":")[0]
+  );
+
+  // Convert to 24-hour
+  if (
+    meridian === "PM" &&
+    hour !== 12
+  ) {
+    hour += 12;
+  }
+
+  if (
+    meridian === "AM" &&
+    hour === 12
+  ) {
+    hour = 0;
+  }
+
+  if (hour < 12) {
+    return "Morning";
+  }
+
+  if (hour < 17) {
+    return "Afternoon";
+  }
+
+  return "Evening";
+};
+
+const getSlotStyles = ({
+  isPast,
+  isBooked,
+  isSelected,
+}) => ({
+  padding: "10px 12px",
+
+  cursor:
+    isPast ? "not-allowed" : "pointer",
+
+  border: "1px solid #ddd",
+
+  borderRadius: "6px",
+
+  backgroundColor: isPast
+    ? "#ececec"
+    : isBooked
+      ? "#a0afbc"
+      : isSelected
+        ? "#1976d2"
+        : "#f5f5f5",
+
+  color: isSelected
+    ? "white"
+    : isBooked
+      ? "#d32f2f"
+      : isPast
+        ? "#888"
+        : "#333",
+
+  fontSize: "13px",
+
+  fontWeight: isSelected
+    ? "bold"
+    : "normal",
+
+  opacity: isPast ? 0.7 : 1,
+
+  transition: "all 0.2s ease",
+
+  textAlign: "left",
+});
+
+
 const getRemainingTime = (
   selectedDate,
   patientArrivalTime
 ) => {
 
-  if (!selectedDate || !patientArrivalTime) {
+  if (
+    !selectedDate ||
+    !patientArrivalTime
+  ) {
     return "";
   }
 
+  // Extract date only
   const onlyDate =
     selectedDate.split("T")[0];
 
-  const arrivalDateTime = new Date(
-    `${onlyDate}T${patientArrivalTime}:00`
+  // Combine date + AM/PM time
+  const arrivalDateTime = dayjs(
+    `${onlyDate} ${patientArrivalTime}`,
+    "YYYY-MM-DD hh:mm A",
+    true
   );
 
-  const diff =
-    arrivalDateTime.getTime() - Date.now();
+  // Invalid datetime safety
+  if (!arrivalDateTime.isValid()) {
+    return "";
+  }
 
+  const now = dayjs();
+
+  const diff =
+    arrivalDateTime.diff(now);
+
+  // Patient arrived
   if (diff <= 0) {
     return "Patient Arrived";
   }
@@ -97,7 +195,6 @@ const getRemainingTime = (
 
   return `${minutes} Min left`;
 };
-
 const getDayName = (dateTime) => {
   const date = new Date(dateTime);
   return date.toLocaleDateString("en-US", { weekday: "long" });
@@ -497,10 +594,14 @@ function Forms() {
       form.formData.patientArrivalTime !== slotStart
     ) {
 
+
+
       handleChange(
         "formData.patientArrivalTime",
         slotStart
       );
+      console.log("patientArrivalTime", form.formData.patientArrivalTime);
+
     }
 
   }, [
@@ -544,21 +645,33 @@ function Forms() {
       }))
     );
 
-  const isPastSlot = (slotStart, selectedDate) => {
+
+  const isPastSlot = (
+    slotStart,
+    selectedDate
+  ) => {
 
     if (!slotStart || !selectedDate) {
       return false;
     }
 
-    // Extract only date part
+    // Get only date
     const onlyDate =
       selectedDate.split("T")[0];
 
-    const slotDateTime = new Date(
-      `${onlyDate}T${slotStart}:00`
+    // Combine date + AM/PM time
+    const slotDateTime = dayjs(
+      `${onlyDate} ${slotStart}`,
+      "YYYY-MM-DD hh:mm A",
+      true
     );
 
-    return slotDateTime < new Date();
+    // Invalid date safety
+    if (!slotDateTime.isValid()) {
+      return false;
+    }
+
+    return slotDateTime.isBefore(dayjs());
   };
 
   const renderInboundPurposeDetails = () => {
@@ -684,33 +797,12 @@ function Forms() {
                       }}
                     >
 
-                      {selectedDoctor.slots.map(
-                        (slot, index) => {
+                      {
+                        selectedDoctor.slots.map((slot) => {
 
-                          const startHour = Number(
-                            slot.start.split(":")[0]
+                          const session = getSession(
+                            slot.start
                           );
-
-                          const session =
-                            startHour < 12
-                              ? "Morning"
-                              : "Evening";
-
-                          const formatTime = (time) => {
-
-                            const [hour, minute] =
-                              time.split(":");
-
-                            const h = Number(hour);
-
-                            const ampm =
-                              h >= 12 ? "PM" : "AM";
-
-                            const formattedHour =
-                              h % 12 || 12;
-
-                            return `${formattedHour}:${minute} ${ampm}`;
-                          };
 
                           const isSelected =
                             String(
@@ -723,25 +815,20 @@ function Forms() {
                               String(slot._id)
                             );
 
-                          // NEW
-                          const isPast =
-                            isPastSlot(
-                              slot.start,
-                              form.formData.dateTime
-                            );
-
-                          const isDisabled = isPast;
+                          const isPast = isPastSlot(
+                            slot.start,
+                            form.formData.dateTime
+                          );
 
                           return (
                             <button
-                              key={index}
+                              key={slot._id}
                               type="button"
-                              disabled={isDisabled}
+                              disabled={isPast}
 
                               onClick={() => {
 
                                 if (isBooked) {
-
                                   setBookedSlotModal({
                                     open: true,
                                     slot,
@@ -764,60 +851,19 @@ function Forms() {
                                     end: slot.end,
 
                                     date:
-                                      form.formData
-                                        .dateTime,
+                                      form.formData.dateTime,
                                   }
                                 );
                               }}
 
-                              style={{
-                                padding: "10px 12px",
-
-                                cursor:
-                                  isDisabled
-                                    ? "not-allowed"
-                                    : "pointer",
-
-                                border:
-                                  "1px solid #ddd",
-
-                                borderRadius: "6px",
-
-                                backgroundColor:
-                                  isPast
-                                    ? "#ececec"
-                                    : isBooked
-                                      ? "#a0afbc"
-                                      : isSelected
-                                        ? "#1976d2"
-                                        : "#f5f5f5",
-
-                                color:
-                                  isSelected
-                                    ? "white"
-                                    : isBooked
-                                      ? "#d32f2f"
-                                      : isPast
-                                        ? "#888"
-                                        : "#333",
-
-                                fontSize: "13px",
-
-                                fontWeight:
-                                  isSelected
-                                    ? "bold"
-                                    : "normal",
-
-                                opacity:
-                                  isDisabled ? 0.7 : 1,
-
-                                transition:
-                                  "all 0.2s ease",
-
-                                textAlign: "left",
-                              }}
+                              style={getSlotStyles({
+                                isPast,
+                                isBooked,
+                                isSelected,
+                              })}
                             >
 
+                              {/* SESSION */}
                               <div
                                 style={{
                                   fontSize: "11px",
@@ -828,11 +874,12 @@ function Forms() {
                                 {session}
                               </div>
 
+                              {/* SLOT TIME */}
                               <div>
-                                {formatTime(slot.start)} -{" "}
-                                {formatTime(slot.end)}
+                                {slot.start} - {slot.end}
                               </div>
 
+                              {/* BOOKED */}
                               {isBooked && (
                                 <div
                                   style={{
@@ -846,12 +893,13 @@ function Forms() {
                                 </div>
                               )}
 
+                              {/* EXPIRED */}
                               {isPast && (
                                 <div
                                   style={{
                                     marginTop: 4,
                                     fontSize: 11,
-                                    color: "#888",
+                                    color: "#c23737",
                                     fontWeight: 600,
                                   }}
                                 >
@@ -861,8 +909,8 @@ function Forms() {
 
                             </button>
                           );
-                        }
-                      )}
+                        })
+                      }
 
                     </div>
 
@@ -928,13 +976,30 @@ function Forms() {
 
                   <input
                     type="time"
-                    value={form.formData.patientArrivalTime || ""}
-                    onChange={(e) =>
+
+                    value={
+                      form.formData.patientArrivalTime
+                        ? dayjs(
+                          form.formData.patientArrivalTime,
+                          "hh:mm A"
+                        ).format("HH:mm")
+                        : ""
+                    }
+
+                    onChange={(e) => {
+
+                      const formattedTime =
+                        dayjs(
+                          e.target.value,
+                          "HH:mm"
+                        ).format("hh:mm A");
+
                       handleChange(
                         "formData.patientArrivalTime",
-                        e.target.value
-                      )
-                    }
+                        formattedTime
+                      );
+                    }}
+
                     required
                     className="time-input"
                   />
