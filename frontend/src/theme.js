@@ -5,181 +5,181 @@ import { createTheme } from "@mui/material/styles";
 export const tokensOld = (mode) => ({
   ...(mode === "dark"
     ? {
-        grey: {
-          100: "#e0e0e0",
-          200: "#c2c2c2",
-          300: "#a3a3a3",
-          400: "#858585",
-          500: "#666666",
-          600: "#525252",
-          700: "#3d3d3d",
-          800: "#292929",
-          900: "#141414",
-        },
-        primary: {
-          100: "#d0d1d5",
-          200: "#a1a4ab",
-          300: "#727681",
-          400: "#1F2A40",
-          500: "#141b2d",
-          600: "#101624",
-          700: "#0c101b",
-          800: "#080b12",
-          900: "#040509",
-        },
-        secondary: {
-          100: "#CEE0F3",
-          200: "#91B9E3",
-          300: "#5090D3",
-          400: "#265D97",
-          500: "#1E4976",
-          600: "#845bf5",
-          700: "#132F4C",
-          800: "#001E3C",
-          900: "#0A1929",
-        },
-        greyish: {
-          100: "#cbd5e1",
-          200: "#7c3aed",
-          300: "#fecaca",
-          400: "#06b6d4",
-          700: "#334155",
-          800: "#18181b",
-          900: "#374151",
-        },
-        greenAccent: {
-          100: "#dbf5ee",
-          200: "#b7ebde",
-          300: "#94e2cd",
-          400: "#70d8bd",
-          500: "#4cceac",
-          600: "#3da58a",
-          700: "#2e7c67",
-          800: "#1e5245",
-          900: "#0f2922",
-        },
-        redAccent: {
-          100: "#f8dcdb",
-          200: "#f1b9b7",
-          300: "#e99592",
-          400: "#e2726e",
-          500: "#db4f4a",
-          600: "#af3f3b",
-          700: "#832f2c",
-          800: "#58201e",
-          900: "#2c100f",
-        },
-        blueAccent: {
-          100: "#e1e2fe",
-          200: "#c3c6fd",
-          300: "#a4a9fc",
-          400: "#868dfb",
-          500: "#6870fa",
-          600: "#535ac8",
-          700: "#3e4396",
-          800: "#2a2d64",
-          900: "#151632",
-        },
-        orangeAccent: {
-          100: "#ffd4b3",
-          200: "#ffb380",
-          300: "#ff924d",
-          400: "#ff711a",
-          500: "#e65100",
-          600: "#cc4700",
-          700: "#b33e00",
-          800: "#993500",
-          900: "#802c00",
-        },
-      }
+      grey: {
+        100: "#e0e0e0",
+        200: "#c2c2c2",
+        300: "#a3a3a3",
+        400: "#858585",
+        500: "#666666",
+        600: "#525252",
+        700: "#3d3d3d",
+        800: "#292929",
+        900: "#141414",
+      },
+      primary: {
+        100: "#d0d1d5",
+        200: "#a1a4ab",
+        300: "#727681",
+        400: "#1F2A40",
+        500: "#141b2d",
+        600: "#101624",
+        700: "#0c101b",
+        800: "#080b12",
+        900: "#040509",
+      },
+      secondary: {
+        100: "#CEE0F3",
+        200: "#91B9E3",
+        300: "#5090D3",
+        400: "#265D97",
+        500: "#1E4976",
+        600: "#845bf5",
+        700: "#132F4C",
+        800: "#001E3C",
+        900: "#0A1929",
+      },
+      greyish: {
+        100: "#cbd5e1",
+        200: "#7c3aed",
+        300: "#fecaca",
+        400: "#06b6d4",
+        700: "#334155",
+        800: "#18181b",
+        900: "#374151",
+      },
+      greenAccent: {
+        100: "#dbf5ee",
+        200: "#b7ebde",
+        300: "#94e2cd",
+        400: "#70d8bd",
+        500: "#4cceac",
+        600: "#3da58a",
+        700: "#2e7c67",
+        800: "#1e5245",
+        900: "#0f2922",
+      },
+      redAccent: {
+        100: "#f8dcdb",
+        200: "#f1b9b7",
+        300: "#e99592",
+        400: "#e2726e",
+        500: "#db4f4a",
+        600: "#af3f3b",
+        700: "#832f2c",
+        800: "#58201e",
+        900: "#2c100f",
+      },
+      blueAccent: {
+        100: "#e1e2fe",
+        200: "#c3c6fd",
+        300: "#a4a9fc",
+        400: "#868dfb",
+        500: "#6870fa",
+        600: "#535ac8",
+        700: "#3e4396",
+        800: "#2a2d64",
+        900: "#151632",
+      },
+      orangeAccent: {
+        100: "#ffd4b3",
+        200: "#ffb380",
+        300: "#ff924d",
+        400: "#ff711a",
+        500: "#e65100",
+        600: "#cc4700",
+        700: "#b33e00",
+        800: "#993500",
+        900: "#802c00",
+      },
+    }
     : {
-        grey: {
-          100: "#f5f5f5",
-          200: "#eeeeee",
-          300: "#e0e0e0",
-          400: "#bdbdbd",
-          500: "#9e9e9e",
-          600: "#757575",
-          700: "#616161",
-          800: "#424242",
-          900: "#212121",
-        },
-        primary: {
-          100: "#ffffff",
-          200: "#f5f5f5",
-          300: "#e0e0e0",
-          400: "#bdbdbd",
-          500: "#9e9e9e",
-          600: "#757575",
-          700: "#616161",
-          800: "#424242",
-          900: "#212121",
-        },
-        secondary: {
-          100: "#FFE0B2",
-          200: "#FFCC80",
-          300: "#FFB74D",
-          400: "#FFA726",
-          500: "#e3dbcf",
-          600: "#845bf5",
-          700: "#F57C00",
-          800: "#bedcf7",
-          900: "#E65100",
-        },
-        greyish: {
-          100: "#e0f7fa",
-          200: "#80deea",
-          300: "#4dd0e1",
-          400: "#26c6da",
-          700: "#00838f",
-          800: "#006064",
-          900: "#004d40",
-        },
-        greenAccent: {
-          100: "#e8f5e9",
-          200: "#c8e6c9",
-          300: "#a5d6a7",
-          400: "#81c784",
-          500: "#66bb6a",
-          600: "#4caf50",
-          700: "#388e3c",
-          800: "#2e7d32",
-          900: "#1b5e20",
-        },
-        redAccent: {
-          100: "#ffebee",
-          200: "#ffcdd2",
-          300: "#ef9a9a",
-          400: "#e57373",
-          500: "#ef5350",
-          600: "#f44336",
-          700: "#d32f2f",
-          800: "#c62828",
-          900: "#b71c1c",
-        },
-        blueAccent: {
-          100: "#e3f2fd",
-          200: "#bbdefb",
-          300: "#90caf9",
-          400: "#64b5f6",
-          500: "#42a5f5",
-          600: "#2196f3",
-          700: "#1e88e5",
-          800: "#1976d2",
-          900: "#1565c0",
-        },
-        orangeAccent: {
-          100: "#fff3e0",
-          200: "#ffe0b2",
-          300: "#ffcc80",
-          400: "#ffb74d",
-          500: "#ffa726",
-          600: "#ff9800",
-          700: "#f57c00",
-          800: "#ef6c00",
-          900: "#e65100",
-        },
-      }),
+      grey: {
+        100: "#f5f5f5",
+        200: "#eeeeee",
+        300: "#e0e0e0",
+        400: "#bdbdbd",
+        500: "#9e9e9e",
+        600: "#757575",
+        700: "#616161",
+        800: "#424242",
+        900: "#212121",
+      },
+      primary: {
+        100: "#ffffff",
+        200: "#f5f5f5",
+        300: "#e0e0e0",
+        400: "#bdbdbd",
+        500: "#9e9e9e",
+        600: "#757575",
+        700: "#616161",
+        800: "#424242",
+        900: "#212121",
+      },
+      secondary: {
+        100: "#FFE0B2",
+        200: "#FFCC80",
+        300: "#FFB74D",
+        400: "#FFA726",
+        500: "#e3dbcf",
+        600: "#845bf5",
+        700: "#F57C00",
+        800: "#bedcf7",
+        900: "#E65100",
+      },
+      greyish: {
+        100: "#e0f7fa",
+        200: "#80deea",
+        300: "#4dd0e1",
+        400: "#26c6da",
+        700: "#00838f",
+        800: "#006064",
+        900: "#004d40",
+      },
+      greenAccent: {
+        100: "#e8f5e9",
+        200: "#c8e6c9",
+        300: "#a5d6a7",
+        400: "#81c784",
+        500: "#66bb6a",
+        600: "#4caf50",
+        700: "#388e3c",
+        800: "#2e7d32",
+        900: "#1b5e20",
+      },
+      redAccent: {
+        100: "#ffebee",
+        200: "#ffcdd2",
+        300: "#ef9a9a",
+        400: "#e57373",
+        500: "#ef5350",
+        600: "#f44336",
+        700: "#d32f2f",
+        800: "#c62828",
+        900: "#b71c1c",
+      },
+      blueAccent: {
+        100: "#e3f2fd",
+        200: "#bbdefb",
+        300: "#90caf9",
+        400: "#64b5f6",
+        500: "#42a5f5",
+        600: "#2196f3",
+        700: "#1e88e5",
+        800: "#1976d2",
+        900: "#1565c0",
+      },
+      orangeAccent: {
+        100: "#fff3e0",
+        200: "#ffe0b2",
+        300: "#ffcc80",
+        400: "#ffb74d",
+        500: "#ffa726",
+        600: "#ff9800",
+        700: "#f57c00",
+        800: "#ef6c00",
+        900: "#e65100",
+      },
+    }),
 });
 
 // Modern color design tokens optimized for DataGrid and dashboard components
@@ -206,6 +206,7 @@ export const tokens = (mode) => ({
     950: mode === "dark" ? "#010b13" : "#E3F2FD",
     960: mode === "dark" ? "#0F171E" : "#E3F2FD",
   },
+
   // Secondary colors
   secondary: {
     50: mode === "dark" ? "#E2EDF8" : "#FFF3E0",
@@ -262,6 +263,18 @@ export const tokens = (mode) => ({
     900: mode === "dark" ? "#0D47A1" : "#0D47A1",
   },
 
+  yellowAccent: {
+    50: mode === "dark" ? "#FFFDE7" : "#FFFDE7",
+    100: mode === "dark" ? "#FFF9C4" : "#FFF9C4",
+    200: mode === "dark" ? "#FFF59D" : "#FFF59D",
+    300: mode === "dark" ? "#FFF176" : "#FFF176",
+    400: mode === "dark" ? "#FFEE58" : "#FFEE58",
+    500: mode === "dark" ? "#FFEB3B" : "#FFEB3B",
+    600: mode === "dark" ? "#FDD835" : "#FDD835",
+    700: mode === "dark" ? "#FBC02D" : "#FBC02D",
+    800: mode === "dark" ? "#F9A825" : "#F9A825",
+    900: mode === "dark" ? "#F57F17" : "#F57F17",
+  },
   // Grey colors (adjust to be more subtle in light mode)
   grey: {
     50: mode === "dark" ? "#F3F6F9" : "#FAFAFA",
@@ -310,37 +323,37 @@ export const themeSettingsOld = (mode) => {
       mode: mode,
       ...(mode === "dark"
         ? {
-            primary: {
-              main: colors.primary[500],
-            },
-            secondary: {
-              main: colors.greenAccent[500],
-            },
-            neutral: {
-              dark: colors.grey[700],
-              main: colors.grey[500],
-              light: colors.grey[100],
-            },
-            background: {
-              default: colors.primary[500],
-            },
-          }
+          primary: {
+            main: colors.primary[500],
+          },
+          secondary: {
+            main: colors.greenAccent[500],
+          },
+          neutral: {
+            dark: colors.grey[700],
+            main: colors.grey[500],
+            light: colors.grey[100],
+          },
+          background: {
+            default: colors.primary[500],
+          },
+        }
         : {
-            primary: {
-              main: colors.primary[100],
-            },
-            secondary: {
-              main: colors.greenAccent[500],
-            },
-            neutral: {
-              dark: colors.grey[700],
-              main: colors.grey[500],
-              light: colors.grey[100],
-            },
-            background: {
-              default: colors.primary[100],
-            },
-          }),
+          primary: {
+            main: colors.primary[100],
+          },
+          secondary: {
+            main: colors.greenAccent[500],
+          },
+          neutral: {
+            dark: colors.grey[700],
+            main: colors.grey[500],
+            light: colors.grey[100],
+          },
+          background: {
+            default: colors.primary[100],
+          },
+        }),
     },
     typography: {
       fontFamily: ["Source Sans Pro", "sans-serif"].join(","),
@@ -381,97 +394,97 @@ export const themeSettings = (mode) => {
       mode: mode,
       ...(mode === "dark"
         ? {
-            // Dark mode palette
-            primary: {
-              main: colors.primary[400],
-              light: colors.primary[300],
-              dark: colors.primary[600],
-            },
-            secondary: {
-              main: colors.secondary[500],
-              light: colors.secondary[400],
-              dark: colors.secondary[600],
-            },
-            error: {
-              main: colors.redAccent[500],
-              light: colors.redAccent[400],
-              dark: colors.redAccent[600],
-            },
-            warning: {
-              main: colors.orangeAccent[500],
-              light: colors.orangeAccent[400],
-              dark: colors.orangeAccent[600],
-            },
-            info: {
-              main: colors.blueAccent[500],
-              light: colors.blueAccent[400],
-              dark: colors.blueAccent[600],
-            },
-            success: {
-              main: colors.greenAccent[500],
-              light: colors.greenAccent[400],
-              dark: colors.greenAccent[600],
-            },
-            neutral: {
-              dark: colors.grey[700],
-              main: colors.grey[500],
-              light: colors.grey[100],
-            },
-            background: {
-              default: colors.primary[950],
-              paper: colors.primary[950],
-            },
-            text: {
-              primary: colors.grey[100],
-              secondary: colors.grey[300],
-            },
-          }
+          // Dark mode palette
+          primary: {
+            main: colors.primary[400],
+            light: colors.primary[300],
+            dark: colors.primary[600],
+          },
+          secondary: {
+            main: colors.secondary[500],
+            light: colors.secondary[400],
+            dark: colors.secondary[600],
+          },
+          error: {
+            main: colors.redAccent[500],
+            light: colors.redAccent[400],
+            dark: colors.redAccent[600],
+          },
+          warning: {
+            main: colors.orangeAccent[500],
+            light: colors.orangeAccent[400],
+            dark: colors.orangeAccent[600],
+          },
+          info: {
+            main: colors.blueAccent[500],
+            light: colors.blueAccent[400],
+            dark: colors.blueAccent[600],
+          },
+          success: {
+            main: colors.greenAccent[500],
+            light: colors.greenAccent[400],
+            dark: colors.greenAccent[600],
+          },
+          neutral: {
+            dark: colors.grey[700],
+            main: colors.grey[500],
+            light: colors.grey[100],
+          },
+          background: {
+            default: colors.primary[950],
+            paper: colors.primary[950],
+          },
+          text: {
+            primary: colors.grey[100],
+            secondary: colors.grey[300],
+          },
+        }
         : {
-            // Light mode palette
-            primary: {
-              main: colors.primary[600],
-              light: colors.primary[400],
-              dark: colors.primary[800],
-            },
-            secondary: {
-              main: colors.secondary[600],
-              light: colors.secondary[400],
-              dark: colors.secondary[800],
-            },
-            error: {
-              main: colors.redAccent[600],
-              light: colors.redAccent[400],
-              dark: colors.redAccent[800],
-            },
-            warning: {
-              main: colors.orangeAccent[600],
-              light: colors.orangeAccent[400],
-              dark: colors.orangeAccent[800],
-            },
-            info: {
-              main: colors.blueAccent[600],
-              light: colors.blueAccent[400],
-              dark: colors.blueAccent[800],
-            },
-            success: {
-              main: colors.greenAccent[600],
-              light: colors.greenAccent[400],
-              dark: colors.greenAccent[800],
-            },
-            neutral: {
-              dark: colors.grey[700],
-              main: colors.grey[500],
-              light: colors.grey[100],
-            },
-            background: {
-              default: colors.primary[800],
-              paper: colors.primary[900],
-            },
-            text: {
-              primary: colors.grey[100],
-              secondary: colors.grey[700],
-            },
-          }),
+          // Light mode palette
+          primary: {
+            main: colors.primary[600],
+            light: colors.primary[400],
+            dark: colors.primary[800],
+          },
+          secondary: {
+            main: colors.secondary[600],
+            light: colors.secondary[400],
+            dark: colors.secondary[800],
+          },
+          error: {
+            main: colors.redAccent[600],
+            light: colors.redAccent[400],
+            dark: colors.redAccent[800],
+          },
+          warning: {
+            main: colors.orangeAccent[600],
+            light: colors.orangeAccent[400],
+            dark: colors.orangeAccent[800],
+          },
+          info: {
+            main: colors.blueAccent[600],
+            light: colors.blueAccent[400],
+            dark: colors.blueAccent[800],
+          },
+          success: {
+            main: colors.greenAccent[600],
+            light: colors.greenAccent[400],
+            dark: colors.greenAccent[800],
+          },
+          neutral: {
+            dark: colors.grey[700],
+            main: colors.grey[500],
+            light: colors.grey[100],
+          },
+          background: {
+            default: colors.primary[800],
+            paper: colors.primary[900],
+          },
+          text: {
+            primary: colors.grey[100],
+            secondary: colors.grey[700],
+          },
+        }),
     },
     typography: {
       fontFamily: ["Inter", "Roboto", "Helvetica", "Arial", "sans-serif"].join(
@@ -758,7 +771,7 @@ export const themeSettings = (mode) => {
 
 // Context for color mode
 export const ColorModeContext = createContext({
-  toggleColorMode: () => {},
+  toggleColorMode: () => { },
 });
 
 export const useMode = () => {

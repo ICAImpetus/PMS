@@ -22,9 +22,9 @@ root.render(
   <React.StrictMode>
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
-        <GlobalUserContextProvider>
-          <App />
-        </GlobalUserContextProvider>
+        {/* <GlobalUserContextProvider> */}
+        <App />
+        {/* </GlobalUserContextProvider> */}
       </QueryClientProvider>
     </BrowserRouter>
   </React.StrictMode>

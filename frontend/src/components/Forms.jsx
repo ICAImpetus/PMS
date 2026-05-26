@@ -337,29 +337,29 @@ function Forms() {
         }
         else {
           toast.error(" No patient details found.");
-          setForm((prev) => ({
-            ...prev,
+          // setForm((prev) => ({
+          //   ...prev,
 
-            formData: {
-              ...prev.formData,
+          //   formData: {
+          //     ...prev.formData,
 
-              patientDetails: {
-                ...prev.formData.patientDetails,
+          //     patientDetails: {
+          //       ...prev.formData.patientDetails,
 
-                patientName: "",
+          //       patientName: "",
 
-                patientAge: "",
+          //       patientAge: "",
 
-                gender: "",
+          //       gender: "",
 
-                alternateMobile: "",
+          //       alternateMobile: "",
 
-                location: "",
+          //       location: "",
 
-                category: "",
-              },
-            },
-          }));
+          //       category: "",
+          //     },
+          //   },
+          // }));
           return
         }
 

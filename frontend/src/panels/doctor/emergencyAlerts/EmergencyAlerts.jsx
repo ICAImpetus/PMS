@@ -168,10 +168,10 @@ const EmergencyAlerts = () => {
             {/* Header */}
             <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
                 <Box>
-                    <Typography variant="h3" color={colors.gray[100]} fontWeight="bold" mb={1}>
+                    <Typography variant="h3" color={colors.grey[100]} fontWeight="bold" mb={1}>
                         Emergency Alerts
                     </Typography>
-                    <Typography color={colors.gray[300]} variant="body1">
+                    <Typography color={colors.grey[300]} variant="body1">
                         Monitor and respond to critical patient situations
                     </Typography>
                 </Box>
@@ -214,7 +214,7 @@ const EmergencyAlerts = () => {
                 <Grid item xs={12} sm={6} md={3}>
                     <Card sx={{ backgroundColor: colors.primary[400] }}>
                         <CardContent>
-                            <Typography color={colors.gray[300]} variant="body2">
+                            <Typography color={colors.grey[300]} variant="body2">
                                 Total Alerts
                             </Typography>
                             <Typography variant="h4" color={colors.blueAccent[400]}>
@@ -226,7 +226,7 @@ const EmergencyAlerts = () => {
                 <Grid item xs={12} sm={6} md={3}>
                     <Card sx={{ backgroundColor: colors.primary[400] }}>
                         <CardContent>
-                            <Typography color={colors.gray[300]} variant="body2">
+                            <Typography color={colors.grey[300]} variant="body2">
                                 Pending
                             </Typography>
                             <Typography variant="h4" color={colors.redAccent[400]}>
@@ -238,7 +238,7 @@ const EmergencyAlerts = () => {
                 <Grid item xs={12} sm={6} md={3}>
                     <Card sx={{ backgroundColor: colors.primary[400] }}>
                         <CardContent>
-                            <Typography color={colors.gray[300]} variant="body2">
+                            <Typography color={colors.grey[300]} variant="body2">
                                 In Progress
                             </Typography>
                             <Typography variant="h4" color={colors.yellowAccent[400]}>
@@ -250,7 +250,7 @@ const EmergencyAlerts = () => {
                 <Grid item xs={12} sm={6} md={3}>
                     <Card sx={{ backgroundColor: colors.primary[400] }}>
                         <CardContent>
-                            <Typography color={colors.gray[300]} variant="body2">
+                            <Typography color={colors.grey[300]} variant="body2">
                                 Resolved
                             </Typography>
                             <Typography variant="h4" color={colors.greenAccent[400]}>
@@ -308,13 +308,13 @@ const EmergencyAlerts = () => {
                         <Table>
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: colors.primary[500] }}>
-                                    <TableCell sx={{ color: colors.gray[100] }}>Severity</TableCell>
-                                    <TableCell sx={{ color: colors.gray[100] }}>Patient Name</TableCell>
-                                    <TableCell sx={{ color: colors.gray[100] }}>Condition</TableCell>
-                                    <TableCell sx={{ color: colors.gray[100] }}>Location</TableCell>
-                                    <TableCell sx={{ color: colors.gray[100] }}>Time</TableCell>
-                                    <TableCell sx={{ color: colors.gray[100] }}>Status</TableCell>
-                                    <TableCell sx={{ color: colors.gray[100] }}>Actions</TableCell>
+                                    <TableCell sx={{ color: colors.grey[100] }}>Severity</TableCell>
+                                    <TableCell sx={{ color: colors.grey[100] }}>Patient Name</TableCell>
+                                    <TableCell sx={{ color: colors.grey[100] }}>Condition</TableCell>
+                                    <TableCell sx={{ color: colors.grey[100] }}>Location</TableCell>
+                                    <TableCell sx={{ color: colors.grey[100] }}>Time</TableCell>
+                                    <TableCell sx={{ color: colors.grey[100] }}>Status</TableCell>
+                                    <TableCell sx={{ color: colors.grey[100] }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -328,7 +328,7 @@ const EmergencyAlerts = () => {
                                                 alert.status === "Pending" ? `${colors.redAccent[900]}30` : "transparent",
                                         }}
                                     >
-                                        <TableCell sx={{ color: colors.gray[100] }}>
+                                        <TableCell sx={{ color: colors.grey[100] }}>
                                             <Box display="flex" alignItems="center" gap={1}>
                                                 {getSeverityIcon(alert.severity)}
                                                 <Chip
@@ -339,19 +339,19 @@ const EmergencyAlerts = () => {
                                                 />
                                             </Box>
                                         </TableCell>
-                                        <TableCell sx={{ color: colors.gray[100] }}>
+                                        <TableCell sx={{ color: colors.grey[100] }}>
                                             {alert.patientName}
                                         </TableCell>
-                                        <TableCell sx={{ color: colors.gray[300] }}>
+                                        <TableCell sx={{ color: colors.grey[300] }}>
                                             {alert.condition}
                                         </TableCell>
-                                        <TableCell sx={{ color: colors.gray[300] }}>
+                                        <TableCell sx={{ color: colors.grey[300] }}>
                                             <Box display="flex" alignItems="center" gap={1}>
                                                 <LocationOnIcon sx={{ fontSize: "1rem", color: colors.blueAccent[400] }} />
                                                 {alert.location}
                                             </Box>
                                         </TableCell>
-                                        <TableCell sx={{ color: colors.gray[300] }}>
+                                        <TableCell sx={{ color: colors.grey[300] }}>
                                             {alert.timestamp}
                                         </TableCell>
                                         <TableCell>
@@ -427,7 +427,7 @@ const EmergencyAlerts = () => {
 
             {/* View Dialog */}
             <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-                <DialogTitle sx={{ backgroundColor: colors.primary[400], color: colors.gray[100] }}>
+                <DialogTitle sx={{ backgroundColor: colors.primary[400], color: colors.grey[100] }}>
                     Emergency Alert Details
                 </DialogTitle>
                 <DialogContent sx={{ backgroundColor: colors.primary[400], pt: 2 }}>
@@ -442,33 +442,33 @@ const EmergencyAlerts = () => {
 
                             {/* Patient Information */}
                             <Box>
-                                <Typography color={colors.gray[300]} variant="subtitle2" fontWeight="bold">
+                                <Typography color={colors.grey[300]} variant="subtitle2" fontWeight="bold">
                                     PATIENT INFORMATION
                                 </Typography>
                                 <Divider sx={{ my: 1 }} />
                                 <Grid container spacing={2}>
                                     <Grid item xs={12} sm={6}>
-                                        <Typography color={colors.gray[300]} variant="caption">
+                                        <Typography color={colors.grey[300]} variant="caption">
                                             Name
                                         </Typography>
-                                        <Typography color={colors.gray[100]} variant="body1">
+                                        <Typography color={colors.grey[100]} variant="body1">
                                             {viewingAlert.patientName}
                                         </Typography>
                                     </Grid>
                                     <Grid item xs={12} sm={6}>
-                                        <Typography color={colors.gray[300]} variant="caption">
+                                        <Typography color={colors.grey[300]} variant="caption">
                                             Patient ID
                                         </Typography>
-                                        <Typography color={colors.gray[100]} variant="body1">
+                                        <Typography color={colors.grey[100]} variant="body1">
                                             {viewingAlert.patientId}
                                         </Typography>
                                     </Grid>
                                     <Grid item xs={12} sm={6}>
-                                        <Typography color={colors.gray[300]} variant="caption">
+                                        <Typography color={colors.grey[300]} variant="caption">
                                             Contact Number
                                         </Typography>
                                         <Box display="flex" alignItems="center" gap={1}>
-                                            <Typography color={colors.gray[100]} variant="body1">
+                                            <Typography color={colors.grey[100]} variant="body1">
                                                 {viewingAlert.contactNumber}
                                             </Typography>
                                             <Button
@@ -485,13 +485,13 @@ const EmergencyAlerts = () => {
 
                             {/* Alert Details */}
                             <Box>
-                                <Typography color={colors.gray[300]} variant="subtitle2" fontWeight="bold">
+                                <Typography color={colors.grey[300]} variant="subtitle2" fontWeight="bold">
                                     ALERT DETAILS
                                 </Typography>
                                 <Divider sx={{ my: 1 }} />
                                 <Grid container spacing={2}>
                                     <Grid item xs={12} sm={6}>
-                                        <Typography color={colors.gray[300]} variant="caption">
+                                        <Typography color={colors.grey[300]} variant="caption">
                                             Severity
                                         </Typography>
                                         <Chip
@@ -502,7 +502,7 @@ const EmergencyAlerts = () => {
                                         />
                                     </Grid>
                                     <Grid item xs={12} sm={6}>
-                                        <Typography color={colors.gray[300]} variant="caption">
+                                        <Typography color={colors.grey[300]} variant="caption">
                                             Status
                                         </Typography>
                                         <Chip
@@ -513,31 +513,31 @@ const EmergencyAlerts = () => {
                                         />
                                     </Grid>
                                     <Grid item xs={12}>
-                                        <Typography color={colors.gray[300]} variant="caption">
+                                        <Typography color={colors.grey[300]} variant="caption">
                                             Condition
                                         </Typography>
-                                        <Typography color={colors.gray[100]} variant="body1">
+                                        <Typography color={colors.grey[100]} variant="body1">
                                             {viewingAlert.condition}
                                         </Typography>
                                     </Grid>
                                     <Grid item xs={12}>
-                                        <Typography color={colors.gray[300]} variant="caption">
+                                        <Typography color={colors.grey[300]} variant="caption">
                                             Location
                                         </Typography>
                                         <Box display="flex" alignItems="center" gap={1}>
                                             <LocationOnIcon sx={{ color: colors.blueAccent[400] }} />
-                                            <Typography color={colors.gray[100]} variant="body1">
+                                            <Typography color={colors.grey[100]} variant="body1">
                                                 {viewingAlert.location}
                                             </Typography>
                                         </Box>
                                     </Grid>
                                     <Grid item xs={12}>
-                                        <Typography color={colors.gray[300]} variant="caption">
+                                        <Typography color={colors.grey[300]} variant="caption">
                                             Reported At
                                         </Typography>
                                         <Box display="flex" alignItems="center" gap={1}>
                                             <ScheduleIcon sx={{ color: colors.blueAccent[400] }} />
-                                            <Typography color={colors.gray[100]} variant="body1">
+                                            <Typography color={colors.grey[100]} variant="body1">
                                                 {viewingAlert.timestamp}
                                             </Typography>
                                         </Box>
@@ -547,11 +547,11 @@ const EmergencyAlerts = () => {
 
                             {/* Clinical Notes */}
                             <Box>
-                                <Typography color={colors.gray[300]} variant="subtitle2" fontWeight="bold">
+                                <Typography color={colors.grey[300]} variant="subtitle2" fontWeight="bold">
                                     CLINICAL NOTES
                                 </Typography>
                                 <Divider sx={{ my: 1 }} />
-                                <Typography color={colors.gray[100]} variant="body2">
+                                <Typography color={colors.grey[100]} variant="body2">
                                     {viewingAlert.notes}
                                 </Typography>
                             </Box>

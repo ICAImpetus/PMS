@@ -24,32 +24,118 @@ import {
     Edit as EditIcon,
     Save as SaveIcon,
     Cancel as CancelIcon,
+    ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
 import { tokens } from "../../../theme";
 import { UserContextHook } from "../../../contexts/UserContexts";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
+const currentUser = {
+    _id: "665c9a12ab45ef7890123456",
+
+    firstName: "Vishal",
+    lastName: "Garna",
+    fullName: "Vishal Garna",
+
+    email: "vishal@example.com",
+    phone: "+91 9876543210",
+
+    role: "doctor",
+
+    profileImage:
+        "https://randomuser.me/api/portraits/men/32.jpg",
+
+    gender: "Male",
+    age: 28,
+
+    specialization: "Cardiologist",
+
+    hospital: {
+        _id: "hosp123",
+        name: "City Care Hospital",
+        address: "Jaipur, Rajasthan",
+    },
+
+    department: "Cardiology",
+
+    isVerified: true,
+    isActive: true,
+
+    permissions: [
+        "view_patients",
+        "edit_schedule",
+        "manage_appointments",
+    ],
+
+    timings: {
+        morning: {
+            from: "09:00",
+            to: "13:00",
+        },
+        evening: {
+            from: "17:00",
+            to: "20:00",
+        },
+    },
+
+    stats: {
+        totalPatients: 245,
+        totalAppointments: 540,
+        todayAppointments: 18,
+    },
+
+    createdAt: "2026-01-12T10:30:00.000Z",
+};
 const DoctorProfile = () => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
-    const { currentUser } = UserContextHook();
+    // const { currentUser } = UserContextHook();
+    const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
-    const [profileImage, setProfileImage] = useState(currentUser?.profilePicture || "");
+    const [profileImage, setProfileImage] = useState(currentUser?.profilePicture || "https://via.placeholder.com/200?text=Dr.+Rajesh");
     const [openImageDialog, setOpenImageDialog] = useState(false);
-    const [formData, setFormData] = useState({
-        fullName: currentUser?.name || "",
-        doctorId: currentUser?._id || "DOC-001",
-        specialization: currentUser?.specialization || "General Medicine",
-        qualification: currentUser?.qualification || "MBBS, MD",
-        experience: currentUser?.experience || "10 years",
-        email: currentUser?.email || "doctor@hospital.com",
-        contactNumber: currentUser?.contactNumber || "+91-9876543210",
-        licenseNumber: currentUser?.licenseNumber || "MCI-123456",
-        bio: currentUser?.bio || "",
-        hospital: currentUser?.hospital || "City Medical Center",
-        department: currentUser?.department || "Internal Medicine",
-    });
 
+    // Dummy doctor data with complete model fields
+    const dummyDoctor = {
+        _id: "DOC001",
+        name: "Dr. Rajesh Kumar",
+        title: "Dr.",
+        specialization: "Cardiology",
+        designation: "Senior Consultant",
+        qualification: "MBBS, MD, DM Cardiology",
+        customDegrees: "DM Cardiology, FACC",
+        experience: 15,
+        email: "dr.rajesh@hospital.com",
+        contactNumber: "+91-9876543210",
+        whatsappNumber: "+91-9876543211",
+        countryCode: "+91",
+        profilePicture: "https://via.placeholder.com/200?text=Dr.+Rajesh",
+        licenseNumber: "MCI-123456",
+        paName: "Ramesh Kumar",
+        paContactNumber: "+91-9988776655",
+        extensionNumber: "305",
+        department: "Cardiology",
+        hospital: "City Medical Center",
+        floor: "3rd Floor",
+        bio: "Experienced cardiologist with 15 years of clinical practice",
+        consultationCharges: 500,
+        averagePatientTime: "20 minutes",
+        maxPatientsHandled: 50,
+        teleConsultation: true,
+        subDepartment: "Interventional Cardiology",
+        additionalInfo: "Available for online consultations every Saturday from 2-4 PM",
+        opdNo: "OPD-305",
+        opdDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+        timings: {
+            morning: { start: "09:00 AM", end: "01:00 PM" },
+            evening: { start: "05:00 PM", end: "08:00 PM" },
+            custom: { start: "Custom timing available" },
+        },
+        surgeries: ["Coronary Bypass Surgery", "Angioplasty", "Valve Replacement"],
+    };
+
+    const [formData, setFormData] = useState(dummyDoctor);
     const [editData, setEditData] = useState(formData);
 
     const handleChange = (e) => {
@@ -88,7 +174,7 @@ const DoctorProfile = () => {
         <Card sx={{ backgroundColor: colors.primary[400], mb: 3 }}>
             <CardHeader
                 title={title}
-                titleTypographyProps={{ color: colors.gray[100] }}
+                titleTypographyProps={{ color: colors.grey[100] }}
                 sx={{ pb: 1 }}
             />
             <Divider sx={{ borderColor: colors.primary[500] }} />
@@ -97,16 +183,21 @@ const DoctorProfile = () => {
     );
 
     return (
-        <Container maxWidth="md" sx={{ py: 4 }}>
+        <Container maxWidth="lg" sx={{ py: 4 }}>
             {/* Header */}
             <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
-                <Box>
-                    <Typography variant="h3" color={colors.gray[100]} fontWeight="bold" mb={1}>
-                        My Profile
-                    </Typography>
-                    <Typography color={colors.gray[300]} variant="body1">
-                        Manage your professional information and credentials
-                    </Typography>
+                <Box display="flex" alignItems="center" gap={2}>
+                    <IconButton onClick={() => navigate(-1)} sx={{ color: colors.grey[100] }}>
+                        <ArrowBackIcon />
+                    </IconButton>
+                    <Box>
+                        <Typography variant="h3" color={colors.grey[100]} fontWeight="bold" mb={1}>
+                            My Profile
+                        </Typography>
+                        <Typography color={colors.grey[300]} variant="body1">
+                            Complete professional information and credentials
+                        </Typography>
+                    </Box>
                 </Box>
                 <Button
                     variant={isEditing ? "outlined" : "contained"}
@@ -127,7 +218,7 @@ const DoctorProfile = () => {
                     <Box position="relative">
                         <Avatar
                             src={profileImage}
-                            alt={formData.fullName}
+                            alt={formData.name}
                             sx={{
                                 width: 150,
                                 height: 150,
@@ -135,7 +226,7 @@ const DoctorProfile = () => {
                                 backgroundColor: colors.blueAccent[700],
                             }}
                         >
-                            {formData.fullName.charAt(0)}
+                            {formData.name.charAt(0)}
                         </Avatar>
                         <IconButton
                             sx={{
@@ -143,7 +234,7 @@ const DoctorProfile = () => {
                                 bottom: -5,
                                 right: -5,
                                 backgroundColor: colors.blueAccent[400],
-                                color: colors.gray[900],
+                                color: colors.grey[900],
                                 "&:hover": { backgroundColor: colors.blueAccent[300] },
                             }}
                             onClick={() => setOpenImageDialog(true)}
@@ -160,22 +251,44 @@ const DoctorProfile = () => {
                     <Grid item xs={12} md={6}>
                         <TextField
                             fullWidth
-                            label="Full Name"
-                            name="fullName"
-                            value={isEditing ? editData.fullName : formData.fullName}
+                            label="Title"
+                            name="title"
+                            value={isEditing ? editData.title : formData.title}
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
                             InputProps={{
                                 sx: {
-                                    color: colors.gray[100],
+                                    color: colors.grey[100],
                                     "& .MuiInput-underline:before": {
                                         borderBottomColor: colors.primary[500],
                                     },
                                 },
                             }}
                             InputLabelProps={{
-                                sx: { color: colors.gray[300] },
+                                sx: { color: colors.grey[300] },
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            label="Full Name"
+                            name="name"
+                            value={isEditing ? editData.name : formData.name}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            variant={isEditing ? "outlined" : "standard"}
+                            InputProps={{
+                                sx: {
+                                    color: colors.grey[100],
+                                    "& .MuiInput-underline:before": {
+                                        borderBottomColor: colors.primary[500],
+                                    },
+                                },
+                            }}
+                            InputLabelProps={{
+                                sx: { color: colors.grey[300] },
                             }}
                         />
                     </Grid>
@@ -183,20 +296,20 @@ const DoctorProfile = () => {
                         <TextField
                             fullWidth
                             label="Doctor ID"
-                            name="doctorId"
-                            value={formData.doctorId}
+                            name="_id"
+                            value={formData._id}
                             disabled
                             variant="standard"
                             InputProps={{
                                 sx: {
-                                    color: colors.gray[100],
+                                    color: colors.grey[100],
                                     "& .MuiInput-underline:before": {
                                         borderBottomColor: colors.primary[500],
                                     },
                                 },
                             }}
                             InputLabelProps={{
-                                sx: { color: colors.gray[300] },
+                                sx: { color: colors.grey[300] },
                             }}
                         />
                     </Grid>
@@ -212,14 +325,14 @@ const DoctorProfile = () => {
                             variant={isEditing ? "outlined" : "standard"}
                             InputProps={{
                                 sx: {
-                                    color: colors.gray[100],
+                                    color: colors.grey[100],
                                     "& .MuiInput-underline:before": {
                                         borderBottomColor: colors.primary[500],
                                     },
                                 },
                             }}
                             InputLabelProps={{
-                                sx: { color: colors.gray[300] },
+                                sx: { color: colors.grey[300] },
                             }}
                         />
                     </Grid>
@@ -234,14 +347,36 @@ const DoctorProfile = () => {
                             variant={isEditing ? "outlined" : "standard"}
                             InputProps={{
                                 sx: {
-                                    color: colors.gray[100],
+                                    color: colors.grey[100],
                                     "& .MuiInput-underline:before": {
                                         borderBottomColor: colors.primary[500],
                                     },
                                 },
                             }}
                             InputLabelProps={{
-                                sx: { color: colors.gray[300] },
+                                sx: { color: colors.grey[300] },
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            label="WhatsApp Number"
+                            name="whatsappNumber"
+                            value={isEditing ? editData.whatsappNumber : formData.whatsappNumber}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            variant={isEditing ? "outlined" : "standard"}
+                            InputProps={{
+                                sx: {
+                                    color: colors.grey[100],
+                                    "& .MuiInput-underline:before": {
+                                        borderBottomColor: colors.primary[500],
+                                    },
+                                },
+                            }}
+                            InputLabelProps={{
+                                sx: { color: colors.grey[300] },
                             }}
                         />
                     </Grid>
@@ -254,6 +389,28 @@ const DoctorProfile = () => {
                     <Grid item xs={12} md={6}>
                         <TextField
                             fullWidth
+                            label="Designation"
+                            name="designation"
+                            value={isEditing ? editData.designation : formData.designation}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            variant={isEditing ? "outlined" : "standard"}
+                            InputProps={{
+                                sx: {
+                                    color: colors.grey[100],
+                                    "& .MuiInput-underline:before": {
+                                        borderBottomColor: colors.primary[500],
+                                    },
+                                },
+                            }}
+                            InputLabelProps={{
+                                sx: { color: colors.grey[300] },
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
                             label="Specialization"
                             name="specialization"
                             value={isEditing ? editData.specialization : formData.specialization}
@@ -262,14 +419,14 @@ const DoctorProfile = () => {
                             variant={isEditing ? "outlined" : "standard"}
                             InputProps={{
                                 sx: {
-                                    color: colors.gray[100],
+                                    color: colors.grey[100],
                                     "& .MuiInput-underline:before": {
                                         borderBottomColor: colors.primary[500],
                                     },
                                 },
                             }}
                             InputLabelProps={{
-                                sx: { color: colors.gray[300] },
+                                sx: { color: colors.grey[300] },
                             }}
                         />
                     </Grid>
@@ -284,14 +441,36 @@ const DoctorProfile = () => {
                             variant={isEditing ? "outlined" : "standard"}
                             InputProps={{
                                 sx: {
-                                    color: colors.gray[100],
+                                    color: colors.grey[100],
                                     "& .MuiInput-underline:before": {
                                         borderBottomColor: colors.primary[500],
                                     },
                                 },
                             }}
                             InputLabelProps={{
-                                sx: { color: colors.gray[300] },
+                                sx: { color: colors.grey[300] },
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            label="Sub-Department"
+                            name="subDepartment"
+                            value={isEditing ? editData.subDepartment : formData.subDepartment}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            variant={isEditing ? "outlined" : "standard"}
+                            InputProps={{
+                                sx: {
+                                    color: colors.grey[100],
+                                    "& .MuiInput-underline:before": {
+                                        borderBottomColor: colors.primary[500],
+                                    },
+                                },
+                            }}
+                            InputLabelProps={{
+                                sx: { color: colors.grey[300] },
                             }}
                         />
                     </Grid>
@@ -306,36 +485,59 @@ const DoctorProfile = () => {
                             variant={isEditing ? "outlined" : "standard"}
                             InputProps={{
                                 sx: {
-                                    color: colors.gray[100],
+                                    color: colors.grey[100],
                                     "& .MuiInput-underline:before": {
                                         borderBottomColor: colors.primary[500],
                                     },
                                 },
                             }}
                             InputLabelProps={{
-                                sx: { color: colors.gray[300] },
+                                sx: { color: colors.grey[300] },
                             }}
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
                         <TextField
                             fullWidth
-                            label="Experience"
-                            name="experience"
-                            value={isEditing ? editData.experience : formData.experience}
+                            label="Custom Degrees"
+                            name="customDegrees"
+                            value={isEditing ? editData.customDegrees : formData.customDegrees}
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
                             InputProps={{
                                 sx: {
-                                    color: colors.gray[100],
+                                    color: colors.grey[100],
                                     "& .MuiInput-underline:before": {
                                         borderBottomColor: colors.primary[500],
                                     },
                                 },
                             }}
                             InputLabelProps={{
-                                sx: { color: colors.gray[300] },
+                                sx: { color: colors.grey[300] },
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            label="Experience (Years)"
+                            name="experience"
+                            type="number"
+                            value={isEditing ? editData.experience : formData.experience}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            variant={isEditing ? "outlined" : "standard"}
+                            InputProps={{
+                                sx: {
+                                    color: colors.grey[100],
+                                    "& .MuiInput-underline:before": {
+                                        borderBottomColor: colors.primary[500],
+                                    },
+                                },
+                            }}
+                            InputLabelProps={{
+                                sx: { color: colors.grey[300] },
                             }}
                         />
                     </Grid>
@@ -350,17 +552,23 @@ const DoctorProfile = () => {
                             variant={isEditing ? "outlined" : "standard"}
                             InputProps={{
                                 sx: {
-                                    color: colors.gray[100],
+                                    color: colors.grey[100],
                                     "& .MuiInput-underline:before": {
                                         borderBottomColor: colors.primary[500],
                                     },
                                 },
                             }}
                             InputLabelProps={{
-                                sx: { color: colors.gray[300] },
+                                sx: { color: colors.grey[300] },
                             }}
                         />
                     </Grid>
+                </Grid>
+            </ProfileSection>
+
+            {/* Hospital & Location Information */}
+            <ProfileSection title="Hospital & Location Information">
+                <Grid container spacing={2}>
                     <Grid item xs={12} md={6}>
                         <TextField
                             fullWidth
@@ -372,14 +580,225 @@ const DoctorProfile = () => {
                             variant={isEditing ? "outlined" : "standard"}
                             InputProps={{
                                 sx: {
-                                    color: colors.gray[100],
+                                    color: colors.grey[100],
                                     "& .MuiInput-underline:before": {
                                         borderBottomColor: colors.primary[500],
                                     },
                                 },
                             }}
                             InputLabelProps={{
-                                sx: { color: colors.gray[300] },
+                                sx: { color: colors.grey[300] },
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            label="Floor"
+                            name="floor"
+                            value={isEditing ? editData.floor : formData.floor}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            variant={isEditing ? "outlined" : "standard"}
+                            InputProps={{
+                                sx: {
+                                    color: colors.grey[100],
+                                    "& .MuiInput-underline:before": {
+                                        borderBottomColor: colors.primary[500],
+                                    },
+                                },
+                            }}
+                            InputLabelProps={{
+                                sx: { color: colors.grey[300] },
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            label="Extension Number"
+                            name="extensionNumber"
+                            value={isEditing ? editData.extensionNumber : formData.extensionNumber}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            variant={isEditing ? "outlined" : "standard"}
+                            InputProps={{
+                                sx: {
+                                    color: colors.grey[100],
+                                    "& .MuiInput-underline:before": {
+                                        borderBottomColor: colors.primary[500],
+                                    },
+                                },
+                            }}
+                            InputLabelProps={{
+                                sx: { color: colors.grey[300] },
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            label="OPD Number"
+                            name="opdNo"
+                            value={isEditing ? editData.opdNo : formData.opdNo}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            variant={isEditing ? "outlined" : "standard"}
+                            InputProps={{
+                                sx: {
+                                    color: colors.grey[100],
+                                    "& .MuiInput-underline:before": {
+                                        borderBottomColor: colors.primary[500],
+                                    },
+                                },
+                            }}
+                            InputLabelProps={{
+                                sx: { color: colors.grey[300] },
+                            }}
+                        />
+                    </Grid>
+                </Grid>
+            </ProfileSection>
+
+            {/* Consultation Information */}
+            <ProfileSection title="Consultation Information">
+                <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            label="Consultation Charges"
+                            name="consultationCharges"
+                            type="number"
+                            value={isEditing ? editData.consultationCharges : formData.consultationCharges}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            variant={isEditing ? "outlined" : "standard"}
+                            InputProps={{
+                                sx: {
+                                    color: colors.grey[100],
+                                    "& .MuiInput-underline:before": {
+                                        borderBottomColor: colors.primary[500],
+                                    },
+                                },
+                            }}
+                            InputLabelProps={{
+                                sx: { color: colors.grey[300] },
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            label="Average Patient Time"
+                            name="averagePatientTime"
+                            value={isEditing ? editData.averagePatientTime : formData.averagePatientTime}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            variant={isEditing ? "outlined" : "standard"}
+                            InputProps={{
+                                sx: {
+                                    color: colors.grey[100],
+                                    "& .MuiInput-underline:before": {
+                                        borderBottomColor: colors.primary[500],
+                                    },
+                                },
+                            }}
+                            InputLabelProps={{
+                                sx: { color: colors.grey[300] },
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            label="Max Patients Handled"
+                            name="maxPatientsHandled"
+                            type="number"
+                            value={isEditing ? editData.maxPatientsHandled : formData.maxPatientsHandled}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            variant={isEditing ? "outlined" : "standard"}
+                            InputProps={{
+                                sx: {
+                                    color: colors.grey[100],
+                                    "& .MuiInput-underline:before": {
+                                        borderBottomColor: colors.primary[500],
+                                    },
+                                },
+                            }}
+                            InputLabelProps={{
+                                sx: { color: colors.grey[300] },
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            label="Tele-Consultation Available"
+                            name="teleConsultation"
+                            value={isEditing ? editData.teleConsultation : formData.teleConsultation}
+                            disabled={!isEditing}
+                            variant={isEditing ? "outlined" : "standard"}
+                            InputProps={{
+                                sx: {
+                                    color: colors.grey[100],
+                                    "& .MuiInput-underline:before": {
+                                        borderBottomColor: colors.primary[500],
+                                    },
+                                },
+                            }}
+                            InputLabelProps={{
+                                sx: { color: colors.grey[300] },
+                            }}
+                        />
+                    </Grid>
+                </Grid>
+            </ProfileSection>
+
+            {/* Personal Assistant Information */}
+            <ProfileSection title="Personal Assistant Information">
+                <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            label="PA Name"
+                            name="paName"
+                            value={isEditing ? editData.paName : formData.paName}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            variant={isEditing ? "outlined" : "standard"}
+                            InputProps={{
+                                sx: {
+                                    color: colors.grey[100],
+                                    "& .MuiInput-underline:before": {
+                                        borderBottomColor: colors.primary[500],
+                                    },
+                                },
+                            }}
+                            InputLabelProps={{
+                                sx: { color: colors.grey[300] },
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            label="PA Contact Number"
+                            name="paContactNumber"
+                            value={isEditing ? editData.paContactNumber : formData.paContactNumber}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            variant={isEditing ? "outlined" : "standard"}
+                            InputProps={{
+                                sx: {
+                                    color: colors.grey[100],
+                                    "& .MuiInput-underline:before": {
+                                        borderBottomColor: colors.primary[500],
+                                    },
+                                },
+                            }}
+                            InputLabelProps={{
+                                sx: { color: colors.grey[300] },
                             }}
                         />
                     </Grid>
@@ -387,29 +806,57 @@ const DoctorProfile = () => {
             </ProfileSection>
 
             {/* Bio Section */}
-            <ProfileSection title="Professional Bio">
-                <TextField
-                    fullWidth
-                    multiline
-                    rows={4}
-                    label="Bio"
-                    name="bio"
-                    value={isEditing ? editData.bio : formData.bio}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    variant={isEditing ? "outlined" : "standard"}
-                    InputProps={{
-                        sx: {
-                            color: colors.gray[100],
-                            "& .MuiInput-underline:before": {
-                                borderBottomColor: colors.primary[500],
-                            },
-                        },
-                    }}
-                    InputLabelProps={{
-                        sx: { color: colors.gray[300] },
-                    }}
-                />
+            <ProfileSection title="Professional Bio & Additional Info">
+                <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                        <TextField
+                            fullWidth
+                            multiline
+                            rows={3}
+                            label="Professional Bio"
+                            name="bio"
+                            value={isEditing ? editData.bio : formData.bio}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            variant={isEditing ? "outlined" : "standard"}
+                            InputProps={{
+                                sx: {
+                                    color: colors.grey[100],
+                                    "& .MuiInput-underline:before": {
+                                        borderBottomColor: colors.primary[500],
+                                    },
+                                },
+                            }}
+                            InputLabelProps={{
+                                sx: { color: colors.grey[300] },
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12}>
+                        <TextField
+                            fullWidth
+                            multiline
+                            rows={3}
+                            label="Additional Information"
+                            name="additionalInfo"
+                            value={isEditing ? editData.additionalInfo : formData.additionalInfo}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            variant={isEditing ? "outlined" : "standard"}
+                            InputProps={{
+                                sx: {
+                                    color: colors.grey[100],
+                                    "& .MuiInput-underline:before": {
+                                        borderBottomColor: colors.primary[500],
+                                    },
+                                },
+                            }}
+                            InputLabelProps={{
+                                sx: { color: colors.grey[300] },
+                            }}
+                        />
+                    </Grid>
+                </Grid>
             </ProfileSection>
 
             {/* Save Button */}
