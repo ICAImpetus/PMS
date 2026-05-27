@@ -214,84 +214,62 @@ const SuperAdminDashboard = () => {
 
   // }, [selectedHostpital]);
   const categoryData =
-    analytics?.callCategorization ??
-    {
-      appointment: [
-        { name: "Delhi", dec: 120, jan: 98, feb: 110 },
-        { name: "Noida", dec: 80, jan: 76, feb: 90 },
-        { name: "Gurgaon", dec: 65, jan: 70, feb: 60 },
-      ],
+    analytics?.callCategorization || {};
 
-      age: [
-        { name: "18-25", dec: 150, jan: 120, feb: 130 },
-        { name: "26-35", dec: 200, jan: 180, feb: 175 },
-        { name: "36-45", dec: 100, jan: 95, feb: 90 },
-      ],
-
-      gender: [
-        { name: "Male", dec: 220, jan: 200, feb: 210 },
-        { name: "Female", dec: 180, jan: 160, feb: 170 },
-      ],
-
-      doctor: [
-        { name: "Dr Sharma", dec: 120, jan: 110, feb: 115 },
-        { name: "Dr Mehta", dec: 95, jan: 90, feb: 100 },
-      ],
-
-      poc: [
-        { name: "Reception", dec: 140, jan: 120, feb: 130 },
-        { name: "Support", dec: 110, jan: 100, feb: 105 },
-      ]
-    };
-
-  const currentDataa = categoryData["appointment"];
+  const currentDataa =
+    categoryData["appointment"] || [];
 
   const months = currentDataa?.length
-    ? Object.keys(currentDataa[0]).filter((key) => key !== "name")
+    ? Object.keys(currentDataa[0]).filter(
+      (key) => key !== "name"
+    )
     : [];
 
-  const labels = months.map(formatMonth)
-  const appointmentData = getMonthWiseData(
-    analytics?.callCategorization?.appointment || [],
-    months
+
+  // API DATA
+  const appointmentData =
+    analytics?.callCategorization?.appointment || [];
+
+  const newPatientData =
+    analytics?.callCategorization?.newPatient || [];
+
+  const labels = newPatientData.map(
+    (item) => item.month
+  );
+  // CHART VALUES
+  const appointmentChartData = appointmentData.map(
+    (item) => item.appointment || 0
   );
 
-  const newPatientData = getMonthWiseData(
-    analytics?.callCategorization?.newPatient || [],
-    months
+  const newPatientChartData = newPatientData.map(
+    (item) => item.newPatients || 0
   );
 
-  const oldPatientData = getMonthWiseData(
-    analytics?.callCategorization?.oldPatient || [],
-    months
-  );
-  const totalNew = sum(newPatientData);
-  const totalOld = sum(oldPatientData);;
+  // LABELS
+
+  const totalNew = sum(newPatientChartData);
+
+  // FINAL CHART DATA
   const data = {
     labels,
+
     datasets: [
       {
         label: "Appointments",
-        data: appointmentData,
+        data: appointmentChartData,
         backgroundColor: "#7b3fe4",
         borderRadius: 6,
-        barThickness: 18
+        barThickness: 18,
       },
+
       {
         label: "New Patients",
-        data: newPatientData,
+        data: newPatientChartData,
         backgroundColor: "#2d91ee",
         borderRadius: 6,
-        barThickness: 18
+        barThickness: 18,
       },
-      {
-        label: "Old Patients",
-        data: oldPatientData,
-        backgroundColor: "#184f9c",
-        borderRadius: 6,
-        barThickness: 18
-      }
-    ]
+    ],
   };
 
   const options = {
@@ -337,18 +315,11 @@ const SuperAdminDashboard = () => {
     datasets: [
       {
         label: "New Patient",
-        data: newPatientData ?? [347, 206, 253],
+        data: newPatientChartData ?? [347, 206, 253],
         borderColor: "#3f86d9",
         backgroundColor: "#3f86d9",
         tension: 0.4
       },
-      {
-        label: "Old Patient",
-        data: oldPatientData ?? [1162, 924, 902],
-        borderColor: "#184f9c",
-        backgroundColor: "#184f9c",
-        tension: 0.4
-      }
     ]
   };
 
@@ -594,36 +565,38 @@ const SuperAdminDashboard = () => {
                 <tr>
                   <th>Month</th>
                   <th>New Patient</th>
-                  <th>Old Patient</th>
                 </tr>
               </thead>
 
               <tbody>
-                {labels.map((month, i) => {
-                  const newVal = newPatientData[i] || 0;
-                  const oldVal = oldPatientData[i] || 0;
-
-                  return (
-                    <tr key={month}>
-                      <td>{month}</td>
-                      <td>{newVal}</td>
-                      <td>{oldVal}</td>
+                {newPatientData?.length > 0 ? (
+                  newPatientData.map((item, i) => (
+                    <tr key={i}>
+                      <td>{item.month}</td>
+                      <td>{item.newPatients}</td>
                     </tr>
-                  );
-                })}
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="2">No data available</td>
+                  </tr>
+                )}
 
                 <tr className="total-row">
-                  <td><strong>Total</strong></td>
-                  <td><strong>{totalNew}</strong></td>
-                  <td><strong>{totalOld}</strong></td>
+                  <td>
+                    <strong>Total</strong>
+                  </td>
+
+                  <td>
+                    <strong>{totalNew}</strong>
+                  </td>
                 </tr>
               </tbody>
             </table>
 
             <div className="patient-summary" style={{ marginTop: "15px" }}>
               <p><strong>New Patients :</strong> {totalNew}</p>
-              <p><strong>Old Patients :</strong> {totalOld}</p>
-              <p><strong>Total Registered Patients :</strong> {totalNew + totalOld}</p>
+              <p><strong>Total Registered Patients :</strong> {totalNew}</p>
             </div>
           </div>
         </div>
@@ -780,10 +753,10 @@ const SuperAdminDashboard = () => {
                     <div className={`log-icon ${status}`}>
                       <User size={16} />
                     </div>
-                    <strong>{item?.name || "name"}</strong>
+                    <strong>{item?.agentName || "name"}</strong>
                   </div>
                   <span className={`badge ${status}`}>
-                    Forms: {item?.count || 0}
+                    Forms: {item?.totalCalls || 0}
                   </span>
                 </div>
               );

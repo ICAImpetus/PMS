@@ -31,7 +31,7 @@ function Root() {
           <BrowserRouter>
             <QueryClientProvider client={queryClient}>
               <GlobalUserContextProvider>
-                <App />
+              <App />
               </GlobalUserContextProvider>
             </QueryClientProvider>
           </BrowserRouter>

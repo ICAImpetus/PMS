@@ -58,7 +58,8 @@ export const CodeAlertsSchema = new mongoose.Schema({
         default: Date.now
     }
 
-})
+
+}, { timestamps: true, versionKey: false })
 
 // const CodeAlertsModel = mongoose.model("CodeAlerts", CodeAlertsSchema);
 // export default CodeAlertsModel;

@@ -68,7 +68,7 @@ export const ProcedureSchema = new mongoose.Schema(
             default: false,
         },
     },
-    { timestamps: true }
+    { timestamps: true, versionKey: false }
 );
 
 // const ProcedureModel = mongoose.model("Procedure", procedureSchema);

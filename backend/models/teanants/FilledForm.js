@@ -24,6 +24,7 @@ export const FilledFormSchema = new mongoose.Schema(
       type: String,
       enum: ["inbound", "outbound"],
       required: true,
+      index: true
     },
 
     // hospitalId: {
@@ -53,7 +54,7 @@ export const FilledFormSchema = new mongoose.Schema(
       ref: "Department",
     },
     agentName: String,
-    purpose: String,
+    purpose: { type: String, index: true },
     callStatus: {
       type: String,
       trim: true,
@@ -160,12 +161,9 @@ export const FilledFormSchema = new mongoose.Schema(
       },
       cancelReason: String,
     },
-    isDeleted: { type: Boolean, default: false },
+    isDeleted: { type: Boolean,  index: true, default: false },
   },
-  {
-    timestamps: true,
-
-  }
+  { timestamps: true, versionKey: false }
 );
 
 // const FilledFormsModel = mongoose.model("filledForms", filledFormSchema);

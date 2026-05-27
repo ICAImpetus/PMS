@@ -55,7 +55,7 @@ export const IPDAndDayCareSchema = new mongoose.Schema(
             default: false,
         },
     },
-    { timestamps: true }
+     { timestamps: true, versionKey: false }
 );
 
 // const IPDAndDayCareModel = mongoose.model("IPDAndDayCareModel", IPDAndDayCareSchema);

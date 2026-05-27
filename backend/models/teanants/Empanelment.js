@@ -63,7 +63,7 @@ export const EmpanelmentSchema = new mongoose.Schema(
             default: false,
         },
     },
-    { timestamps: true }
+    { timestamps: true, versionKey: false }
 );
 
 // const EmpanelmentModel = mongoose.model("Empanelment", empanelmentSchema);

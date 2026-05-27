@@ -45,7 +45,7 @@ export const DepartmentSchema = new mongoose.Schema(
       default: false,
     },
   },
-  { timestamps: true },
+  { timestamps: true, versionKey: false }
 );
 
 // const DepartmentModel = mongoose.model("Department", departmentSchema);

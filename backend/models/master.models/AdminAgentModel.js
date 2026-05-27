@@ -11,7 +11,7 @@ export const AdminAgentSchema = new mongoose.Schema(
         },
         name: String,
       },
-    ], 
+    ],
 
     branches: [
       {
@@ -109,10 +109,7 @@ export const AdminAgentSchema = new mongoose.Schema(
       default: false,
     },
   },
-
-  {
-    timestamps: true,
-  },
+  { timestamps: true, versionKey: false }
 );
 
 

@@ -102,9 +102,7 @@ export const BranchSchema = new mongoose.Schema(
       default: false,
     },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true, versionKey: false }
 );
 
 // const BranchModel = mongoose.model("Branch", branchSchema);

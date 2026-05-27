@@ -11,4 +11,4 @@ export const AuditLogSchema = new mongoose.Schema({
     oldData: mongoose.Schema.Types.Mixed,
     newData: mongoose.Schema.Types.Mixed,
     ip: String,
-}, { timestamps: true });
+}, { timestamps: true, versionKey: false });

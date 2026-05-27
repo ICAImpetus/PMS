@@ -66,7 +66,7 @@ export const CodeAnnouncementSchema = new mongoose.Schema(
             default: false,
         },
     },
-    { timestamps: true }
+     { timestamps: true, versionKey: false }
 );
 
 // const CodeAnnouncementModel = mongoose.model("CodeAnnouncement", codeAnnouncementSchema);

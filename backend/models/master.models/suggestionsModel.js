@@ -16,5 +16,5 @@ export const Suggestion = new mongoose.Schema(
             default: false
         },
     },
-    { timestamps: true }
+    { timestamps: true, versionKey: false }
 );

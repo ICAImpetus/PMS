@@ -71,7 +71,5 @@ export const PatientSchema = new mongoose.Schema(
         }
     },
 
-    {
-        timestamps: true,
-    }
+    { timestamps: true, versionKey: false }
 );

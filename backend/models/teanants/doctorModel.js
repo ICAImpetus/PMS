@@ -204,7 +204,7 @@ export const DoctorSchema = new mongoose.Schema(
       default: false,
     },
   },
-  { timestamps: true },
+  { timestamps: true, versionKey: false }
 );
 
 

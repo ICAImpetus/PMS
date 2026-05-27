@@ -6273,303 +6273,449 @@ export const superManagerDashboardService = async (conn, branchId) => {
     throw new Error(error.message);
   }
 };
-export const superAdminDashboardService = async (conn, hospitalId, user) => {
+export const superAdminDashboardService = async (
+  conn,
+  hospitalId,
+  user
+) => {
   try {
-    console.log("hospitalId", hospitalId);
+    const FilledFormsModel = getFilledFormsModel(conn);
+    const BranchModel = getBranchModel(conn);
+    const PatientModel = getPatientModel(conn);
 
-    const FilledFormsModel = getFilledFormsModel(conn)
-    const BranchModel = getBranchModel(conn)
-    const profile = await AdminAndAgentModel.findById(user.id).lean();
-    if (!profile) throw new Error("User not found");
-    const hospitalObjectId = new mongoose.Types.ObjectId(hospitalId);
-    const role = profile.type?.toLowerCase();
+    const profile = await AdminAndAgentModel.findById(user.id)
+      .select("type")
+      .lean();
 
-    // Base match
-    const matchStage = { isDeleted: false };
-
-    // User Query
-    let userQuery = {
-      isDeleted: false,
-      "hospitals.hospitalId": {
-        $in: Array.isArray(hospitalObjectId) ? hospitalObjectId : [hospitalObjectId]
-      }
-    };
-
-    // console.log("userQuery", userQuery);
-
-
-    if (role === "admin") {
-      userQuery.type = { $nin: ["superadmin", "admin"] };
-
-    } else if (role === "superadmin") {
-      userQuery.type = { $nin: ["superadmin", "admin"] };
+    if (!profile) {
+      throw new Error("User not found");
     }
 
-    // Parallel execution
-    const [totalUsers, totalBranches, recentActivity, agg] = await Promise.all([
+    const role = profile.type?.toLowerCase();
+
+    const hospitalObjectId = new mongoose.Types.ObjectId(
+      hospitalId
+    );
+
+    // last 90 days optimization
+    const last90Days = new Date();
+    last90Days.setDate(last90Days.getDate() - 90);
+
+    // base match
+    const matchStage = {
+      isDeleted: false,
+      createdAt: { $gte: last90Days },
+    };
+
+    // user query
+    const userQuery = {
+      isDeleted: false,
+      "hospitals.hospitalId": hospitalObjectId,
+      ...(role === "admin" || role === "superadmin"
+        ? {
+          type: {
+            $nin: ["superadmin", "admin"],
+          },
+        }
+        : {}),
+    };
+
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - 2);
+
+    const [
+      totalUsers,
+      totalBranches,
+      recentActivity,
+      dashboardAgg,
+      patientData,
+    ] = await Promise.all([
+
+      // TOTAL USERS
       AdminAndAgentModel.countDocuments(userQuery),
 
-      BranchModel.countDocuments({ isDeleted: false }),
-      // optimized recent activity
+      // TOTAL BRANCHES
+      BranchModel.countDocuments({
+        isDeleted: false,
+      }),
+
+      // RECENT ACTIVITY
       AuditLog.aggregate([
         ...(role === "admin"
           ? [
             {
               $match: {
-                userId: { $in: [user.id] } //  avoid heavy query
-              }
-            }
+                userId: user.id,
+              },
+            },
           ]
           : []),
-        { $sort: { createdAt: -1 } },
-        { $limit: 5 }
+
+        {
+          $sort: {
+            createdAt: -1,
+          },
+        },
+
+        {
+          $project: {
+            newData: 0,
+            oldData: 0,
+            ip: 0,
+          },
+        },
+
+        {
+          $limit: 5,
+        },
       ]),
 
-      // Main aggregation
+      // DASHBOARD ANALYTICS
       FilledFormsModel.aggregate([
-        { $match: matchStage },
+        {
+          $match: {
+            ...matchStage,
+
+            createdAt: {
+              $gte: startDate,
+            },
+          },
+        },
 
         {
           $facet: {
-            genderCount: [
-              {
-                $group: {
-                  _id: null,
-                  total: { $sum: 1 },
-                  male: {
-                    $sum: {
-                      $cond: [
-                        { $eq: ["$formData.patientDetails.gender", "Male"] },
-                        1, 0
-                      ]
-                    }
-                  },
-                  female: {
-                    $sum: {
-                      $cond: [
-                        { $eq: ["$formData.patientDetails.gender", "Female"] },
-                        1, 0
-                      ]
-                    }
-                  },
-                  unknown: {
-                    $sum: {
-                      $cond: [
-                        {
-                          $in: [
-                            "$formData.patientDetails.gender",
-                            [null, ""]
-                          ]
-                        },
-                        1, 0
-                      ]
-                    }
-                  }
-                }
-              },
-              { $project: { _id: 0 } }
-            ],
+
+            // TOP INBOUND PURPOSE
             topInboundPurpose: [
-              { $match: { formType: "inbound", purpose: { $ne: "" } } },
+              {
+                $match: {
+                  formType: "inbound",
+                  purpose: {
+                    $nin: ["", null],
+                  },
+                },
+              },
+
               {
                 $group: {
                   _id: "$purpose",
-                  count: { $sum: 1 }
-                }
+                  count: {
+                    $sum: 1,
+                  },
+                },
               },
-              { $sort: { count: -1 } },
-              { $limit: 5 },
+
+              {
+                $sort: {
+                  count: -1,
+                },
+              },
+
+              {
+                $limit: 5,
+              },
+
               {
                 $project: {
                   _id: 0,
                   purpose: "$_id",
-                  count: 1
-                }
-              }
+                  count: 1,
+                },
+              },
             ],
 
             // TOP OUTBOUND PURPOSE
             topOutboundPurpose: [
-              { $match: { formType: "outbound", purpose: { $ne: "" } } },
+              {
+                $match: {
+                  formType: "outbound",
+                  purpose: {
+                    $nin: ["", null],
+                  },
+                },
+              },
+
               {
                 $group: {
                   _id: "$purpose",
-                  count: { $sum: 1 }
-                }
+                  count: {
+                    $sum: 1,
+                  },
+                },
               },
-              { $sort: { count: -1 } },
-              { $limit: 5 },
+
+              {
+                $sort: {
+                  count: -1,
+                },
+              },
+
+              {
+                $limit: 5,
+              },
+
               {
                 $project: {
                   _id: 0,
                   purpose: "$_id",
-                  count: 1
-                }
-              }
+                  count: 1,
+                },
+              },
             ],
 
+            // TOP AGENTS (OPTIMIZED)
             teamOverview: [
-              { $group: { _id: "$agentId", count: { $sum: 1 } } },
-              { $sort: { count: -1 } },
-              { $limit: 10 }
-            ],
+              // ignore empty agents
+              {
+                $match: {
+                  agentId: { $ne: null },
+                },
+              },
 
-            callCategorization: [
+              // group directly
               {
-                $lookup: {
-                  from: "doctors",
-                  localField: "doctor",
-                  foreignField: "_id",
-                  as: "doctor"
-                }
+                $group: {
+                  _id: "$agentId",
+
+                  agentName: {
+                    $first: "$agentName",
+                  },
+
+                  totalCalls: {
+                    $sum: 1,
+                  }
+                },
               },
+
+              // sorting
               {
-                $unwind: {
-                  path: "$doctor",
-                  preserveNullAndEmptyArrays: true
-                }
+                $sort: {
+                  totalCalls: -1,
+                },
               },
+
+              // top 10
+              {
+                $limit: 10,
+              },
+
+              // final response
               {
                 $project: {
-                  month: { $month: "$createdAt" },
-                  //  Appointment (fast + safe)
+                  _id: 0,
+
+                  agentId: "$_id",
+                  agentName: 1,
+
+                  totalCalls: 1,
+                  inbound: 1,
+                  outbound: 1,
+                  appointments: 1,
+                },
+              },
+            ],
+
+            // CALL CATEGORIZATION
+            callCategorization: [
+              {
+                $group: {
+                  _id: {
+                    month: {
+                      $dateToString: {
+                        format: "%b",
+                        date: "$createdAt",
+                      },
+                    },
+
+                    monthNumber: {
+                      $month: "$createdAt",
+                    },
+                  },
+
                   appointment: {
-                    $cond: [
-                      {
-                        $and: [
-                          { $ne: ["$purpose", null] },
-                          { $ne: ["$purpose", ""] },
-                          { $eq: ["$purpose", "Appointment"] }
-                        ]
-                      },
-                      1,
-                      0
-                    ]
+                    $sum: {
+                      $cond: [
+                        {
+                          $eq: ["$purpose", "Appointment"],
+                        },
+                        1,
+                        0,
+                      ],
+                    },
                   },
+                },
+              },
 
-                  //  New Patient (inline normalize)
-                  newPatient: {
-                    $cond: [
-                      {
-                        $eq: [
-                          {
-                            $toLower: {
-                              $trim: {
-                                input: {
-                                  $ifNull: ["$formData.patientDetails.status", ""]
-                                }
-                              }
-                            }
-                          },
-                          "new"
-                        ]
-                      },
-                      1,
-                      0
-                    ]
-                  },
+              {
+                $sort: {
+                  "_id.monthNumber": 1,
+                },
+              },
 
-                  //  Old Patient
-                  oldPatient: {
-                    $cond: [
-                      {
-                        $eq: [
-                          {
-                            $toLower: {
-                              $trim: {
-                                input: {
-                                  $ifNull: ["$formData.patientDetails.status", ""]
-                                }
-                              }
-                            }
-                          },
-                          "old"
-                        ]
-                      },
-                      1,
-                      0
-                    ]
-                  }
-                }
-              }
-            ]
-          }
-        }
-      ])
+              {
+                $project: {
+                  _id: 0,
+                  month: "$_id.month",
+                  appointment: 1,
+                },
+              },
+            ],
+          },
+        },
+      ]).allowDiskUse(true),
+
+      // UNIQUE PATIENT MONTH-WISE
+      PatientModel.aggregate([
+        {
+          $match: {
+            isDeleted: false,
+
+            patientMobile: {
+              $nin: [null, ""],
+            },
+
+            createdAt: {
+              $gte: startDate,
+            },
+          },
+        },
+
+        // UNIQUE PATIENT PER MONTH
+        {
+          $group: {
+            _id: {
+              month: {
+                $dateToString: {
+                  format: "%B",
+                  date: "$createdAt",
+                },
+              },
+
+              monthNumber: {
+                $month: "$createdAt",
+              },
+
+              patientMobile: "$patientMobile",
+            },
+          },
+        },
+
+        // MONTH-WISE COUNT
+        {
+          $group: {
+            _id: {
+              month: "$_id.month",
+              monthNumber: "$_id.monthNumber",
+            },
+
+            newPatients: {
+              $sum: 1,
+            },
+          },
+        },
+
+        {
+          $sort: {
+            "_id.monthNumber": 1,
+          },
+        },
+
+        {
+          $project: {
+            _id: 0,
+            month: "$_id.month",
+            newPatients: 1,
+          },
+        },
+      ]).allowDiskUse(true),
     ]);
 
-    const data = agg[0] || {};
 
-    const last3Months = getLast3Months();
-    const allowedMonths = last3Months.map(m => m.index);
-    const allowedMonthKeys = last3Months.map(m => m.key);
+    let formattedPatientData = patientData;
 
-    const categories = {
-      appointment: {},
-      newPatient: {},
-      oldPatient: {},
+    if (patientData.length < 3) {
+      const currentDate = new Date();
 
+      const last3Months = [];
+
+      for (let i = 2; i >= 0; i--) {
+        const d = new Date();
+
+        d.setMonth(currentDate.getMonth() - i);
+
+        last3Months.push(
+          d.toLocaleString("default", {
+            month: "short",
+          })
+        );
+      }
+
+      formattedPatientData = last3Months.map((month) => {
+        const found = patientData.find(
+          (item) => item.month === month
+        );
+
+        return {
+          month,
+          newPatients: found?.newPatients || 0,
+        };
+      });
+    }
+    console.log("formattedPatientData", formattedPatientData);
+
+    // transform chart data
+    const analytics = dashboardAgg?.[0] || {};
+    const callCategorization = {
+      appointment: [],
+      newPatient: formattedPatientData
     };
 
-    (data.callCategorization || []).forEach(item => {
-      //skip unwanted months
-      if (!allowedMonths.includes(item.month)) return;
+    (analytics.callCategorization || []).forEach(
+      (item) => {
+        callCategorization.appointment.push({
+          month: item._id,
+          count: item.appointment,
+        });
 
-      const monthKey = last3Months.find(m => m.index === item.month)?.key;
-      if (!monthKey) return;
+        // callCategorization.newPatient.push({
+        //   month: item._id,
+        //   count: item.newPatient,
+        // });
 
-      Object.keys(categories).forEach(key => {
-        if (["appointment", "newPatient", "oldPatient"].includes(key)) {
-          // Boolean flags: only count when true (1)
-          if (item[key] === 1) {
-            if (!categories[key]["count"]) {
-              categories[key]["count"] = Object.fromEntries(allowedMonthKeys.map(m => [m, 0]));
-            }
-            categories[key]["count"][monthKey]++;
-          }
-        } else {
-          // Categorical fields: group by value
-          const value = item[key] || "Unknown";
-
-          if (!categories[key][value]) {
-            // only last 3 months keys
-            categories[key][value] = {
-              name: value,
-              ...Object.fromEntries(allowedMonthKeys.map(m => [m, 0]))
-            };
-          }
-
-          categories[key][value][monthKey]++;
-        }
-      });
-    });
-    const callCategorizationFinal = {};
-
-    Object.keys(categories).forEach(key => {
-      callCategorizationFinal[key] = Object.values(categories[key]).filter(
-        item =>
-          item.name !== "Unknown" &&
-          item.name !== "" &&
-          item.name !== null
-      );
-    });
+        // callCategorization.oldPatient.push({
+        //   month: item._id,
+        //   count: item.oldPatient,
+        // });
+      }
+    );
 
     return {
       analytics: {
         totalUsers,
         totalBranches,
-        genderCount: data.genderCount?.[0] || {},
-        topInboundPurpose: data.topInboundPurpose || [],
-        topOutboundPurpose: data.topOutboundPurpose || [],
-        teamOverview: data.teamOverview || [],
-        callCategorization: callCategorizationFinal || [],
-        recentActivity
-      }
-    };
+        topInboundPurpose:
+          analytics.topInboundPurpose || [],
 
+        topOutboundPurpose:
+          analytics.topOutboundPurpose || [],
+
+        teamOverview:
+          analytics.teamOverview || [],
+
+        callCategorization,
+
+        recentActivity,
+      },
+    };
   } catch (error) {
-    console.error("Dashboard Error:", error);
-    throw new Error(error.message);
+    console.error(
+      "superAdminDashboardService Error:",
+      error
+    );
+
+    throw new Error(
+      error?.message || "Dashboard fetch failed"
+    );
   }
 };
 export const uploadBranchCSV = async (req, res) => {

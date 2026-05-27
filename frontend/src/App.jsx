@@ -192,15 +192,7 @@ function App() {
   );
 
   return (
-    // <Routes>
-    //   <Route path="/" element={<DoctorDashboard />} />
-    //   <Route path="/profile" element={<DoctorProfile />} />
-    //   <Route path="/appointments" element={<AppointmentManagement />} />
-    //   <Route path="/consultations" element={<PatientConsultations />} />
-    //   <Route path="/schedule" element={<ScheduleManagement />} />
-    //   <Route path="/emergency-alerts" element={<EmergencyAlerts />} />
-    //   <Route path="/clinical-records" element={<ClinicalRecords />} />
-    // </Routes>
+
     <>
       <Toaster position="top-right" reverseOrder={false} />
       {currentUser ? (
