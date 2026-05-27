@@ -29,11 +29,9 @@ function formatSchedule(timings) {
     timings.morning?.end
   ) {
     parts.push(
-      `${convertTo12Hour(
-        timings.morning.start
-      )} - ${convertTo12Hour(
-        timings.morning.end
-      )}`
+      `${timings.morning.start
+      } - ${timings.morning.end
+      }`
     );
   }
 
@@ -42,11 +40,9 @@ function formatSchedule(timings) {
     timings.evening?.end
   ) {
     parts.push(
-      `${convertTo12Hour(
-        timings.evening.start
-      )} - ${convertTo12Hour(
-        timings.evening.end
-      )}`
+      `${timings.evening.start
+      } - ${timings.evening.end
+      }`
     );
   }
 
@@ -55,11 +51,9 @@ function formatSchedule(timings) {
     timings.custom?.end
   ) {
     parts.push(
-      `${convertTo12Hour(
-        timings.custom.start
-      )} - ${convertTo12Hour(
-        timings.custom.end
-      )}`
+      `${timings.custom.start
+      } - ${timings.custom.end
+      }`
     );
   }
 
@@ -148,7 +142,7 @@ export default function DoctorDropdown({
             );
           }
           const schedule = formatSchedule(option.timings)
-          const opdDaysStr = option.opdDays && option.opdDays.length > 0 ? option.opdDays.join(", ") : "";
+          // const opdDaysStr = option.opdDays && option.opdDays.length > 0 ? option.opdDays.join(", ") : "";
           const degsStr = option.degrees && option.degrees.length > 0 ? `(${option.degrees.join(", ")})` : "";
           const disabled = !isDoctorAvailableOnDay(option);
 
@@ -171,19 +165,19 @@ export default function DoctorDropdown({
                       </span>
                     )}
 
-                    {option.opdNo && (
+                    {/* {option.opdNo && (
                       <span className="doctor-info-tag">
                         <span className="tag-label">OPD:</span>
                         <span className="tag-value">{option.opdNo}</span>
                       </span>
-                    )}
+                    )} */}
 
-                    {opdDaysStr && (
+                    {/* {opdDaysStr && (
                       <span className="doctor-info-tag">
                         <span className="tag-label">Days:</span>
                         <span className="tag-value">{opdDaysStr}</span>
                       </span>
-                    )}
+                    )} */}
 
                     {option.consultationCharges != null && (
                       <span className="doctor-info-tag">

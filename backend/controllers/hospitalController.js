@@ -7656,7 +7656,9 @@ export const getPatientByRole = async (req, res) => {
         })
         .skip(skip)
         .limit(PAGE_LIMIT)
+        .sort({ createdAt: -1 })
         .lean(),
+
 
       PatientModel.countDocuments(match),
     ]);

@@ -685,11 +685,42 @@ function Forms() {
               <div className="input-group">
                 <label className="required">Department</label>
 
-                <select
-                  className="select-field"
-                  value={form?.department || ""}
-                  onChange={(e) => {
-                    const depId = e.target.value;
+                <Autocomplete
+                  sx={{
+                    width: "100%",
+
+                    "& .MuiOutlinedInput-root": {
+                      minHeight: 38,
+                      border: "1px solid var(--border-color)",
+                      borderRadius: "var(--radius)",
+                      backgroundColor: "#fff",
+                      fontSize: "13px",
+
+                      "& fieldset": {
+                        border: "none",
+                      },
+                    },
+
+                    "& .MuiInputBase-input": {
+                      fontSize: "13px",
+                      padding: "0 14px",
+                    },
+                  }}
+                  options={[
+                    { _id: "", name: "Select Department" },
+                    ...(dynamicDepartments || []),
+                  ]}
+                  getOptionLabel={(option) => option?.name || ""}
+                  isOptionEqualToValue={(option, value) =>
+                    option._id === value._id
+                  }
+                  value={
+                    dynamicDepartments?.find(
+                      (dept) => dept._id === form?.department
+                    ) || { _id: "", name: "Select Department" }
+                  }
+                  onChange={(_, newValue) => {
+                    const depId = newValue?._id || "";
 
                     // doctor clear
                     handleChange("doctor", null);
@@ -697,20 +728,15 @@ function Forms() {
                     // department set
                     handleDepartmentChange(depId);
                     handleChange("department", depId);
-
-
                   }}
-                  required
-                >
-                  <option value="">Select</option>
-
-
-                  {dynamicDepartments?.map((dept) => (
-                    <option key={dept._id} value={dept._id}>
-                      {dept.name}
-                    </option>
-                  ))}
-                </select>
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      placeholder="Select Department"
+                      required
+                    />
+                  )}
+                />
               </div>
 
               <div className="input-group">
@@ -977,6 +1003,7 @@ function Forms() {
                   <input
                     type="time"
 
+                    disabled={form.formData.appointmentSlot?.start ? true : false}
                     value={
                       form.formData.patientArrivalTime
                         ? dayjs(

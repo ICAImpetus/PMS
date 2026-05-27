@@ -151,28 +151,59 @@ const FilledFormsComponent = ({
 
   const exportFormsToSheet = () => {
     if (filteredForms.length === 0) return;
+
     const headers = visibleFormColumns.map((c) => c.label);
+
     const rows = filteredForms.map((row) =>
       visibleFormColumns.map((c) => {
         let val = row[c.key];
-        if (val instanceof Date) val = val.toISOString();
+
+        // appointment slot format
+        if (c.key === "appointmentslot") {
+          if (val && typeof val === "object") {
+            const date = val.date
+              ? moment(val.date).format("DD MMM YYYY")
+              : "";
+
+            const start = val.start || "";
+            const end = val.end || "";
+
+            val = `${date} | ${start} - ${end}`;
+          } else {
+            val = "-";
+          }
+        }
+
+        // date convert
+        if (val instanceof Date) {
+          val = val.toISOString();
+        }
+
         return typeof val === "string" && val.includes(",")
           ? `"${val}"`
           : String(val ?? "");
-      }),
+      })
     );
+
     const csvContent = [
       headers.join(","),
       ...rows.map((r) => r.join(",")),
     ].join("\n");
+
     const blob = new Blob(["\uFEFF" + csvContent], {
       type: "text/csv;charset=utf-8;",
     });
+
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement("a");
     a.href = url;
-    a.download = `filled-forms-${moment().format("YYYY-MM-DD-HHmm")}.csv`;
+    a.download = `filled-forms-${moment().format(
+      "YYYY-MM-DD-HHmm"
+    )}.csv`;
+
     a.click();
+
     URL.revokeObjectURL(url);
   };
   useEffect(() => {

@@ -74,182 +74,182 @@ const HospitalManagementLayout = () => {
 
 function App() {
   const [theme, colorMode] = useMode();
-  // const { currentUser } = UserContextHook();
+  const { currentUser } = UserContextHook();
   // const colors = tokens(theme.palette.mode);
   const [isSidebar, setIsSidebar] = useState(true);
   const [toggled, setIsToggled] = useState(false);
   const [refresh, setRefresh] = useState(false);
-  // const isLoggedIn = !!currentUser;
+  const isLoggedIn = !!currentUser;
 
-  // const userRole = currentUser?.type;
-  // const hasAdminPrivileges = [
-  //   "superadmin",
-  //   "admin",
-  //   "supermanager",
-  //   "teamLeader",
-  //   "teamleader"
-  // ].includes(userRole);
+  const userRole = currentUser?.type;
+  const hasAdminPrivileges = [
+    "superadmin",
+    "admin",
+    "supermanager",
+    "teamLeader",
+    "teamleader"
+  ].includes(userRole);
 
-  // const adminRoutes = (
-  //   <>
-  //     {userRole === "superadmin" && (
-  //       <>
-  //         <Route path="/admin-management" element={<AdminManagement />} />
-  //         <Route path="/patient-history" element={<PatientHistory />} />
-  //         <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
-  //         <Route path="/user-management" element={<UserManagement />} />
-  //         <Route path="/admin-audit-logs" element={<AuditLog />} />
-  //       </>
-  //     )}
-  //     {userRole === "admin" && (
-  //       <>
-  //         <Route path="/" element={<AdminDashboard />} />
-  //         <Route path="/patient-history" element={<PatientHistory />} />
-  //         <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
-  //         <Route path="/user-management" element={<UserManagementAdmin />} />
-  //         <Route path="/roles-permissions" element={<RolesPermissions />} />
-  //         <Route path="/admin-user-management" element={<AdminUserManagement />} />
-  //       </>
-  //     )}
+  const adminRoutes = (
+    <>
+      {userRole === "superadmin" && (
+        <>
+          <Route path="/admin-management" element={<AdminManagement />} />
+          <Route path="/patient-history" element={<PatientHistory />} />
+          <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
+          <Route path="/user-management" element={<UserManagement />} />
+          <Route path="/admin-audit-logs" element={<AuditLog />} />
+        </>
+      )}
+      {userRole === "admin" && (
+        <>
+          <Route path="/" element={<AdminDashboard />} />
+          <Route path="/patient-history" element={<PatientHistory />} />
+          <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
+          <Route path="/user-management" element={<UserManagementAdmin />} />
+          <Route path="/roles-permissions" element={<RolesPermissions />} />
+          <Route path="/admin-user-management" element={<AdminUserManagement />} />
+        </>
+      )}
 
-  //     {userRole === "teamLeader" || userRole === "teamleader" && (
-  //       <>
-  //         <Route path="/" element={<TeamDashboard />} />
-  //         <Route path="/patient-history" element={<PatientHistoryForNonAdmins />} />
-  //         <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
-  //         <Route path="/user-management" element={<UserManagementTeamLeader />} />
-  //       </>
-  //     )}
+      {userRole === "teamLeader" || userRole === "teamleader" && (
+        <>
+          <Route path="/" element={<TeamDashboard />} />
+          <Route path="/patient-history" element={<PatientHistoryForNonAdmins />} />
+          <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
+          <Route path="/user-management" element={<UserManagementTeamLeader />} />
+        </>
+      )}
 
-  //     {userRole === "supermanager" && (
-  //       <>
-  //         <Route path="/" element={<SuperManagerDashboard />} />
-  //         <Route path="/patient-history" element={<PatientHistoryForNonAdmins />} />
-  //         <Route path="/single-patient-history:/id" element={<SInglePatientDetails />} />
-  //         <Route path="/user-management" element={<UserManagementSuperManager />} />
-  //       </>
-  //     )}
+      {userRole === "supermanager" && (
+        <>
+          <Route path="/" element={<SuperManagerDashboard />} />
+          <Route path="/patient-history" element={<PatientHistoryForNonAdmins />} />
+          <Route path="/single-patient-history:/id" element={<SInglePatientDetails />} />
+          <Route path="/user-management" element={<UserManagementSuperManager />} />
+        </>
+      )}
 
-  //     {(userRole === "superadmin" || userRole === "admin") && (
-  //       <>
-  //         {userRole === "superadmin" && (
-  //           <Route path="/" element={<SuperAdminDashboard />} />
-  //         )}
-  //         {userRole === "admin" && (
-  //           <Route path="/" element={<AdminDashboard />} />
-  //         )}
-  //         <Route path="/audit-logs" element={<AuditLogs />} />
-  //         <Route path="/admin-audit-logs" element={<AuditLog />} />
-  //       </>
-  //     )}
+      {(userRole === "superadmin" || userRole === "admin") && (
+        <>
+          {userRole === "superadmin" && (
+            <Route path="/" element={<SuperAdminDashboard />} />
+          )}
+          {userRole === "admin" && (
+            <Route path="/" element={<AdminDashboard />} />
+          )}
+          <Route path="/audit-logs" element={<AuditLogs />} />
+          <Route path="/admin-audit-logs" element={<AuditLog />} />
+        </>
+      )}
 
-  //     {hasAdminPrivileges && (
-  //       <Route path="/hospital-management" element={<HospitalManagementLayout />}>
-  //         <Route
-  //           index
-  //           element={<HospitalCreationNew />}
-  //         />
-  //         <Route index element={<HospitalCreationNew />} />
-  //         <Route path="edit-branches/:id" element={<EditBranches />} />
-  //         <Route path="edit-branches/:id/edit" element={<BranchInfo />} />
-  //         <Route path="edit/:id" element={<EditHospitalSuperadmin />} />
-  //         <Route path="create" element={<HospitalCreation />} />
-  //         <Route path="assigned" element={<HospitalList />} />
-  //       </Route>
-  //     )}
-  //   </>
-  // );
+      {hasAdminPrivileges && (
+        <Route path="/hospital-management" element={<HospitalManagementLayout />}>
+          <Route
+            index
+            element={<HospitalCreationNew />}
+          />
+          <Route index element={<HospitalCreationNew />} />
+          <Route path="edit-branches/:id" element={<EditBranches />} />
+          <Route path="edit-branches/:id/edit" element={<BranchInfo />} />
+          <Route path="edit/:id" element={<EditHospitalSuperadmin />} />
+          <Route path="create" element={<HospitalCreation />} />
+          <Route path="assigned" element={<HospitalList />} />
+        </Route>
+      )}
+    </>
+  );
 
-  // const nonAdminRoutes = (
-  //   <>
-  //     {userRole === "doctor" && (
-  //       <>
-  //         <Route path="/" element={<DoctorDashboard />} />
-  //         <Route path="/profile" element={<DoctorProfile />} />
-  //         <Route path="/appointments" element={<AppointmentManagement />} />
-  //         <Route path="/consultations" element={<PatientConsultations />} />
-  //         <Route path="/schedule" element={<ScheduleManagement />} />
-  //         <Route path="/emergency-alerts" element={<EmergencyAlerts />} />
-  //         <Route path="/clinical-records" element={<ClinicalRecords />} />
-  //       </>
-  //     )}
+  const nonAdminRoutes = (
+    <>
+      {userRole === "doctor" && (
+        <>
+          <Route path="/" element={<DoctorDashboard />} />
+          <Route path="/profile" element={<DoctorProfile />} />
+          <Route path="/appointments" element={<AppointmentManagement />} />
+          <Route path="/consultations" element={<PatientConsultations />} />
+          <Route path="/schedule" element={<ScheduleManagement />} />
+          <Route path="/emergency-alerts" element={<EmergencyAlerts />} />
+          <Route path="/clinical-records" element={<ClinicalRecords />} />
+        </>
+      )}
 
-  //     {userRole === "teamLeader" || userRole === "teamleader" ? (
-  //       <Route path="/" element={<TeamDashboard />} />
-  //     ) : userRole === "executive" ? (
-  //       <>
-  //         <Route path="/" element={<ExecutiveDashboard />} />
-  //         <Route path="/patient-history" element={<PatientHistoryForNonAdmins />} />
-  //         <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
-  //       </>
-  //     ) : null}
+      {userRole === "teamLeader" || userRole === "teamleader" ? (
+        <Route path="/" element={<TeamDashboard />} />
+      ) : userRole === "executive" ? (
+        <>
+          <Route path="/" element={<ExecutiveDashboard />} />
+          <Route path="/patient-history" element={<PatientHistoryForNonAdmins />} />
+          <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
+        </>
+      ) : null}
 
-  //     {userRole === "executive" && (
+      {userRole === "executive" && (
 
-  //       <Route path="/executive-forms" element={<ExecutiveForms />} />
-  //     )}
-  //   </>
-  // );
+        <Route path="/executive-forms" element={<ExecutiveForms />} />
+      )}
+    </>
+  );
 
   return (
-    <Routes>
-      <Route path="/" element={<DoctorDashboard />} />
-      <Route path="/profile" element={<DoctorProfile />} />
-      <Route path="/appointments" element={<AppointmentManagement />} />
-      <Route path="/consultations" element={<PatientConsultations />} />
-      <Route path="/schedule" element={<ScheduleManagement />} />
-      <Route path="/emergency-alerts" element={<EmergencyAlerts />} />
-      <Route path="/clinical-records" element={<ClinicalRecords />} />
-    </Routes>
-    // <>
-    //   <Toaster position="top-right" reverseOrder={false} />
-    //   {currentUser ? (
-    //     <ColorModeContext.Provider value={colorMode}>
-    //       <ThemeProvider theme={theme}>
-    //         <CssBaseline />
-    //         <GlobalLoader />
-    //         <div className="app-container">
-    //           <div className="topbar-wrapper">
-    //             <Topbar
-    //               setIsSidebar={setIsSidebar}
-    //               setIsToggled={setIsToggled}
-    //               toggled={toggled}
-    //               setRefresh={setRefresh}
-    //             />
-    //           </div>
+    // <Routes>
+    //   <Route path="/" element={<DoctorDashboard />} />
+    //   <Route path="/profile" element={<DoctorProfile />} />
+    //   <Route path="/appointments" element={<AppointmentManagement />} />
+    //   <Route path="/consultations" element={<PatientConsultations />} />
+    //   <Route path="/schedule" element={<ScheduleManagement />} />
+    //   <Route path="/emergency-alerts" element={<EmergencyAlerts />} />
+    //   <Route path="/clinical-records" element={<ClinicalRecords />} />
+    // </Routes>
+    <>
+      <Toaster position="top-right" reverseOrder={false} />
+      {currentUser ? (
+        <ColorModeContext.Provider value={colorMode}>
+          <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <GlobalLoader />
+            <div className="app-container">
+              <div className="topbar-wrapper">
+                <Topbar
+                  setIsSidebar={setIsSidebar}
+                  setIsToggled={setIsToggled}
+                  toggled={toggled}
+                  setRefresh={setRefresh}
+                />
+              </div>
 
-    //           <div className="main-layout">
-    //             <Sidebar
-    //               isSidebar={isSidebar}
-    //               toggled={toggled}
-    //               setIsToggled={setIsToggled}
-    //             />
-    //             <main className="main-content">
-    //               <GlobalHospitalContextProvider>
-    //                 <Routes>
-    //                   <Route path="/login" element={<Navigate to="/" />} />
-    //                   {hasAdminPrivileges ? adminRoutes : nonAdminRoutes}
-    //                 </Routes>
-    //               </GlobalHospitalContextProvider>
-    //             </main>
-    //           </div>
-    //         </div>
+              <div className="main-layout">
+                <Sidebar
+                  isSidebar={isSidebar}
+                  toggled={toggled}
+                  setIsToggled={setIsToggled}
+                />
+                <main className="main-content">
+                  <GlobalHospitalContextProvider>
+                    <Routes>
+                      <Route path="/login" element={<Navigate to="/" />} />
+                      {hasAdminPrivileges ? adminRoutes : nonAdminRoutes}
+                    </Routes>
+                  </GlobalHospitalContextProvider>
+                </main>
+              </div>
+            </div>
 
 
-    //       </ThemeProvider>
-    //     </ColorModeContext.Provider>
-    //   ) : (
+          </ThemeProvider>
+        </ColorModeContext.Provider>
+      ) : (
 
-    //     <Routes>
-    //       <Route path="/*" element={<Navigate to="/login" />} />
-    //       <Route
-    //         path="/login"
-    //         element={<Login setRefresh={setRefresh} />}
-    //       />
-    //     </Routes>
+        <Routes>
+          <Route path="/*" element={<Navigate to="/login" />} />
+          <Route
+            path="/login"
+            element={<Login setRefresh={setRefresh} />}
+          />
+        </Routes>
 
-    //   )}
-    // </>
+      )}
+    </>
   )
 
 }

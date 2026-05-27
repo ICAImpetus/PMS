@@ -94,7 +94,7 @@ export const PatientHistory = () => {
         pagination,
         setPagination,
         selectedHostpital,
-        refreshPatients
+        refetchPatients
     } = useContext(HospitalContext);
 
 
@@ -565,7 +565,10 @@ export const PatientHistory = () => {
                                     variant="outlined"
                                     color="primary"
                                     startIcon={<RefreshIcon />}
-                                    onClick={refreshPatients}
+                                    onClick={() => {
+                                        refetchPatients();
+                                        toast.success("Patient data refreshed!")
+                                    }}
 
                                 >
                                     Refresh

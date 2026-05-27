@@ -586,7 +586,7 @@ const ExecutiveDashboard = () => {
               </div>
               <div className="content-wrapper">
                 <div className="executive-metric-value">
-                  {metrics?.appointments?.length || 0}
+                  {metrics?.appointments?.total || 0}
                 </div>
                 <div className="executive-metric-breakdown">
                   <div
