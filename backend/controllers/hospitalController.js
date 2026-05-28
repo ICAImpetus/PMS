@@ -10,7 +10,7 @@ import cloudinary from "../utils/cloudinary.js";
 import { NotificationSchema } from "../models/master.models/NotiificationModel.js";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat.js";
-
+import bcrypt from "bcrypt"
 dayjs.extend(customParseFormat);
 
 const HospitalModel = getHospitalModel(MasterConn)
@@ -968,6 +968,7 @@ export const getSingleBranch = async (req, res) => {
         .populate(pop("department", Department))
         .populate(pop("specialties", Suggestion))
         .populate(pop("surgeries", Suggestion))
+        .select("-slots") // exclude heavy fields
         .sort({ createdAt: -1 })
         .lean(),
 
@@ -1267,6 +1268,9 @@ export const getDoctorFullProfile = async (req, res) => {
 export const addDoctor = async (req, res) => {
   let uploadedPublicId = null;
   let uploadedImageUrl = null;
+  let session;
+  console.log("req.body", req.body);
+
   try {
     const { branchId, hosId } = req.query;
 
@@ -1304,6 +1308,9 @@ export const addDoctor = async (req, res) => {
 
     // Tenant connection
     const conn = await getConnection(hospital.trimmedName);
+    //  Start Transaction
+    session = await conn.startSession();
+    session.startTransaction();
 
     const BranchModel = getBranchModel(conn);
     const DepartmentModel = getDepartmentModel(conn);
@@ -1316,6 +1323,8 @@ export const addDoctor = async (req, res) => {
     })
 
     if (!branch) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({
         success: false,
         message: "Branch not found",
@@ -1355,11 +1364,39 @@ export const addDoctor = async (req, res) => {
       if (!departmentExists) depId = null;
     }
 
+    if (!body.name || !body.username || !body.password) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(401).json({
+        success: false,
+        message: "Name, username and password are required",
+      });
+    }
+
+     const checkUsername = await AdminAndAgentModel.findOne({
+      username: body.username,
+      isDeleted: false,
+    }).lean();
+
+    if (checkUsername) {
+      await session.abortTransaction(); 
+      session.endSession();
+      return res.status(400).json({
+        success: false,
+        message: "Username already exists. Please choose another.",
+      });
+    }
+
+
+    const hashPassword = await bcrypt.hash(body?.password, 10);
+
     const doctorData = {
       hospital: branch.hospital,
       branch: branchId,
       department: depId,
       name: body.name,
+      username: body.username,
+      password: hashPassword,
       type: body?.type,
       designation: body.designation,
       specialization: body?.specialization,
@@ -1426,15 +1463,42 @@ export const addDoctor = async (req, res) => {
     // Create doctor
     // console.log("doctor", doctorData);
 
-    const createdDoctor = await DoctorModel.create(doctorData);
+    const createdDoctor = await DoctorModel.create([doctorData], {
+      session,
+    });
 
-    // Update department
+    const doctor = createdDoctor[0];
+
+    // UPDATE DEPARTMENT
     if (depId) {
       await DepartmentModel.findByIdAndUpdate(
         depId,
-        { $addToSet: { doctors: createdDoctor._id } },
+        {
+          $addToSet: {
+            doctors: doctor._id,
+          },
+        },
+        { session }
       );
     }
+
+    await AdminAndAgentModel.create({
+      name: doctorData.name,
+      username: doctorData.username,
+      password: doctorData.password,
+      type: "doctor",
+      hospitals: [
+        {
+          hospitalId: hospital._id,
+          name: hospital.name,
+        },
+      ],
+      refId: doctor._id,
+    });
+    // COMMIT
+    await session.commitTransaction();
+    session.endSession();
+
 
     auditLog({
       action: "Doctor_INSERT",
@@ -1450,7 +1514,6 @@ export const addDoctor = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Doctor added successfully",
-      data: createdDoctor,
     });
   } catch (error) {
     if (uploadedPublicId) {
@@ -1458,6 +1521,13 @@ export const addDoctor = async (req, res) => {
         await cloudinary.uploader.destroy(uploadedPublicId);
       } catch { }
     }
+
+    if (session) {
+      await session.abortTransaction();
+      session.endSession();
+    }
+
+    console.log("Add Doctor Error:", error);
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
@@ -1466,54 +1536,64 @@ export const addDoctor = async (req, res) => {
   }
 };
 export const updateDoctor = async (req, res) => {
-
   let uploadedPublicId = null;
   let uploadedImageUrl = null;
-
-
+  let session;
   console.log("doctor", req.body);
-
   try {
+
     const { id } = req.params;
     const { hosId } = req.query;
 
-
     if (!id) {
-
       return res.status(400).json({
         success: false,
         message: "Doctor ID is required",
       });
     }
 
-    if (
-      !hosId ||
-      !mongoose.Types.ObjectId.isValid(hosId)
-    ) {
+    if (!hosId || !mongoose.Types.ObjectId.isValid(hosId)) {
       return res.status(400).json({
         success: false,
         message: "Valid hospitalId are required",
       });
     }
 
-    // Validate hospital (master DB)
+    // =============================
+    // VALIDATE HOSPITAL
+    // =============================
+
     const hospital = await HospitalModel.findOne({
       _id: hosId,
       isDeleted: false,
-    }).lean();
+    })
+      .lean()
+      .session(session);
 
     if (!hospital) {
+
       return res.status(404).json({
         success: false,
         message: "Hospital not found",
       });
     }
+
     const conn = await getConnection(hospital.trimmedName);
+    session = await conn.startSession();
+    session.startTransaction();
+
     const DepartmentModel = getDepartmentModel(conn);
     const DoctorModel = getDoctorModel(conn);
 
-    const doctor = await DoctorModel.findById(id)
+    // =============================
+    // FIND DOCTOR
+    // =============================
+
+    const doctor = await DoctorModel.findById(id).session(session);
+
     if (!doctor || doctor.isDeleted) {
+      await session.abortTransaction();
+      session.endSession();
 
       return res.status(404).json({
         success: false,
@@ -1526,10 +1606,13 @@ export const updateDoctor = async (req, res) => {
     // =============================
     // SAFE JSON PARSER
     // =============================
+
     const parseJSON = (value, fallback) => {
       try {
         if (!value) return fallback;
+
         if (typeof value === "object") return value;
+
         return typeof value === "string" &&
           (value.startsWith("{") || value.startsWith("["))
           ? JSON.parse(value)
@@ -1539,16 +1622,39 @@ export const updateDoctor = async (req, res) => {
       }
     };
 
-    const specialties = parseJSON(body.specialties, doctor.specialties);
-    const surgeries = parseJSON(body.surgeries, doctor.surgeries);
-    const degrees = parseJSON(body.degrees, doctor.degrees);
-    const customDegrees = parseJSON(body.customDegrees, doctor.customDegrees);
-    const timings = parseJSON(body.timings, doctor.timings);
-    const videoConsultation = parseJSON(
-      body.videoConsultation,
-      doctor.videoConsultation,
+    const specialties = parseJSON(
+      body.specialties,
+      doctor.specialties
     );
 
+    const surgeries = parseJSON(
+      body.surgeries,
+      doctor.surgeries
+    );
+
+    const degrees = parseJSON(
+      body.degrees,
+      doctor.degrees
+    );
+
+    const customDegrees = parseJSON(
+      body.customDegrees,
+      doctor.customDegrees
+    );
+
+    const timings = parseJSON(
+      body.timings,
+      doctor.timings
+    );
+
+    const videoConsultation = parseJSON(
+      body.videoConsultation,
+      doctor.videoConsultation
+    );
+
+    // =============================
+    // IMAGE UPDATE
+    // =============================
 
     if (req.imageUrl) {
       uploadedPublicId = req.publicId;
@@ -1556,7 +1662,9 @@ export const updateDoctor = async (req, res) => {
 
       // delete old image
       if (doctor.profilePicture?.imageId) {
-        await cloudinary.uploader.destroy(doctor.profilePicture.imageId);
+        await cloudinary.uploader.destroy(
+          doctor.profilePicture.imageId
+        );
       }
 
       doctor.profilePicture = {
@@ -1565,63 +1673,96 @@ export const updateDoctor = async (req, res) => {
       };
     }
 
+    // REMOVE PROFILE PIC
     if (body.removeProfilePicture === "true") {
       if (doctor.profilePicture?.imageId) {
-        await cloudinary.uploader.destroy(doctor.profilePicture.imageId);
+        await cloudinary.uploader.destroy(
+          doctor.profilePicture.imageId
+        );
       }
+
       doctor.profilePicture = null;
     }
 
-    // =============================
-    // DEPARTMENT CHANGE HANDLING
-    // =============================
-
+    // DEPARTMENT CHANGE
     let newDepId = body.department;
 
     if (newDepId && mongoose.isValidObjectId(newDepId)) {
       if (doctor.department?.toString() !== newDepId) {
-        // Remove from old department
-        if (doctor.department) {
+
+        // REMOVE FROM OLD DEPARTMENT
+        if (doctor?.department) {
           await DepartmentModel.findByIdAndUpdate(
             doctor.department,
-            { $pull: { doctors: doctor._id } },
+            {
+              $pull: {
+                doctors: doctor._id,
+              },
+            },
+            { session }
           );
         }
 
-        // Add to new department
+        // ADD TO NEW DEPARTMENT
         await DepartmentModel.findByIdAndUpdate(
           newDepId,
-          { $addToSet: { doctors: doctor._id } },
+          {
+            $addToSet: {
+              doctors: doctor._id,
+            },
+          },
+          { session }
         );
 
         doctor.department = newDepId;
       }
     }
 
-    // =============================
-    // UPDATE BASIC FIELDS
-    // =============================
+    // UPDATE SUGGESTIONS
+    const surgeryIds = await updateSuggestions(
+      conn,
+      "surgery",
+      surgeries
+    );
 
-    const surgeryIds = await updateSuggestions(conn, "surgery", surgeries);
-    const specialityIds = await updateSuggestions(conn, "speciality", specialties);
-
+    const specialityIds = await updateSuggestions(
+      conn,
+      "speciality",
+      specialties
+    );
 
     doctor.surgeries = surgeryIds;
     doctor.specialties = specialityIds;
 
+
     doctor.name = body.name ?? doctor.name;
+    doctor.username = body.username ?? doctor.username;
     doctor.title = body.title ?? doctor.title;
     doctor.designation = body.designation ?? doctor.designation;
     doctor.opdNo = body.opdNo ?? doctor.opdNo;
+
     doctor.opdDays = body.opdDays
       ? body.opdDays.split(",").map((d) => d.trim())
       : doctor.opdDays;
-    doctor.specialization = body.specialization ?? doctor.specialization;
-    doctor.subDepartment = body.subDepartment ?? doctor.subDepartment;
+
+    doctor.specialization =
+      body.specialization ?? doctor.specialization;
+
+    doctor.subDepartment =
+      body.subDepartment ?? doctor.subDepartment;
+      
+
     doctor.type = body.type ?? doctor.type;
-    doctor.averagePatientTime = body?.averagePatientTime ?? doctor?.averagePatientTime,
-      doctor.maxPatientsHandled = body?.maxPatientsHandled ?? doctor?.maxPatientsHandled,
-      doctor.experience =
+
+    doctor.averagePatientTime =
+      body?.averagePatientTime ??
+      doctor?.averagePatientTime;
+
+    doctor.maxPatientsHandled =
+      body?.maxPatientsHandled ??
+      doctor?.maxPatientsHandled;
+
+    doctor.experience =
       body.experience !== undefined
         ? Number(body.experience)
         : doctor.experience;
@@ -1633,63 +1774,157 @@ export const updateDoctor = async (req, res) => {
 
     doctor.floor = body.floor ?? doctor.floor;
 
-    doctor.contactNumber = body.contactNumber ?? doctor.contactNumber;
-    doctor.whatsappNumber = body.whatsappNumber ?? doctor.whatsappNumber;
-    doctor.countryCode = body.countryCode ?? doctor.countryCode;
-    doctor.extensionNumber = body.extensionNumber ?? doctor.extensionNumber;
-    doctor.paName = body.paName ?? doctor.paName;
-    doctor.paContactNumber = body.paContactNumber ?? doctor.paContactNumber;
-    doctor.additionalInfo = body.additionalInfo ?? doctor.additionalInfo;
-    doctor.teleMedicine = body.teleMedicine ?? doctor.teleMedicine;
+    doctor.contactNumber =
+      body.contactNumber ?? doctor.contactNumber;
 
-    // doctor.specialties = specialties;
-    // doctor.surgeries = surgeries;
+    doctor.whatsappNumber =
+      body.whatsappNumber ?? doctor.whatsappNumber;
+
+    doctor.countryCode =
+      body.countryCode ?? doctor.countryCode;
+
+    doctor.extensionNumber =
+      body.extensionNumber ?? doctor.extensionNumber;
+
+    doctor.paName = body.paName ?? doctor.paName;
+
+    doctor.paContactNumber =
+      body.paContactNumber ?? doctor.paContactNumber;
+
+    doctor.additionalInfo =
+      body.additionalInfo ?? doctor.additionalInfo;
+
+    doctor.teleMedicine =
+      body.teleMedicine ?? doctor.teleMedicine;
+
     doctor.degrees = degrees;
     doctor.customDegrees = customDegrees;
 
-    // Video Consultation Mapping
+    let updatedPassword = null;
+
+    if (body.password) {
+      updatedPassword = await bcrypt.hash(body.password, 10);
+
+      doctor.password = updatedPassword;
+    }
+
+    // =============================
+    // VIDEO CONSULTATION
+    // =============================
+
     doctor.videoConsultation = {
       enabled: videoConsultation?.enabled === true,
-      timeSlot: videoConsultation?.timeSlot || doctor.videoConsultation?.timeSlot,
-      charges: Number(videoConsultation?.charges) || 0,
-      startTime: videoConsultation?.startTime || doctor.videoConsultation?.startTime,
-      endTime: videoConsultation?.endTime || doctor.videoConsultation?.endTime,
+
+      timeSlot:
+        videoConsultation?.timeSlot ||
+        doctor.videoConsultation?.timeSlot,
+
+      charges:
+        Number(videoConsultation?.charges) || 0,
+
+      startTime:
+        videoConsultation?.startTime ||
+        doctor.videoConsultation?.startTime,
+
+      endTime:
+        videoConsultation?.endTime ||
+        doctor.videoConsultation?.endTime,
+
       days: videoConsultation?.days
         ? Array.isArray(videoConsultation.days)
           ? videoConsultation.days
-          : videoConsultation.days.split(",").map((d) => d.trim())
+          : videoConsultation.days
+            .split(",")
+            .map((d) => d.trim())
         : [],
     };
 
-    // Timings Mapping
+    // =============================
+    // TIMINGS
+    // =============================
+
     doctor.timings = {
       morning: {
-        start: timings?.morning?.from || timings?.morning?.start || "",
-        end: timings?.morning?.to || timings?.morning?.end || "",
+        start:
+          timings?.morning?.from ||
+          timings?.morning?.start ||
+          "",
+
+        end:
+          timings?.morning?.to ||
+          timings?.morning?.end ||
+          "",
       },
+
       evening: {
-        start: timings?.evening?.from || timings?.evening?.start || "",
-        end: timings?.evening?.to || timings?.evening?.end || "",
+        start:
+          timings?.evening?.from ||
+          timings?.evening?.start ||
+          "",
+
+        end:
+          timings?.evening?.to ||
+          timings?.evening?.end ||
+          "",
       },
+
       custom: {
-        start: timings?.custom?.from || timings?.custom?.start || "",
-        end: timings?.custom?.to || timings?.custom?.end || "",
+        start:
+          timings?.custom?.from ||
+          timings?.custom?.start ||
+          "",
+
+        end:
+          timings?.custom?.to ||
+          timings?.custom?.end ||
+          "",
       },
     };
 
-    doctor.isEnabled = body.isEnabled === "true" || body.isEnabled === true;
+    doctor.isEnabled =
+      body.isEnabled === "true" ||
+      body.isEnabled === true;
 
-    doctor.slots = generateDoctorSlots(doctor)
-    //  Actor Info
+    doctor.slots = generateDoctorSlots(doctor);
+
+    // =============================
+    // SAVE DOCTOR
+    // =============================
+
+    await doctor.save({ session });
+
+    // =============================
+    // UPDATE ADMIN SCHEMA
+    // =============================
+
+    const adminUpdateData = {
+      name: doctor.name,
+      username: doctor.username,
+    };
+
+    if (updatedPassword) {
+      adminUpdateData.password = updatedPassword;
+    }
+
+    await AdminAndAgentModel.findOneAndUpdate(
+      {
+        refId: doctor._id,
+        type: "doctor",
+      },
+      {
+        $set: adminUpdateData,
+      }
+    );
+
+    // =============================
+    // AUDIT LOG
+    // =============================
+
     const actorRole = req.user?.type || "Unknown";
-    const actorName = req.user?.name || "Unknown User";
 
-    await doctor.save();
+    const actorName =
+      req.user?.name || "Unknown User";
 
-    // const populatedDoctor =
-    //   await DoctorModel.findById(id).populate("department");
-
-    //  Audit Log
     auditLog({
       action: "UPDATE_DOCTOR",
       module: "DoctorManagement",
@@ -1702,15 +1937,31 @@ export const updateDoctor = async (req, res) => {
       userAgent: req.headers["user-agent"],
     });
 
+    // =============================
+    // COMMIT
+    // =============================
+
+    await session.commitTransaction();
+    session.endSession();
+
     return res.status(200).json({
       success: true,
       message: "Doctor updated successfully",
-      // data: populatedDoctor,
     });
+
   } catch (error) {
 
+    if (session) {
+      await session.abortTransaction();
+      session.endSession();
+    }
+    // DELETE NEW IMAGE IF FAILED
     if (uploadedPublicId) {
-      await cloudinary.uploader.destroy(uploadedPublicId);
+      try {
+        await cloudinary.uploader.destroy(
+          uploadedPublicId
+        );
+      } catch { }
     }
 
     console.error("Update Doctor Error:", error);

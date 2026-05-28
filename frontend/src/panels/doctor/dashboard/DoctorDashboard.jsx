@@ -59,21 +59,6 @@ const DoctorDashboard = () => {
     const colors = tokens(theme.palette.mode);
     const navigate = useNavigate();
     const { currentUser } = UserContextHook() || { name: "Dr. Rajesh Kumar" };
-
-    // Dummy doctor data
-    const dummyDoctor = {
-        _id: "DOC001",
-        name: "Dr. Rajesh Kumar",
-        specialization: "Cardiology",
-        qualification: "MBBS, MD, DM Cardiology",
-        experience: 15,
-        email: "dr.rajesh@hospital.com",
-        contactNumber: "+91-9876543210",
-        profilePicture: "https://via.placeholder.com/200?text=Dr.+Rajesh",
-        department: "Cardiology",
-        consultationCharges: 500,
-    };
-
     // Today's appointments
     const todayAppointments = [
         {
@@ -276,10 +261,10 @@ const DoctorDashboard = () => {
             sx={{
                 height: "100%",
                 backgroundColor: colors.primary[400],
-                border: `1px solid ${colors.primary[500]}`,
+                // border: `1px solid ${colors.primary[500]}`,
                 transition: "all 0.3s ease",
                 "&:hover": {
-                    boxShadow: `0 8px 16px ${color}40`,
+                    // boxShadow: `0 8px 16px ${color}40`,
                     transform: "translateY(-4px)",
                 },
             }}
@@ -287,7 +272,7 @@ const DoctorDashboard = () => {
             <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
                     <Box>
-                        <Typography color={colors.grey[300]} variant="body2" mb={1} fontWeight={500}>
+                        <Typography variant="body2" mb={1} fontWeight={500}>
                             {title}
                         </Typography>
                         <Box display="flex" alignItems="baseline" gap={1}>
@@ -328,20 +313,29 @@ const DoctorDashboard = () => {
 
     // Today's appointments card with better styling
     const TodayAppointmentsCard = () => (
-        <Card sx={{ backgroundColor: colors.primary[400], border: `1px solid ${colors.primary[500]}` }}>
-            <CardHeader
-                title={
-                    <Box display="flex" alignItems="center" gap={1}>
-                        <ScheduleIcon sx={{ color: colors.blueAccent[400] }} />
-                        <span>Today's Appointments</span>
-                    </Box>
-                }
-                subheader={`${appointments.length} scheduled consultations`}
-                titleTypographyProps={{ color: colors.grey[100], variant: "h6" }}
-                subheaderTypographyProps={{ color: colors.grey[300] }}
-                sx={{ pb: 2 }}
-            />
-            <Divider sx={{ borderColor: colors.primary[500] }} />
+        <Card sx={{ border: `1px solid lightgray` }}>
+            <Box display="flex" alignItems="center" justifyContent="space-between">
+                <CardHeader
+                    title={<span>Today's Appointments</span>}
+                    subheader={`${appointments.length} scheduled consultations`}
+                    titleTypographyProps={{ variant: "h6" }}
+                    sx={{ pb: 2 }}
+                />
+
+
+                <Button
+
+                    variant="contained"
+                    onClick={() => setTabValue(0)}
+                    sx={{ backgroundColor: colors.blueAccent[400], mx: 2 }}
+                >
+                    View All({appointments.length})
+                </Button>
+
+
+
+            </Box>
+            <Divider sx={{ borderColor: "lightgray" }} />
             <CardContent sx={{ p: 0 }}>
                 <Box sx={{ maxHeight: "500px", overflowY: "auto" }}>
                     {appointments.slice(0, 5).map((apt, idx) => (
@@ -350,10 +344,9 @@ const DoctorDashboard = () => {
                             sx={{
                                 p: 2,
                                 borderBottom: idx < 4 ? `1px solid ${colors.primary[500]}` : "none",
-                                backgroundColor: idx % 2 === 0 ? "transparent" : `${colors.primary[500]}40`,
                                 transition: "background-color 0.2s ease",
                                 "&:hover": {
-                                    backgroundColor: colors.primary[500],
+                                    backgroundColor: "lightgrey",
                                 },
                             }}
                         >
@@ -362,91 +355,49 @@ const DoctorDashboard = () => {
                                     <Typography color={colors.grey[100]} variant="subtitle2" fontWeight={600}>
                                         {apt.patientName}
                                     </Typography>
-                                    <Typography color={colors.grey[300]} variant="caption">
+                                    <Typography variant="caption">
                                         {apt.patientId} • {apt.appointmentTime}
                                     </Typography>
                                 </Box>
                                 <Box display="flex" gap={1}>
-                                    <Chip
-                                        label={apt.type}
+                                    <IconButton
                                         size="small"
-                                        sx={{
-                                            backgroundColor: apt.type === "Emergency" ? `${colors.redAccent[400]}40` : `${colors.blueAccent[400]}40`,
-                                            color: apt.type === "Emergency" ? colors.redAccent[400] : colors.blueAccent[400],
-                                        }}
-                                    />
-                                    <Chip
-                                        label={apt.status}
+                                        onClick={() => handleEditAppointment(apt)}
+                                        sx={{ color: colors.blueAccent[400] }}
+                                    >
+                                        <EditIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton
                                         size="small"
-                                        color={apt.status === "Scheduled" ? "success" : "warning"}
-                                        variant="outlined"
-                                    />
+                                        onClick={() => handleCompleteAppointment(apt.id)}
+                                        sx={{ color: colors.greenAccent[400] }}
+                                    >
+                                        <CheckCircleIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => handleCancelAppointment(apt.id)}
+                                        sx={{ color: colors.redAccent[400] }}
+                                    >
+                                        <CancelIcon fontSize="small" />
+                                    </IconButton>
                                 </Box>
                             </Box>
-                            <Typography color={colors.grey[300]} variant="caption" display="block" mb={1}>
+                            <Typography variant="caption" display="block" mb={1}>
                                 {apt.notes}
                             </Typography>
-                            <Box display="flex" gap={1}>
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    startIcon={<EditIcon />}
-                                    onClick={() => handleEditAppointment(apt)}
-                                    sx={{
-                                        fontSize: "0.75rem",
-                                        color: colors.blueAccent[400],
-                                        borderColor: colors.blueAccent[400],
-                                    }}
-                                >
-                                    Edit
-                                </Button>
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    startIcon={<CheckCircleIcon />}
-                                    onClick={() => handleCompleteAppointment(apt.id)}
-                                    sx={{
-                                        fontSize: "0.75rem",
-                                        color: colors.greenAccent[400],
-                                        borderColor: colors.greenAccent[400],
-                                    }}
-                                >
-                                    Complete
-                                </Button>
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    startIcon={<CancelIcon />}
-                                    onClick={() => handleCancelAppointment(apt.id)}
-                                    sx={{
-                                        fontSize: "0.75rem",
-                                        color: colors.redAccent[400],
-                                        borderColor: colors.redAccent[400],
-                                    }}
-                                >
-                                    Cancel
-                                </Button>
-                            </Box>
+
                         </Box>
                     ))}
                 </Box>
-                <Box sx={{ p: 2, textAlign: "center", borderTop: `1px solid ${colors.primary[500]}` }}>
-                    <Button
-                        fullWidth
-                        variant="contained"
-                        onClick={() => setTabValue(0)}
-                        sx={{ backgroundColor: colors.blueAccent[400] }}
-                    >
-                        View All Appointments ({appointments.length})
-                    </Button>
-                </Box>
+
             </CardContent>
         </Card>
     );
 
     // Enhanced recent consultations with detailed info
     const RecentConsultationsCard = () => (
-        <Card sx={{ backgroundColor: colors.primary[400], border: `1px solid ${colors.primary[500]}` }}>
+        <Card sx={{ backgroundColor: colors.primary[400], border: `1px solid lightgray` }}>
             <CardHeader
                 title={
                     <Box display="flex" alignItems="center" gap={1}>
@@ -459,7 +410,7 @@ const DoctorDashboard = () => {
                 subheaderTypographyProps={{ color: colors.grey[300] }}
                 sx={{ pb: 2 }}
             />
-            <Divider sx={{ borderColor: colors.primary[500] }} />
+            <Divider sx={{ borderColor: "lightgray" }} />
             <CardContent sx={{ p: 0 }}>
                 <Box sx={{ maxHeight: "500px", overflowY: "auto" }}>
                     {appointments.slice(0, 5).map((apt, idx) => (
@@ -703,7 +654,7 @@ const DoctorDashboard = () => {
     const PastAppointmentsTab = () => (
         <Box>
             {/* Filters */}
-            <Card sx={{ backgroundColor: colors.primary[400], border: `1px solid ${colors.primary[500]}`, mb: 3, mt: 3 }}>
+            <Card sx={{ border: `1px solid lightgray`, mb: 3, mt: 3 }}>
                 <CardHeader
                     title={
                         <Box display="flex" alignItems="center" gap={1}>
@@ -801,13 +752,13 @@ const DoctorDashboard = () => {
             </Card>
 
             {/* Past Appointments Table */}
-            <Card sx={{ backgroundColor: colors.primary[400], border: `1px solid ${colors.primary[500]}` }}>
+            <Card sx={{ backgroundColor: colors.primary[400], border: `1px solid lightgray` }}>
                 <CardHeader
                     title={`Past Appointments (${getFilteredPastAppointments().length})`}
                     titleTypographyProps={{ color: colors.grey[100] }}
                     sx={{ pb: 2 }}
                 />
-                <Divider sx={{ borderColor: colors.primary[500] }} />
+                <Divider sx={{ borderColor: "lightgray" }} />
                 <CardContent sx={{ p: 0 }}>
                     <TableContainer>
                         <Table>
@@ -948,7 +899,7 @@ const DoctorDashboard = () => {
             <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
                 <Box>
                     <Typography variant="h3" color={colors.grey[100]} fontWeight="bold" mb={1}>
-                        Welcome, Dr. {dummyDoctor.name.split(" ").pop()}
+                        Welcome, Dr. {currentUser?.name}
                     </Typography>
                     <Typography color={colors.grey[300]} variant="body1">
                         {new Date().toLocaleDateString("en-US", {
@@ -959,7 +910,7 @@ const DoctorDashboard = () => {
                         })}
                     </Typography>
                 </Box>
-                <Box display="flex" gap={2} alignItems="center">
+                {/* <Box display="flex" gap={2} alignItems="center">
                     <Card
                         sx={{
                             backgroundColor: colors.primary[400],
@@ -969,7 +920,7 @@ const DoctorDashboard = () => {
                     >
                         <Box display="flex" alignItems="center" gap={2}>
                             <Avatar
-                                alt={dummyDoctor.name}
+                                alt={currentUser?.name}
                                 sx={{
                                     width: 60,
                                     height: 60,
@@ -978,14 +929,14 @@ const DoctorDashboard = () => {
                                     border: `2px solid ${colors.blueAccent[400]}`,
                                 }}
                             >
-                                {dummyDoctor.name.charAt(0)}
+                                {currentUser?.name.charAt(0)}
                             </Avatar>
                             <Box>
                                 <Typography color={colors.grey[100]} variant="subtitle2" fontWeight={600}>
-                                    {dummyDoctor.name}
+                                    {currentUser?.name}
                                 </Typography>
                                 <Typography color={colors.blueAccent[400]} variant="caption" fontWeight={500}>
-                                    {dummyDoctor.specialization}
+                                    {currentUser?.specialization}
                                 </Typography>
                             </Box>
                             <IconButton
@@ -1001,7 +952,7 @@ const DoctorDashboard = () => {
                             </IconButton>
                         </Box>
                     </Card>
-                </Box>
+                </Box> */}
             </Box>
 
             {/* Enhanced Stats Grid */}
@@ -1024,7 +975,7 @@ const DoctorDashboard = () => {
                         trend={-5}
                     />
                 </Grid>
-                <Grid item xs={12} sm={6} md={4}>
+                {/* <Grid item xs={12} sm={6} md={4}>
                     <StatCard
                         title="Emergency Alerts"
                         value={stats.emergencyAlerts}
@@ -1032,7 +983,7 @@ const DoctorDashboard = () => {
                         color={colors.redAccent[400]}
                         trend={8}
                     />
-                </Grid>
+                </Grid> */}
                 <Grid item xs={12} sm={6} md={4}>
                     <StatCard
                         title="Total Patients"
@@ -1042,7 +993,7 @@ const DoctorDashboard = () => {
                         trend={18}
                     />
                 </Grid>
-                <Grid item xs={12} sm={6} md={4}>
+                {/* <Grid item xs={12} sm={6} md={4}>
                     <StatCard
                         title="Avg. Rating"
                         value={stats.averageRating}
@@ -1051,8 +1002,8 @@ const DoctorDashboard = () => {
                         unit="/5"
                         trend={3}
                     />
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
+                </Grid> */}
+                {/* <Grid item xs={12} sm={6} md={4}>
                     <StatCard
                         title="Consultation Rate"
                         value={stats.consultationRate}
@@ -1061,21 +1012,21 @@ const DoctorDashboard = () => {
                         unit="%"
                         trend={6}
                     />
-                </Grid>
+                </Grid> */}
             </Grid>
 
             {/* Tabbed Interface */}
-            <Card sx={{ backgroundColor: colors.primary[400], border: `1px solid ${colors.primary[500]}` }}>
-                <Box sx={{ borderBottom: `2px solid ${colors.primary[500]}` }}>
+            <Card sx={{ backgroundColor: colors.primary[400] }}>
+                <Box >
                     <Tabs
                         value={tabValue}
                         onChange={(e, newValue) => setTabValue(newValue)}
                         sx={{
-                            "& .MuiTabs-indicator": { backgroundColor: colors.blueAccent[400] },
-                            "& .MuiTab-root": {
-                                color: colors.grey[300],
-                                "&.Mui-selected": { color: colors.blueAccent[400] },
-                            },
+                            // "& .MuiTabs-indicator": { backgroundColor: colors.blueAccent[400] },
+                            // "& .MuiTab-root": {
+                            //     color: colors.grey[300],
+                            //     "&.Mui-selected": { color: colors.blueAccent[400] },
+                            // },
                         }}
                     >
                         <Tab label="Today's Appointments" icon={<EventIcon />} iconPosition="start" />
@@ -1097,7 +1048,6 @@ const DoctorDashboard = () => {
                                     </Grid>
                                 </Grid>
                             </CardContent>
-                            <AllAppointmentsTab />
                         </Box>
                     )}
                     {tabValue === 1 && <PastAppointmentsTab />}

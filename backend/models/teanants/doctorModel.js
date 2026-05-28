@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const toTitleCase = (str) => {
+export const toTitleCase = (str) => {
   if (!str) return str;
 
   return str
@@ -65,6 +65,15 @@ export const DoctorSchema = new mongoose.Schema(
       type: String,
       trim: true,
       // set: toTitleCase,
+    },
+    username: {
+      type: String,
+      // required: true,   
+      // unique: true,
+    },
+    password: {
+      type: String,
+      // required: true,
     },
     averagePatientTime: {
       type: String,

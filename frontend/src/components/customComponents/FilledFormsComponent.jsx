@@ -6,6 +6,8 @@ import IconButton from "@mui/material/IconButton";
 import IosShareOutlinedIcon from '@mui/icons-material/IosShareOutlined';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import { Box, Pagination, TextField } from "@mui/material";
+import { useApi } from "../../api/useApi";
+import { commonRoutes } from "../../api/apiService";
 
 
 const FORMS_AVAILABLE_COLUMNS = [
@@ -77,9 +79,6 @@ const FilledFormsComponent = ({
   setPagination,
   formsLoading = false,
 }) => {
-
-
-
   const [formsColumnFilterOpen, setFormsColumnFilterOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("")
   const [index, setIndex] = useState(0);
@@ -96,6 +95,8 @@ const FilledFormsComponent = ({
     "remarks"
 
   ]);
+
+  // const { request } = useApi(commonRoutes.getFilledForms);
   const formsColumnFilterRef = useRef(null);
 
   const flattenedForms = React.useMemo(() => {
@@ -149,62 +150,93 @@ const FilledFormsComponent = ({
     );
   };
 
-  const exportFormsToSheet = () => {
-    if (filteredForms.length === 0) return;
+  const exportFormsToSheet = async () => {
+    try {
+      //  STEP 1: filter build karo
+      const getFilterParams = () => {
+        switch (selectedFilter) {
+          case "today":
+            return "filter=today";
+          case "yesterday":
+            return "filter=yesterday";
+          case "last7":
+            return "filter=last7";
+          case "last30":
+            return "filter=last30";
+          case "last3M":
+            return "filter=last3M";
+          default:
+            return "";
+        }
+      };
 
-    const headers = visibleFormColumns.map((c) => c.label);
+      const query = getFilterParams();
 
-    const rows = filteredForms.map((row) =>
-      visibleFormColumns.map((c) => {
-        let val = row[c.key];
+      //  STEP 2: ALL data fetch (NO pagination)
+      // const res = await  
+      // const json = await res.json();
 
-        // appointment slot format
-        if (c.key === "appointmentslot") {
-          if (val && typeof val === "object") {
-            const date = val.date
-              ? moment(val.date).format("DD MMM YYYY")
-              : "";
+      // const allForms = json.results || [];
 
-            const start = val.start || "";
-            const end = val.end || "";
+      // if (allForms.length === 0) return;
 
-            val = `${date} | ${start} - ${end}`;
-          } else {
-            val = "-";
+      //  STEP 3: CSV logic (same tera)
+      const headers = visibleFormColumns.map((c) => c.label);
+
+      const rows = allForms.map((row) =>
+        visibleFormColumns.map((c) => {
+          let val = row[c.key];
+
+          // appointment slot format
+          if (c.key === "appointmentslot") {
+            if (val && typeof val === "object") {
+              const date = val.date
+                ? moment(val.date).format("DD MMM YYYY")
+                : "";
+
+              const start = val.start || "";
+              const end = val.end || "";
+
+              val = `${date} | ${start} - ${end}`;
+            } else {
+              val = "-";
+            }
           }
-        }
 
-        // date convert
-        if (val instanceof Date) {
-          val = val.toISOString();
-        }
+          // date convert
+          if (val instanceof Date) {
+            val = val.toISOString();
+          }
 
-        return typeof val === "string" && val.includes(",")
-          ? `"${val}"`
-          : String(val ?? "");
-      })
-    );
+          return typeof val === "string" && val.includes(",")
+            ? `"${val}"`
+            : String(val ?? "");
+        })
+      );
 
-    const csvContent = [
-      headers.join(","),
-      ...rows.map((r) => r.join(",")),
-    ].join("\n");
+      const csvContent = [
+        headers.join(","),
+        ...rows.map((r) => r.join(",")),
+      ].join("\n");
 
-    const blob = new Blob(["\uFEFF" + csvContent], {
-      type: "text/csv;charset=utf-8;",
-    });
+      const blob = new Blob(["\uFEFF" + csvContent], {
+        type: "text/csv;charset=utf-8;",
+      });
 
-    const url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `filled-forms-${moment().format(
-      "YYYY-MM-DD-HHmm"
-    )}.csv`;
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `filled-forms-${moment().format(
+        "YYYY-MM-DD-HHmm"
+      )}.csv`;
 
-    a.click();
+      a.click();
+      URL.revokeObjectURL(url);
 
-    URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Export error:", err);
+    }
   };
   useEffect(() => {
     const handleClickOutside = (event) => {

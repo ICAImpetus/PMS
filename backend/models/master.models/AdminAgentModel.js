@@ -56,6 +56,7 @@ export const AdminAgentSchema = new mongoose.Schema(
           "teamleader",
           "executive",
           "supermanager",
+          "doctor",
         ],
         message: "{VALUE} is not a valid user type",
       },
@@ -103,6 +104,12 @@ export const AdminAgentSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    refId:{
+      type: mongoose.Schema.Types.ObjectId,
+    },
+
+    
 
     canDelete: {
       type: Boolean,

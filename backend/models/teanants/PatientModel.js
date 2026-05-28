@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
+import { toTitleCase } from "./doctorModel.js";
 
-// Patient
+
 export const PatientSchema = new mongoose.Schema(
     {
         hospitalId: {
@@ -30,6 +31,8 @@ export const PatientSchema = new mongoose.Schema(
         patientName: {
             type: String,
             trim: true,
+            set: toTitleCase,
+
         },
 
         patientMobile: {

@@ -51,11 +51,6 @@ import {
 import {
   DoctorDashboard,
   DoctorProfile,
-  AppointmentManagement,
-  PatientConsultations,
-  ScheduleManagement,
-  EmergencyAlerts,
-  ClinicalRecords,
 } from "./panels/doctor";
 
 import AdminManagement from "./panels/superAdmin/adminManagement/AdminManagement";
@@ -166,11 +161,7 @@ function App() {
         <>
           <Route path="/" element={<DoctorDashboard />} />
           <Route path="/profile" element={<DoctorProfile />} />
-          <Route path="/appointments" element={<AppointmentManagement />} />
-          <Route path="/consultations" element={<PatientConsultations />} />
-          <Route path="/schedule" element={<ScheduleManagement />} />
-          <Route path="/emergency-alerts" element={<EmergencyAlerts />} />
-          <Route path="/clinical-records" element={<ClinicalRecords />} />
+          <Route path="/appointments" element={<PatientHistoryForNonAdmins />} />
         </>
       )}
 

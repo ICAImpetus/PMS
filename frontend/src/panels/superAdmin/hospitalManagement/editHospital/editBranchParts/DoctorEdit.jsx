@@ -13,6 +13,8 @@ import {
   Typography,
   Chip,
   IconButton,
+  Tooltip,
+  InputAdornment,
   useTheme,
   Card,
   CardContent,
@@ -33,6 +35,9 @@ import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 // Imports for Time Pickers
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -182,6 +187,8 @@ const AddDoctorModal = ({
     // New fields
     profilePicture: null,
     profilePreview: null,
+    username: "",
+    password: "",
     title: "",
     designation: "",
     department: null,
@@ -213,6 +220,8 @@ const AddDoctorModal = ({
     predefinedSubDepartments,
   );
   const [newSubDepartment, setNewSubDepartment] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [usernameEdited, setUsernameEdited] = useState(false);
   const [suggestions, setSuggestions] = useState({
     treatableAreas: [],
     surgeries: [],
@@ -413,6 +422,9 @@ const AddDoctorModal = ({
           doctorData?.specialization || "",
 
         title: doctorData?.title || "",
+
+        username: doctorData?.username || "",
+        password: "",
       });
 
       setWhatsappOption(
@@ -502,6 +514,9 @@ const AddDoctorModal = ({
         specialization: "",
 
         title: "",
+
+        username: "",
+        password: "",
       });
 
       setWhatsappOption("same");
@@ -516,6 +531,8 @@ const AddDoctorModal = ({
     setCurrentSurgeryInput("");
     setNewDepartment("");
     setNewSubDepartment("");
+    setShowPassword(false);
+    setUsernameEdited(false);
 
   }, [open, doctorData]);
   // Handle changes for standard text fields
@@ -525,14 +542,55 @@ const AddDoctorModal = ({
       toast.error("Max 50 Patients Allowed")
       return
     }
+
     setCurrentDoctor((prev) => ({
       ...prev,
       [name]: value,
     }));
+
+    if (name === "username") {
+      setUsernameEdited(true);
+    }
+
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
+
+  const generateUsername = (doctorName, hospitalName) => {
+    const namePart = doctorName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "")
+      .trim();
+    const hospitalPart = hospitalName
+      ? hospitalName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "")
+        .trim()
+      : "";
+
+    if (!namePart) return "";
+    return hospitalPart ? `${namePart}${hospitalPart}` : namePart;
+  };
+
+  useEffect(() => {
+    if (doctorData) return;
+    if (usernameEdited) return;
+
+    const hospitalName =
+      doctorData?.hospital?.name || doctorData?.hospitalName || "";
+    const generatedUsername = generateUsername(
+      currentDoctor.name || "",
+      hospitalName,
+    );
+
+    if (generatedUsername && generatedUsername !== currentDoctor.username) {
+      setCurrentDoctor((prev) => ({
+        ...prev,
+        username: generatedUsername,
+      }));
+    }
+  }, [currentDoctor.name, doctorData, usernameEdited]);
 
   // Strict Number Validation Handler
   const handleNumberChange = (e, maxLength) => {
@@ -904,6 +962,15 @@ const AddDoctorModal = ({
 
     if (!currentDoctor.type?.trim())
       tempErrors.type = "Doctor type is required.";
+
+    if (!currentDoctor.username?.trim())
+      tempErrors.username = "Username is required.";
+
+    if (!doctorData && !currentDoctor.password?.trim())
+      tempErrors.password = "Password is required.";
+
+    if (currentDoctor.password?.trim() && currentDoctor.password.length < 8)
+      tempErrors.password = "Password must be at least 8 characters.";
 
     // if (!currentDoctor.department?.toString().trim())
     //   tempErrors.department = "Department is required.";
@@ -1804,6 +1871,71 @@ const AddDoctorModal = ({
                         required
                         error={!!errors.name}
                         helperText={errors.name}
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <Tooltip title="Username auto-fills from doctor name and hospital name. You can still edit it." arrow>
+                                <InfoOutlinedIcon
+                                  fontSize="small"
+                                  sx={{ cursor: "pointer", color: "text.secondary" }}
+                                />
+                              </Tooltip>
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Username"
+                        name="username"
+                        value={currentDoctor.username}
+                        onChange={handleChange}
+                        variant="outlined"
+                        required
+                        error={!!errors.username}
+                        helperText={errors.username}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Password"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        value={currentDoctor.password}
+                        onChange={handleChange}
+                        variant="outlined"
+                        required={!doctorData}
+                        error={!!errors.password}
+                        helperText={
+                          doctorData
+                            ? errors.password || "Leave blank to keep existing password"
+                            : errors.password || "Minimum 8 characters"
+                        }
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                <Tooltip title="Password must be at least 8 characters" arrow>
+                                  <InfoOutlinedIcon
+                                    fontSize="small"
+                                    sx={{ cursor: "pointer", color: "text.secondary" }}
+                                  />
+                                </Tooltip>
+                                <IconButton
+                                  onClick={() => setShowPassword((prev) => !prev)}
+                                  edge="end"
+                                  size="small"
+                                  sx={{ color: "text.secondary" }}
+                                >
+                                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                                </IconButton>
+                              </Box>
+                            </InputAdornment>
+                          ),
+                        }}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>

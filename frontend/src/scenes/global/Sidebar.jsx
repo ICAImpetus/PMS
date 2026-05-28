@@ -245,9 +245,9 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
               {isDoctor && (
                 <>
                   <Item
-                    title="My Profile"
+                    title="Profile"
                     to="/profile"
-                    icon={<PersonIcon />}
+                    icon={<PersonAddIcon />}
                     selected={selected}
                     setSelected={setSelected}
                   />
@@ -255,34 +255,6 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                     title="Appointments"
                     to="/appointments"
                     icon={<EventNoteIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                  <Item
-                    title="Consultations"
-                    to="/consultations"
-                    icon={<AssignmentIndOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                  <Item
-                    title="Schedule"
-                    to="/schedule"
-                    icon={<ScheduleIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                  <Item
-                    title="Emergency Alerts"
-                    to="/emergency-alerts"
-                    icon={<WarningIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                  <Item
-                    title="Clinical Records"
-                    to="/clinical-records"
-                    icon={<DescriptionIcon />}
                     selected={selected}
                     setSelected={setSelected}
                   />
