@@ -199,7 +199,7 @@ const AddDoctorModal = ({
     departments: [],
     surgeries: [], // New surgeries field
     whatsappNumber: "",
-    averagePatientTime: "10m",
+    averagePatientTime: "10",
     maxPatientsHandled: 1,
     floor: ""
   });

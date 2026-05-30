@@ -233,13 +233,14 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                 selected={selected}
                 setSelected={setSelected}
               />
-              <Item
-                title="Patient History"
-                to="/patient-history"
-                icon={<PersonAddIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
+              {!isDoctor && (
+                <Item
+                  title="Patient History"
+                  to="/patient-history"
+                  icon={<PersonAddIcon />}
+                  selected={selected}
+                  setSelected={setSelected}
+                />)}
 
               {/* --- DOCTOR ITEMS --- */}
               {isDoctor && (
@@ -248,13 +249,6 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                     title="Profile"
                     to="/profile"
                     icon={<PersonAddIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                  <Item
-                    title="Appointments"
-                    to="/appointments"
-                    icon={<EventNoteIcon />}
                     selected={selected}
                     setSelected={setSelected}
                   />

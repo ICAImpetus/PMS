@@ -372,11 +372,23 @@ export const createFilledForm = async (req, res) => {
 
 export const getFilledForms = async (req, res) => {
   try {
-    const { hospitalId, branchId, filter, page = 1 } = req.query;
+    const { hospitalId, branchId, filter, page = 1, isExport } = req.query;
+
+    //  FIXED (IMPORTANT)
+    const isExportMode = isExport === "true";
 
     const PAGE_LIMIT = 10;
     const pageNum = Math.max(parseInt(page) || 1, 1);
-    const skip = (pageNum - 1) * PAGE_LIMIT;
+
+    const skip = isExportMode ? 0 : (pageNum - 1) * PAGE_LIMIT;
+
+    //  Dynamic pagination stages
+    const paginationStages = isExportMode
+      ? []
+      : [
+          { $skip: skip },
+          { $limit: PAGE_LIMIT },
+        ];
 
     //  Validate hospitalId
     if (!hospitalId || !mongoose.isValidObjectId(hospitalId)) {
@@ -386,7 +398,6 @@ export const getFilledForms = async (req, res) => {
       });
     }
 
-    //  Get hospital
     const hospital = await HospitalModel.findById(hospitalId)
       .select("trimmedName")
       .lean();
@@ -398,18 +409,15 @@ export const getFilledForms = async (req, res) => {
       });
     }
 
-    //  Multi-tenant connection
     const conn = await getConnection(hospital.trimmedName);
-    const FilledFormsModel = getFilledFormsModel(conn)
+    const FilledFormsModel = getFilledFormsModel(conn);
 
-    //  Build match stage
     const matchStage = { isDeleted: false };
 
     if (branchId && mongoose.isValidObjectId(branchId)) {
       matchStage.branchId = new mongoose.Types.ObjectId(branchId);
     }
 
-    //  Date filter
     if (filter) {
       const { start, end } = calculateFilterRange(filter);
       if (start && end) {
@@ -420,7 +428,6 @@ export const getFilledForms = async (req, res) => {
       }
     }
 
-    //  Aggregation
     const [data] = await FilledFormsModel.aggregate([
       { $match: matchStage },
 
@@ -434,170 +441,28 @@ export const getFilledForms = async (req, res) => {
             { $match: { formType: "outbound" } },
             { $count: "count" },
           ],
+
           appointmentForms: [
             { $match: { purpose: "Appointment" } },
-            {
-              $group: {
-                _id: "$formType",
-                count: { $sum: 1 },
-              },
-            },
+            { $group: { _id: "$formType", count: { $sum: 1 } } },
           ],
+
           followupForms: [
             { $match: { followupStatus: "pending" } },
-            {
-              $group: {
-                _id: "$formType",
-                count: { $sum: 1 },
-              },
-            },
+            { $group: { _id: "$formType", count: { $sum: 1 } } },
           ],
+
+          //  APPOINTMENTS
           appointmentData: [
             {
               $match: {
-                purpose: {
-                  $regex: "^appointment$",
-                  $options: "i",
-                },
-                callStatus: {
-                  $regex: "^connected$",
-                  $options: "i",
-                },
+                purpose: { $regex: "^appointment$", $options: "i" },
+                callStatus: { $regex: "^connected$", $options: "i" },
               },
             },
             { $sort: { createdAt: -1 } },
-            { $skip: skip },
-            { $limit: PAGE_LIMIT },
 
-            {
-              $lookup: {
-                from: "doctors",
-                localField: "doctor",
-                foreignField: "_id",
-                as: "doctor"
-              }
-            },
-            { $unwind: { path: "$doctor", preserveNullAndEmptyArrays: true } },
-
-            {
-              $lookup: {
-                from: "departments",
-                localField: "department",
-                foreignField: "_id",
-                as: "department"
-              }
-            },
-            { $unwind: { path: "$department", preserveNullAndEmptyArrays: true } },
-            {
-              $lookup: {
-                from: "patients",
-                localField: "formData.patientDetails",
-                foreignField: "_id",
-                as: "patientDetails",
-              },
-            },
-            {
-              $unwind: {
-                path: "$patientDetails",
-                preserveNullAndEmptyArrays: true,
-              },
-            },
-
-            {
-              $project: {
-                _id: 1,
-                purpose: 1,
-                formType: 1,
-                createdAt: 1,
-                agentName: 1,
-                callStatus: 1,
-
-                appointmentSlot: "$formData.appointmentSlot",
-                patientArrivalTime: "$formData.patientArrivalTime",
-                dateTime: "$formData.dateTime",
-
-                callerType: "$formData.callerType",
-
-                // appointmentslot: "$formData?.appointmentSlot?.date"
-
-                patientName: "$patientDetails.patientName",
-                patientMobile: "$patientDetails.patientMobile",
-
-                remarks: "$formData.remarks",
-                referenceFrom: "$formData.referenceFrom",
-
-                doctorName: "$doctor.name",
-                departmentName: "$department.name",
-              },
-            }
-          ],
-
-          // FOLLOWUP DATA
-          followupData: [
-            { $match: { followupStatus: "pending" } },
-            { $sort: { createdAt: -1 } },
-            { $skip: skip },
-            { $limit: PAGE_LIMIT },
-
-            {
-              $lookup: {
-                from: "doctors",
-                localField: "doctor",
-                foreignField: "_id",
-                as: "doctor"
-              }
-            },
-            { $unwind: { path: "$doctor", preserveNullAndEmptyArrays: true } },
-
-            {
-              $lookup: {
-                from: "departments",
-                localField: "department",
-                foreignField: "_id",
-                as: "department"
-              }
-            },
-            { $unwind: { path: "$department", preserveNullAndEmptyArrays: true } },
-            {
-              $lookup: {
-                from: "patients",
-                localField: "formData.patientDetails",
-                foreignField: "_id",
-                as: "patientDetails",
-              },
-            },
-            {
-              $unwind: {
-                path: "$patientDetails",
-                preserveNullAndEmptyArrays: true,
-              },
-            },
-            {
-              $project: {
-                _id: 1,
-                purpose: 1,
-                formType: 1,
-                createdAt: 1,
-                agentName: 1,
-                callStatus: 1,
-                appointmentSlot: "$formData.appointmentSlot",
-                callerType: "$formData.callerType",
-
-                patientName: "$patientDetails.patientName",
-                patientMobile: "$patientDetails.patientMobile",
-
-                remarks: "$formData.remarks",
-                referenceFrom: "$formData.referenceFrom",
-
-                doctorName: "$doctor.name",
-                departmentName: "$department.name",
-              },
-            }
-          ],
-          forms: [
-            { $sort: { createdAt: -1 } },
-            { $skip: skip },
-            { $limit: PAGE_LIMIT },
+            ...paginationStages, //  FIX
 
             {
               $lookup: {
@@ -617,12 +482,8 @@ export const getFilledForms = async (req, res) => {
                 as: "department",
               },
             },
-            {
-              $unwind: {
-                path: "$department",
-                preserveNullAndEmptyArrays: true,
-              },
-            },
+            { $unwind: { path: "$department", preserveNullAndEmptyArrays: true } },
+
             {
               $lookup: {
                 from: "patients",
@@ -631,12 +492,67 @@ export const getFilledForms = async (req, res) => {
                 as: "patientDetails",
               },
             },
+            { $unwind: { path: "$patientDetails", preserveNullAndEmptyArrays: true } },
+
             {
-              $unwind: {
-                path: "$patientDetails",
-                preserveNullAndEmptyArrays: true,
+              $project: {
+                _id: 1,
+                purpose: 1,
+                formType: 1,
+                createdAt: 1,
+                agentName: 1,
+                callStatus: 1,
+                appointmentSlot: "$formData.appointmentSlot",
+                patientArrivalTime: "$formData.patientArrivalTime",
+                dateTime: "$formData.dateTime",
+                callerType: "$formData.callerType",
+                patientName: "$patientDetails.patientName",
+                patientMobile: "$patientDetails.patientMobile",
+                remarks: "$formData.remarks",
+                referenceFrom: "$formData.referenceFrom",
+                doctorName: "$doctor.name",
+                departmentName: "$department.name",
               },
             },
+          ],
+
+          //  FOLLOWUPS
+          followupData: [
+            { $match: { followupStatus: "pending" } },
+            { $sort: { createdAt: -1 } },
+
+            ...paginationStages, //  FIX
+
+            {
+              $lookup: {
+                from: "doctors",
+                localField: "doctor",
+                foreignField: "_id",
+                as: "doctor",
+              },
+            },
+            { $unwind: { path: "$doctor", preserveNullAndEmptyArrays: true } },
+
+            {
+              $lookup: {
+                from: "departments",
+                localField: "department",
+                foreignField: "_id",
+                as: "department",
+              },
+            },
+            { $unwind: { path: "$department", preserveNullAndEmptyArrays: true } },
+
+            {
+              $lookup: {
+                from: "patients",
+                localField: "formData.patientDetails",
+                foreignField: "_id",
+                as: "patientDetails",
+              },
+            },
+            { $unwind: { path: "$patientDetails", preserveNullAndEmptyArrays: true } },
+
             {
               $project: {
                 _id: 1,
@@ -647,17 +563,70 @@ export const getFilledForms = async (req, res) => {
                 callStatus: 1,
                 appointmentSlot: "$formData.appointmentSlot",
                 callerType: "$formData.callerType",
-
                 patientName: "$patientDetails.patientName",
                 patientMobile: "$patientDetails.patientMobile",
-
                 remarks: "$formData.remarks",
                 referenceFrom: "$formData.referenceFrom",
-
                 doctorName: "$doctor.name",
                 departmentName: "$department.name",
               },
-            }
+            },
+          ],
+
+          //  ALL FORMS
+          forms: [
+            { $sort: { createdAt: -1 } },
+
+            ...paginationStages, //  FIX
+
+            {
+              $lookup: {
+                from: "doctors",
+                localField: "doctor",
+                foreignField: "_id",
+                as: "doctor",
+              },
+            },
+            { $unwind: { path: "$doctor", preserveNullAndEmptyArrays: true } },
+
+            {
+              $lookup: {
+                from: "departments",
+                localField: "department",
+                foreignField: "_id",
+                as: "department",
+              },
+            },
+            { $unwind: { path: "$department", preserveNullAndEmptyArrays: true } },
+
+            {
+              $lookup: {
+                from: "patients",
+                localField: "formData.patientDetails",
+                foreignField: "_id",
+                as: "patientDetails",
+              },
+            },
+            { $unwind: { path: "$patientDetails", preserveNullAndEmptyArrays: true } },
+
+            {
+              $project: {
+                _id: 1,
+                purpose: 1,
+                formType: 1,
+                createdAt: 1,
+                agentName: 1,
+                callStatus: 1,
+                appointmentSlot: "$formData.appointmentSlot",
+                callerType: "$formData.callerType",
+                patientName: "$patientDetails.patientName",
+                patientMobile: "$patientDetails.patientMobile",
+                remarks: "$formData.remarks",
+                referenceFrom: "$formData.referenceFrom",
+                doctorName: "$doctor.name",
+                departmentName: "$department.name",
+              },
+            },
           ],
 
           totalCount: [{ $count: "count" }],
@@ -665,7 +634,6 @@ export const getFilledForms = async (req, res) => {
       },
     ]);
 
-    //  Safe extraction
     const inbound = data.inboundCount?.[0]?.count || 0;
     const outbound = data.outboundCount?.[0]?.count || 0;
     const totalDocument = data.totalCount?.[0]?.count || 0;
@@ -681,15 +649,16 @@ export const getFilledForms = async (req, res) => {
       followupMap[i._id] = i.count;
     });
 
-    //  Final response
     return res.status(200).json({
       success: true,
       data: {
         metrics: {
           pagination: {
             totalDocument,
-            page: pageNum,
-            totalPages: Math.ceil(totalDocument / PAGE_LIMIT),
+            page: isExportMode ? 1 : pageNum, //  FIX
+            totalPages: isExportMode
+              ? 1
+              : Math.ceil(totalDocument / PAGE_LIMIT), //  FIX
           },
           totalForms: {
             total: inbound + outbound,
@@ -711,7 +680,7 @@ export const getFilledForms = async (req, res) => {
           today: data.forms || [],
           appointments: data.appointmentData || [],
           followups: data.followupData || [],
-        }
+        },
       },
     });
   } catch (error) {

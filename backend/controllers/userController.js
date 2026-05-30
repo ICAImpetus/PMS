@@ -1,6 +1,11 @@
 import bcrypt from "bcrypt";
 import mongoose, { model } from "mongoose";
-import { getAdminAgentModel, getBranchModel, getConnection, getHospitalModel, MasterConn } from "../utils/db.manager.js";
+import {
+  getAdminAgentModel, getDoctorModel,
+  getBranchModel, getConnection, getHospitalModel, getDepartmentModel, MasterConn
+} from "../utils/db.manager.js";
+
+
 import { toObjectId } from "../utils/toObjectId.js";
 import { auditLog } from "../middlewares/apiLogger.middleware.js";
 
@@ -842,7 +847,7 @@ export const getMe = async (req, res) => {
     const objectId = mongoose.Types.ObjectId.isValid(userId)
       ? new mongoose.Types.ObjectId(userId)
       : userId;
-    const userData = await AdminAndAgentModel.findOne({
+    let userData = await AdminAndAgentModel.findOne({
       _id: objectId,
       isDeleted: { $ne: true },
     })
@@ -856,6 +861,21 @@ export const getMe = async (req, res) => {
         success: false,
       });
     }
+    if (userData.refId !== null && userData.refId !== undefined && userData.hospitals && userData.hospitals.length > 0) {
+      const pop = (path, model) => ({ path, model });
+      const hosId = userData.hospitals[0].hospitalId
+      const hoa = await HospitalModel.findOne({ _id: hosId }).select("trimmedName").lean();
+      const conn = await getConnection(hoa.trimmedName);
+      const Department = getDepartmentModel(conn);
+      const DoctorModel = getDoctorModel(conn);
+      const doctorData = await DoctorModel.findOne({ _id: userData.refId }).populate(pop("department", Department))
+        .select("name  username profilePicture branch contactNumber experience totalBookedPatients degrees customDegrees subDepartment timings designation title").lean(); // exclude heavy fields
+
+      if (userData) {
+        userData.refId = doctorData;
+      }
+    }
+
     res.json({
       message: "User profile successfully fetched",
       data: userData,

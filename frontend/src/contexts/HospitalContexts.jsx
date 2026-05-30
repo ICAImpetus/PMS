@@ -35,8 +35,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     const isSuperAdmin = role === "superadmin";
     const isSuperManager = role === "supermanager";
     const isExecutive = role === "executive";
+    const isDoctor = role === "doctor"
     const isAdmin = ["superadmin", "admin", "supermanager"].includes(role);
-    const isNonAdmin = ["teamleader", "executive"].includes(role);
+    const isNonAdmin = ["teamleader", "executive", "doctor"].includes(role);
 
 
 
@@ -46,7 +47,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             : null
     );
 
-    const [selectedBranch, setSelectedBranch] = useState(null);
+    const [selectedBranch, setSelectedBranch] = useState(isDoctor ? currentUser?.refId?.branch || null : null);
     const [branchCount, setBranchCount] = useState(0);
 
     const [pagination, setPagination] = useState({
@@ -77,6 +78,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
 
     const [patients, setPatients] = useState([]);
+    const [appointments, setAppointments] = useState([]);
+    const [pastappointments, setPastAppointments] = useState([]);
     const [users, setUsers] = useState([]);
     const [allLogs, setAllLogs] = useState([]);
 
@@ -87,6 +90,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     });
 
     const [metrics, setMetrics] = useState({});
+
+    const [dateFilter, setDateFilter] = useState("today");
+
 
 
 
@@ -139,7 +145,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             const res = await commonRoutes.getAllHospital();
             return res.data;
         },
-        enabled: !isExecutive,
+        enabled: !isExecutive && !isDoctor,
         onError: () => toast.error("Failed to fetch hospitals")
     });
 
@@ -166,7 +172,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
             return res.data;
         },
-        enabled: !!selectedHostpital,
+        enabled: !!selectedHostpital && !isDoctor,
         onError: () => toast.error("Failed to fetch branches")
     });
 
@@ -210,7 +216,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
                     alertRes?.data?.data || []
             };
         },
-        enabled: !!selectedHostpital && !!selectedBranch,
+        enabled: !!selectedHostpital && !!selectedBranch && !isDoctor,
         onError: () => toast.error("Dashboard load failed")
     });
 
@@ -273,6 +279,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             return res?.data || {};
         },
         enabled:
+            !isDoctor &&
             !!selectedHostpital &&
             (!!selectedBranch || !isNonAdmin),
 
@@ -301,8 +308,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
     }, [patientsData]);
 
-
-
     const {
         data: usersData,
         isFetching: usersLoading,
@@ -323,7 +328,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
             return res.data;
         },
-        enabled: !!selectedHostpital && !isExecutive,
+        enabled: !!selectedHostpital && !isExecutive && !isDoctor,
         keepPreviousData: true,
         onError: () => toast.error("Users fetch failed")
     });
@@ -398,7 +403,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             return res.data?.data;
         },
 
-        enabled: !!selectedHostpital,
+        enabled: !!selectedHostpital && !isDoctor,
 
         keepPreviousData: true,
 
@@ -439,7 +444,95 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
     }, [formsData]);
 
+    // doctor api
+    const enabledQuery =
+        !!selectedHostpital &&
+        !!selectedBranch &&
+        !!currentUser?._id &&
+        isDoctor;
 
+    const {
+        data: appointmentData,
+        isFetching: appointmentLoading,
+        refetch: refetchAppointments,
+        error: appointmentError,
+    } = useQuery({
+        queryKey: [
+            "doctorAppointments",
+            selectedHostpital,
+            selectedBranch,
+            currentUser?._id,
+            dateFilter
+        ],
+
+        queryFn: async () => {
+            const res = await commonRoutes.getDoctorAppointments(
+                selectedHostpital,
+                selectedBranch,
+                currentUser?._id,
+                dateFilter
+            );
+
+            return res.data?.data;
+        },
+
+        enabled: enabledQuery,
+    });
+
+    const {
+        data: pastAppointmentData,
+        isFetching: pastAppointmentLoading,
+        refetch: refetchPastAppointments,
+        error: pastAppointmentError,
+    } = useQuery({
+        queryKey: [
+            "doctorPastAppointments",
+            selectedHostpital,
+            selectedBranch,
+            currentUser?._id,
+        ],
+
+        queryFn: async () => {
+            const res =
+                await commonRoutes.getPastDoctorAppointments(
+                    selectedHostpital,
+                    selectedBranch,
+                    currentUser?._id,
+                    1, // page
+                    10 // limit
+                );
+
+            return res.data?.data;
+        },
+
+        enabled: enabledQuery,
+    });
+
+    useEffect(() => {
+        if (!pastAppointmentData) return;
+
+        setPastAppointments(pastAppointmentData);
+    }, [pastAppointmentData]);
+    useEffect(() => {
+
+        if (!appointmentData) return;
+
+        // setAppointments((prev) =>
+        //     mergePaginatedData(
+        //         prev,
+        //         patientsData?.data || [],
+        //         pagination.patients.page
+        //     )
+        // );
+
+        // updatePagination(
+        //     "patients",
+        //     patientsData?.pagination
+        // );
+
+        setAppointments(appointmentData)
+
+    }, [appointmentData]);
 
     const {
         data: auditLogsData,
@@ -576,6 +669,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         admins: adminsLoading,
         forms: formsLoading,
         auditLogs: auditLogsLoading,
+        appointmentLoading,
+        pastAppointmentLoading,
+
 
         isAnyLoading:
             hospitalsLoading ||
@@ -594,7 +690,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         users: usersError,
         admins: adminsError,
         forms: formsError,
-        auditLogs: auditLogsError
+        auditLogs: auditLogsError,
+        appointmentError,
+        pastAppointmentError
     };
 
 
@@ -615,6 +713,11 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         branchFollowups,
         codeAlertsData,
 
+        dateFilter,
+
+        appointments,
+        pastappointments,
+
         selectedHostpital,
         selectedBranch,
 
@@ -623,7 +726,10 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
         filterOptions,
 
+
+        setDateFilter,
         setSelectedHostpital,
+        setAppointments,
         setSelectedBranch,
         setPagination,
         setFilter,
@@ -639,7 +745,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         refetchHospital,
         refetchAdmins,
         refetchUsers,
-        refetchForms
+        refetchForms,
+        refetchAppointments
 
     }), [
         hospitals,
@@ -658,6 +765,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         selectedHostpital,
         selectedBranch,
         pagination,
+        appointmentData,
+        pastAppointmentData,
         filter,
         loading,
         errors

@@ -5,7 +5,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import IconButton from "@mui/material/IconButton";
 import IosShareOutlinedIcon from '@mui/icons-material/IosShareOutlined';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
-import { Box, Pagination, TextField } from "@mui/material";
+import { Box, CircularProgress, Pagination, TextField } from "@mui/material";
 import { useApi } from "../../api/useApi";
 import { commonRoutes } from "../../api/apiService";
 
@@ -17,7 +17,7 @@ const FORMS_AVAILABLE_COLUMNS = [
   { key: "patientName", label: "Patient Name" },
   { key: "callStatus", label: "Call Status" },
   { key: "purpose", label: "POC / Purpose" },
-  { key: "appointmentslot", label: "App. Slot" },
+  { key: "appointmentSlot", label: "App. Slot" },
   { key: "referenceFrom", label: "Reference From" },
   { key: "callerType", label: "Caller Type" },
   { key: "department", label: "Department" },
@@ -39,7 +39,7 @@ const flattenFilledForm = (doc) => {
     purpose: doc.purpose || "-",
 
 
-    appointmentslot: doc?.appointmentSlot || "-",
+    appointmentSlot: doc?.appointmentSlot || "-",
 
     referenceFrom: doc.referenceFrom || "-",
     callerType: doc.callerType || "-",
@@ -70,6 +70,9 @@ const searchOptions = [
 
 
 const FilledFormsComponent = ({
+  selectedBranch = null,
+  selectedHostpital = null,
+  filter = "today",
   formsModalOpen,
   setFormsModalOpen,
   formsData = [],
@@ -89,13 +92,12 @@ const FilledFormsComponent = ({
     "patientMobile",
     "purpose",
     ...(formsModalOpen === "Appointments"
-      ? ["appointmentslot", "department", "doctor"]
+      ? ["appointmentSlot", "department", "doctor"]
       : []),
     "createdAt",
     "remarks"
 
   ]);
-
   // const { request } = useApi(commonRoutes.getFilledForms);
   const formsColumnFilterRef = useRef(null);
 
@@ -136,6 +138,7 @@ const FilledFormsComponent = ({
   }, [flattenedForms, formsTypeFilter, searchTerm]);
 
 
+  const { request: getFilledForms, loading: getFilledFormsLoading } = useApi(commonRoutes.getFilledForms)
   const rowParPage = 10
 
   const paginationData = filteredForms.slice((pagination?.forms?.page - 1) * rowParPage, pagination?.forms?.page * rowParPage)
@@ -152,44 +155,40 @@ const FilledFormsComponent = ({
 
   const exportFormsToSheet = async () => {
     try {
-      //  STEP 1: filter build karo
-      const getFilterParams = () => {
-        switch (selectedFilter) {
-          case "today":
-            return "filter=today";
-          case "yesterday":
-            return "filter=yesterday";
-          case "last7":
-            return "filter=last7";
-          case "last30":
-            return "filter=last30";
-          case "last3M":
-            return "filter=last3M";
-          default:
-            return "";
-        }
-      };
-
-      const query = getFilterParams();
 
       //  STEP 2: ALL data fetch (NO pagination)
-      // const res = await  
-      // const json = await res.json();
+      const res = await getFilledForms(filter, pagination.forms.page, selectedBranch, selectedHostpital, true)
 
-      // const allForms = json.results || [];
+      const map = {
+        "Forms": res?.data?.forms?.today || [],
+        "Appointments": res?.data?.forms?.appointments || [],
+        "Followups": res?.data?.forms?.followups || []
+      }
+      const allForms = map[formsModalOpen] || [];
+      console.log("allForms", allForms);
 
-      // if (allForms.length === 0) return;
+
+      if (allForms.length === 0) return;
 
       //  STEP 3: CSV logic (same tera)
       const headers = visibleFormColumns.map((c) => c.label);
 
       const rows = allForms.map((row) =>
         visibleFormColumns.map((c) => {
+          console.log("visibleFormColumns", c);
+          console.log("rows", visibleFormColumns);
+
           let val = row[c.key];
 
+
+
           // appointment slot format
-          if (c.key === "appointmentslot") {
+          if (c.key === "appointmentSlot") {
+            console.log("c.key ", c.key);
+            console.log("val", val);
             if (val && typeof val === "object") {
+              console.log("val", val);
+
               const date = val.date
                 ? moment(val.date).format("DD MMM YYYY")
                 : "";
@@ -341,15 +340,72 @@ const FilledFormsComponent = ({
               </button>
 
               {formsColumnFilterOpen && (
-                <div className="ff-column-filter-dropdown" style={{ top: "100%", marginTop: "8px" }}>
+                <div
+                  className="ff-column-filter-dropdown"
+                  style={{ top: "100%", marginTop: "8px" }}
+                >
+                  {/* Select All */}
+                  <div
+                    style={{
+                      // padding: "8px 12px",
+                      borderBottom: "1px solid #e0e0e0",
+                    }}
+                  >
+                    <label
+                      className="ff-column-check"
+                      style={{
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={
+                          selectedFormColumns.length ===
+                          FORMS_AVAILABLE_COLUMNS.length
+                        }
+                        onChange={() => {
+                          if (
+                            selectedFormColumns.length ===
+                            FORMS_AVAILABLE_COLUMNS.length
+                          ) {
+                            setSelectedFormColumns([]);
+                          } else {
+                            setSelectedFormColumns(
+                              FORMS_AVAILABLE_COLUMNS.map(
+                                (col) => col.key
+                              )
+                            );
+                          }
+                        }}
+                      />
+
+                      <span>
+                        {selectedFormColumns.length ===
+                          FORMS_AVAILABLE_COLUMNS.length
+                          ? "Unselect All"
+                          : "Select All"}
+                      </span>
+                    </label>
+                  </div>
+
+                  {/* Individual Columns */}
                   <div className="ff-column-checkboxes">
                     {FORMS_AVAILABLE_COLUMNS.map((col) => (
-                      <label key={col.key} className="ff-column-check">
+                      <label
+                        key={col.key}
+                        className="ff-column-check"
+                      >
                         <input
                           type="checkbox"
-                          checked={selectedFormColumns.includes(col.key)}
-                          onChange={() => toggleFormColumn(col.key)}
+                          checked={selectedFormColumns.includes(
+                            col.key
+                          )}
+                          onChange={() =>
+                            toggleFormColumn(col.key)
+                          }
                         />
+
                         <span>{col.label}</span>
                       </label>
                     ))}
@@ -363,7 +419,7 @@ const FilledFormsComponent = ({
               onClick={exportFormsToSheet}
               disabled={
                 filteredForms?.length === 0 ||
-                visibleFormColumns.length === 0
+                visibleFormColumns.length === 0 || getFilledFormsLoading
               }
               sx={{
                 borderRadius: 2,
@@ -382,7 +438,16 @@ const FilledFormsComponent = ({
                 },
               }}
             >
-              <IosShareOutlinedIcon sx={{ fontSize: "1.1rem", mr: 0.5 }} /> Export
+              {
+                getFilledFormsLoading ? (
+                  <CircularProgress size={20} />
+                ) : (
+                  <>
+                    <IosShareOutlinedIcon sx={{ fontSize: "1.1rem", mr: 0.5 }} />
+                    Export
+                  </>
+                )
+              }
             </IconButton>
 
             <IconButton
@@ -439,7 +504,7 @@ const FilledFormsComponent = ({
 
                         // Handle appointmentSlot object
                         if (
-                          col.key === "appointmentslot"
+                          col.key === "appointmentSlot"
                         ) {
 
                           if (val) {

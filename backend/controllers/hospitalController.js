@@ -2,7 +2,14 @@ import mongoose from "mongoose";
 import fs from "fs";
 import csv from "csv-parser";
 import { sanitizeHospitalPayload } from "../models/master.models/HospitalModel.js";
-import { getAdminAgentModel, getAuditLogModel, getBranchModel, getCodeAlertModel, getCodeAnnoucementModel, getConnection, getDepartmentModel, getDoctorModel, getEmpanelmentModel, getFilledFormsModel, getHospitalModel, getInchargeModel, getIPDAndDayCareModel, getLabTestModel, getPatientModel, getProcedureModel, getSuggestionsModel, MasterConn } from "../utils/db.manager.js";
+import {
+  getAdminAgentModel, getAuditLogModel, getBranchModel, getCodeAlertModel, getCodeAnnoucementModel, getConnection, getDepartmentModel,
+  getDoctorModel, getEmpanelmentModel,
+  getFilledFormsModel, getHospitalModel,
+  getInchargeModel, getIPDAndDayCareModel,
+  getLabTestModel, getPatientModel, getProcedureModel,
+  getSuggestionsModel, MasterConn
+} from "../utils/db.manager.js";
 import { auditLog } from "../middlewares/apiLogger.middleware.js";
 import { updateSuggestions } from "../utils/updateSuggestions.js";
 import { toObjectId } from "../utils/toObjectId.js";
@@ -102,7 +109,7 @@ export function generateDoctorSlots(
   }
 
   const slotMinutes = Number(
-    doctor?.averagePatientTime
+    doctor?.averagePatientTime || 10
   );
 
   if (
@@ -1324,7 +1331,7 @@ export const addDoctor = async (req, res) => {
 
     if (!branch) {
       await session.abortTransaction();
-      session.endSession();
+    await  session.endSession();
       return res.status(404).json({
         success: false,
         message: "Branch not found",
@@ -1366,21 +1373,21 @@ export const addDoctor = async (req, res) => {
 
     if (!body.name || !body.username || !body.password) {
       await session.abortTransaction();
-      session.endSession();
+      await session.endSession();
       return res.status(401).json({
         success: false,
         message: "Name, username and password are required",
       });
     }
 
-     const checkUsername = await AdminAndAgentModel.findOne({
+    const checkUsername = await AdminAndAgentModel.findOne({
       username: body.username,
       isDeleted: false,
     }).lean();
 
     if (checkUsername) {
-      await session.abortTransaction(); 
-      session.endSession();
+      await session.abortTransaction();
+      await session.endSession();
       return res.status(400).json({
         success: false,
         message: "Username already exists. Please choose another.",
@@ -1482,11 +1489,16 @@ export const addDoctor = async (req, res) => {
       );
     }
 
-    await AdminAndAgentModel.create({
+    const res = await AdminAndAgentModel.create({
       name: doctorData.name,
       username: doctorData.username,
       password: doctorData.password,
       type: "doctor",
+      branches: [
+        {
+          branchId: branchId,
+        },
+      ],
       hospitals: [
         {
           hospitalId: hospital._id,
@@ -1496,24 +1508,31 @@ export const addDoctor = async (req, res) => {
       refId: doctor._id,
     });
     // COMMIT
+
     await session.commitTransaction();
-    session.endSession();
+   await session.endSession();
+    if (res) {
+      auditLog({
+        action: "Doctor_INSERT",
+        event: "ADD",
+        module: "Doctor",
+        role: req.user?.type,
+        name: req.user?.name,
+        userId: req.user?.id,
+        customMessage: `Doctor "${doctorData.name}" created`,
+        ip: req.userIp,
+      });
 
+      return res.status(201).json({
+        success: true,
+        message: "Doctor added successfully",
+      });
 
-    auditLog({
-      action: "Doctor_INSERT",
-      event: "ADD",
-      module: "Doctor",
-      role: req.user?.type,
-      name: req.user?.name,
-      userId: req.user?.id,
-      customMessage: `Doctor "${doctorData.name}" created`,
-      ip: req.userIp,
-    });
+    }
 
-    return res.status(201).json({
+    return res.status(301).json({
       success: true,
-      message: "Doctor added successfully",
+      message: "Error to Create Doctor",
     });
   } catch (error) {
     if (uploadedPublicId) {
@@ -1524,7 +1543,7 @@ export const addDoctor = async (req, res) => {
 
     if (session) {
       await session.abortTransaction();
-      session.endSession();
+      await session.endSession();
     }
 
     console.log("Add Doctor Error:", error);
@@ -1568,7 +1587,6 @@ export const updateDoctor = async (req, res) => {
       isDeleted: false,
     })
       .lean()
-      .session(session);
 
     if (!hospital) {
 
@@ -1593,7 +1611,7 @@ export const updateDoctor = async (req, res) => {
 
     if (!doctor || doctor.isDeleted) {
       await session.abortTransaction();
-      session.endSession();
+      await session.endSession();
 
       return res.status(404).json({
         success: false,
@@ -1750,7 +1768,7 @@ export const updateDoctor = async (req, res) => {
 
     doctor.subDepartment =
       body.subDepartment ?? doctor.subDepartment;
-      
+
 
     doctor.type = body.type ?? doctor.type;
 
@@ -1898,28 +1916,53 @@ export const updateDoctor = async (req, res) => {
     // =============================
 
     const adminUpdateData = {
+      branches: [
+        {
+          branchId: doctor?.branch,
+        },
+      ],
+      hospitals: [
+        {
+          hospitalId: hospital._id,
+          name: hospital.name,
+        },
+      ],
       name: doctor.name,
       username: doctor.username,
+      refId: doctor._id,
+      type: "doctor",
     };
 
     if (updatedPassword) {
       adminUpdateData.password = updatedPassword;
     }
 
-    await AdminAndAgentModel.findOneAndUpdate(
+    const adminUser = await AdminAndAgentModel.findOneAndUpdate(
       {
         refId: doctor._id,
         type: "doctor",
       },
       {
         $set: adminUpdateData,
+      },
+      {
+        upsert: true,
+        new: true,
       }
     );
-
     // =============================
-    // AUDIT LOG
+    // COMMIT
     // =============================
 
+    if (!adminUser) {
+      return res.status(401).json({
+        success: false,
+        message: "Error To Create Doctor",
+      });
+    }
+
+    await session.commitTransaction();
+    await session.endSession();
     const actorRole = req.user?.type || "Unknown";
 
     const actorName =
@@ -1937,13 +1980,6 @@ export const updateDoctor = async (req, res) => {
       userAgent: req.headers["user-agent"],
     });
 
-    // =============================
-    // COMMIT
-    // =============================
-
-    await session.commitTransaction();
-    session.endSession();
-
     return res.status(200).json({
       success: true,
       message: "Doctor updated successfully",
@@ -1951,26 +1987,20 @@ export const updateDoctor = async (req, res) => {
 
   } catch (error) {
 
+    try {
+      if (session?.inTransaction()) {
+        await session.abortTransaction();
+      }
+    } catch (abortError) {
+      console.error(
+        "Transaction abort error:",
+        abortError
+      );
+    }
+
     if (session) {
-      await session.abortTransaction();
-      session.endSession();
+      await session.endSession();
     }
-    // DELETE NEW IMAGE IF FAILED
-    if (uploadedPublicId) {
-      try {
-        await cloudinary.uploader.destroy(
-          uploadedPublicId
-        );
-      } catch { }
-    }
-
-    console.error("Update Doctor Error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-      error: error.message,
-    });
   }
 };
 
@@ -2150,12 +2180,7 @@ export const removeDoctor = async (req, res) => {
       { new: true },
     );
 
-    if (!doctor) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor not found",
-      });
-    }
+
     await DepartmentModel.updateMany(
       { doctors: id },
       { $pull: { doctors: id } },
@@ -2165,6 +2190,23 @@ export const removeDoctor = async (req, res) => {
     const actorRole = req.user?.type || "Unknown";
     const actorName = req.user?.name || "Unknown User";
 
+    const isDeleted = await AdminAndAgentModel.findOneAndUpdate(
+      {
+        refId: doctor._id,
+        type: "doctor",
+      },
+      {
+        $set: { isDeleted: true },
+      }, {
+      new: true
+    }
+    )
+    if (!doctor || !isDeleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Doctor not found",
+      });
+    }
     //  Audit Log
     auditLog({
       action: "DELETE_DOCTOR",
@@ -2177,12 +2219,11 @@ export const removeDoctor = async (req, res) => {
       ip: req.userIp,
       userAgent: req.headers["user-agent"],
     });
-
     return res.status(200).json({
       success: true,
       message: "Doctor deleted successfully",
-      data: doctor,
     });
+
   } catch (error) {
     console.error("Remove Doctor Error:", error);
 
@@ -7099,7 +7140,7 @@ export const uploadBranchCSV = async (req, res) => {
 
     //  Commit Transaction
     await session.commitTransaction();
-    session.endSession();
+    await session.endSession();
 
     fs.unlinkSync(req.csvFilePath);
 
@@ -7112,7 +7153,7 @@ export const uploadBranchCSV = async (req, res) => {
   } catch (error) {
     if (session) {
       await session.abortTransaction();
-      session.endSession();
+    await  session.endSession();
     }
 
     if (req.file?.path) {
@@ -8236,3 +8277,283 @@ export const getPatientByNumber = async (req, res) => {
   }
 };
 
+export const getDoctorAppointment = async (req, res) => {
+  try {
+    console.log("req.query", req.query);
+
+
+    const {
+      hospitalId,
+      branchId,
+      doctorId,
+      dateFilter = "today",
+      page = 1,
+      limit = 20,
+    } = req.query;
+
+    // Validate ids
+    if (
+      !hospitalId ||
+      !branchId ||
+      !doctorId ||
+      !mongoose.isValidObjectId(hospitalId) ||
+      !mongoose.isValidObjectId(branchId) ||
+      !mongoose.isValidObjectId(doctorId)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Valid Hospital Id, Branch Id and Doctor Id are required",
+      });
+    }
+
+    // Get hospital
+    const hospital = await HospitalModel.findById(hospitalId)
+      .select("trimmedName")
+      .lean();
+
+    if (!hospital) {
+      return res.status(404).json({
+        success: false,
+        message: "Hospital not found",
+      });
+    }
+
+    // Multi tenant DB connection
+    const conn = await getConnection(hospital.trimmedName);
+
+    // Model
+    const FilledFormsModel = getFilledFormsModel(conn);
+
+    const start = Date.now();
+
+    const query = {
+      doctorId,
+      branchId,
+      appointmentStatus: "pending",
+    };
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    switch (dateFilter) {
+      case "today": {
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+
+        query.appointmentDate = {
+          $gte: today,
+          $lt: tomorrow,
+        };
+        break;
+      }
+
+      case "tomorrow": {
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+
+        const dayAfterTomorrow = new Date(today);
+        dayAfterTomorrow.setDate(today.getDate() + 2);
+
+        query.appointmentDate = {
+          $gte: tomorrow,
+          $lt: dayAfterTomorrow,
+        };
+        break;
+      }
+
+      case "next3": {
+        const next3Days = new Date(today);
+        next3Days.setDate(today.getDate() + 3);
+
+        query.appointmentDate = {
+          $gte: today,
+          $lte: next3Days,
+        };
+        break;
+      }
+
+      case "next7": {
+        const next7Days = new Date(today);
+        next7Days.setDate(today.getDate() + 7);
+
+        query.appointmentDate = {
+          $gte: today,
+          $lte: next7Days,
+        };
+        break;
+      }
+
+      case "all": {
+        query.appointmentDate = {
+          $gte: today,
+        };
+        break;
+      }
+
+      default:
+        break;
+    }
+
+
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const [data, total] = await Promise.all([
+      FilledFormsModel.find(query)
+        .sort({
+          appointmentDate: 1,
+          createdAt: -1,
+        })
+        .skip(skip)
+        .limit(limitNumber)
+        .lean(),
+
+      FilledFormsModel.countDocuments(query),
+    ]);
+
+    const end = Date.now();
+
+    return res.status(200).json({
+      success: true,
+      executionTime: `${end - start} ms`,
+
+      data,
+
+      pagination: {
+        page: pageNumber,
+        limit: limitNumber,
+        total,
+        totalPages: Math.ceil(total / limitNumber),
+        hasNextPage:
+          skip + data.length < total,
+      },
+    });
+
+
+  } catch (error) {
+    console.error(
+      "Get Doctor Appointment Error:",
+      error
+    );
+
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+
+
+  }
+};
+
+export const getPastDoctorAppointments = async (req, res) => {
+  try {
+    const {
+      hospitalId,
+      branchId,
+      doctorId,
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    // Validate ids
+    if (
+      !hospitalId ||
+      !branchId ||
+      !doctorId ||
+      !mongoose.isValidObjectId(hospitalId) ||
+      !mongoose.isValidObjectId(branchId) ||
+      !mongoose.isValidObjectId(doctorId)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Valid Hospital Id, Branch Id and Doctor Id are required",
+      });
+    }
+
+    // Get hospital
+    const hospital = await HospitalModel.findById(hospitalId)
+      .select("trimmedName")
+      .lean();
+
+    if (!hospital) {
+      return res.status(404).json({
+        success: false,
+        message: "Hospital not found",
+      });
+    }
+
+    // Multi tenant connection
+    const conn = await getConnection(hospital.trimmedName);
+
+    // Model
+    const FilledFormsModel = getFilledFormsModel(conn);
+
+    // Pagination
+    const pageNumber = Math.max(parseInt(page) || 1, 1);
+    const limitNumber = Math.max(parseInt(limit) || 10, 1);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // Today's start
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const start = Date.now();
+
+    // Query
+    const query = {
+      doctorId,
+      branchId,
+
+      // Past appointments only
+      appointmentDate: {
+        $lt: todayStart,
+      },
+    };
+
+    // Count
+    const total = await FilledFormsModel.countDocuments(query);
+
+    // Data
+    const data = await FilledFormsModel.find(query)
+      .sort({ appointmentDate: -1 })
+      .skip(skip)
+      .limit(limitNumber)
+      .lean();
+
+    const end = Date.now();
+
+    return res.status(200).json({
+      success: true,
+      message: "Past appointments fetched successfully",
+
+      pagination: {
+        total,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages: Math.ceil(total / limitNumber),
+        hasNextPage: pageNumber * limitNumber < total,
+        hasPrevPage: pageNumber > 1,
+      },
+
+      executionTime: `${end - start} ms`,
+
+      data,
+    });
+  } catch (error) {
+    console.error(
+      "Get Past Doctor Appointments Error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};

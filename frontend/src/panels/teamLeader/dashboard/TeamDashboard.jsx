@@ -68,6 +68,7 @@ const TeamDashboard = () => {
     codeAlerts,
     branches,
     selectedBranch,
+    selectedHostpital,
     pagination,
     setSelectedBranch,
     filter,
@@ -829,6 +830,9 @@ const TeamDashboard = () => {
       {
         formsModalOpen && (
           <FilledFormsComponent
+            filter={filter}
+            selectedBranch={selectedBranch}
+            selectedHostpital={selectedHostpital}
             formsModalOpen={formsModalOpen}
             setFormsModalOpen={setFormsModalOpen}
             formsData={formsData}

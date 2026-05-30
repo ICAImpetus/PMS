@@ -47,6 +47,7 @@ export const FilledFormSchema = new mongoose.Schema(
     doctor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Doctor",
+      index: true
     },
 
     department: {
@@ -63,6 +64,10 @@ export const FilledFormSchema = new mongoose.Schema(
     useForFollowup: {
       type: Boolean,
       default: false
+    },
+    appointmentStatus: {
+      type: String,
+      default: ""
     },
     followupStatus: {
       type: String,
@@ -161,7 +166,7 @@ export const FilledFormSchema = new mongoose.Schema(
       },
       cancelReason: String,
     },
-    isDeleted: { type: Boolean,  index: true, default: false },
+    isDeleted: { type: Boolean, index: true, default: false },
   },
   { timestamps: true, versionKey: false }
 );

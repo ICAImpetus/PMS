@@ -192,4 +192,10 @@ router.get("/get-patients", auth, hospitalController.getPatientByRole);
 router.get("/getpatientByMobile", hospitalController.getPatientByNumber);
 router.get("/single-patient-history", auth, hospitalController.singlePatientHistory);
 
+
+// doctor routes 
+
+router.get("/doctor-appointments", hospitalController.getDoctorAppointment);
+router.get("/doctor-past-appointments",hospitalController.getPastDoctorAppointments);
+
 export default router;

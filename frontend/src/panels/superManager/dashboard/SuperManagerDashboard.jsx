@@ -98,6 +98,7 @@ const Dashboard = () => {
     setPage,
     branches,
     selectedBranch,
+    selectedHostpital,
     setSelectedBranch
   } = useContext(HospitalContext);
 
@@ -1342,6 +1343,9 @@ const Dashboard = () => {
       {
         formsModalOpen && (
           <FilledFormsComponent
+            // filter={filter}
+            selectedBranch={selectedBranch}
+            selectedHostpital={selectedHostpital}
             formsModalOpen={formsModalOpen}
             setFormsModalOpen={setFormsModalOpen}
             formsData={formsData}

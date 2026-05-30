@@ -1088,6 +1088,9 @@ const ExecutiveDashboard = () => {
       {
         formsModalOpen && (
           <FilledFormsComponent
+            filter={filter}
+            selectedBranch={selectedBranch}
+            selectedHostpital={selectedHostpital}
             formsModalOpen={formsModalOpen}
             setFormsModalOpen={setFormsModalOpen}
             formsData={formsData}

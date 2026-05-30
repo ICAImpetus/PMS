@@ -105,11 +105,12 @@ export const AdminAgentSchema = new mongoose.Schema(
       default: false,
     },
 
-    refId:{
+    refId: {
       type: mongoose.Schema.Types.ObjectId,
+      index: true,
     },
 
-    
+
 
     canDelete: {
       type: Boolean,

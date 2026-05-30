@@ -760,6 +760,8 @@ const AdminDashboard = () => {
       {
         formsModalOpen && (
           <FilledFormsComponent
+            filter={filter}
+            selectedHostpital={selectedHostpital}
             formsModalOpen={formsModalOpen}
             setFormsModalOpen={setFormsModalOpen}
             formsData={formsData}

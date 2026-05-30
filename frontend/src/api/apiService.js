@@ -277,11 +277,11 @@ export const commonRoutes = {
 
 
 
-  getFilledForms: (filter, page, branchId = null, hospitalId = null) => {
+  getFilledForms: (filter, page, branchId = null, hospitalId = null, isExport =false) => {
     // console.log("branchId", branchId);
     // console.log("hospitalId", hospitalId);
 
-    const params = { filter, page };
+    const params = { filter, page, isExport };
 
     if (branchId != null) params.branchId = branchId;
     if (hospitalId) params.hospitalId = hospitalId;
@@ -386,67 +386,37 @@ export const commonRoutes = {
         patientMobile
       }
     }),
-
-
-
-
-  // addDoctor: (branchid, data) => API.post(`api/add-doctor/${branchid}`, data),
-  // removeDoc: (docId) => API.delete(`api/remove-doctor/${docId}`),
-  // updateDoctor: (docId, data) => API.put(`api/update-doctor/${docId}`, data),
-  // getDoctors: (depId) => API.get(`api/get-doctors/${depId}`),
-
-  // addUsers: (data) => API.post(`api/addUsers`, data),
-
-  // updateUser: (id, data) => API.put(`api/updateUser/${id}`, data),
-
-  // addDep: (hosId, branchId, data) => API.post(`api/add-dep/${hosId}/${branchId}`, data),
-  // removeDep: (depId) => API.delete(`api/remove-dep/${depId}`),
-  // updateDep: (depId, data) => API.put(`api/update-dep/${depId}`, data),
-
-  // addEmpanelment: (branchid, data) =>
-  //   API.post(`api/add-empanelment/${branchid}`, data),
-  // updateEmpanelment: (empId, data) =>
-  //   API.put(`api/update-empanelment/${empId}`, data),
-  // removeEmp: (empId) => API.delete(`api/remove-empanelment/${empId}`),
-
-  // addLabtest: (branchid, data) => API.post(`api/add-labtest/${branchid}`, data),
-  // updateLabTest: (labTestId, data) => API.put(`api/update-labtest/${labTestId}`, data),
-  // removeLabtest: (labTestId) => API.delete(`api/remove-labtest/${labTestId}`),
-
-  // addIPDandDayCare: (iPDandDayCareId, type, data) => API.post(`api/add-ipd-day-care/${iPDandDayCareId}?type=${type}`, data),
-  // updateIPDAndDayCare: (iPDandDayCareId, type, data) =>
-  //   API.put(`api/update-ipd-day-care/${iPDandDayCareId}?type=${type}`, data),
-  // removeIPDandDayCare: (iPDandDayCareId, type) => API.delete(`api/remove-iPDandDayCare/${iPDandDayCareId}?type=${type}`),
-
-  // addProcedure: (procedureId, type, data) => API.post(`api/add-procedure/${procedureId}?type=${type}`, data),
-  // updateProcedure: (procedureId, type, data) => API.put(`api/update-procedure/${procedureId}?type=${type}`, data),
-  // removeProcedure: (procedureId) => API.delete(`api/remove-procedure/${procedureId}`),
-
-  // addIncharge: (inchargeId, type, data) => API.post(`api/add-incharge/${inchargeId}?type=${type}`, data),
-  // updateIncharge: (inchargeId, type, data) => API.put(`api/update-incharge/${inchargeId}?type=${type}`, data),
-  // removeIncharge: (inchargeId, type) => API.delete(`api/remove-incharge/${inchargeId}?type=${type}`),
-
-
-  // addCodeAnnouncement: (codeAnnouncementId, data) => API.post(`api/add-code-announcement/${codeAnnouncementId}`, data),
-  // updateCodeAnnouncement: (codeAnnouncementId, data) => API.put(`api/update-code-announcement/${codeAnnouncementId}`, data),
-  // removeCodeAnnouncement: (codeAnnouncementId) => API.delete(`api/remove-code-announcement/${codeAnnouncementId}`),
-  // getFilledForms: (filter, page, branchId = null, hospitalId = null) => {
-  //   const params = { filter, page };
-
-  //   if (branchId != null) params.branchId = branchId;
-  //   if (hospitalId != null && hospitalId !== '' && hospitalId !== "") params.hospitalId = hospitalId;
-
-  //   return API.get("api/filled-forms", { params });
-  // },
-  // saveFilledForm: (data) => API.post(`api/filled-forms`, data),
-
-  // createCodeAlert: (branchId, data) => API.post(`api/add-code-alert/${branchId}`, data),
-
-  // getSuggestions: () => API.get(`api/getSuggestions`),
-  // getCodeAlerts: () => API.get(`api/getCodeAlert`),
-  // toggleCodeAlertStatus: (id) => API.put(`api/toggle-alert/${id}`),
-  // getCreatedCodeAlerts: () => API.get(`api/get-created-code-alert`),
-
+  getDoctorAppointments: (
+    hospitalId,
+    branchId,
+    doctorId,
+    dateFilter
+  ) => {
+    return API.get("api/doctor-appointments", {
+      params: {
+        hospitalId,
+        branchId,
+        doctorId,
+        dateFilter
+      },
+    })
+  },
+  getPastDoctorAppointments: (
+    hospitalId,
+    branchId,
+    doctorId,
+    page = 1,
+    limit = 10
+  ) =>
+    API.get("api/doctor-past-appointments", {
+      params: {
+        hospitalId,
+        branchId,
+        doctorId,
+        page,
+        limit,
+      },
+    }),
   getAuditLogs: () => API.get(`api/get-audit-logs`),
 
   getSelectedBranches: (hospitalId) => {

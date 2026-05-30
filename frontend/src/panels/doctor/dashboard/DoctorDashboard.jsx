@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
     Box,
     Container,
@@ -28,6 +28,7 @@ import {
     Divider,
     Tab,
     Tabs,
+    CircularProgress,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
@@ -49,185 +50,38 @@ import {
     Info as InfoIcon,
     TrendingDown as TrendingDownIcon,
 } from "@mui/icons-material";
+import CampaignIcon from "@mui/icons-material/Campaign";
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { tokens } from "../../../theme";
 import { UserContextHook } from "../../../contexts/UserContexts";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import HospitalContext from "../../../contexts/HospitalContexts";
 
+
+const DATE_FILTER_OPTIONS = {
+    today: "Today",
+    tomorrow: "Tomorrow",
+    next3: "Next 3 Days",
+    next7: "Next 7 Days",
+    all: "All Upcoming",
+};
 const DoctorDashboard = () => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
     const navigate = useNavigate();
     const { currentUser } = UserContextHook() || { name: "Dr. Rajesh Kumar" };
-    // Today's appointments
-    const todayAppointments = [
-        {
-            id: 1,
-            patientName: "Amit Sharma",
-            patientId: "P001",
-            appointmentDate: "2026-05-26",
-            appointmentTime: "09:30 AM",
-            status: "Scheduled",
-            type: "OPD",
-            notes: "First consultation - chest pain",
-            consultationType: "Initial Consultation",
-            duration: 30,
-        },
-        {
-            id: 2,
-            patientName: "Priya Singh",
-            patientId: "P002",
-            appointmentDate: "2026-05-26",
-            appointmentTime: "10:00 AM",
-            status: "Scheduled",
-            type: "Follow-up",
-            notes: "Post-angioplasty follow-up",
-            consultationType: "Follow-up",
-            duration: 20,
-        },
-        {
-            id: 3,
-            patientName: "Vikram Patel",
-            patientId: "P003",
-            appointmentDate: "2026-05-26",
-            appointmentTime: "10:30 AM",
-            status: "Scheduled",
-            type: "OPD",
-            notes: "ECG review and blood pressure check",
-            consultationType: "Review",
-            duration: 25,
-        },
-        {
-            id: 4,
-            patientName: "Neha Gupta",
-            patientId: "P004",
-            appointmentDate: "2026-05-26",
-            appointmentTime: "11:00 AM",
-            status: "Scheduled",
-            type: "Emergency",
-            notes: "Acute myocardial infarction risk assessment",
-            consultationType: "Emergency",
-            duration: 45,
-        },
-        {
-            id: 5,
-            patientName: "Rahul Verma",
-            patientId: "P005",
-            appointmentDate: "2026-05-26",
-            appointmentTime: "02:00 PM",
-            status: "Pending",
-            type: "Follow-up",
-            notes: "Arrhythmia management review",
-            consultationType: "Follow-up",
-            duration: 20,
-        },
-        {
-            id: 6,
-            patientName: "Anjali Kumar",
-            patientId: "P006",
-            appointmentDate: "2026-05-26",
-            appointmentTime: "02:30 PM",
-            status: "Scheduled",
-            type: "OPD",
-            notes: "Hypertension counseling",
-            consultationType: "Counseling",
-            duration: 30,
-        },
-        {
-            id: 7,
-            patientName: "Sanjay Dubey",
-            patientId: "P007",
-            appointmentDate: "2026-05-26",
-            appointmentTime: "03:00 PM",
-            status: "Scheduled",
-            type: "Follow-up",
-            notes: "Valve replacement post-operative check",
-            consultationType: "Post-op Review",
-            duration: 25,
-        },
-        {
-            id: 8,
-            patientName: "Divya Nair",
-            patientId: "P008",
-            appointmentDate: "2026-05-26",
-            appointmentTime: "04:00 PM",
-            status: "Scheduled",
-            type: "OPD",
-            notes: "Cardiac risk factor assessment",
-            consultationType: "Assessment",
-            duration: 30,
-        },
-    ];
 
-    // Past appointments for history
-    const pastAppointmentsData = [
-        {
-            id: 101,
-            patientName: "Rajesh Patel",
-            patientId: "P101",
-            appointmentDate: "2026-05-25",
-            appointmentTime: "10:00 AM",
-            status: "Completed",
-            type: "Follow-up",
-            notes: "Successful follow-up consultation",
-            consultationType: "Follow-up",
-        },
-        {
-            id: 102,
-            patientName: "Meera Singh",
-            patientId: "P102",
-            appointmentDate: "2026-05-25",
-            appointmentTime: "11:30 AM",
-            status: "Completed",
-            type: "OPD",
-            notes: "Initial consultation completed",
-            consultationType: "Initial Consultation",
-        },
-        {
-            id: 103,
-            patientName: "Arjun Verma",
-            patientId: "P103",
-            appointmentDate: "2026-05-24",
-            appointmentTime: "02:00 PM",
-            status: "Cancelled",
-            type: "Follow-up",
-            notes: "Patient requested cancellation",
-            consultationType: "Follow-up",
-        },
-        {
-            id: 104,
-            patientName: "Kavya Gupta",
-            patientId: "P104",
-            appointmentDate: "2026-05-24",
-            appointmentTime: "03:30 PM",
-            status: "Completed",
-            type: "OPD",
-            notes: "Successful consultation with recommendations",
-            consultationType: "Initial Consultation",
-        },
-        {
-            id: 105,
-            patientName: "Deepak Kumar",
-            patientId: "P105",
-            appointmentDate: "2026-05-23",
-            appointmentTime: "09:00 AM",
-            status: "Completed",
-            type: "Emergency",
-            notes: "Emergency consultation - patient stabilized",
-            consultationType: "Emergency",
-        },
-        {
-            id: 106,
-            patientName: "Pooja Iyer",
-            patientId: "P106",
-            appointmentDate: "2026-05-23",
-            appointmentTime: "01:00 PM",
-            status: "Completed",
-            type: "Follow-up",
-            notes: "Post-treatment follow-up successful",
-            consultationType: "Follow-up",
-        },
-    ];
+    const {
+        appointments,
+        pastappointments,
+        loading,
+        refetchAppointments,
+        refetchPastAppointments,
+        dateFilter,
+        setDateFilter
+    } = useContext(HospitalContext)
+
 
     const [stats, setStats] = useState({
         todayAppointments: 8,
@@ -237,10 +91,6 @@ const DoctorDashboard = () => {
         averageRating: 4.7,
         consultationRate: 92,
     });
-
-    const [appointments, setAppointments] = useState(todayAppointments);
-    const [pastAppointments, setPastAppointments] = useState(pastAppointmentsData);
-
     // Dialog states
     const [openEditDialog, setOpenEditDialog] = useState(false);
     const [editingAppointment, setEditingAppointment] = useState(null);
@@ -251,6 +101,7 @@ const DoctorDashboard = () => {
     const [filterStatus, setFilterStatus] = useState("All");
     const [filterDate, setFilterDate] = useState("");
     const [sortBy, setSortBy] = useState("date-desc");
+
 
     // Tab for past appointments
     const [tabValue, setTabValue] = useState(0);
@@ -310,94 +161,261 @@ const DoctorDashboard = () => {
             </CardContent>
         </Card>
     );
-
-    // Today's appointments card with better styling
     const TodayAppointmentsCard = () => (
-        <Card sx={{ border: `1px solid lightgray` }}>
-            <Box display="flex" alignItems="center" justifyContent="space-between">
-                <CardHeader
-                    title={<span>Today's Appointments</span>}
-                    subheader={`${appointments.length} scheduled consultations`}
-                    titleTypographyProps={{ variant: "h6" }}
-                    sx={{ pb: 2 }}
-                />
-
-
-                <Button
-
-                    variant="contained"
-                    onClick={() => setTabValue(0)}
-                    sx={{ backgroundColor: colors.blueAccent[400], mx: 2 }}
-                >
-                    View All({appointments.length})
-                </Button>
-
-
-
-            </Box>
-            <Divider sx={{ borderColor: "lightgray" }} />
-            <CardContent sx={{ p: 0 }}>
-                <Box sx={{ maxHeight: "500px", overflowY: "auto" }}>
-                    {appointments.slice(0, 5).map((apt, idx) => (
-                        <Box
-                            key={apt.id}
-                            sx={{
-                                p: 2,
-                                borderBottom: idx < 4 ? `1px solid ${colors.primary[500]}` : "none",
-                                transition: "background-color 0.2s ease",
-                                "&:hover": {
-                                    backgroundColor: "lightgrey",
-                                },
-                            }}
-                        >
-                            <Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={2} mb={1}>
-                                <Box flex={1}>
-                                    <Typography color={colors.grey[100]} variant="subtitle2" fontWeight={600}>
-                                        {apt.patientName}
-                                    </Typography>
-                                    <Typography variant="caption">
-                                        {apt.patientId} • {apt.appointmentTime}
-                                    </Typography>
-                                </Box>
-                                <Box display="flex" gap={1}>
-                                    <IconButton
-                                        size="small"
-                                        onClick={() => handleEditAppointment(apt)}
-                                        sx={{ color: colors.blueAccent[400] }}
-                                    >
-                                        <EditIcon fontSize="small" />
-                                    </IconButton>
-                                    <IconButton
-                                        size="small"
-                                        onClick={() => handleCompleteAppointment(apt.id)}
-                                        sx={{ color: colors.greenAccent[400] }}
-                                    >
-                                        <CheckCircleIcon fontSize="small" />
-                                    </IconButton>
-                                    <IconButton
-                                        size="small"
-                                        onClick={() => handleCancelAppointment(apt.id)}
-                                        sx={{ color: colors.redAccent[400] }}
-                                    >
-                                        <CancelIcon fontSize="small" />
-                                    </IconButton>
-                                </Box>
-                            </Box>
-                            <Typography variant="caption" display="block" mb={1}>
-                                {apt.notes}
-                            </Typography>
-
-                        </Box>
-                    ))}
+        <Card
+            elevation={0}
+            sx={{
+                boxShadow: "none",
+                transition: "none",
+                "&:hover": {
+                    boxShadow: "none !important",
+                    transform: "none !important",
+                },
+            }}
+        >
+            <Box
+                sx={{
+                    p: 2,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: 2,
+                }}
+            > <Box> <Typography
+                variant="h6"
+                fontWeight={600}
+                color={colors.grey[100]}
+            >
+                Appointments </Typography>
+                    <Typography
+                        variant="body2"
+                        color={colors.grey[400]}
+                    >
+                        {appointments?.length || 0} appointments found
+                    </Typography>
                 </Box>
+
+                <Box
+                    display="flex"
+                    gap={2}
+                    alignItems="center"
+                    flexWrap="wrap"
+                >
+                    <TextField
+                        select
+                        size="small"
+                        label="Date Range"
+                        value={dateFilter}
+                        onChange={(e) => setDateFilter(e.target.value)}
+                        sx={{
+                            minWidth: 180,
+                            "& .MuiOutlinedInput-root": {
+                                color: colors.grey[100],
+                                "& fieldset": {
+                                    borderColor: colors.primary[500],
+                                },
+                            },
+                        }}
+                    >
+                        {Object.entries(DATE_FILTER_OPTIONS).map(([value, label]) => (
+                            <MenuItem key={value} value={value}>
+                                {label}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                    <IconButton
+                        size="small"
+                        onClick={refetchAppointments}
+                        disabled={loading?.appointmentLoading}
+                        title="Refresh"
+                        sx={{
+                            border: `1px solid ${colors.primary[500]}`,
+                            borderRadius: 2,
+                        }}
+                    >
+                        <RefreshIcon fontSize="small" />
+                    </IconButton>
+                </Box>
+            </Box>
+
+            <Divider sx={{ borderColor: "lightgray" }} />
+
+            {loading?.appointmentLoading && (
+                <CircularProgress size={20} />
+            )}
+            <CardContent sx={{ p: 0 }}>
+                {!loading?.appointmentLoading && (
+                    <Box sx={{ maxHeight: "500px", overflowY: "auto" }}>
+                        {appointments?.length > 0 ? (
+                            appointments.slice(0, 5).map((apt, idx) => (
+                                <Box
+                                    key={apt.id}
+                                    sx={{
+                                        p: 2,
+                                        borderBottom:
+                                            idx < appointments.slice(0, 5).length - 1
+                                                ? `1px solid ${colors.primary[500]}`
+                                                : "none",
+                                        transition: "all 0.2s ease",
+
+                                        "&:hover": {
+                                            backgroundColor: `${colors.primary[500]}20`,
+                                        },
+                                    }}
+                                >
+                                    <Box
+                                        display="flex"
+                                        justifyContent="space-between"
+                                        alignItems="flex-start"
+                                        gap={2}
+                                        mb={1}
+                                    >
+                                        <Box flex={1}>
+                                            <Typography
+                                                color={colors.grey[100]}
+                                                variant="subtitle2"
+                                                fontWeight={600}
+                                            >
+                                                {apt.patientName}
+                                            </Typography>
+
+                                            <Typography
+                                                variant="caption"
+                                                display="block"
+                                                color={colors.grey[400]}
+                                            >
+                                                ID: {apt.patientId}
+                                            </Typography>
+
+                                            <Typography
+                                                variant="caption"
+                                                display="block"
+                                                color={colors.greenAccent[400]}
+                                                fontWeight={600}
+                                            >
+                                                {apt.appointmentDate} • {apt.appointmentTime}
+                                            </Typography>
+                                        </Box>
+
+                                        <Box
+                                            display="flex"
+                                            alignItems="center"
+                                            gap={1}
+                                            flexWrap="wrap"
+                                        >
+                                            <Chip
+                                                size="small"
+                                                label={apt.status || "Scheduled"}
+                                                color={
+                                                    apt.status === "Completed"
+                                                        ? "success"
+                                                        : apt.status === "Cancelled"
+                                                            ? "error"
+                                                            : "primary"
+                                                }
+                                            />
+
+                                            <IconButton
+                                                size="small"
+                                                onClick={() =>
+                                                    handleEditAppointment(apt)
+                                                }
+                                                sx={{
+                                                    color:
+                                                        colors.blueAccent[400],
+                                                }}
+                                            >
+                                                <EditIcon fontSize="small" />
+                                            </IconButton>
+
+                                            <IconButton
+                                                size="small"
+                                                onClick={() =>
+                                                    handleCompleteAppointment(
+                                                        apt.id
+                                                    )
+                                                }
+                                                sx={{
+                                                    color:
+                                                        colors.greenAccent[400],
+                                                }}
+                                            >
+                                                <CheckCircleIcon fontSize="small" />
+                                            </IconButton>
+
+                                            <IconButton
+                                                size="small"
+                                                onClick={() =>
+                                                    handleCancelAppointment(
+                                                        apt.id
+                                                    )
+                                                }
+                                                sx={{
+                                                    color:
+                                                        colors.redAccent[400],
+                                                }}
+                                            >
+                                                <CancelIcon fontSize="small" />
+                                            </IconButton>
+                                        </Box>
+                                    </Box>
+
+                                    <Typography
+                                        variant="caption"
+                                        display="block"
+                                        color={colors.grey[400]}
+                                    >
+                                        {apt.notes ||
+                                            "No notes available"}
+                                    </Typography>
+                                </Box>
+                            ))
+                        ) : (
+                            <Box
+                                display="flex"
+                                flexDirection="column"
+                                alignItems="center"
+                                justifyContent="center"
+                                py={8}
+                                px={3}
+                                textAlign="center"
+                            >
+                                <EventIcon
+                                    sx={{
+                                        fontSize: 55,
+                                        color: colors.grey[500],
+                                        mb: 2,
+                                    }}
+                                />
+                                <Typography
+                                    variant="body2"
+                                    color={colors.grey[400]}
+                                >
+                                    No appointments found for {DATE_FILTER_OPTIONS[dateFilter]}.
+                                </Typography>
+                            </Box>
+                        )}
+                    </Box>
+                )}
 
             </CardContent>
         </Card>
     );
 
-    // Enhanced recent consultations with detailed info
     const RecentConsultationsCard = () => (
-        <Card sx={{ backgroundColor: colors.primary[400], border: `1px solid lightgray` }}>
+        <Card
+            elevation={0}
+            sx={{
+                boxShadow: "none",
+                transition: "none",
+
+                "&:hover": {
+                    boxShadow: "none !important",
+                    transform: "none !important",
+                },
+            }}
+        >
             <CardHeader
                 title={
                     <Box display="flex" alignItems="center" gap={1}>
@@ -406,61 +424,140 @@ const DoctorDashboard = () => {
                     </Box>
                 }
                 subheader="Detailed consultation history"
-                titleTypographyProps={{ color: colors.grey[100], variant: "h6" }}
-                subheaderTypographyProps={{ color: colors.grey[300] }}
+                titleTypographyProps={{
+                    color: colors.grey[100],
+                    variant: "h6",
+                }}
+                subheaderTypographyProps={{
+                    color: colors.grey[300],
+                }}
                 sx={{ pb: 2 }}
             />
+
             <Divider sx={{ borderColor: "lightgray" }} />
+
             <CardContent sx={{ p: 0 }}>
                 <Box sx={{ maxHeight: "500px", overflowY: "auto" }}>
-                    {appointments.slice(0, 5).map((apt, idx) => (
-                        <Box
-                            key={apt.id}
-                            sx={{
-                                p: 2,
-                                borderBottom: idx < 4 ? `1px solid ${colors.primary[500]}` : "none",
-                                backgroundColor: idx % 2 === 0 ? "transparent" : `${colors.primary[500]}40`,
-                            }}
-                        >
-                            <Box display="flex" gap={2} mb={1}>
-                                <Avatar
-                                    sx={{
-                                        width: 40,
-                                        height: 40,
-                                        backgroundColor: colors.blueAccent[500],
-                                        fontSize: "0.9rem",
-                                    }}
-                                >
-                                    {apt.patientName.charAt(0)}
-                                </Avatar>
-                                <Box flex={1}>
-                                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                                        <Typography color={colors.grey[100]} variant="subtitle2" fontWeight={600}>
-                                            {apt.patientName}
+                    {appointments?.length > 0 ? (
+                        appointments.map((apt, idx) => (
+                            <Box
+                                key={apt.id}
+                                sx={{
+                                    p: 2,
+                                    borderBottom:
+                                        idx < appointments.length - 1
+                                            ? `1px solid ${colors.primary[500]} `
+                                            : "none",
+
+                                    backgroundColor:
+                                        idx % 2 === 0
+                                            ? "transparent"
+                                            : `${colors.primary[500]} 40`,
+                                }}
+                            >
+                                <Box display="flex" gap={2} mb={1}>
+                                    <Avatar
+                                        sx={{
+                                            width: 40,
+                                            height: 40,
+                                            backgroundColor: colors.blueAccent[500],
+                                            fontSize: "0.9rem",
+                                        }}
+                                    >
+                                        {apt.patientName?.charAt(0) || "P"}
+                                    </Avatar>
+
+                                    <Box flex={1}>
+                                        <Box
+                                            display="flex"
+                                            justifyContent="space-between"
+                                            alignItems="center"
+                                        >
+                                            <Typography
+                                                color={colors.grey[100]}
+                                                variant="subtitle2"
+                                                fontWeight={600}
+                                            >
+                                                {apt.patientName}
+                                            </Typography>
+
+                                            <Typography
+                                                color={colors.grey[300]}
+                                                variant="caption"
+                                            >
+                                                {apt.appointmentDate}
+                                            </Typography>
+                                        </Box>
+
+                                        <Typography
+                                            color={colors.grey[300]}
+                                            variant="caption"
+                                            display="block"
+                                        >
+                                            {apt.appointmentTime} •{" "}
+                                            {apt.consultationType}
                                         </Typography>
-                                        <Typography color={colors.grey[300]} variant="caption">
-                                            {apt.appointmentDate}
+
+                                        <Typography
+                                            color={colors.grey[400]}
+                                            variant="caption"
+                                            display="block"
+                                            mt={0.5}
+                                        >
+                                            {apt.notes || "No consultation notes available"}
                                         </Typography>
                                     </Box>
-                                    <Typography color={colors.grey[300]} variant="caption" display="block">
-                                        {apt.appointmentTime} • {apt.consultationType}
-                                    </Typography>
-                                    <Typography color={colors.grey[400]} variant="caption" display="block" mt={0.5}>
-                                        {apt.notes}
-                                    </Typography>
+                                </Box>
+
+                                <Box
+                                    display="flex"
+                                    gap={1}
+                                    justifyContent="flex-end"
+                                >
+                                    <Chip
+                                        label={apt.type || "General"}
+                                        size="small"
+                                        variant="outlined"
+                                    />
+
+                                    <Chip
+                                        label={`${apt.duration || 0} min`}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{
+                                            color: colors.blueAccent[400],
+                                            borderColor: colors.blueAccent[400],
+                                        }}
+                                    />
                                 </Box>
                             </Box>
-                            <Box display="flex" gap={1} justifyContent="flex-end">
-                                <Chip label={apt.type} size="small" variant="outlined" />
-                                <Chip
-                                    label={`${apt.duration} min`}
-                                    size="small"
-                                    variant="outlined"
-                                    sx={{ color: colors.blueAccent[400], borderColor: colors.blueAccent[400] }}
-                                />
-                            </Box>
+                        ))
+                    ) : (
+                        <Box
+                            display="flex"
+                            flexDirection="column"
+                            alignItems="center"
+                            justifyContent="center"
+                            py={8}
+                            px={3}
+                            textAlign="center"
+                        >
+                            <InfoIcon
+                                sx={{
+                                    fontSize: 55,
+                                    color: colors.grey[500],
+                                    mb: 2,
+                                }}
+                            />
+
+                            <Typography
+                                variant="body2"
+                                color={colors.grey[400]}
+                            >
+                                No consultation records are available yet.
+                            </Typography>
                         </Box>
-                    ))}
+                    )}
                 </Box>
             </CardContent>
         </Card>
@@ -474,36 +571,36 @@ const DoctorDashboard = () => {
     };
 
     const handleUpdateAppointment = () => {
-        setAppointments((prev) =>
-            prev.map((apt) =>
-                apt.id === editingAppointment.id ? { ...apt, ...editFormData } : apt
-            )
-        );
-        setOpenEditDialog(false);
+        // setAppointments((prev) =>
+        //     prev.map((apt) =>
+        //         apt.id === editingAppointment.id ? { ...apt, ...editFormData } : apt
+        //     )
+        // );
+        // setOpenEditDialog(false);
         toast.success("Appointment updated successfully!");
     };
 
     const handleCompleteAppointment = (id) => {
-        setAppointments((prev) =>
-            prev.map((apt) =>
-                apt.id === id ? { ...apt, status: "Completed" } : apt
-            )
-        );
+        // setAppointments((prev) =>
+        //     prev.map((apt) =>
+        //         apt.id === id ? { ...apt, status: "Completed" } : apt
+        //     )
+        // );
         toast.success("Appointment marked as completed!");
     };
 
     const handleCancelAppointment = (id) => {
-        setAppointments((prev) =>
-            prev.map((apt) =>
-                apt.id === id ? { ...apt, status: "Cancelled" } : apt
-            )
-        );
+        // setAppointments((prev) =>
+        //     prev.map((apt) =>
+        //         apt.id === id ? { ...apt, status: "Cancelled" } : apt
+        //     )
+        // );
         toast.error("Appointment cancelled!");
     };
 
     // Filter and sort past appointments
     const getFilteredPastAppointments = () => {
-        let filtered = pastAppointments;
+        let filtered = pastappointments;
 
         // Search filter
         if (searchTerm) {
@@ -542,7 +639,7 @@ const DoctorDashboard = () => {
 
     // All Appointments Tab
     const AllAppointmentsTab = () => (
-        <Card sx={{ backgroundColor: colors.primary[400], border: `1px solid ${colors.primary[500]}`, mt: 3 }}>
+        <Card sx={{ backgroundColor: colors.primary[400], border: `1px solid ${colors.primary[500]} `, mt: 3 }}>
             <CardHeader
                 title="All Appointments"
                 titleTypographyProps={{ color: colors.grey[100] }}
@@ -567,8 +664,8 @@ const DoctorDashboard = () => {
                                 <TableRow
                                     key={apt.id}
                                     sx={{
-                                        backgroundColor: idx % 2 === 0 ? "transparent" : `${colors.primary[500]}40`,
-                                        borderBottom: `1px solid ${colors.primary[500]}`,
+                                        backgroundColor: idx % 2 === 0 ? "transparent" : `${colors.primary[500]} 40`,
+                                        borderBottom: `1px solid ${colors.primary[500]} `,
                                         "&:hover": { backgroundColor: colors.primary[500] },
                                     }}
                                 >
@@ -595,7 +692,7 @@ const DoctorDashboard = () => {
                                             label={apt.type}
                                             size="small"
                                             sx={{
-                                                backgroundColor: apt.type === "Emergency" ? `${colors.redAccent[400]}40` : `${colors.blueAccent[400]}40`,
+                                                backgroundColor: apt.type === "Emergency" ? `${colors.redAccent[400]} 40` : `${colors.blueAccent[400]} 40`,
                                                 color: apt.type === "Emergency" ? colors.redAccent[400] : colors.blueAccent[400],
                                             }}
                                         />
@@ -654,7 +751,12 @@ const DoctorDashboard = () => {
     const PastAppointmentsTab = () => (
         <Box>
             {/* Filters */}
-            <Card sx={{ border: `1px solid lightgray`, mb: 3, mt: 3 }}>
+            <Card sx={{
+                border: `1px solid lightgray`, "&:hover": {
+                    boxShadow: "none",
+                    transform: "none",
+                }
+            }}>
                 <CardHeader
                     title={
                         <Box display="flex" alignItems="center" gap={1}>
@@ -665,8 +767,18 @@ const DoctorDashboard = () => {
                     titleTypographyProps={{ color: colors.grey[100], variant: "h6" }}
                     sx={{ pb: 2 }}
                 />
-                <Divider sx={{ borderColor: colors.primary[500] }} />
-                <CardContent>
+                {/* <Divider sx={{ borderColor: colors.primary[500] }} /> */}
+                <CardContent sx={{
+                    p: 0,
+                    boxShadow: "none",
+                    transition: "none",
+
+                    "&:hover": {
+                        boxShadow: "none !important",
+                        transform: "none !important",
+                    },
+                }}
+                >
                     <Grid container spacing={2}>
                         <Grid item xs={12} md={3}>
                             <TextField
@@ -754,13 +866,23 @@ const DoctorDashboard = () => {
             {/* Past Appointments Table */}
             <Card sx={{ backgroundColor: colors.primary[400], border: `1px solid lightgray` }}>
                 <CardHeader
-                    title={`Past Appointments (${getFilteredPastAppointments().length})`}
+                    title={`Past Appointments(${getFilteredPastAppointments().length})`}
                     titleTypographyProps={{ color: colors.grey[100] }}
                     sx={{ pb: 2 }}
                 />
                 <Divider sx={{ borderColor: "lightgray" }} />
-                <CardContent sx={{ p: 0 }}>
-                    <TableContainer>
+                <CardContent sx={{
+                    p: 0,
+                    boxShadow: "none",
+                    transition: "none",
+
+                    "&:hover": {
+                        boxShadow: "none !important",
+                        transform: "none !important",
+                    }
+                }} >
+
+                    < TableContainer >
                         <Table>
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: colors.primary[500] }}>
@@ -768,8 +890,8 @@ const DoctorDashboard = () => {
                                     <TableCell sx={{ color: colors.grey[100], fontWeight: 600 }}>Date & Time</TableCell>
                                     <TableCell sx={{ color: colors.grey[100], fontWeight: 600 }}>Type</TableCell>
                                     <TableCell sx={{ color: colors.grey[100], fontWeight: 600 }}>Status</TableCell>
-                                    <TableCell sx={{ color: colors.grey[100], fontWeight: 600 }}>Consultation Type</TableCell>
-                                    <TableCell sx={{ color: colors.grey[100], fontWeight: 600 }}>Notes</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Consultation Type</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Notes</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -778,9 +900,9 @@ const DoctorDashboard = () => {
                                         <TableRow
                                             key={apt.id}
                                             sx={{
-                                                backgroundColor: idx % 2 === 0 ? "transparent" : `${colors.primary[500]}40`,
-                                                borderBottom: `1px solid ${colors.primary[500]}`,
-                                                "&:hover": { backgroundColor: colors.primary[500] },
+                                                backgroundColor: idx % 2 === 0 ? "transparent" : `white`,
+                                                borderBottom: `1px solid ${colors.primary[500]} `,
+                                                "&:hover": { backgroundColor: "lightgrey" },
                                                 opacity: apt.status === "Cancelled" ? 0.6 : 1,
                                             }}
                                         >
@@ -799,7 +921,7 @@ const DoctorDashboard = () => {
                                                     </Box>
                                                 </Box>
                                             </TableCell>
-                                            <TableCell sx={{ color: colors.grey[300] }}>
+                                            <TableCell >
                                                 {apt.appointmentDate} <br /> {apt.appointmentTime}
                                             </TableCell>
                                             <TableCell>
@@ -812,17 +934,17 @@ const DoctorDashboard = () => {
                                                     color={apt.status === "Completed" ? "success" : "error"}
                                                 />
                                             </TableCell>
-                                            <TableCell sx={{ color: colors.grey[300] }}>
+                                            <TableCell sx={{}}>
                                                 {apt.consultationType}
                                             </TableCell>
-                                            <TableCell sx={{ color: colors.grey[300], maxWidth: 250 }}>
+                                            <TableCell sx={{ maxWidth: 250 }}>
                                                 <Typography variant="caption">{apt.notes}</Typography>
                                             </TableCell>
                                         </TableRow>
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={6} sx={{ textAlign: "center", py: 4, color: colors.grey[300] }}>
+                                        <TableCell colSpan={6} sx={{ textAlign: "center", py: 4 }}>
                                             No past appointments found matching your filters.
                                         </TableCell>
                                     </TableRow>
@@ -831,8 +953,8 @@ const DoctorDashboard = () => {
                         </Table>
                     </TableContainer>
                 </CardContent>
-            </Card>
-        </Box>
+            </Card >
+        </Box >
     );
 
     // Edit appointment dialog
@@ -896,71 +1018,46 @@ const DoctorDashboard = () => {
     return (
         <Container maxWidth="xl" sx={{ py: 4 }}>
             {/* Welcome Section with Profile */}
-            <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
+            <Card fullwidth sx={{
+                backgroundColor: colors.primary[400],
+                border: `2px solid ${colors.blueAccent[400]} `, p: 2,
+                display: "flex", alignItems: "center", gap: 2,
+                mt: 0,
+                mb: 2,
+                "&:hover": {
+                    boxShadow: "none",
+                    transform: "none",
+                },
+            }}>
                 <Box>
-                    <Typography variant="h3" color={colors.grey[100]} fontWeight="bold" mb={1}>
-                        Welcome, Dr. {currentUser?.name}
+                    <Typography variant="h4" color={colors.grey[100]} fontWeight="bold">
+                        Welcome, Dr. {currentUser?.name} <Chip>Hello</Chip>
                     </Typography>
-                    <Typography color={colors.grey[300]} variant="body1">
-                        {new Date().toLocaleDateString("en-US", {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                        })}
-                    </Typography>
-                </Box>
-                {/* <Box display="flex" gap={2} alignItems="center">
-                    <Card
-                        sx={{
-                            backgroundColor: colors.primary[400],
-                            border: `2px solid ${colors.blueAccent[400]}`,
-                            p: 2,
-                        }}
+                    <Typography
+                        variant="h6"
+                        sx={{ color: "grey" }}
                     >
-                        <Box display="flex" alignItems="center" gap={2}>
-                            <Avatar
-                                alt={currentUser?.name}
-                                sx={{
-                                    width: 60,
-                                    height: 60,
-                                    backgroundColor: colors.blueAccent[500],
-                                    fontSize: "1.5rem",
-                                    border: `2px solid ${colors.blueAccent[400]}`,
-                                }}
-                            >
-                                {currentUser?.name.charAt(0)}
-                            </Avatar>
-                            <Box>
-                                <Typography color={colors.grey[100]} variant="subtitle2" fontWeight={600}>
-                                    {currentUser?.name}
-                                </Typography>
-                                <Typography color={colors.blueAccent[400]} variant="caption" fontWeight={500}>
-                                    {currentUser?.specialization}
-                                </Typography>
-                            </Box>
-                            <IconButton
-                                onClick={() => navigate("/profile")}
-                                sx={{
-                                    backgroundColor: colors.blueAccent[700],
-                                    color: colors.grey[100],
-                                    "&:hover": { backgroundColor: colors.blueAccent[600] },
-                                }}
-                                title="View Profile"
-                            >
-                                <AccountCircleIcon />
-                            </IconButton>
-                        </Box>
-                    </Card>
-                </Box> */}
-            </Box>
+                        Here’s your dashboard overview
+                    </Typography>
+
+                </Box>
+                <Box>
+                    <Button
+                        className="executiveannoucementbutton"
+                    // onClick={() => setModalOpen("announcement")}
+                    >
+                        <CampaignIcon sx={{ fontSize: 25 }} />Announcements
+                    </Button>
+                </Box>
+            </Card>
+
 
             {/* Enhanced Stats Grid */}
-            <Grid container spacing={2} mb={4}>
+            <Grid container spacing={2} mb={2}>
                 <Grid item xs={12} sm={6} md={4}>
                     <StatCard
                         title="Today's Appointments"
-                        value={stats.todayAppointments}
+                        value={appointments?.length || 0}
                         icon={EventIcon}
                         color={colors.blueAccent[400]}
                         trend={12}
@@ -1016,7 +1113,21 @@ const DoctorDashboard = () => {
             </Grid>
 
             {/* Tabbed Interface */}
-            <Card sx={{ backgroundColor: colors.primary[400] }}>
+            <Card
+                elevation={0}
+                sx={{
+                    backgroundColor: colors.primary[400],
+                    borderColor: colors.primary[400],
+                    boxShadow: "none",
+                    transition: "none",
+
+                    "&:hover": {
+                        boxShadow: "none !important",
+                        transform: "none !important",
+                        backgroundColor: colors.primary[400],
+                    },
+                }}
+            >
                 <Box >
                     <Tabs
                         value={tabValue}
@@ -1038,7 +1149,18 @@ const DoctorDashboard = () => {
                 <Box sx={{ pt: 0 }}>
                     {tabValue === 0 && (
                         <Box>
-                            <CardContent sx={{ p: 0 }}>
+                            <CardContent
+                                sx={{
+                                    p: 0,
+                                    boxShadow: "none",
+                                    transition: "none",
+
+                                    "&:hover": {
+                                        boxShadow: "none !important",
+                                        transform: "none !important",
+                                    },
+                                }}
+                            >
                                 <Grid container spacing={3}>
                                     <Grid item xs={12} md={7}>
                                         <TodayAppointmentsCard />
@@ -1056,7 +1178,7 @@ const DoctorDashboard = () => {
 
             {/* Edit Appointment Dialog */}
             <EditAppointmentDialog />
-        </Container>
+        </Container >
     );
 };
 

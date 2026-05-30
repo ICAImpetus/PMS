@@ -31,66 +31,10 @@ import { UserContextHook } from "../../../contexts/UserContexts";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-const currentUser = {
-    _id: "665c9a12ab45ef7890123456",
-
-    firstName: "Vishal",
-    lastName: "Garna",
-    fullName: "Vishal Garna",
-
-    email: "vishal@example.com",
-    phone: "+91 9876543210",
-
-    role: "doctor",
-
-    profileImage:
-        "https://randomuser.me/api/portraits/men/32.jpg",
-
-    gender: "Male",
-    age: 28,
-
-    specialization: "Cardiologist",
-
-    hospital: {
-        _id: "hosp123",
-        name: "City Care Hospital",
-        address: "Jaipur, Rajasthan",
-    },
-
-    department: "Cardiology",
-
-    isVerified: true,
-    isActive: true,
-
-    permissions: [
-        "view_patients",
-        "edit_schedule",
-        "manage_appointments",
-    ],
-
-    timings: {
-        morning: {
-            from: "09:00",
-            to: "13:00",
-        },
-        evening: {
-            from: "17:00",
-            to: "20:00",
-        },
-    },
-
-    stats: {
-        totalPatients: 245,
-        totalAppointments: 540,
-        todayAppointments: 18,
-    },
-
-    createdAt: "2026-01-12T10:30:00.000Z",
-};
 const DoctorProfile = () => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
-    // const { currentUser } = UserContextHook();
+    const { currentUser } = UserContextHook();
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
     const [profileImage, setProfileImage] = useState(currentUser?.profilePicture || "https://via.placeholder.com/200?text=Dr.+Rajesh");
@@ -98,41 +42,84 @@ const DoctorProfile = () => {
 
     // Dummy doctor data with complete model fields
     const dummyDoctor = {
-        _id: "DOC001",
-        name: "Dr. Rajesh Kumar",
-        title: "Dr.",
-        specialization: "Cardiology",
-        designation: "Senior Consultant",
-        qualification: "MBBS, MD, DM Cardiology",
-        customDegrees: "DM Cardiology, FACC",
-        experience: 15,
-        email: "dr.rajesh@hospital.com",
-        contactNumber: "+91-9876543210",
-        whatsappNumber: "+91-9876543211",
-        countryCode: "+91",
-        profilePicture: "https://via.placeholder.com/200?text=Dr.+Rajesh",
-        licenseNumber: "MCI-123456",
-        paName: "Ramesh Kumar",
-        paContactNumber: "+91-9988776655",
-        extensionNumber: "305",
-        department: "Cardiology",
-        hospital: "City Medical Center",
-        floor: "3rd Floor",
-        bio: "Experienced cardiologist with 15 years of clinical practice",
-        consultationCharges: 500,
-        averagePatientTime: "20 minutes",
-        maxPatientsHandled: 50,
-        teleConsultation: true,
-        subDepartment: "Interventional Cardiology",
-        additionalInfo: "Available for online consultations every Saturday from 2-4 PM",
-        opdNo: "OPD-305",
-        opdDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-        timings: {
-            morning: { start: "09:00 AM", end: "01:00 PM" },
-            evening: { start: "05:00 PM", end: "08:00 PM" },
-            custom: { start: "Custom timing available" },
+        _id: "6a17f226883d8a85d30aee8a",
+        hospitals: [
+            {
+                hospitalId: {
+                    _id: "69d4c091a6740216ffc532ad",
+                    corporateAddress:
+                        "78-79, Dhuleshwar Garden, Sardar Patel Marg",
+                },
+                name: "SR Kalla Memorial Hospital",
+                _id: "6a17f226883d8a85d30aee8b",
+            },
+        ],
+        username: "shobhit@123",
+        name: "shobhit ica",
+        type: "doctor",
+        isAdmin: false,
+        dailyAccumulatedTime: 0,
+        isLoggedIn: false,
+        lastSessionDuration: 0,
+        loginCount: 0,
+        isDeleted: false,
+
+        refId: {
+            _id: "6a17f226883d8a85d30aee74",
+            branch: "69d4c091a6740216ffc532b1",
+
+            department: {
+                _id: "69d8c06f813b31523870be42",
+                name: "Cardio",
+                doctors: [
+                    "69d8c0be813b31523870be5b",
+                    "6a17f226883d8a85d30aee74",
+                ],
+                branch: "69d4c091a6740216ffc532b1",
+                isDeleted: false,
+                createdAt: "2026-04-10T09:18:39.760Z",
+                updatedAt: "2026-05-28T07:43:34.291Z",
+                __v: 0,
+            },
+
+            name: "shobhit ica",
+            username: "shobhit@123",
+            profilePicture: null,
+            contactNumber: "7894564654",
+            experience: 11,
+            totalBookedPatients: 0,
+
+            degrees: ["DO"],
+            customDegrees: [],
+
+            subDepartment: "",
+
+            timings: {
+                morning: {
+                    start: "09:01 AM",
+                    end: "02:00 PM",
+                },
+
+                evening: {
+                    start: "",
+                    end: "",
+                },
+
+                custom: {
+                    start: "",
+                    end: "",
+                },
+            },
+
+            title: "Dr",
+            designation: "Seniorconsultant",
         },
-        surgeries: ["Coronary Bypass Surgery", "Angioplasty", "Valve Replacement"],
+
+        canDelete: false,
+        branches: [],
+
+        createdAt: "2026-05-28T07:43:34.333Z",
+        updatedAt: "2026-05-28T07:56:50.311Z",
     };
 
     const [formData, setFormData] = useState(dummyDoctor);
@@ -257,17 +244,17 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+                        // InputProps={{
+                        //     sx: {
+                        //         color: colors.grey[100],
+                        //         "& .MuiInput-underline:before": {
+                        //             borderBottomColor: colors.primary[500],
+                        //         },
+                        //     },
+                        // }}
+                        // InputLabelProps={{
+                        //     sx: { color: colors.grey[300] },
+                        // }}
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -280,15 +267,9 @@ const DoctorProfile = () => {
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
                             InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
                             }}
                             InputLabelProps={{
-                                sx: { color: colors.grey[300] },
+                                // sx: { color: colors.grey[300] },
                             }}
                         />
                     </Grid>
@@ -300,17 +281,17 @@ const DoctorProfile = () => {
                             value={formData._id}
                             disabled
                             variant="standard"
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+                        // InputProps={{
+                        //     sx: {
+                        //         color: colors.grey[100],
+                        //         "& .MuiInput-underline:before": {
+                        //             borderBottomColor: colors.primary[500],
+                        //         },
+                        //     },
+                        // }}
+                        // InputLabelProps={{
+                        //     sx: { color: colors.grey[300] },
+                        // }}
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -323,17 +304,17 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+                        // InputProps={{
+                        //     sx: {
+                        //         color: colors.grey[100],
+                        //         "& .MuiInput-underline:before": {
+                        //             borderBottomColor: colors.primary[500],
+                        //         },
+                        //     },
+                        // }}
+                        // InputLabelProps={{
+                        //     sx: { color: colors.grey[300] },
+                        // }}
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -345,17 +326,17 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+                        // InputProps={{
+                        //     sx: {
+                        //         color: colors.grey[100],
+                        //         "& .MuiInput-underline:before": {
+                        //             borderBottomColor: colors.primary[500],
+                        //         },
+                        //     },
+                        // }}
+                        // InputLabelProps={{
+                        //     sx: { color: colors.grey[300] },
+                        // }}
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -367,17 +348,17 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+                        // InputProps={{
+                        //     sx: {
+                        //         color: colors.grey[100],
+                        //         "& .MuiInput-underline:before": {
+                        //             borderBottomColor: colors.primary[500],
+                        //         },
+                        //     },
+                        // }}
+                        // InputLabelProps={{
+                        //     sx: { color: colors.grey[300] },
+                        // }}
                         />
                     </Grid>
                 </Grid>
@@ -395,17 +376,17 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+                        // InputProps={{
+                        //     sx: {
+                        //         color: colors.grey[100],
+                        //         "& .MuiInput-underline:before": {
+                        //             borderBottomColor: colors.primary[500],
+                        //         },
+                        //     },
+                        // }}
+                        // InputLabelProps={{
+                        //     sx: { color: colors.grey[300] },
+                        // }}
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -417,17 +398,17 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+                        // InputProps={{
+                        //     sx: {
+                        //         color: colors.grey[100],
+                        //         "& .MuiInput-underline:before": {
+                        //             borderBottomColor: colors.primary[500],
+                        //         },
+                        //     },
+                        // }}
+                        // InputLabelProps={{
+                        //     sx: { color: colors.grey[300] },
+                        // }}
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -439,17 +420,17 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+                        // InputProps={{
+                        //     sx: {
+                        //         color: colors.grey[100],
+                        //         "& .MuiInput-underline:before": {
+                        //             borderBottomColor: colors.primary[500],
+                        //         },
+                        //     },
+                        // }}
+                        // InputLabelProps={{
+                        //     sx: { color: colors.grey[300] },
+                        // }}
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -461,17 +442,17 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+                        // InputProps={{
+                        //     sx: {
+                        //         color: colors.grey[100],
+                        //         "& .MuiInput-underline:before": {
+                        //             borderBottomColor: colors.primary[500],
+                        //         },
+                        //     },
+                        // }}
+                        // InputLabelProps={{
+                        //     sx: { color: colors.grey[300] },
+                        // }}
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -483,17 +464,7 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -505,17 +476,7 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -528,17 +489,7 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -550,17 +501,7 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+
                         />
                     </Grid>
                 </Grid>
@@ -578,17 +519,7 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -600,17 +531,7 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -622,17 +543,7 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -644,17 +555,7 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+
                         />
                     </Grid>
                 </Grid>
@@ -673,17 +574,7 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -695,17 +586,7 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -718,17 +599,7 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -739,17 +610,7 @@ const DoctorProfile = () => {
                             value={isEditing ? editData.teleConsultation : formData.teleConsultation}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+
                         />
                     </Grid>
                 </Grid>
@@ -767,17 +628,7 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -789,17 +640,7 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+
                         />
                     </Grid>
                 </Grid>
@@ -819,17 +660,7 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+
                         />
                     </Grid>
                     <Grid item xs={12}>
@@ -843,17 +674,17 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                                sx: {
-                                    color: colors.grey[100],
-                                    "& .MuiInput-underline:before": {
-                                        borderBottomColor: colors.primary[500],
-                                    },
-                                },
-                            }}
-                            InputLabelProps={{
-                                sx: { color: colors.grey[300] },
-                            }}
+                        // InputProps={{
+                        //     sx: {
+                        //         color: colors.grey[100],
+                        //         "& .MuiInput-underline:before": {
+                        //             borderBottomColor: colors.primary[500],
+                        //         },
+                        //     },
+                        // }}
+                        // InputLabelProps={{
+                        //     sx: { color: colors.grey[300] },
+                        // }}
                         />
                     </Grid>
                 </Grid>

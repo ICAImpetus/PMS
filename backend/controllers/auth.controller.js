@@ -1,8 +1,9 @@
 import env from "../config/env.js";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
-import { getAdminAgentModel, MasterConn } from "../utils/db.manager.js";
-
+import { getAdminAgentModel, MasterConn, getDepartmentModel, getConnection,
+   getDoctorModel, getHospitalModel } from "../utils/db.manager.js";
+const HospitalModel = getHospitalModel(MasterConn)
 
 export const createUser = async (req, res, next) => {
   try {
@@ -100,7 +101,7 @@ export const userLogin = async (req, res, next) => {
 
     const AdminAndAgentModel = getAdminAgentModel(MasterConn)
 
-    const userData = await AdminAndAgentModel.findOne({
+    let userData = await AdminAndAgentModel.findOne({
       username,
       isDeleted: { $ne: true },
     })
@@ -160,6 +161,23 @@ export const userLogin = async (req, res, next) => {
 
     const token = jwt.sign(tokenPayload, env.jwtSecret);
 
+
+    if (userData.refId !== null && userData.refId !== undefined && userData.hospitals && userData.hospitals.length > 0) {
+      const pop = (path, model) => ({ path, model });
+      const hosId = userData.hospitals[0].hospitalId
+      const hoa = await HospitalModel.findOne({ _id: hosId }).select("trimmedName").lean();
+      const conn = await getConnection(hoa.trimmedName);
+      const Department = getDepartmentModel(conn);
+      const DoctorModel = getDoctorModel(conn);
+      const doctorData = await DoctorModel.findOne({ _id: userData.refId }).populate(pop("department", Department))
+        .select("name  username profilePicture contactNumber branch experience totalBookedPatients degrees customDegrees subDepartment timings designation title").lean(); // exclude heavy fields
+
+      if (userData) {
+        userData.refId = doctorData;
+      }
+    }
+
+
     const result = {
       id: userData.ID,
       mongoId: userData._id,
@@ -171,6 +189,7 @@ export const userLogin = async (req, res, next) => {
       branches: userData?.branches,
       canDelete: Boolean(userData.canDelete),
       createdAt: userData.createdAt,
+      refId: userData?.refId
     };
 
     res.cookie("token", token, {
