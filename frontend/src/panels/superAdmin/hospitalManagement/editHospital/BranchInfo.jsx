@@ -71,6 +71,7 @@ import DeleteConfirmationModal from "../../../../components/DeleteConfirmationMo
 import ProgressPopup, { SpecialtiesCell } from "./UploadLoading";
 import DoctorAttendanceCalendar from "./DoctorAttendanceCalendar";
 import { getRequiredHeaders, getDummyData } from "../../../Schemas/doctor";
+import { toTitleCase } from "../../../../utils/normalizeUserType";
 const normalizeSuggestionValue = (value) => {
   if (!value && value !== 0) return "";
   if (typeof value === "string") return value.trim();
@@ -81,6 +82,7 @@ const normalizeSuggestionValue = (value) => {
   }
   return "";
 };
+
 export const normalizeSuggestionArray = (arr) => {
   if (!Array.isArray(arr)) return [];
   return arr
@@ -1709,7 +1711,7 @@ const BranchInfo = () => {
                               : "")
                           } />
                           <span>
-                            {row?.title ?? row?.title} {row?.name}
+                            {toTitleCase(`${row?.title || ""} ${row?.name || ""}`)}
                           </span>
                         </Box>
                       </TableCell>

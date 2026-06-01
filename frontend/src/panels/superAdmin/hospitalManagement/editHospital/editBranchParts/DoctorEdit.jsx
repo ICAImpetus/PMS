@@ -200,7 +200,6 @@ const AddDoctorModal = ({
     surgeries: [], // New surgeries field
     whatsappNumber: "",
     averagePatientTime: "10",
-    maxPatientsHandled: 1,
     floor: ""
   });
 
@@ -226,8 +225,6 @@ const AddDoctorModal = ({
     treatableAreas: [],
     surgeries: [],
   });
-
-
 
 
   useEffect(() => {
@@ -413,9 +410,6 @@ const AddDoctorModal = ({
         averagePatientTime:
           doctorData?.averagePatientTime || "",
 
-        maxPatientsHandled:
-          doctorData?.maxPatientsHandled || "",
-
         floor: doctorData?.floor || "",
 
         specialization:
@@ -507,8 +501,6 @@ const AddDoctorModal = ({
 
         averagePatientTime: "",
 
-        maxPatientsHandled: "",
-
         floor: "",
 
         specialization: "",
@@ -538,11 +530,6 @@ const AddDoctorModal = ({
   // Handle changes for standard text fields
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "maxPatientsHandled" && value > 50) {
-      toast.error("Max 50 Patients Allowed")
-      return
-    }
-
     setCurrentDoctor((prev) => ({
       ...prev,
       [name]: value,
@@ -963,14 +950,14 @@ const AddDoctorModal = ({
     if (!currentDoctor.type?.trim())
       tempErrors.type = "Doctor type is required.";
 
-    if (!currentDoctor.username?.trim())
-      tempErrors.username = "Username is required.";
+    // if (!currentDoctor.username?.trim())
+    //   tempErrors.username = "Username is required.";
 
-    if (!doctorData && !currentDoctor.password?.trim())
-      tempErrors.password = "Password is required.";
+    // if (!doctorData && !currentDoctor.password?.trim())
+    //   tempErrors.password = "Password is required.";
 
-    if (currentDoctor.password?.trim() && currentDoctor.password.length < 8)
-      tempErrors.password = "Password must be at least 8 characters.";
+    // if (currentDoctor.password?.trim() && currentDoctor.password.length < 8)
+    //   tempErrors.password = "Password must be at least 8 characters.";
 
     // if (!currentDoctor.department?.toString().trim())
     //   tempErrors.department = "Department is required.";
@@ -1871,18 +1858,18 @@ const AddDoctorModal = ({
                         required
                         error={!!errors.name}
                         helperText={errors.name}
-                        InputProps={{
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <Tooltip title="Username auto-fills from doctor name and hospital name. You can still edit it." arrow>
-                                <InfoOutlinedIcon
-                                  fontSize="small"
-                                  sx={{ cursor: "pointer", color: "text.secondary" }}
-                                />
-                              </Tooltip>
-                            </InputAdornment>
-                          ),
-                        }}
+                      // InputProps={{
+                      //   endAdornment: (
+                      //     <InputAdornment position="end">
+                      //       <Tooltip title="Username auto-fills from doctor name and hospital name. You can still edit it." arrow>
+                      //         <InfoOutlinedIcon
+                      //           fontSize="small"
+                      //           sx={{ cursor: "pointer", color: "text.secondary" }}
+                      //         />
+                      //       </Tooltip>
+                      //     </InputAdornment>
+                      //   ),
+                      // }}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -2912,7 +2899,7 @@ const AddDoctorModal = ({
                         placeholder="Floor Number"
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    {/* <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
                         label="Max Patients Handled"
@@ -2926,17 +2913,17 @@ const AddDoctorModal = ({
                         helperText={errors.maxPatientsHandled}
                         placeholder="Ex. 10, 15, 20"
                       />
-                    </Grid>
+                    </Grid> */}
                     <Grid item xs={12} sm={6}>
                       <TextField
                         select
                         fullWidth
                         label="Average Patient Time"
                         name="averagePatientTime"
-                        value={currentDoctor.averagePatientTime}
+                        value={currentDoctor.averagePatientTime || "10"}
                         onChange={handleChange}
                       >
-                        <MenuItem value="10">10 Minutes</MenuItem>
+                        <MenuItem default value="10">10 Minutes</MenuItem>
                         <MenuItem value="15">15 Minutes</MenuItem>
                         <MenuItem value="30">30 Minutes</MenuItem>
                         <MenuItem value="45">45 Minutes</MenuItem>

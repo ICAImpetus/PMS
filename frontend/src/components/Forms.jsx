@@ -2987,7 +2987,7 @@ function Forms() {
               <div className="feedback-questions">
                 <div className="input-row">
                   <div className="input-group">
-                    <label className="required">OPD Number</label>
+                    <label className="">OPD Number</label>
 
                     <input
                       type="text"
@@ -2996,7 +2996,6 @@ function Forms() {
                       onChange={(e) =>
                         handleChange("formData.opdNumber", e.target.value)
                       }
-                      required
                     />
                   </div>
                 </div>

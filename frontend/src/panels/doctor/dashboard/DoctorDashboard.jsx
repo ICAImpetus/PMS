@@ -277,7 +277,7 @@ const DoctorDashboard = () => {
                                                 variant="subtitle2"
                                                 fontWeight={600}
                                             >
-                                                {apt.patientName}
+                                                {apt.formData.patientDetails?.patientName}
                                             </Typography>
 
                                             <Typography
@@ -285,7 +285,7 @@ const DoctorDashboard = () => {
                                                 display="block"
                                                 color={colors.grey[400]}
                                             >
-                                                ID: {apt.patientId}
+                                                ID: {apt.formData.patientDetails?.patientId}
                                             </Typography>
 
                                             <Typography
@@ -294,7 +294,7 @@ const DoctorDashboard = () => {
                                                 color={colors.greenAccent[400]}
                                                 fontWeight={600}
                                             >
-                                                {apt.appointmentDate} • {apt.appointmentTime}
+                                                {apt.formData.appointmentSlot?.date} • {apt.formData.appointmentSlot?.time}
                                             </Typography>
                                         </Box>
 

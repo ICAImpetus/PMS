@@ -30,6 +30,7 @@ import { tokens } from "../../../theme";
 import { UserContextHook } from "../../../contexts/UserContexts";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { toTitleCase } from "../../../utils/normalizeUserType";
 
 const DoctorProfile = () => {
     const theme = useTheme();
@@ -40,91 +41,55 @@ const DoctorProfile = () => {
     const [profileImage, setProfileImage] = useState(currentUser?.profilePicture || "https://via.placeholder.com/200?text=Dr.+Rajesh");
     const [openImageDialog, setOpenImageDialog] = useState(false);
 
-    // Dummy doctor data with complete model fields
-    const dummyDoctor = {
-        _id: "6a17f226883d8a85d30aee8a",
-        hospitals: [
-            {
-                hospitalId: {
-                    _id: "69d4c091a6740216ffc532ad",
-                    corporateAddress:
-                        "78-79, Dhuleshwar Garden, Sardar Patel Marg",
-                },
-                name: "SR Kalla Memorial Hospital",
-                _id: "6a17f226883d8a85d30aee8b",
-            },
-        ],
-        username: "shobhit@123",
-        name: "shobhit ica",
-        type: "doctor",
-        isAdmin: false,
-        dailyAccumulatedTime: 0,
-        isLoggedIn: false,
-        lastSessionDuration: 0,
-        loginCount: 0,
-        isDeleted: false,
+    const mapDoctorToForm = (user) => {
+        return {
+            name: user?.name || "",
+            username: user?.username || "",
 
-        refId: {
-            _id: "6a17f226883d8a85d30aee74",
-            branch: "69d4c091a6740216ffc532b1",
+            // doctor core
+            opdNo: user?.refId?.opdNo || "",
+            contactNumber: user?.refId?.contactNumber || "",
+            whatsappNumber: user?.refId?.whatsappNumber || "",
 
-            department: {
-                _id: "69d8c06f813b31523870be42",
-                name: "Cardio",
-                doctors: [
-                    "69d8c0be813b31523870be5b",
-                    "6a17f226883d8a85d30aee74",
-                ],
-                branch: "69d4c091a6740216ffc532b1",
-                isDeleted: false,
-                createdAt: "2026-04-10T09:18:39.760Z",
-                updatedAt: "2026-05-28T07:43:34.291Z",
-                __v: 0,
-            },
+            designation: user?.refId?.designation || "",
+            specialization: user?.refId?.specialization || "",
+            department: user?.refId?.department?.name || "",
+            subDepartment: user?.refId?.subDepartment || "",
 
-            name: "shobhit ica",
-            username: "shobhit@123",
-            profilePicture: null,
-            contactNumber: "7894564654",
-            experience: 11,
-            totalBookedPatients: 0,
+            experience: user?.refId?.experience || 0,
+            qualification: (user?.refId?.degrees || []).join(", "),
+            customDegrees: (user?.refId?.customDegrees || []).join(", "),
 
-            degrees: ["DO"],
-            customDegrees: [],
+            licenseNumber: user?.refId?.licenseNumber || "",
 
-            subDepartment: "",
+            hospital: user?.hospitals?.[0]?.name || "",
+            floor: user?.refId?.floor || "",
+            extensionNumber: user?.refId?.extensionNumber || "",
 
-            timings: {
-                morning: {
-                    start: "09:01 AM",
-                    end: "02:00 PM",
-                },
+            consultationCharges: user?.refId?.consultationCharges || 0,
+            averagePatientTime: user?.refId?.averagePatientTime || "",
+            maxPatientsHandled: user?.refId?.maxPatientsHandled || 0,
 
-                evening: {
-                    start: "",
-                    end: "",
-                },
+            teleConsultation: user?.refId?.teleConsultation || false,
 
-                custom: {
-                    start: "",
-                    end: "",
-                },
-            },
+            paName: user?.refId?.paName || "",
+            paContactNumber: user?.refId?.paContactNumber || "",
 
-            title: "Dr",
-            designation: "Seniorconsultant",
-        },
-
-        canDelete: false,
-        branches: [],
-
-        createdAt: "2026-05-28T07:43:34.333Z",
-        updatedAt: "2026-05-28T07:56:50.311Z",
+            bio: user?.refId?.bio || "",
+            additionalInfo: user?.refId?.additionalInfo || ""
+        };
     };
 
-    const [formData, setFormData] = useState(dummyDoctor);
+    const [formData, setFormData] = useState(mapDoctorToForm(currentUser));
     const [editData, setEditData] = useState(formData);
 
+
+    React.useEffect(() => {
+        if (currentUser) {
+            setFormData(mapDoctorToForm(currentUser));
+            setEditData(mapDoctorToForm(currentUser));
+        }
+    }, [currentUser]);
     const handleChange = (e) => {
         const { name, value } = e.target;
         setEditData((prev) => ({
@@ -186,7 +151,7 @@ const DoctorProfile = () => {
                         </Typography>
                     </Box>
                 </Box>
-                <Button
+                {/* <Button
                     variant={isEditing ? "outlined" : "contained"}
                     startIcon={isEditing ? <CancelIcon /> : <EditIcon />}
                     onClick={() => (isEditing ? handleCancel() : setIsEditing(true))}
@@ -196,7 +161,7 @@ const DoctorProfile = () => {
                     }}
                 >
                     {isEditing ? "Cancel" : "Edit Profile"}
-                </Button>
+                </Button> */}
             </Box>
 
             {/* Profile Picture Section */}
@@ -231,92 +196,49 @@ const DoctorProfile = () => {
                     </Box>
                 </Box>
             </ProfileSection>
-
             {/* Basic Information */}
             <ProfileSection title="Basic Information">
                 <Grid container spacing={2}>
-                    <Grid item xs={12} md={6}>
-                        <TextField
-                            fullWidth
-                            label="Title"
-                            name="title"
-                            value={isEditing ? editData.title : formData.title}
-                            onChange={handleChange}
-                            disabled={!isEditing}
-                            variant={isEditing ? "outlined" : "standard"}
-                        // InputProps={{
-                        //     sx: {
-                        //         color: colors.grey[100],
-                        //         "& .MuiInput-underline:before": {
-                        //             borderBottomColor: colors.primary[500],
-                        //         },
-                        //     },
-                        // }}
-                        // InputLabelProps={{
-                        //     sx: { color: colors.grey[300] },
-                        // }}
-                        />
-                    </Grid>
+
+                    {/* Name */}
                     <Grid item xs={12} md={6}>
                         <TextField
                             fullWidth
                             label="Full Name"
                             name="name"
-                            value={isEditing ? editData.name : formData.name}
+                            value={isEditing ? toTitleCase(editData.name) : toTitleCase(formData.name)}
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                            InputProps={{
-                            }}
-                            InputLabelProps={{
-                                // sx: { color: colors.grey[300] },
-                            }}
                         />
                     </Grid>
+
+                    {/* Username */}
                     <Grid item xs={12} md={6}>
                         <TextField
                             fullWidth
-                            label="Doctor ID"
-                            name="_id"
-                            value={formData._id}
+                            label="Username"
+                            name="username"
+                            value={formData.username}
                             disabled
                             variant="standard"
-                        // InputProps={{
-                        //     sx: {
-                        //         color: colors.grey[100],
-                        //         "& .MuiInput-underline:before": {
-                        //             borderBottomColor: colors.primary[500],
-                        //         },
-                        //     },
-                        // }}
-                        // InputLabelProps={{
-                        //     sx: { color: colors.grey[300] },
-                        // }}
                         />
                     </Grid>
+
+                    {/* OPD */}
                     <Grid item xs={12} md={6}>
                         <TextField
                             fullWidth
-                            label="Email"
-                            name="email"
-                            type="email"
-                            value={isEditing ? editData.email : formData.email}
+                            label="OPD No"
+                            name="opdNo"
+                            value={isEditing ? editData.opdNo : formData.opdNo}
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                        // InputProps={{
-                        //     sx: {
-                        //         color: colors.grey[100],
-                        //         "& .MuiInput-underline:before": {
-                        //             borderBottomColor: colors.primary[500],
-                        //         },
-                        //     },
-                        // }}
-                        // InputLabelProps={{
-                        //     sx: { color: colors.grey[300] },
-                        // }}
                         />
                     </Grid>
+
+                    {/* Contact */}
                     <Grid item xs={12} md={6}>
                         <TextField
                             fullWidth
@@ -326,19 +248,10 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                        // InputProps={{
-                        //     sx: {
-                        //         color: colors.grey[100],
-                        //         "& .MuiInput-underline:before": {
-                        //             borderBottomColor: colors.primary[500],
-                        //         },
-                        //     },
-                        // }}
-                        // InputLabelProps={{
-                        //     sx: { color: colors.grey[300] },
-                        // }}
                         />
                     </Grid>
+
+                    {/* WhatsApp */}
                     <Grid item xs={12} md={6}>
                         <TextField
                             fullWidth
@@ -348,19 +261,23 @@ const DoctorProfile = () => {
                             onChange={handleChange}
                             disabled={!isEditing}
                             variant={isEditing ? "outlined" : "standard"}
-                        // InputProps={{
-                        //     sx: {
-                        //         color: colors.grey[100],
-                        //         "& .MuiInput-underline:before": {
-                        //             borderBottomColor: colors.primary[500],
-                        //         },
-                        //     },
-                        // }}
-                        // InputLabelProps={{
-                        //     sx: { color: colors.grey[300] },
-                        // }}
                         />
                     </Grid>
+
+                    {/* CONSULTATION FEES (ADDED) */}
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            label="Consultation Fees"
+                            name="consultationCharges"
+                            type="number"
+                            value={isEditing ? editData.consultationCharges : formData.consultationCharges}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            variant={isEditing ? "outlined" : "standard"}
+                        />
+                    </Grid>
+
                 </Grid>
             </ProfileSection>
 

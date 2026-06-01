@@ -12,3 +12,7 @@ export const normalizeUserType = (type) => {
   return raw;
 };
 
+
+export const toTitleCase = (str = "") =>
+  str.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+

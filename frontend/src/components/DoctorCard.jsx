@@ -17,13 +17,13 @@ import { commonRoutes } from "../api/apiService";
 import { useState } from "react";
 import { useEffect } from "react";
 import { useApi } from "../api/useApi";
+import { toTitleCase } from "../utils/normalizeUserType";
 
 const chipStyles = {
     opd: { bgcolor: "#E3F2FD", color: "#1976D2" },
     specialties: { bgcolor: "#FFF3E0", color: "#F57C00" },
     surgeries: { bgcolor: "#F3E5F5", color: "#7B1FA2" },
 };
-
 const DoctorProfileCard = ({ doctor, hosId }) => {
 
 
@@ -98,7 +98,7 @@ const DoctorProfileCard = ({ doctor, hosId }) => {
                     <Grid item xs>
 
                         <Typography fontSize={15} fontWeight={600}>
-                            {data?.title} {data?.name}  {data?.masters ? `(${data?.masters})` : ""}
+                            {toTitleCase(`${data?.title || ""} ${data?.name || ""}`)}  {data?.masters ? `(${data?.masters})` : ""}
                         </Typography>
 
                         <Typography fontSize={12} color="text.secondary">

@@ -105,13 +105,24 @@ export function generateDoctorSlots(
   doctor
 ) {
   if (!doctor?.timings) {
+    console.log("Doctor timings not found, cannot generate slots.");
     return [];
   }
+  const rawTime = doctor?.averagePatientTime;
 
-  const slotMinutes = Number(
-    doctor?.averagePatientTime || 10
-  );
+  let slotMinutes = 10;
 
+  if (typeof rawTime === "string") {
+    if (rawTime.includes("m")) {
+      slotMinutes = Number(rawTime.replace("m", "").trim());
+    } else {
+      slotMinutes = Number(rawTime) || 10;
+    }
+  } else {
+    slotMinutes = Number(rawTime) || 10;
+  }
+
+  console.log("slotMinutes", slotMinutes)
   if (
     !slotMinutes
   ) {
@@ -119,10 +130,6 @@ export function generateDoctorSlots(
   }
 
   let allSlots = [];
-
-  // =========================
-  // MORNING SHIFT
-  // =========================
 
   if (
     doctor.timings?.morning?.start &&
@@ -1276,12 +1283,11 @@ export const addDoctor = async (req, res) => {
   let uploadedPublicId = null;
   let uploadedImageUrl = null;
   let session;
-  console.log("req.body", req.body);
 
+  // console.log("Request body:", req.body);
   try {
     const { branchId, hosId } = req.query;
 
-    // Validate IDs
     if (
       !branchId ||
       !hosId ||
@@ -1294,7 +1300,6 @@ export const addDoctor = async (req, res) => {
       });
     }
 
-    // Validate hospital (master DB)
     const hospital = await HospitalModel.findOne({
       _id: hosId,
       isDeleted: false,
@@ -1307,15 +1312,13 @@ export const addDoctor = async (req, res) => {
       });
     }
 
-    // Upload handling
     if (req.imageUrl) {
       uploadedPublicId = req.publicId;
       uploadedImageUrl = req.imageUrl;
     }
 
-    // Tenant connection
     const conn = await getConnection(hospital.trimmedName);
-    //  Start Transaction
+
     session = await conn.startSession();
     session.startTransaction();
 
@@ -1323,15 +1326,14 @@ export const addDoctor = async (req, res) => {
     const DepartmentModel = getDepartmentModel(conn);
     const DoctorModel = getDoctorModel(conn);
 
-    // Validate branch
     const branch = await BranchModel.findOne({
       _id: branchId,
       isDeleted: false,
-    })
+    });
 
     if (!branch) {
       await session.abortTransaction();
-    await  session.endSession();
+      await session.endSession();
       return res.status(404).json({
         success: false,
         message: "Branch not found",
@@ -1339,7 +1341,6 @@ export const addDoctor = async (req, res) => {
     }
 
     const body = req.body;
-
 
     const specialties = parseJSON(body.specialties, []);
     const surgeries = parseJSON(body.surgeries, []);
@@ -1360,13 +1361,12 @@ export const addDoctor = async (req, res) => {
       depId = body.department;
     }
 
-    // Validate department
     if (depId) {
       const departmentExists = await DepartmentModel.findOne({
         _id: depId,
         branch: branchId,
         isDeleted: false,
-      })
+      });
 
       if (!departmentExists) depId = null;
     }
@@ -1394,7 +1394,6 @@ export const addDoctor = async (req, res) => {
       });
     }
 
-
     const hashPassword = await bcrypt.hash(body?.password, 10);
 
     const doctorData = {
@@ -1416,7 +1415,6 @@ export const addDoctor = async (req, res) => {
           imagePath: uploadedImageUrl,
           imageId: uploadedPublicId,
         }
-
         : null,
       degrees,
       customDegrees,
@@ -1449,7 +1447,7 @@ export const addDoctor = async (req, res) => {
         custom: {
           start: timings?.custom?.from || "",
           end: timings?.custom?.to || "",
-        }
+        },
       },
       videoConsultation: {
         enabled: videoConsultation?.enabled === true,
@@ -1461,22 +1459,19 @@ export const addDoctor = async (req, res) => {
       },
     };
 
-    // Suggestions
-
     doctorData.surgeries = await updateSuggestions(conn, "surgery", doctorData.surgeries);
     doctorData.specialties = await updateSuggestions(conn, "speciality", doctorData.specialties);
-    doctorData.slots = generateDoctorSlots(doctorData)
+    doctorData.slots = generateDoctorSlots(doctorData);
 
-    // Create doctor
-    // console.log("doctor", doctorData);
+    // console.log("Creating doctor with data:", doctorData);
+    const createdDoctor = await DoctorModel.create([doctorData], { session });
 
-    const createdDoctor = await DoctorModel.create([doctorData], {
-      session,
-    });
-
+    // return res.status(301).json({
+    //   success: false,
+    //   message: "Error to Create Doctor Panel . Please try again.",
+    // });
     const doctor = createdDoctor[0];
 
-    // UPDATE DEPARTMENT
     if (depId) {
       await DepartmentModel.findByIdAndUpdate(
         depId,
@@ -1489,16 +1484,12 @@ export const addDoctor = async (req, res) => {
       );
     }
 
-    const res = await AdminAndAgentModel.create({
+    const adminAgent = await AdminAndAgentModel.create({
       name: doctorData.name,
       username: doctorData.username,
       password: doctorData.password,
       type: "doctor",
-      branches: [
-        {
-          branchId: branchId,
-        },
-      ],
+      branches: [{ branchId }],
       hospitals: [
         {
           hospitalId: hospital._id,
@@ -1507,11 +1498,11 @@ export const addDoctor = async (req, res) => {
       ],
       refId: doctor._id,
     });
-    // COMMIT
 
     await session.commitTransaction();
-   await session.endSession();
-    if (res) {
+    await session.endSession();
+
+    if (adminAgent) {
       auditLog({
         action: "Doctor_INSERT",
         event: "ADD",
@@ -1527,13 +1518,13 @@ export const addDoctor = async (req, res) => {
         success: true,
         message: "Doctor added successfully",
       });
-
     }
 
     return res.status(301).json({
-      success: true,
-      message: "Error to Create Doctor",
+      success: false,
+      message: "Error to Create Doctor Panel . Please try again.",
     });
+
   } catch (error) {
     if (uploadedPublicId) {
       try {
@@ -1542,11 +1533,14 @@ export const addDoctor = async (req, res) => {
     }
 
     if (session) {
-      await session.abortTransaction();
-      await session.endSession();
+      try {
+        await session.abortTransaction();
+        await session.endSession();
+      } catch { }
     }
 
     console.log("Add Doctor Error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
@@ -6399,7 +6393,7 @@ export const superManagerDashboardService = async (conn, branchId) => {
                 $project: {
                   month: { $month: "$createdAt" },
 
-                  // ⚡ lightweight fields
+                  // lightweight fields
                   location: "$formData.location",
                   age: "$formData.patientDetails.patientAge",
 
@@ -6818,29 +6812,17 @@ export const superAdminDashboardService = async (
                         date: "$createdAt",
                       },
                     },
-
-                    monthNumber: {
-                      $month: "$createdAt",
-                    },
                   },
 
                   appointment: {
                     $sum: {
                       $cond: [
-                        {
-                          $eq: ["$purpose", "Appointment"],
-                        },
+                        { $eq: ["$purpose", "Appointment"] },
                         1,
                         0,
                       ],
                     },
                   },
-                },
-              },
-
-              {
-                $sort: {
-                  "_id.monthNumber": 1,
                 },
               },
 
@@ -6922,6 +6904,7 @@ export const superAdminDashboardService = async (
       ]).allowDiskUse(true),
     ]);
 
+    // console.log(JSON.stringify(patientData, null, 2));
 
     let formattedPatientData = patientData;
 
@@ -6935,51 +6918,44 @@ export const superAdminDashboardService = async (
 
         d.setMonth(currentDate.getMonth() - i);
 
-        last3Months.push(
-          d.toLocaleString("default", {
+        last3Months.push({
+          month: d.toLocaleString("default", {
             month: "short",
-          })
-        );
+          }),
+          fullMonth: d.toLocaleString("default", {
+            month: "long",
+          }),
+        });
       }
 
-      formattedPatientData = last3Months.map((month) => {
+      formattedPatientData = last3Months.map((m) => {
         const found = patientData.find(
-          (item) => item.month === month
+          (item) => item.month === m.fullMonth
         );
 
         return {
-          month,
+          month: m.month,
           newPatients: found?.newPatients || 0,
         };
       });
     }
-    console.log("formattedPatientData", formattedPatientData);
+    // console.log("formattedPatientData", formattedPatientData);
 
     // transform chart data
     const analytics = dashboardAgg?.[0] || {};
     const callCategorization = {
-      appointment: [],
+      appointment: analytics.callCategorization || [],
       newPatient: formattedPatientData
     };
+    // callCategorization.newPatient.push({
+    //   month: item._id,
+    //   count: item.newPatient,
+    // });
 
-    (analytics.callCategorization || []).forEach(
-      (item) => {
-        callCategorization.appointment.push({
-          month: item._id,
-          count: item.appointment,
-        });
-
-        // callCategorization.newPatient.push({
-        //   month: item._id,
-        //   count: item.newPatient,
-        // });
-
-        // callCategorization.oldPatient.push({
-        //   month: item._id,
-        //   count: item.oldPatient,
-        // });
-      }
-    );
+    // callCategorization.oldPatient.push({
+    //   month: item._id,
+    //   count: item.oldPatient,
+    // });
 
     return {
       analytics: {
@@ -7153,7 +7129,7 @@ export const uploadBranchCSV = async (req, res) => {
   } catch (error) {
     if (session) {
       await session.abortTransaction();
-    await  session.endSession();
+      await session.endSession();
     }
 
     if (req.file?.path) {
@@ -8279,9 +8255,6 @@ export const getPatientByNumber = async (req, res) => {
 
 export const getDoctorAppointment = async (req, res) => {
   try {
-    console.log("req.query", req.query);
-
-
     const {
       hospitalId,
       branchId,
@@ -8324,24 +8297,27 @@ export const getDoctorAppointment = async (req, res) => {
 
     // Model
     const FilledFormsModel = getFilledFormsModel(conn);
+    const PatientModel = getPatientModel(conn);
 
     const start = Date.now();
 
     const query = {
-      doctorId,
-      branchId,
-      appointmentStatus: "pending",
+      // doctorId,
+      // branchId,
+      // appointmentStatus: "pending",
     };
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    console.log("Date Filter:", dateFilter);
+    console.log("Date Filter:", doctorId);
     switch (dateFilter) {
       case "today": {
         const tomorrow = new Date(today);
         tomorrow.setDate(today.getDate() + 1);
 
-        query.appointmentDate = {
+        query["formData.appointmentSlot.date"] = {
           $gte: today,
           $lt: tomorrow,
         };
@@ -8355,7 +8331,7 @@ export const getDoctorAppointment = async (req, res) => {
         const dayAfterTomorrow = new Date(today);
         dayAfterTomorrow.setDate(today.getDate() + 2);
 
-        query.appointmentDate = {
+        query["formData.appointmentSlot.date"] = {
           $gte: tomorrow,
           $lt: dayAfterTomorrow,
         };
@@ -8366,7 +8342,7 @@ export const getDoctorAppointment = async (req, res) => {
         const next3Days = new Date(today);
         next3Days.setDate(today.getDate() + 3);
 
-        query.appointmentDate = {
+        query["formData.appointmentSlot.date"] = {
           $gte: today,
           $lte: next3Days,
         };
@@ -8377,7 +8353,7 @@ export const getDoctorAppointment = async (req, res) => {
         const next7Days = new Date(today);
         next7Days.setDate(today.getDate() + 7);
 
-        query.appointmentDate = {
+        query["formData.appointmentSlot.date"] = {
           $gte: today,
           $lte: next7Days,
         };
@@ -8385,7 +8361,7 @@ export const getDoctorAppointment = async (req, res) => {
       }
 
       case "all": {
-        query.appointmentDate = {
+        query["formData.appointmentSlot.date"] = {
           $gte: today,
         };
         break;
@@ -8402,10 +8378,9 @@ export const getDoctorAppointment = async (req, res) => {
 
     const [data, total] = await Promise.all([
       FilledFormsModel.find(query)
-        .sort({
-          appointmentDate: 1,
-          createdAt: -1,
-        })
+        .populate({ model: PatientModel, path: "formData.patientDetails", select: "patientName patientMobile" })
+        .select("formData.patientDetails formData.appointmentSlot createdAt")
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNumber)
         .lean(),
@@ -8510,9 +8485,11 @@ export const getPastDoctorAppointments = async (req, res) => {
       branchId,
 
       // Past appointments only
-      appointmentDate: {
-        $lt: todayStart,
-      },
+      appointmentSlot: {
+        date: {
+          $lt: todayStart,
+        }
+      }
     };
 
     // Count
@@ -8520,7 +8497,7 @@ export const getPastDoctorAppointments = async (req, res) => {
 
     // Data
     const data = await FilledFormsModel.find(query)
-      .sort({ appointmentDate: -1 })
+      // .sort({ appointmentSlot: { date: -1 } })
       .skip(skip)
       .limit(limitNumber)
       .lean();

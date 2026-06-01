@@ -88,17 +88,17 @@ export const getAllUsers = async (req, res) => {
       const type = profile?.type?.toLowerCase();
 
       if (type === "superadmin") {
-        query.type = { $nin: ["superadmin", "admin"] };
+        query.type = { $nin: ["superadmin", "admin", "doctor"] };
       }
       else if (type === "admin") {
-        query.type = { $nin: ["superadmin", "admin"] };
+        query.type = { $nin: ["superadmin", "admin", "doctor"] };
       }
       else if (type === "supermanager") {
-        query.type = { $nin: ["superadmin", "supermanager", "admin"] };
+        query.type = { $nin: ["superadmin", "supermanager", "admin", "doctor"] };
       }
       else if (type === "teamleader") {
         query.type = {
-          $nin: ["supermanager", "superadmin", "admin", "teamleader"],
+          $nin: ["supermanager", "superadmin", "admin", "teamleader", "doctor"],
         };
 
         //  IMPORTANT: Branch filter for teamleader
@@ -869,7 +869,9 @@ export const getMe = async (req, res) => {
       const Department = getDepartmentModel(conn);
       const DoctorModel = getDoctorModel(conn);
       const doctorData = await DoctorModel.findOne({ _id: userData.refId }).populate(pop("department", Department))
-        .select("name  username profilePicture branch contactNumber experience totalBookedPatients degrees customDegrees subDepartment timings designation title").lean(); // exclude heavy fields
+        // .select("name  username profilePicture branch contactNumber experience totalBookedPatients degrees customDegrees subDepartment timings designation title")
+        .select("-password -slots")
+        .lean(); // exclude heavy fields
 
       if (userData) {
         userData.refId = doctorData;

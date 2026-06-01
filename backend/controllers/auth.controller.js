@@ -155,11 +155,12 @@ export const userLogin = async (req, res, next) => {
       branches: userData?.branches,
       email: userData.email,
       canDelete: Boolean(userData.canDelete),
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 2 * 60 * 60,
+
     };
 
-    const token = jwt.sign(tokenPayload, env.jwtSecret);
+    const token = jwt.sign(tokenPayload, env.jwtSecret, {
+      expiresIn: "24h",
+    });
 
 
     if (userData.refId !== null && userData.refId !== undefined && userData.hospitals && userData.hospitals.length > 0) {
@@ -170,7 +171,9 @@ export const userLogin = async (req, res, next) => {
       const Department = getDepartmentModel(conn);
       const DoctorModel = getDoctorModel(conn);
       const doctorData = await DoctorModel.findOne({ _id: userData.refId }).populate(pop("department", Department))
-        .select("name  username profilePicture contactNumber branch experience totalBookedPatients degrees customDegrees subDepartment timings designation title").lean(); // exclude heavy fields
+          .select("-password -slots")
+          .lean(); // exclude heavy fields
+        // .select("name  username profilePicture contactNumber branch experience totalBookedPatients degrees customDegrees subDepartment timings designation title").lean(); // exclude heavy fields
 
       if (userData) {
         userData.refId = doctorData;

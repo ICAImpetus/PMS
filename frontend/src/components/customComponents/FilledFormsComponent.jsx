@@ -20,14 +20,13 @@ const FORMS_AVAILABLE_COLUMNS = [
   { key: "appointmentSlot", label: "App. Slot" },
   { key: "referenceFrom", label: "Reference From" },
   { key: "callerType", label: "Caller Type" },
-  { key: "department", label: "Department" },
-  { key: "doctor", label: "Doctor" },
+  { key: "departmentName", label: "Department" },
+  { key: "doctorName", label: "Doctor" },
   { key: "remarks", label: "Remarks" },
   { key: "createdAt", label: "Submitted At" },
 ];
 
 const flattenFilledForm = (doc) => {
-  console.log("doc", doc);
   return {
     _id: doc._id,
 
@@ -44,8 +43,8 @@ const flattenFilledForm = (doc) => {
     referenceFrom: doc.referenceFrom || "-",
     callerType: doc.callerType || "-",
 
-    department: doc?.departmentName || "-",
-    doctor: doc?.doctorName || "-",
+    departmentName: doc?.departmentName || "-",
+    doctorName: doc?.doctorName || "-",
 
 
     remarks: doc.remarks || "-",
@@ -92,7 +91,7 @@ const FilledFormsComponent = ({
     "patientMobile",
     "purpose",
     ...(formsModalOpen === "Appointments"
-      ? ["appointmentSlot", "department", "doctor"]
+      ? ["appointmentSlot", "departmentName", "doctorName"]
       : []),
     "createdAt",
     "remarks"

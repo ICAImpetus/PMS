@@ -187,12 +187,12 @@ export const DoctorSchema = new mongoose.Schema(
     title: {
       type: String,
       trim: true,
-      set: toTitleCase,
+      // set: toTitleCase,
     },
     designation: {
       type: String,
       trim: true,
-      set: toTitleCase,
+      // set: toTitleCase,
     },
     teleMedicine: {
       type: String,

@@ -233,14 +233,19 @@ const SuperAdminDashboard = () => {
   const newPatientData =
     analytics?.callCategorization?.newPatient || [];
 
+
   const labels = newPatientData.map(
     (item) => item.month
   );
   // CHART VALUES
+
+  console.log("Appointment Data:", appointmentData);
+
   const appointmentChartData = appointmentData.map(
     (item) => item.appointment || 0
   );
 
+  console.log("appointmentChartData:", appointmentChartData);
   const newPatientChartData = newPatientData.map(
     (item) => item.newPatients || 0
   );
