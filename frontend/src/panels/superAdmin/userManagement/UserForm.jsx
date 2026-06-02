@@ -38,6 +38,9 @@ const UserForm = ({
 }) => {
 
 
+  console.log("updateUser", hospitalId);
+
+
 
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -55,9 +58,7 @@ const UserForm = ({
       ? (initialState?.type ?? "")
       : "supermanager",
 
-    hospitalName: isUpdateComp
-      ? (initialState?.hospitals?.map(h => h?._id).filter(Boolean) ?? [])
-      : (hospitalId?._id ? [hospitalId._id] : []),
+    hospitalName: [hospitalId],
 
     selectedBranch: Array.isArray(initialState?.branches)
       ? initialState.branches
@@ -130,8 +131,6 @@ const UserForm = ({
       setSubmitting(true); // Start loading state
 
       let valuesToSubmit = { ...values };
-      valuesToSubmit.hospitalName = [hospitalId]
-
       valuesToSubmit.selectedBranch = valuesToSubmit?.selectedBranch?.map(
         (item) => item?._id
       ) || [];
@@ -231,6 +230,9 @@ const UserForm = ({
           setFieldValue,
           setFieldError,
         }) => {
+
+          console.log("errro", errors);
+
           // ... (all useEffects and handlers inside Formik are unchanged) ...
           // Fetch branches whenever hospital selection changes
           // const handleBlur = async (e) => {
@@ -256,11 +258,6 @@ const UserForm = ({
           //     console.error("Username check error:", err);
           //   }
           // };
-          useEffect(() => {
-            if (hospitalId) {
-              setFieldValue("hospitalName", [{ _id: hospitalId }]);
-            }
-          }, [hospitalId]);
           useEffect(() => {
             const fetchBranches = async () => {
               if (!values.hospitalName || values.hospitalName.length === 0) {

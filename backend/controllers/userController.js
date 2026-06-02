@@ -852,7 +852,7 @@ export const getMe = async (req, res) => {
       isDeleted: { $ne: true },
     })
       .select("-password")
-      .populate("hospitals.hospitalId", "corporateAddress hospitallogo")
+      .populate("hospitals.hospitalId", "name corporateAddress hospitallogo")
       .lean();
 
     if (!userData) {

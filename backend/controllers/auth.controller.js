@@ -106,7 +106,7 @@ export const userLogin = async (req, res, next) => {
       isDeleted: { $ne: true },
     })
       .select("+password")
-      .populate("hospitals.hospitalId", "corporateAddress hospitallogo")
+      .populate("hospitals.hospitalId", "name corporateAddress hospitallogo")
       .lean();
 
     // Verify user exists
