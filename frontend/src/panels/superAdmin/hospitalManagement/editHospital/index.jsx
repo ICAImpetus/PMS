@@ -227,7 +227,7 @@ const EditHopsitalSuperadmin = () => {
       >
         <Header
           title="Hospital Edit Management"
-          subtitle={"Hospitals List in Superadmin Panel For Edit"}
+          subtitle={"Hospitals List For Edit"}
         />
       </Box>
       <Box m="4px 0 0 0" height="80vh" sx={DataGridStyles(colors, theme)}>

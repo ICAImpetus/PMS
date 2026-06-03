@@ -731,6 +731,7 @@ export const updateBranch = async (req, res) => {
     }
 
     if (name !== undefined) branch.name = name;
+    if (code !== undefined) branch.code = code;
     if (city !== undefined) branch.city = city;
     if (state !== undefined) branch.state = state;
     if (location !== undefined) branch.location = location;

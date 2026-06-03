@@ -678,7 +678,7 @@ const TeamDashboard = () => {
         <div className="executive-outbound-grid">
           <div className="executive-outbound-card">
             <div className="executive-chart-title">
-              <PieChartIcon />Top 5 Inbound Purpose
+              <PieChartIcon />Top Inbound Purpose
             </div>
             {analytics?.topInboundPurpose?.length === 0 ? (
               <div className="executive-leads-breakdown">
@@ -700,7 +700,7 @@ const TeamDashboard = () => {
           </div>
           <div className="executive-outbound-card">
             <div className="executive-chart-title">
-              <BarChartIcon />Top 5 Outbound Purpose
+              <BarChartIcon />Top Outbound Purpose
             </div>
             {analytics?.topOutboundPurpose?.length === 0 ? (
               <div className="executive-leads-breakdown">

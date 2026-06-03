@@ -802,7 +802,7 @@ const ExecutiveDashboard = () => {
         <div className="data-grid row-3">
           <div className="data-card">
             <div className="executive-chart-title">
-              <PieChartIcon /> Top 5 Inbound Purpose
+              <PieChartIcon /> Top Inbound Purpose
             </div>
 
             <div className="scrollable-content">
@@ -823,7 +823,7 @@ const ExecutiveDashboard = () => {
 
           <div className="data-card">
             <div className="executive-chart-title">
-              <BarChartIcon /> Top 5 Outbound Purpose
+              <BarChartIcon /> Top Outbound Purpose
             </div>
             <div className="scrollable-content">
               {analytics?.topOutboundPurpose?.length === 0 ? (

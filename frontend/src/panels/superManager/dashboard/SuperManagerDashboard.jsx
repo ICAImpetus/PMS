@@ -674,7 +674,7 @@ const Dashboard = () => {
         <div className="executive-outbound-grid">
           <div className="executive-outbound-card">
             <div className="executive-chart-title">
-              <i className="fas fa-chart-pie"></i>Top 5 Inbound Purpose
+              <i className="fas fa-chart-pie"></i>Top Inbound Purpose
             </div>
             <div className="executive-leads-breakdown">
               {analytics?.topInboundPurpose?.length === 0 ? (
@@ -694,7 +694,7 @@ const Dashboard = () => {
           </div>
           <div className="executive-outbound-card">
             <div className="executive-chart-title">
-              <i className="fas fa-chart-bar"></i>Top 5 Outbound Purpose
+              <i className="fas fa-chart-bar"></i>Top Outbound Purpose
             </div>
             <div className="executive-leads-breakdown">
               {analytics?.topOutboundPurpose?.length === 0 ? (

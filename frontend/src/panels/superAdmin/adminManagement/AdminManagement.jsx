@@ -294,7 +294,7 @@ function AdminManagement() {
                     >
                         <Header
                             title="Admin Managements"
-                            subtitle={"Admin List in Superadmin Panel"}
+                            subtitle={"Admin List"}
                         />
                         <Box display="flex" gap={1} alignItems="center">
                             <TextField
