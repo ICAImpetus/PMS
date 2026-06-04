@@ -97,6 +97,9 @@ export const PatientHistory = () => {
         refetchPatients
     } = useContext(HospitalContext);
 
+    console.log("patient ", patients);
+    console.log("pagination ", pagination);
+
 
     const visibleFormColumns = FORMS_AVAILABLE_COLUMNS.filter((col) =>
         selectedFormColumns.includes(col.key),
@@ -310,13 +313,29 @@ export const PatientHistory = () => {
     const counts = calculateCounts();
 
     // Handle pagination
+    // Handle pagination
     const handleChangePage = (event, newPage) => {
-        setPage(newPage);
+        setPagination(prev => ({
+            ...prev,
+            patients: {
+                ...prev.patients,
+                page: newPage + 1
+            }
+        }));
     };
-
     const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
+        const newLimit = parseInt(event.target.value, 10);
+
+        setRowsPerPage(newLimit);
+
+        setPagination((prev) => ({
+            ...prev,
+            patients: {
+                ...prev.patients,
+                limit: newLimit,
+                page: 1, // reset to first page
+            },
+        }));
     };
 
     // Get current page data
@@ -854,11 +873,11 @@ export const PatientHistory = () => {
                         <TablePagination
                             rowsPerPageOptions={[5, 10, 25, 50]}
                             component="div"
-                            count={filteredPatients.length}
-                            rowsPerPage={rowsPerPage}
-                            page={page}
-                            onPageChange={handleChangePage}
+                            count={pagination?.patients?.totalDocument || 0}
+                            rowsPerPage={pagination?.patients?.limit || 10}
+                            page={pagination?.patients?.page - 1}   // IMPORTANT FIX
                             onRowsPerPageChange={handleChangeRowsPerPage}
+                            onPageChange={handleChangePage}
                             sx={{
                                 backgroundColor: "white",
                                 mt: 2,

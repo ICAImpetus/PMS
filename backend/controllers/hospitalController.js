@@ -8005,11 +8005,12 @@ export const getPatientByRole = async (req, res) => {
   try {
     const { hospitalId, branchId, filter, page = 1 } = req.query;
 
-    // console.log("call", req.query);
+    console.log("call", req.query);
 
 
     const PAGE_LIMIT = 10;
     const pageNum = Math.max(parseInt(page) || 1, 1);
+
     const skip = (pageNum - 1) * PAGE_LIMIT;
 
     // Validate hospitalId

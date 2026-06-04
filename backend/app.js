@@ -7,6 +7,7 @@ import apiFormRoutes from "./routes/form.routes.js";
 import apiHospitalRoutes from "./routes/hospital.routes.js";
 import apiUserRoutes from "./routes/user.routes.js";
 import errorHandler from "./middlewares/errorHandler.js";
+import "./crons/backupCron.js";
 
 // Security middleware
 import {
