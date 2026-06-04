@@ -346,27 +346,30 @@ export const PatientHistory = () => {
 
     // Handle pagination
     const handleChangePage = (event, newPage) => {
-        setPagination((prev) => ({
+        setPagination(prev => ({
             ...prev,
             patients: {
                 ...prev.patients,
-                page: newPage,
-            },
+                page: newPage + 1
+            }
         }));
     };
 
+
     const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
+        const newLimit = parseInt(event.target.value, 10);
+
+        setRowsPerPage(newLimit);
+
         setPagination((prev) => ({
             ...prev,
             patients: {
                 ...prev.patients,
-                page: 0,
+                limit: newLimit,
+                page: 1, // reset to first page
             },
-        }));;
+        }));
     };
-
-
     // Handle click outside for dropdown
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -932,11 +935,11 @@ export const PatientHistory = () => {
                         <TablePagination
                             rowsPerPageOptions={[5, 10, 25, 50]}
                             component="div"
-                            count={filteredPatients.length}
-                            rowsPerPage={pagination?.patients?.limit}
-                            page={pagination?.patients?.page}
-                            onPageChange={handleChangePage}
+                            count={pagination?.patients?.totalDocument || 0}
+                            rowsPerPage={pagination?.patients?.limit || 10}
+                            page={pagination?.patients?.page - 1}   // IMPORTANT FIX
                             onRowsPerPageChange={handleChangeRowsPerPage}
+                            onPageChange={handleChangePage}
                             sx={{
                                 backgroundColor: "white",
                                 mt: 2,

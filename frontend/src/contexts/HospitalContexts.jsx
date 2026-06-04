@@ -251,8 +251,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             toast.error("Failed to fetch Hospital Code")
     });
 
-
-
     const {
         data: patientsData,
         isLoading: patientsLoading,
@@ -267,17 +265,20 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             pagination.patients.page,
             filter
         ],
-        queryFn: async () => {
+
+        queryFn: async ({ queryKey }) => {
+            const [, hospitalId, branchId, page, filter] = queryKey;
 
             const res = await commonRoutes.getPatients(
                 filter,
-                pagination.patients,
-                isNonAdmin ? selectedBranch : null,
-                selectedHostpital
+                page,
+                isNonAdmin ? branchId : null,
+                hospitalId
             );
 
             return res?.data || {};
         },
+
         enabled:
             !isDoctor &&
             !!selectedHostpital &&
@@ -288,25 +289,31 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         onError: () =>
             toast.error("Failed to fetch patients")
     });
-
     useEffect(() => {
+        if (!patientsData?.data) return;
 
-        if (!patientsData) return;
+        const currentPage = patientsData?.pagination?.page || 1;
 
-        setPatients((prev) =>
-            mergePaginatedData(
-                prev,
-                patientsData?.data || [],
-                pagination.patients.page
-            )
-        );
+        setPatients((prev) => {
+            //  If first page → replace data
+            if (currentPage === 1) {
+                return patientsData.data;
+            }
 
-        updatePagination(
-            "patients",
-            patientsData?.pagination
-        );
+            //  If next pages → append
+            return [
+                ...prev,
+                ...patientsData.data.filter(
+                    (newItem) =>
+                        !prev.some((p) => p._id === newItem._id)
+                ),
+            ];
+        });
+
+        updatePagination("patients", patientsData.pagination);
 
     }, [patientsData]);
+
 
     const {
         data: usersData,
@@ -644,6 +651,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     }, []);
 
 
+    console.log("patientsData", patientsData);
+
+
 
     const hospitals = hospitalsData?.data || [];
     const branches = branchesData?.data || [];
@@ -751,7 +761,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     }), [
         hospitals,
         branches,
-        patients,
         users,
         admins,
         allLogs,
@@ -766,6 +775,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         selectedBranch,
         pagination,
         appointmentData,
+        patients,
+        patientsData,
         pastAppointmentData,
         filter,
         loading,
