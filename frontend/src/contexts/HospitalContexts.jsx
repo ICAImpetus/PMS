@@ -651,10 +651,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     }, []);
 
 
-    console.log("patientsData", patientsData);
-
-
-
     const hospitals = hospitalsData?.data || [];
     const branches = branchesData?.data || [];
     const admins = adminsData?.data || [];

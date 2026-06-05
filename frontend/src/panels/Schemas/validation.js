@@ -55,7 +55,27 @@ export const getValidationSchema = (isUpdateComp = false) =>
             .required("User Type is required"),
 
         hospitalName: Yup.array()
-            .of(Yup.string().required())
+            .of(
+                Yup.mixed().test(
+                    "is-valid-hospital",
+                    "Invalid hospital format",
+                    function (value) {
+                        // case 1: string id
+                        if (typeof value === "string") return true;
+
+                        // case 2: object {_id, name}
+                        if (
+                            value &&
+                            typeof value === "object" &&
+                            typeof value._id === "string"
+                        ) {
+                            return true;
+                        }
+
+                        return false;
+                    }
+                )
+            )
             .min(1, "At least one hospital is required"),
         selectedBranch: Yup.array().when("type", {
             is: (type) =>

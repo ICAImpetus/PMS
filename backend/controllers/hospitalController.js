@@ -6595,18 +6595,22 @@ export const superAdminDashboardService = async (
     };
 
     // user query
+    console.log("hospitalId", hospitalObjectId);
     const userQuery = {
       isDeleted: false,
-      "hospitals.hospitalId": hospitalObjectId,
+
+      hospitals: {
+        $elemMatch: {
+          hospitalId: hospitalObjectId
+        }
+      },
+
       ...(role === "admin" || role === "superadmin"
         ? {
-          type: {
-            $nin: ["superadmin", "admin"],
-          },
+          type: { $nin: ["superadmin", "admin"] }
         }
-        : {}),
+        : {})
     };
-
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - 2);
 
