@@ -37,7 +37,7 @@ export const PatientSchema = new mongoose.Schema(
 
         patientMobile: {
             type: String,
-            required: true,
+            // required: true,
             index: true,
         },
 
@@ -47,9 +47,9 @@ export const PatientSchema = new mongoose.Schema(
 
         location: String,
 
-        gender: String,
+        gender: { type: String, toLowerCase: true },
 
-        status: String,
+        status: { type: String, toLowerCase: true },
 
         category: String,
 

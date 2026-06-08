@@ -624,6 +624,21 @@ body {
   background: #94a3b8;
 }
 
+.patient-classification-section {
+  display: flex;
+  gap: 12px;
+}
+
+.patient-latest-visit-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.patient-latest-visit-table {
+  overflow-y: auto;
+}
+
 /* =========================================
    10. RESPONSIVE DESIGN
    ========================================= */

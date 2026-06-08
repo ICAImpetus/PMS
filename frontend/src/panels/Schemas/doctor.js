@@ -1,53 +1,38 @@
 
 export const doctorValidation = {
     name: {
-        required: true,
+        // required: true,
         type: "string",
     },
 
-    morningStart: {
-        required: true,
-        type: "string",
-    },
-    morningEnd: {
-        required: true,
-        type: "string",
-    },
-    specialization: {
-        required: true,
-        type: "string",
-    },
     type: {
-        required: true,
         type: "string",
     },
     department: {
-        required: true,
+        //  // required: true,
         type: "string",
     },
     contactNumber: {
-        required: true,
+        // required: true,
         type: "number",
         // min: 10,
-        max: 12,
+        // max: 12,
     },
 
     experience: {
-        required: true,
+        // required: true,
         type: "number",
-        min: 18,
-        max: 60,
     },
 
     consultationCharges: {
-        required: true,
+        // required: true,
         type: "number",
         min: 100,
         max: 5000,
     },
 
     age: {
-        required: true,
+        // required: true,
         type: "number",
         min: 18,
         max: 60,
@@ -58,32 +43,38 @@ export const doctorValidation = {
     },
 
     opdDays: {
-        required: true,
+        // required: true,
         type: "array",
         allowedValues: [
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
         ],
     },
 
 
-    email: {
-        validate: (value) => {
-            if (!value.includes("@")) {
-                return "Invalid email";
-            }
-        },
-    }
+    morningStart: {
+        // required: true,
+        type: "string",
+    },
+    morningEnd: {
+        // required: true,
+        type: "string",
+    },
+    specialization: {
+        // required: true,
+        type: "string",
+    },
 };
 export const getRequiredHeaders = (type) => {
     const map = {
         doctor: [
             "specialization",
+            "type",
             "name",
             "department",
             "opdDays",
@@ -138,6 +129,8 @@ export const getDummyData = (type) => {
         doctor: [
             // specialization
             "surgeon",
+
+            "fulltime|parttime|visiting|oncall",
 
             // name
             "Dr Raj Sharma",

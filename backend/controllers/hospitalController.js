@@ -7510,7 +7510,7 @@ const uploadDoctorCSV = async ({
             : [],
         }
 
-        doc.slots = generateDoctorSlots(doctor);
+        doc.slots = generateDoctorSlots(doc);
         doctorsToInsert.push(doc);
       } catch (innerError) {
         console.log(
@@ -7787,15 +7787,14 @@ const uploadEmpanelmentCSV = async ({ conn, branchId, rows, normalize, session }
   }
 };
 
+const splitComma = (val) =>
+  val ? val.split(",").map((v) => v.trim()).filter(Boolean) : [];
 const uploadLabTestCSV = async ({ conn, branchId, rows, normalize, session }) => {
   try {
     const LabTestModel = getLabTestModel(conn);
     const DepartmentModel = getDepartmentModel(conn);
 
     const branchObjectId = toObjectId(branchId);
-
-    const splitComma = (val) =>
-      val ? val.split(",").map((v) => v.trim()).filter(Boolean) : [];
 
     //  STEP 1: Fetch Departments
     const departments = await DepartmentModel.find({
@@ -7896,7 +7895,7 @@ const uploadLabTestCSV = async ({ conn, branchId, rows, normalize, session }) =>
       const currentTestId = codeToIdMap[row.testCode];
       if (!currentTestId) continue;
 
-      const packageCodes = splitComma(row.packageTests);
+      const packageCodes = (row.psplitCommaackageTests);
 
       const packageIds = packageCodes
         .map((code) => codeToIdMap[code])
@@ -8224,6 +8223,7 @@ export const getPatientByNumber = async (req, res) => {
     // Multi-tenant connection
     const conn = await getConnection(hospital.trimmedName);
     const PatientModel = getPatientModel(conn);
+    const FilledFormsModel = getFilledFormsModel(conn);
 
 
     const patient = await PatientModel.findOne({
@@ -8237,11 +8237,23 @@ export const getPatientByNumber = async (req, res) => {
         message: "Patient not found",
       });
     }
+    const latestVisits = await FilledFormsModel.find({
+      "formData.patientDetails": patient._id,
+      isDeleted: false,
+    })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean();
+
 
     return res.status(200).json({
       success: true,
       message: "Patient fetched successfully",
-      data: patient,
+      data: {
+        patient,
+        latestVisits: latestVisits || []
+      },
+
     });
 
   } catch (error) {

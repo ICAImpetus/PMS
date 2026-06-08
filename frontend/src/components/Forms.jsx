@@ -223,6 +223,7 @@ function Forms() {
   const [bookedSlotAction, setBookedSlotAction] = useState("");
   const [cancelReason, setCancelReason] = useState("");
   const [form, setForm] = useState(initialFormState);
+  const [patientLatest, setPatientLatest] = useState(initialFormState);
   const { request: getSingleBranch, error: getSingleBranchError, loading: getSingleBranchLoading } = useApi(commonRoutes.getBranchById)
   const { request: saveFilledForm, error: saveFilledFormError, loading: saveFilledFormLoading } = useApi(commonRoutes.saveFilledForm)
   const {
@@ -300,7 +301,7 @@ function Forms() {
 
         if (res?.success) {
 
-          const patient = res.data;
+          const patient = res.data?.patient;
 
           setForm((prev) => ({
             ...prev,
@@ -3635,280 +3636,283 @@ function Forms() {
 
   const renderInboundForm = () => (
     <form onSubmit={submitForm} className="all-sections-container">
-      <div className="section">
-        <h3>Primary Classification</h3>
 
-        <div className="input-row">
-          <div className="input-group">
-            <label className={isRequired ? "required" : ""}>Caller Type</label>
+      <div className="patient-classification-section">
+        <div>
+          <div className="section">
+            <h3>Primary Classification</h3>
 
-            <div className="caller-type-buttons">
-              <button
-                type="button"
-                className={`caller-btn ${form.formData.callerType === "Patient" ? "active" : ""}`}
-                onClick={() =>
-                  handleChange("formData.callerType", "Patient")
-                }
-              >
-                Patient
-              </button>
-
-              <button
-                type="button"
-                className={`caller-btn ${form.formData.callerType === "Attendant" ? "active" : ""}`}
-                onClick={() =>
-                  handleChange("formData.callerType", "Attendant")
-                }
-              >
-                Attendant
-              </button>
-            </div>
-          </div>
-
-          {(form.formData.callerType === "Patient" ||
-            form.formData.callerType === "Attendant")
-            && (
+            <div className="input-row">
               <div className="input-group">
-                <label className={isRequired ? "required" : ""}>
-                  Reference From
-                </label>
+                <label className={isRequired ? "required" : ""}>Caller Type</label>
 
-                <Autocomplete
-                  freeSolo
-                  sx={{
-                    width: "100%",
+                <div className="caller-type-buttons">
+                  <button
+                    type="button"
+                    className={`caller-btn ${form.formData.callerType === "Patient" ? "active" : ""}`}
+                    onClick={() =>
+                      handleChange("formData.callerType", "Patient")
+                    }
+                  >
+                    Patient
+                  </button>
 
-                    "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
-                      border:
-                        "1px solid var(--border-color)",
-                      borderRadius: "var(--radius)",
-                      backgroundColor: "#fff",
-                      fontSize: "13px",
+                  <button
+                    type="button"
+                    className={`caller-btn ${form.formData.callerType === "Attendant" ? "active" : ""}`}
+                    onClick={() =>
+                      handleChange("formData.callerType", "Attendant")
+                    }
+                  >
+                    Attendant
+                  </button>
+                </div>
+              </div>
 
-                      "& fieldset": {
-                        border: "none",
-                      },
-                    },
+              {(form.formData.callerType === "Patient" ||
+                form.formData.callerType === "Attendant")
+                && (
+                  <div className="input-group">
+                    <label className={isRequired ? "required" : ""}>
+                      Reference From
+                    </label>
 
-                    "& .MuiInputBase-input": {
-                      fontSize: "13px",
-                      padding: "0 14px",
-                    },
-                  }}
-                  options={REFERENCE_OPTIONS}
-                  getOptionLabel={(option) =>
-                    typeof option === "string"
-                      ? option
-                      : option.label
-                  }
-                  value={
-                    REFERENCE_OPTIONS.find(
-                      (item) =>
-                        item.value ===
-                        form.formData.referenceFrom
-                    ) || form.formData.referenceFrom
-                  }
-                  onChange={(_, newValue) => {
-                    handleChange(
-                      "formData.referenceFrom",
-                      typeof newValue === "string"
-                        ? newValue
-                        : newValue?.value || ""
-                    );
-                  }}
-                  onInputChange={(_, newInputValue) => {
-                    handleChange(
-                      "formData.referenceFrom",
-                      newInputValue
-                    );
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      placeholder="Search or select reference"
+                    <Autocomplete
+                      freeSolo
+                      sx={{
+                        width: "100%",
+
+                        "& .MuiOutlinedInput-root": {
+                          minHeight: 38,
+                          border:
+                            "1px solid var(--border-color)",
+                          borderRadius: "var(--radius)",
+                          backgroundColor: "#fff",
+                          fontSize: "13px",
+
+                          "& fieldset": {
+                            border: "none",
+                          },
+                        },
+
+                        "& .MuiInputBase-input": {
+                          fontSize: "13px",
+                          padding: "0 14px",
+                        },
+                      }}
+                      options={REFERENCE_OPTIONS}
+                      getOptionLabel={(option) =>
+                        typeof option === "string"
+                          ? option
+                          : option.label
+                      }
+                      value={
+                        REFERENCE_OPTIONS.find(
+                          (item) =>
+                            item.value ===
+                            form.formData.referenceFrom
+                        ) || form.formData.referenceFrom
+                      }
+                      onChange={(_, newValue) => {
+                        handleChange(
+                          "formData.referenceFrom",
+                          typeof newValue === "string"
+                            ? newValue
+                            : newValue?.value || ""
+                        );
+                      }}
+                      onInputChange={(_, newInputValue) => {
+                        handleChange(
+                          "formData.referenceFrom",
+                          newInputValue
+                        );
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          placeholder="Search or select reference"
+                        />
+                      )}
                     />
-                  )}
-                />
+                  </div>
+                )}
+            </div>
+
+            {form.formData.referenceFrom === "Doctor" && (
+              <div className="input-row">
+                <div className="input-group">
+                  <label className="required">Doctor Name</label>
+
+                  <input
+                    type="text"
+                    className="input-field"
+                    value={form.formData.refDoctorName}
+                    onChange={(e) =>
+                      handleChange("formData.refDoctorName", e.target.value)
+                    }
+                    required
+                  />
+                </div>
+                <div className="input-group">
+                  <label className="required">Hospital Name</label>
+
+                  <input
+                    type="text"
+                    className="input-field"
+                    value={form.formData.refHospitalName}
+                    onChange={(e) =>
+                      handleChange("formData.refHospitalName", e.target.value)
+                    }
+                    required
+                  />
+                </div>
+                <div className="input-group">
+                  <label className="required">Hospital Location </label>
+
+                  <input
+                    type="text"
+                    className="input-field"
+                    value={form.formData.hospitalLocation}
+                    onChange={(e) =>
+                      handleChange("formData.hospitalLocation", e.target.value)
+                    }
+                    required
+                  />
+                </div>
               </div>
             )}
-        </div>
-
-        {form.formData.referenceFrom === "Doctor" && (
-          <div className="input-row">
-            <div className="input-group">
-              <label className="required">Doctor Name</label>
-
-              <input
-                type="text"
-                className="input-field"
-                value={form.formData.refDoctorName}
-                onChange={(e) =>
-                  handleChange("formData.refDoctorName", e.target.value)
-                }
-                required
-              />
-            </div>
-            <div className="input-group">
-              <label className="required">Hospital Name</label>
-
-              <input
-                type="text"
-                className="input-field"
-                value={form.formData.refHospitalName}
-                onChange={(e) =>
-                  handleChange("formData.refHospitalName", e.target.value)
-                }
-                required
-              />
-            </div>
-            <div className="input-group">
-              <label className="required">Hospital Location </label>
-
-              <input
-                type="text"
-                className="input-field"
-                value={form.formData.hospitalLocation}
-                onChange={(e) =>
-                  handleChange("formData.hospitalLocation", e.target.value)
-                }
-                required
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {form.formData.callerType === "Attendant" && (
-        <div className="input-row" data-section="attendant-details">
-          <div className="input-group">
-            <label className="required">Attendant Name</label>
-
-            <input
-              type="text"
-              className="input-field"
-              value={form.formData.attendantDetails.attendantName}
-              onChange={(e) =>
-                handleChange("formData.attendantDetails.attendantName", e.target.value)
-              }
-              required
-            />
           </div>
 
-          <div className="input-group">
-            <label>Attendant Mobile</label>
-
-            <input
-              type="tel"
-              className="input-field"
-              value={form.formData.attendantDetails.attendantMobile}
-              onChange={(e) => {
-                const digits = e.target.value.replace(/\D/g, "").slice(0, 12);
-                handleChange("formData.attendantDetails.attendantMobile", digits);
-              }}
-              // required
-              pattern="[0-9]{10,12}"
-              maxLength="12"
-              minLength="10"
-              title="Enter exactly 10 digit mobile number"
-              placeholder="10-12 digit number"
-            />
-          </div>
-        </div>
-      )}
-
-      {(form.formData.callerType === "Patient" ||
-        form.formData.callerType === "Attendant") && (
-          <div className="section">
-            <h3>Patient Details</h3>
-
-            <div className="input-row">
+          {form.formData.callerType === "Attendant" && (
+            <div className="input-row" data-section="attendant-details">
               <div className="input-group">
-                <label className="required">Mobile Number</label>
-                <input
-                  type="tel"
-                  className="input-field"
-                  value={form.formData.patientDetails.patientMobile}
-                  onChange={(e) => {
-                    const digits = e.target.value
-                      .replace(/\D/g, "")
-                      .slice(0, 12);
+                <label className="required">Attendant Name</label>
 
-                    handleChange(
-                      "formData.patientDetails.patientMobile",
-                      digits
-                    );
-                  }}
-                  required
-                  pattern="[0-9]{10,12}"
-                  maxLength="12"
-                  minLength="10"
-                  title="Enter 10 to 12 digit mobile number"
-                  placeholder="10-12 digit number"
-                />
-              </div>
-              <div className="input-group">
-                <label className={isRequired ? "required" : ""} >Patient Name</label>
                 <input
                   type="text"
                   className="input-field"
-                  value={form.formData.patientDetails.patientName}
+                  value={form.formData.attendantDetails.attendantName}
                   onChange={(e) =>
-                    handleChange("formData.patientDetails.patientName", e.target.value)
+                    handleChange("formData.attendantDetails.attendantName", e.target.value)
                   }
-                  required={isRequired}
+                  required
                 />
               </div>
+
               <div className="input-group">
-                <label>Alternate Mobile</label>
+                <label>Attendant Mobile</label>
+
                 <input
                   type="tel"
                   className="input-field"
-                  value={form.formData.patientDetails.alternateMobile}
+                  value={form.formData.attendantDetails.attendantMobile}
                   onChange={(e) => {
                     const digits = e.target.value.replace(/\D/g, "").slice(0, 12);
-                    handleChange("formData.patientDetails.alternateMobile", digits);
+                    handleChange("formData.attendantDetails.attendantMobile", digits);
                   }}
+                  // required
                   pattern="[0-9]{10,12}"
                   maxLength="12"
                   minLength="10"
-                  title="Enter exactly 10-12 digit mobile number"
+                  title="Enter exactly 10 digit mobile number"
                   placeholder="10-12 digit number"
                 />
               </div>
             </div>
+          )}
 
-            <div className="input-row">
-              <div className="input-group">
-                <label >Age</label>
-                <input
-                  type="text"
-                  className="input-field"
-                  value={form.formData.patientDetails.patientAge}
-                  inputMode="numeric"
-                  placeholder="Enter Age"
-                  onChange={(e) => {
-                    let value = e.target.value.replace(/\D/g, "");
+          {(form.formData.callerType === "Patient" ||
+            form.formData.callerType === "Attendant") && (
+              <div className="section">
+                <h3>Patient Details</h3>
 
-                    // only 3 digits
-                    value = value.slice(0, 3);
+                <div className="input-row">
+                  <div className="input-group">
+                    <label className="required">Mobile Number</label>
+                    <input
+                      type="tel"
+                      className="input-field"
+                      value={form.formData.patientDetails.patientMobile}
+                      onChange={(e) => {
+                        const digits = e.target.value
+                          .replace(/\D/g, "")
+                          .slice(0, 12);
 
-                    // max age 110
-                    if (value && Number(value) > 110) {
-                      value = "110";
-                    }
+                        handleChange(
+                          "formData.patientDetails.patientMobile",
+                          digits
+                        );
+                      }}
+                      required
+                      pattern="[0-9]{10,12}"
+                      maxLength="12"
+                      minLength="10"
+                      title="Enter 10 to 12 digit mobile number"
+                      placeholder="10-12 digit number"
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label className={isRequired ? "required" : ""} >Patient Name</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={form.formData.patientDetails.patientName}
+                      onChange={(e) =>
+                        handleChange("formData.patientDetails.patientName", e.target.value)
+                      }
+                      required={isRequired}
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label>Alternate Mobile</label>
+                    <input
+                      type="tel"
+                      className="input-field"
+                      value={form.formData.patientDetails.alternateMobile}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, "").slice(0, 12);
+                        handleChange("formData.patientDetails.alternateMobile", digits);
+                      }}
+                      pattern="[0-9]{10,12}"
+                      maxLength="12"
+                      minLength="10"
+                      title="Enter exactly 10-12 digit mobile number"
+                      placeholder="10-12 digit number"
+                    />
+                  </div>
+                </div>
 
-                    handleChange(
-                      "formData.patientDetails.patientAge",
-                      value
-                    );
-                  }}
-                />
-              </div>
+                <div className="input-row">
+                  <div className="input-group">
+                    <label >Age</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={form.formData.patientDetails.patientAge}
+                      inputMode="numeric"
+                      placeholder="Enter Age"
+                      onChange={(e) => {
+                        let value = e.target.value.replace(/\D/g, "");
 
-              <div className="input-group">
-                <label>Location</label>
-                {/* <input
+                        // only 3 digits
+                        value = value.slice(0, 3);
+
+                        // max age 110
+                        if (value && Number(value) > 110) {
+                          value = "110";
+                        }
+
+                        handleChange(
+                          "formData.patientDetails.patientAge",
+                          value
+                        );
+                      }}
+                    />
+                  </div>
+
+                  <div className="input-group">
+                    <label>Location</label>
+                    {/* <input
                   type="text"
                   className="input-field"
                   value={form.formData.patientDetails.location}
@@ -3916,188 +3920,222 @@ function Forms() {
                     handleChange("formData.patientDetails.location", e.target.value)
                   }
                 /> */}
-                <Autocomplete
-                  sx={{
-                    width: 300,
-                    // fontSize: '12px',
-                    "& .MuiOutlinedInput-root": {
-                      height: 33,
-                      border: "1px solid var(--border-color)",
-                      borderRadius: "var(--radius)",
-                      backgroundColor: "#fff",
-                      fontSize: '12px',
+                    <Autocomplete
+                      sx={{
+                        width: 300,
+                        // fontSize: '12px',
+                        "& .MuiOutlinedInput-root": {
+                          height: 33,
+                          border: "1px solid var(--border-color)",
+                          borderRadius: "var(--radius)",
+                          backgroundColor: "#fff",
+                          fontSize: '12px',
 
-                      "& fieldset": {
-                        border: "none",
-                      },
-                    },
+                          "& fieldset": {
+                            border: "none",
+                          },
+                        },
 
-                    "& .MuiInputBase-input": {
-                      fontSize: '12px',
-                      padding: "0 14px",
-                    },
-                  }}
-                  options={allLocations}
-                  value={
-                    allLocations.find(
-                      (loc) =>
-                        loc.label === form.formData.patientDetails.location
-                    ) || null
-                  }
-                  onChange={(_, newValue) => {
-                    handleChange(
-                      "formData.patientDetails.location",
-                      newValue?.label || ""
-                    );
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      // label="Location"
-                      className="input-field"
+                        "& .MuiInputBase-input": {
+                          fontSize: '12px',
+                          padding: "0 14px",
+                        },
+                      }}
+                      options={allLocations}
+                      value={
+                        allLocations.find(
+                          (loc) =>
+                            loc.label === form.formData.patientDetails.location
+                        ) || null
+                      }
+                      onChange={(_, newValue) => {
+                        handleChange(
+                          "formData.patientDetails.location",
+                          newValue?.label || ""
+                        );
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          // label="Location"
+                          className="input-field"
+                        />
+                      )}
                     />
-                  )}
-                />
-              </div>
+                  </div>
 
-              <div className="input-group">
-                <label className={isRequired ? "required" : ""}  >Gender</label>
-                <div className="gender-buttons">
-                  <button
-                    type="button"
-                    className={`gender-btn ${form.formData.patientDetails.gender === "Male" ? "active" : ""}`}
-                    onClick={() => handleChange("formData.patientDetails.gender", "Male")}
-                  >
-                    Male
-                  </button>
-                  <button
-                    type="button"
-                    className={`gender-btn ${form.formData.patientDetails.gender === "Female" ? "active" : ""}`}
-                    onClick={() => handleChange("formData.patientDetails.gender", "Female")}
-                  >
-                    Female
-                  </button>
-                  <button
-                    type="button"
-                    className={`gender-btn ${form.formData.patientDetails.gender === "Transgender" ? "active" : ""}`}
-                    onClick={() => handleChange("formData.patientDetails.gender", "Transgender")}
-                  >
-                    Transgender
-                  </button>
-                  <button
-                    type="button"
-                    className={`gender-btn ${form.formData.patientDetails.gender === "Others" ? "active" : ""}`}
-                    onClick={() => handleChange("formData.patientDetails.gender", "Others")}
-                  >
-                    Others
-                  </button>
+                  <div className="input-group">
+                    <label className={isRequired ? "required" : ""}  >Gender</label>
+                    <div className="gender-buttons">
+                      <button
+                        type="button"
+                        className={`gender-btn ${form.formData.patientDetails.gender === "Male" ? "active" : ""}`}
+                        onClick={() => handleChange("formData.patientDetails.gender", "Male")}
+                      >
+                        Male
+                      </button>
+                      <button
+                        type="button"
+                        className={`gender-btn ${form.formData.patientDetails.gender === "Female" ? "active" : ""}`}
+                        onClick={() => handleChange("formData.patientDetails.gender", "Female")}
+                      >
+                        Female
+                      </button>
+                      <button
+                        type="button"
+                        className={`gender-btn ${form.formData.patientDetails.gender === "Transgender" ? "active" : ""}`}
+                        onClick={() => handleChange("formData.patientDetails.gender", "Transgender")}
+                      >
+                        Transgender
+                      </button>
+                      <button
+                        type="button"
+                        className={`gender-btn ${form.formData.patientDetails.gender === "Others" ? "active" : ""}`}
+                        onClick={() => handleChange("formData.patientDetails.gender", "Others")}
+                      >
+                        Others
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="input-row">
-              <div className="input-group">
-                <label className={isRequired ? "required" : ""}>Status</label>
-                <div className="gender-buttons">
-                  <button
-                    type="button"
-                    className={`gender-btn ${form.formData.patientDetails.status === "New" ? "active" : ""}`}
-                    onClick={() => handleChange("formData.patientDetails.status", "New")}
-                  >
-                    New
-                  </button>
-                  <button
-                    type="button"
-                    className={`gender-btn ${form.formData.patientDetails.status === "Old" ? "active" : ""}`}
-                    onClick={() => handleChange("formData.patientDetails.status", "Old")}
-                  >
-                    Old
-                  </button>
-                  <button
-                    type="button"
-                    className={`gender-btn ${form.formData.patientDetails.status === "Non-Patient" ? "active" : ""}`}
-                    onClick={() =>
-                      handleChange("formData.patientDetails.status", "Non-Patient")
-                    }
-                  >
-                    Non-Patient
-                  </button>
+                <div className="input-row">
+                  <div className="input-group">
+                    <label className={isRequired ? "required" : ""}>Status</label>
+                    <div className="gender-buttons">
+                      <button
+                        type="button"
+                        className={`gender-btn ${form.formData.patientDetails.status === "New" ? "active" : ""}`}
+                        onClick={() => handleChange("formData.patientDetails.status", "New")}
+                      >
+                        New
+                      </button>
+                      <button
+                        type="button"
+                        className={`gender-btn ${form.formData.patientDetails.status === "Old" ? "active" : ""}`}
+                        onClick={() => handleChange("formData.patientDetails.status", "Old")}
+                      >
+                        Old
+                      </button>
+                      <button
+                        type="button"
+                        className={`gender-btn ${form.formData.patientDetails.status === "Non-Patient" ? "active" : ""}`}
+                        onClick={() =>
+                          handleChange("formData.patientDetails.status", "Non-Patient")
+                        }
+                      >
+                        Non-Patient
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <div className="input-row">
-              <div className="input-group">
-                <label className={isRequired ? "required" : ""}>Category</label>
-                <Autocomplete
-                  sx={{
-                    width: 300,
+                <div className="input-row">
+                  <div className="input-group">
+                    <label className={isRequired ? "required" : ""}>Category</label>
+                    <Autocomplete
+                      sx={{
+                        width: 300,
 
-                    "& .MuiOutlinedInput-root": {
-                      height: 33,
-                      border: "1px solid var(--border-color)",
-                      borderRadius: "var(--radius)",
-                      backgroundColor: "#fff",
-                      fontSize: "12px",
+                        "& .MuiOutlinedInput-root": {
+                          height: 33,
+                          border: "1px solid var(--border-color)",
+                          borderRadius: "var(--radius)",
+                          backgroundColor: "#fff",
+                          fontSize: "12px",
 
-                      "& fieldset": {
-                        border: "none",
-                      },
-                    },
+                          "& fieldset": {
+                            border: "none",
+                          },
+                        },
 
-                    "& .MuiInputBase-input": {
-                      fontSize: "12px",
-                      padding: "0 14px",
-                    },
-                  }}
-                  options={CATEGORY}
-                  getOptionLabel={(option) => option.label}
-                  value={
-                    CATEGORY.find(
-                      (item) =>
-                        item.key ===
-                        form.formData.patientDetails.category
-                    ) || null
-                  }
-                  onChange={(_, newValue) => {
-                    handleChange(
-                      "formData.patientDetails.category",
-                      newValue?.key || ""
-                    );
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      placeholder="Select Category"
-                      className="input-field"
+                        "& .MuiInputBase-input": {
+                          fontSize: "12px",
+                          padding: "0 14px",
+                        },
+                      }}
+                      options={CATEGORY}
+                      getOptionLabel={(option) => option.label}
+                      value={
+                        CATEGORY.find(
+                          (item) =>
+                            item.key ===
+                            form.formData.patientDetails.category
+                        ) || null
+                      }
+                      onChange={(_, newValue) => {
+                        handleChange(
+                          "formData.patientDetails.category",
+                          newValue?.key || ""
+                        );
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          placeholder="Select Category"
+                          className="input-field"
+                        />
+                      )}
                     />
-                  )}
-                />
-              </div>
-              <div className="input-group">
-                <label className="required">Call Status</label>
-                <div className="connected-buttons">
-                  <button
-                    type="button"
-                    className={`connected-btn ${form.callStatus === "Connected" ? "active" : ""}`}
-                    onClick={() => handleChange("callStatus", "Connected")}
-                  >
-                    Connected
-                  </button>
-                  <button
-                    type="button"
-                    className={`connected-btn ${form?.callStatus === "Call-Drop" ? "active" : ""}`}
-                    onClick={() => {
-                      handleChange("callStatus", "Call-Drop")
+                  </div>
+                  <div className="input-group">
+                    <label className="required">Call Status</label>
+                    <div className="connected-buttons">
+                      <button
+                        type="button"
+                        className={`connected-btn ${form.callStatus === "Connected" ? "active" : ""}`}
+                        onClick={() => handleChange("callStatus", "Connected")}
+                      >
+                        Connected
+                      </button>
+                      <button
+                        type="button"
+                        className={`connected-btn ${form?.callStatus === "Call-Drop" ? "active" : ""}`}
+                        onClick={() => {
+                          handleChange("callStatus", "Call-Drop")
 
-                    }}
-                  >
-                    Call Drop
-                  </button>
+                        }}
+                      >
+                        Call Drop
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+        </div>
+
+        <div className="section" data-section="patient-latest-details">
+          <div className="patient-latest-visit-heading">
+            <h3>Latest Visit</h3>
+            <button>View More</button>
           </div>
-        )}
+
+          <div className="patient-latest-visit-table">
+            <table className="patient-details-table">
+              <thead>
+                <tr>
+                  <th>Form-Type</th>
+                  <th>Purpose</th>
+                  <th>Doctor</th>
+                  <th>Department</th>
+                  <th>Remarks</th>
+
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>John Doe</td>
+                  <td>30</td>
+                  <td>Male</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+      </div>
 
       {form.callStatus === "Connected" && (
         <div className="section" data-section="call-purpose">

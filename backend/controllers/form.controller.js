@@ -386,9 +386,9 @@ export const getFilledForms = async (req, res) => {
     const paginationStages = isExportMode
       ? []
       : [
-          { $skip: skip },
-          { $limit: PAGE_LIMIT },
-        ];
+        { $skip: skip },
+        { $limit: PAGE_LIMIT },
+      ];
 
     //  Validate hospitalId
     if (!hospitalId || !mongoose.isValidObjectId(hospitalId)) {
@@ -443,7 +443,7 @@ export const getFilledForms = async (req, res) => {
           ],
 
           appointmentForms: [
-            { $match: { purpose: "Appointment" } },
+            { $match: { purpose: { $regex: "^appointment$", $options: "i" }, callStatus: { $regex: "^connected$", $options: "i" } } },
             { $group: { _id: "$formType", count: { $sum: 1 } } },
           ],
 

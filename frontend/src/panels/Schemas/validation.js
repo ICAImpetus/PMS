@@ -1,4 +1,35 @@
 import * as Yup from "yup";
+import { getRequiredHeaders, getDummyData } from "./doctor";
+import toast from "react-hot-toast";
+
+
+export const handleDownloadTemplate = (type, format = "csv") => {
+    const headers = getRequiredHeaders(type);
+    const dummyData = getDummyData(type);
+
+    const csv = [
+        headers.join(","),
+        dummyData.join(",")
+    ].join("\n");
+
+    const blob = new Blob([csv], {
+        type: "text/csv;charset=utf-8;"
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${type}_template.${format}`;
+
+    document.body.appendChild(a);
+    a.click();
+
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast.success("Template downloaded Successfully!");
+};
+
 export const getValidationSchema = (isUpdateComp = false) =>
     Yup.object().shape({
         name: Yup.string()
@@ -99,6 +130,9 @@ export const validateCSVRows = ({
             const rules = validations[column];
             const value = row[column];
 
+            console.log("rules", rules, value);
+
+
             // Required validation
             if (rules.required) {
                 const isEmpty =
@@ -158,10 +192,32 @@ export const validateCSVRows = ({
 
                     case "array":
                         try {
-                            const parsed =
-                                typeof value === "string"
-                                    ? JSON.parse(value)
-                                    : value;
+                            let parsed = [];
+
+                            if (Array.isArray(value)) {
+                                parsed = value;
+                            } else if (typeof value === "string") {
+                                const trimmed = value.trim();
+
+                                if (!trimmed) {
+                                    parsed = [];
+                                } else {
+                                    try {
+                                        // JSON array try karo
+                                        const jsonParsed = JSON.parse(trimmed);
+
+                                        parsed = Array.isArray(jsonParsed)
+                                            ? jsonParsed
+                                            : [jsonParsed];
+                                    } catch {
+                                        // Pipe separated string
+                                        parsed = trimmed
+                                            .split("|")
+                                            .map((item) => item.trim())
+                                            .filter(Boolean);
+                                    }
+                                }
+                            }
 
                             if (!Array.isArray(parsed)) {
                                 return {
@@ -170,11 +226,9 @@ export const validateCSVRows = ({
                                 };
                             }
 
-                            // Allowed values check
                             if (rules.allowedValues?.length) {
                                 const invalidValue = parsed.find(
-                                    (item) =>
-                                        !rules.allowedValues.includes(item)
+                                    (item) => !rules.allowedValues.includes(item)
                                 );
 
                                 if (invalidValue) {
@@ -184,6 +238,8 @@ export const validateCSVRows = ({
                                     };
                                 }
                             }
+
+                            row[column] = parsed; // normalized value
                         } catch {
                             return {
                                 success: false,

@@ -674,130 +674,9 @@ const ExecutiveDashboard = () => {
                 </div> */}
               </div>
             </div>
-            {/* <div
-              className="executive-combined-total-calls executive-card-clickable"
-              onClick={() => {
-                setFormsTypeFilter("all");
-                setFormsModalOpen(true);
-              }}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) =>
-                e.key === "Enter" &&
-                (setFormsTypeFilter("all"), setFormsModalOpen(true))
-              }
-            >
-              <div className="executive-chart-title">
-                <i className="fas fa-file-alt"></i> Filled Forms
-              </div>
-              <div className="content-wrapper">
-                <div className="executive-metric-value">
-                  {formsData?.filledForms?.length || 0}
-                </div>
-                <div className="executive-metric-breakdown">
-                  <div
-                    className="executive-breakdown-item executive-breakdown-clickable"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setFormsTypeFilter("inbound");
-                      setFormsModalOpen(true);
-                    }}
-                  >
-                    <div className="executive-breakdown-label">Inbound</div>
-                    <div className="executive-breakdown-value executive-inbound-breakdown">
-                      {formsData.totalInbound || 0}
-                    </div>
-                  </div>
-                  <div
-                    className="executive-breakdown-item executive-breakdown-clickable"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setFormsTypeFilter("outbound");
-                      setFormsModalOpen(true);
-                    }}
-                  >
-                    <div className="executive-breakdown-label">Outbound</div>
-                    <div className="executive-breakdown-value executive-outbound-breakdown">
-                      {formsData.totalOutbound || 0}
-                    </div>
-                  </div>
-                </div>
-                <div className="executive-metric-change executive-positive">
-                  <i className="fas fa-arrow-up"></i> 26% from last month
-                </div>
-              </div>
-            </div> */}
           </div>
         </div>
       </div>
-
-      {/* Pending Follow-ups (Branch) Section */}
-      {/* <div className="executive-dashboard-section">
-        <div className="pending-followups-section">
-          <div className="pending-followups-header">
-            <h2 className="executive-section-title">
-              <PhoneCallbackIcon /> Pending Follow-ups (Branch)
-            </h2>
-            <div className="pending-followups-header-actions">
-              {/* {(branchFollowups?.length > 5 || branchFollowups?.length > 5) && (
-                <div className="h-pagination-btns">
-                  <button
-                    className="h-page-btn"
-                    disabled={(bfPage === 1 && hPage === 1) || loading?.dashboard}
-                    onClick={() => {
-                      if (hPage > 1) {
-                        setHPage(hPage - 1);
-                      } else if (bfPage > 1) {
-                        setBfPage(bfPage - 1);
-                        setHPage(2);
-                      }
-                    }}
-                    title="Previous"
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                  <span className="h-page-info">
-                    {((bfPage - 1) * 2) + hPage}
-                  </span>
-                  <button
-                    className="h-page-btn"
-                    disabled={
-                      (((bfPage - 1) * 10) + (hPage * 5) >= (branchFollowups?.length || 0)) &&
-                      (hPage * 5 >= (branchFollowups?.length || 0)) ||
-                      loading?.dashboard
-                    }
-                    onClick={() => {
-                      if (hPage < 2 && branchFollowups?.length > 5) {
-                        setHPage(hPage + 1);
-                      } else if (bfPage * 10 < branchFollowups?.length) {
-                        setBfPage(bfPage + 1);
-                        setHPage(1);
-                      }
-                    }}
-                    title="Next"
-                  >
-                    <ChevronRight size={18} />
-                  </button>
-                </div>
-              )} */}
-      {/* {branchFollowups?.length > 0 && (
-                <button
-                  className="pending-followups-more-btn"
-                  onClick={() => setFollowupsPopupOpen(true)}
-                >
-                  More ({branchFollowups?.length || branchFollowups?.length})
-                </button>
-              )}
-            </div>
-          </div>
-          {branchFollowups?.length === 0 && (
-            <div className="pending-followups-empty">
-              No pending follow-ups in this branch.
-            </div>
-          )}
-        </div>
-      </div>  */}
-
       <div className="executive-dashboard-section">
         <div className="data-grid row-3">
           <div className="data-card">
@@ -840,25 +719,6 @@ const ExecutiveDashboard = () => {
               )}
             </div>
           </div>
-
-          {/* <div className="data-card">
-            <div className="executive-chart-title">
-              <PhoneCallbackIcon /> Pending Inbound Followups
-            </div>
-            <div className="scrollable-content">
-              {metrics?.followupsPending?.inbound > 0 ? (
-                <div style={{ padding: "20px", textAlign: "center" }}>
-                  <h2 style={{ fontSize: "3rem", color: "var(--primary)" }}>{metrics.followupsPending.inbound}</h2>
-                  <p style={{ color: "var(--gray)" }}>Total Pending</p>
-                </div>
-              ) : (
-                <div style={{ padding: "20px", textAlign: "center" }}>
-                  <Users size={48} color="#cbd5e1" style={{ marginBottom: "15px" }} />
-                  <p>All clear! No pending inbound followups.</p>
-                </div>
-              )}
-            </div>
-          </div> */}
         </div>
       </div>
       {/* Call Volume and Appointment Details Section */}
@@ -867,18 +727,6 @@ const ExecutiveDashboard = () => {
           <h2 className="executive-section-title">
             <TimelineIcon /> Call Analytics & Appointments
           </h2>
-          {/* <div className="executive-section-filters">
-            <select
-              className=""
-              id="analytics-date-filter"
-              defaultValue="month"
-              onChange={handleFilterChange}
-            >
-              <option value="today">Today</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-            </select>
-          </div> */}
         </div>
         <div className="executive-call-analytics-grid">
           <div className="executive-analytics-card">
@@ -937,29 +785,7 @@ const ExecutiveDashboard = () => {
                   </li>
                 ))
               ) : (
-                <>
-                  <li className="executive-appointment-item">
-                    <div className="executive-appointment-info">
-                      <div className="executive-appointment-patient">Rajesh Kumar</div>
-                      <div className="executive-appointment-details">Dr. Sharma - Urology</div>
-                      <div className="executive-appointment-time">10:30 AM</div>
-                    </div>
-                  </li>
-                  <li className="executive-appointment-item">
-                    <div className="executive-appointment-info">
-                      <div className="executive-appointment-patient">Neha Verma</div>
-                      <div className="executive-appointment-details">Dr. Gupta - General Medicine</div>
-                      <div className="executive-appointment-time">11:15 AM</div>
-                    </div>
-                  </li>
-                  <li className="executive-appointment-item">
-                    <div className="executive-appointment-info">
-                      <div className="executive-appointment-patient">Anita Sharma</div>
-                      <div className="executive-appointment-details">Dr. Agarwal - Neurology</div>
-                      <div className="executive-appointment-time">2:00 PM</div>
-                    </div>
-                  </li>
-                </>
+                <div className="executive-appointment-details">No appointments found</div>
               )}
             </ul>
           </div>

@@ -37,8 +37,7 @@ import { tokens } from "../../../../theme";
 import { UserContextHook } from "../../../../contexts/UserContexts";
 import SectionLoader from "../../../../components/SectionLoader";
 import { doctorValidation } from "../../../Schemas/doctor";
-import { cleanCSVRows, validateCSVRows } from "../../../Schemas/validation";
-
+import { cleanCSVRows, handleDownloadTemplate, validateCSVRows } from "../../../Schemas/validation";
 
 // Components
 import Header from "../../../../components/HeaderNew";
@@ -72,6 +71,7 @@ import ProgressPopup, { SpecialtiesCell } from "./UploadLoading";
 import DoctorAttendanceCalendar from "./DoctorAttendanceCalendar";
 import { getRequiredHeaders, getDummyData } from "../../../Schemas/doctor";
 import { toTitleCase } from "../../../../utils/normalizeUserType";
+
 const normalizeSuggestionValue = (value) => {
   if (!value && value !== 0) return "";
   if (typeof value === "string") return value.trim();
@@ -902,6 +902,8 @@ const BranchInfo = () => {
 
       let res;
 
+      console.log("removeDoctorApi", id);
+
       switch (type) {
         case "doctor":
           res = await removeDoctorApi(hosId, id);
@@ -1112,32 +1114,6 @@ const BranchInfo = () => {
 
   // Returns required headers for each CSV type (lowercase)
 
-  const handleDownloadTemplate = (type, format = "csv") => {
-    const headers = getRequiredHeaders(type);
-    const dummyData = getDummyData(type);
-
-    const csv = [
-      headers.join(","),
-      dummyData.join(",")
-    ].join("\n");
-
-    const blob = new Blob([csv], {
-      type: "text/csv;charset=utf-8;"
-    });
-
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${type}_template.${format}`;
-
-    document.body.appendChild(a);
-    a.click();
-
-    a.remove();
-    URL.revokeObjectURL(url);
-    toast.success("Template downloaded Successfully!");
-  };
 
   const validateCSVHeaders = async (type, file) => {
     try {

@@ -1,14 +1,56 @@
 import React, { useState, useEffect, useRef } from "react";
+import Papa from "papaparse";
 import moment from "moment";
 import "./FilledFormsComponent.css";
 import CloseIcon from "@mui/icons-material/Close";
 import IconButton from "@mui/material/IconButton";
 import IosShareOutlinedIcon from '@mui/icons-material/IosShareOutlined';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
-import { Box, CircularProgress, Pagination, TextField } from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  LinearProgress,
+  Menu,
+  MenuItem,
+  Pagination,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Tooltip,
+  Typography,
+  Paper,
+  Alert,
+} from "@mui/material";
 import { useApi } from "../../api/useApi";
 import { commonRoutes } from "../../api/apiService";
 
+
+const FORMS_AVAILABLE_COLUMNS_FOR_TEMP = [
+  { key: "agentName", label: "Agent Name" },
+  { key: "formType", label: "Form Type" },
+  { key: "patientMobile", label: "Patient Mobile No" },
+  { key: "patientName", label: "Patient Name" },
+  { key: "callStatus", label: "Call Status" },
+  { key: "purpose", label: "POC / Purpose" },
+  { key: "appointmentSlot", label: "App. Slot" },
+  { key: "referenceFrom", label: "Reference From" },
+  { key: "callerType", label: "Caller Type" },
+  { key: "departmentName", label: "Department" },
+  { key: "doctorName", label: "Doctor" },
+  { key: "remarks", label: "Remarks" },
+  { key: "createdAt", label: "Submitted At" },
+];
 
 const FORMS_AVAILABLE_COLUMNS = [
   { key: "agentName", label: "Agent Name" },
@@ -83,6 +125,19 @@ const FilledFormsComponent = ({
 }) => {
   const [formsColumnFilterOpen, setFormsColumnFilterOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadCSVModalOpen, setUploadCSVModalOpen] = useState(false);
+  const [csvStatus, setCSVStatus] = useState("idle");
+  const [csvProgress, setCSVProgress] = useState({ current: 0, total: 0 });
+  const [csvProcessMessage, setCSVProcessMessage] = useState("");
+  const [csvValidationErrors, setCSVValidationErrors] = useState([]);
+  const [csvValidationSummary, setCSVValidationSummary] = useState({ totalRows: 0, successCount: 0, errorCount: 0 });
+  const [csvRows, setCSVRows] = useState([]);
+  const [csvParsedValidRows, setCSVParsedValidRows] = useState([]);
+  const [csvParsedInvalidRows, setCSVParsedInvalidRows] = useState([]);
+  const [csvParseError, setCSVParseError] = useState(null);
+  const [csvActionResult, setCSVActionResult] = useState("");
+  const [moreMenuAnchor, setMoreMenuAnchor] = useState(null);
   const [index, setIndex] = useState(0);
   const [selectedFormColumns, setSelectedFormColumns] = useState([
     "agentName",
@@ -99,6 +154,244 @@ const FilledFormsComponent = ({
   ]);
   // const { request } = useApi(commonRoutes.getFilledForms);
   const formsColumnFilterRef = useRef(null);
+  const csvFileInputRef = useRef(null);
+
+  const resetCSVState = () => {
+    setCSVStatus("idle");
+    setCSVProgress({ current: 0, total: 0 });
+    setCSVProcessMessage("");
+    setCSVValidationErrors([]);
+    setCSVValidationSummary({ totalRows: 0, successCount: 0, errorCount: 0 });
+    setCSVRows([]);
+    setCSVParsedValidRows([]);
+    setCSVParsedInvalidRows([]);
+    setCSVParseError(null);
+    setCSVActionResult("");
+  };
+
+  const normalizeValue = (value) => {
+    if (value === null || value === undefined) return "";
+    return String(value).trim();
+  };
+
+  const validateCSVRow = (row, rowNumber) => {
+    const errors = [];
+    const patientName = normalizeValue(row.patientName || row.name || row.patient_name);
+    const phone = normalizeValue(row.patientMobile || row.contactNumber || row.phone);
+    const department = normalizeValue(row.departmentName || row.department);
+    const formType = normalizeValue(row.formType);
+    const ageValue = normalizeValue(row.age);
+
+    if (!patientName) {
+      errors.push({
+        rowNumber,
+        columnName: "patientName",
+        invalidValue: normalizeValue(row.patientName || row.name),
+        message: "Patient name is required",
+      });
+    }
+
+    if (phone) {
+      const digits = phone.replace(/\D/g, "");
+      if (digits.length < 10 || digits.length > 15) {
+        errors.push({
+          rowNumber,
+          columnName: row.patientMobile ? "patientMobile" : "contactNumber",
+          invalidValue: phone,
+          message: "Invalid phone number",
+        });
+      }
+    }
+
+    if (ageValue) {
+      const age = Number(ageValue);
+      if (Number.isNaN(age) || age <= 18) {
+        errors.push({
+          rowNumber,
+          columnName: "age",
+          invalidValue: ageValue,
+          message: "Age must be greater than 18",
+        });
+      }
+    }
+
+    if (!department) {
+      errors.push({
+        rowNumber,
+        columnName: "departmentName",
+        invalidValue: normalizeValue(row.departmentName || row.department),
+        message: "Department is required",
+      });
+    }
+
+    if (!formType) {
+      errors.push({
+        rowNumber,
+        columnName: "formType",
+        invalidValue: normalizeValue(row.formType),
+        message: "Form type is required",
+      });
+    }
+
+    return errors;
+  };
+
+  const processCSVRows = (rows, totalRows) => {
+    return new Promise((resolve) => {
+      const validRows = [];
+      const invalidRows = [];
+      const errorList = [];
+      let processed = 0;
+      const batchSize = 30;
+
+      const processBatch = () => {
+        const chunk = rows.slice(processed, processed + batchSize);
+        chunk.forEach((row, index) => {
+          const rowNumber = processed + index + 2;
+          const rowErrors = validateCSVRow(row, rowNumber);
+          if (rowErrors.length > 0) {
+            invalidRows.push(row);
+            errorList.push(...rowErrors);
+          } else {
+            validRows.push(row);
+          }
+        });
+
+        processed += chunk.length;
+        setCSVProgress({ current: processed, total: totalRows });
+        setCSVProcessMessage(
+          processed < totalRows
+            ? `Processing row ${processed} of ${totalRows}`
+            : `Processing row ${totalRows} of ${totalRows}`
+        );
+
+        if (processed < totalRows) {
+          window.requestAnimationFrame(processBatch);
+        } else {
+          setCSVRows(rows);
+          setCSVParsedValidRows(validRows);
+          setCSVParsedInvalidRows(invalidRows);
+          setCSVValidationErrors(errorList);
+          setCSVValidationSummary({
+            totalRows,
+            successCount: validRows.length,
+            errorCount: invalidRows.length,
+          });
+          setCSVStatus("completed");
+          setCSVProcessMessage("Validation complete");
+          resolve();
+        }
+      };
+
+      processBatch();
+    });
+  };
+
+  const startCSVValidation = async (file) => {
+    resetCSVState();
+    setCSVStatus("processing");
+    setCSVProcessMessage("Processing file...");
+
+    try {
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).filter((line) => line.trim() !== "");
+      const totalRows = Math.max(0, lines.length - 1);
+      setCSVProgress({ current: 0, total: totalRows });
+
+      const parsed = Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (header) => header?.trim() || "",
+        error: (error) => {
+          setCSVParseError(error.message || "CSV parse failed");
+        },
+      });
+
+      if (parsed.errors?.length) {
+        setCSVParseError(parsed.errors[0]?.message || "CSV parse failed");
+        setCSVStatus("completed");
+        return;
+      }
+
+      await processCSVRows(parsed.data, totalRows);
+    } catch (error) {
+      setCSVParseError(error?.message || "Unable to read the file");
+      setCSVStatus("completed");
+      setCSVProcessMessage("Processing failed");
+    }
+  };
+
+  const handleCSVFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedFile(file);
+    setUploadCSVModalOpen(true);
+
+    await startCSVValidation(file);
+  };
+
+  const handleReupload = () => {
+    setSelectedFile(null);
+    resetCSVState();
+    if (csvFileInputRef.current) {
+      csvFileInputRef.current.value = "";
+      csvFileInputRef.current.click();
+    }
+  };
+
+  const handleBrowseCSV = () => {
+    if (csvFileInputRef.current) {
+      csvFileInputRef.current.value = "";
+      csvFileInputRef.current.click();
+    }
+    setMoreMenuAnchor(null);
+  };
+
+  const downloadTemplate = () => {
+    const headers = selectedFormColumns.length
+      ? selectedFormColumns
+      : FORMS_AVAILABLE_COLUMNS.map((col) => col.key);
+    const csvContent = [headers.join(",")].join("\n");
+    const blob = new Blob(["\uFEFF" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `forms-template-${moment().format("YYYY-MM-DD-HHmm")}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setMoreMenuAnchor(null);
+  };
+
+  const handleMoreMenuOpen = (event) => {
+    setMoreMenuAnchor(event.currentTarget);
+  };
+
+  const handleMoreMenuClose = () => {
+    setMoreMenuAnchor(null);
+  };
+
+  const handleCSVDialogClose = (event, reason) => {
+    if (csvStatus === "processing") return;
+    if (reason === "escapeKeyDown") return;
+    setUploadCSVModalOpen(false);
+  };
+
+  const handleImportAction = (mode) => {
+    if (mode === "skipErrors") {
+      setCSVActionResult(
+        `Import started. ${csvParsedValidRows.length + csvParsedInvalidRows.length - csvParsedInvalidRows.length} valid rows will be imported; ${csvParsedInvalidRows.length} rows will be skipped.`
+      );
+    } else if (mode === "importValid") {
+      setCSVActionResult(
+        `Import started. ${csvParsedValidRows.length} valid rows will be imported; ${csvParsedInvalidRows.length} invalid rows will be skipped.`
+      );
+    }
+    setUploadCSVModalOpen(false);
+  };
 
   const flattenedForms = React.useMemo(() => {
     return formsData?.map(flattenFilledForm);
@@ -201,11 +494,9 @@ const FilledFormsComponent = ({
             }
           }
 
-          // date convert
-          if (val instanceof Date) {
-            val = val.toISOString();
+          if ((val instanceof Date || c.key === "createdAt") && val) {
+            val = moment(val).format("D/M/YYYY h:mm:ss A");
           }
-
           return typeof val === "string" && val.includes(",")
             ? `"${val}"`
             : String(val ?? "");
@@ -277,16 +568,18 @@ const FilledFormsComponent = ({
 
   return (
     <div
-      className="ff-modal-overlay"
-      onClick={() => setFormsModalOpen(null)}
+    // className="ff-modal-overlay"
+    // onClick={() => setFormsModalOpen(null)}
     >
       <div
-        className="ff-modal-container"
+
         onClick={(e) => e.stopPropagation()}
       >
         <div className="ff-modal-header" style={{ padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
           <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "8px", fontSize: "1.2rem", color: "#2c3e50" }}>
-            <ArticleOutlinedIcon /> Filled Forms
+            <IconButton onClick={() => setFormsModalOpen(false)}>
+              <ArrowBackIcon />
+            </IconButton>  <ArticleOutlinedIcon /> Filled Forms
           </h3>
 
           <div className="ff-tabs" style={{ margin: 0 }}>
@@ -412,14 +705,9 @@ const FilledFormsComponent = ({
                 </div>
               )}
             </div>
-
             <IconButton
               className="ff-btn export"
-              onClick={exportFormsToSheet}
-              disabled={
-                filteredForms?.length === 0 ||
-                visibleFormColumns.length === 0 || getFilledFormsLoading
-              }
+              onClick={handleMoreMenuOpen}
               sx={{
                 borderRadius: 2,
                 height: 36,
@@ -437,17 +725,36 @@ const FilledFormsComponent = ({
                 },
               }}
             >
-              {
-                getFilledFormsLoading ? (
-                  <CircularProgress size={20} />
-                ) : (
-                  <>
-                    <IosShareOutlinedIcon sx={{ fontSize: "1.1rem", mr: 0.5 }} />
-                    Export
-                  </>
-                )
-              }
+              <MoreVertIcon sx={{ fontSize: "1.2rem" }} />
             </IconButton>
+            <Menu
+              anchorEl={moreMenuAnchor}
+              open={Boolean(moreMenuAnchor)}
+              onClose={handleMoreMenuClose}
+            >
+              <MenuItem onClick={downloadTemplate}>
+                Download Template
+              </MenuItem>
+              <MenuItem onClick={handleBrowseCSV}>
+                Upload CSV File
+              </MenuItem>
+              <MenuItem
+                onClick={exportFormsToSheet}
+                disabled={
+                  filteredForms?.length === 0 ||
+                  visibleFormColumns.length === 0 || getFilledFormsLoading
+                }
+              >
+                {getFilledFormsLoading ? <CircularProgress size={22} /> : "Export"}
+              </MenuItem>
+            </Menu>
+            <input
+              ref={csvFileInputRef}
+              hidden
+              type="file"
+              accept=".csv"
+              onChange={handleCSVFileChange}
+            />
 
             <IconButton
               onClick={() => setFormsModalOpen(null)}
@@ -583,6 +890,163 @@ const FilledFormsComponent = ({
         </Box>
 
       </div>
+
+
+      <Dialog
+        open={uploadCSVModalOpen}
+        onClose={(event, reason) => {
+          console.log("Dialog close reason:", reason);
+
+          if (reason === "backdropClick") return;
+          if (reason === "backdropClick" || reason === "escapeKeyDown") {
+            return;
+          }
+          handleCSVDialogClose()
+        }}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle sx={{ bgcolor: "#f5f7fa", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span>CSV Validation & Import</span>
+          <Typography variant="caption" sx={{ bgcolor: "#e0e0e0", px: 1.5, py: 0.5, borderRadius: 1 }}>
+            {selectedFile?.name || "No file selected"}
+          </Typography>
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 3, minHeight: 280 }}>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+              {csvStatus === "processing" ? "Processing file..." : "Validation summary"}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {csvProcessMessage || "Uploading and validating the selected CSV file."}
+            </Typography>
+          </Box>
+
+          <Box sx={{ mb: 3 }}>
+            <LinearProgress
+              variant={csvStatus === "processing" ? "determinate" : "determinate"}
+              value={csvProgress.total ? (csvProgress.current / csvProgress.total) * 100 : 0}
+              sx={{ height: 10, borderRadius: 2 }}
+            />
+            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+              <Typography variant="caption" color="text.secondary">
+                {csvProgress.current} of {csvProgress.total} rows processed
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {csvStatus === "processing" ? "Validating rows..." : csvParseError ? "Validation finished with errors" : "Validation finished"}
+              </Typography>
+            </Box>
+          </Box>
+
+          {csvParseError ? (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {csvParseError}
+            </Alert>
+          ) : null}
+
+          {csvStatus === "completed" ? (
+            <Box sx={{ mb: 3 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                  gap: 2,
+                }}
+              >
+                <Paper sx={{ p: 2, bgcolor: "#f5f7fa" }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
+                    Total Rows
+                  </Typography>
+                  <Typography variant="h6">{csvValidationSummary.totalRows}</Typography>
+                </Paper>
+                <Paper sx={{ p: 2, bgcolor: "#e8f5e9" }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
+                    Successfully Processed
+                  </Typography>
+                  <Typography variant="h6">{csvValidationSummary.successCount}</Typography>
+                </Paper>
+                <Paper sx={{ p: 2, bgcolor: "#ffebee" }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
+                    Rows With Errors
+                  </Typography>
+                  <Typography variant="h6">{csvValidationSummary.errorCount}</Typography>
+                </Paper>
+              </Box>
+
+              {csvValidationErrors.length > 0 ? (
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 700 }}>
+                    Validation issues preview
+                  </Typography>
+                  <TableContainer component={Paper} sx={{ maxHeight: 320 }}>
+                    <Table stickyHeader size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 700 }}>Row</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>Column</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>Value</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>Error</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {csvValidationErrors.slice(0, 12).map((error, index) => (
+                          <TableRow key={`${error.rowNumber}-${index}`} sx={{ bgcolor: index % 2 === 0 ? "#fff5f5" : "#fff" }}>
+                            <TableCell>{error.rowNumber}</TableCell>
+                            <TableCell>{error.columnName}</TableCell>
+                            <TableCell>{error.invalidValue || "Empty"}</TableCell>
+                            <TableCell>{error.message}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  {csvValidationErrors.length > 12 ? (
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                      Showing first 12 errors. Review all issues before importing.
+                    </Typography>
+                  ) : null}
+                </Box>
+              ) : (
+                <Alert severity="success" sx={{ mt: 3 }}>
+                  No validation issues found. All rows are ready for import.
+                </Alert>
+              )}
+            </Box>
+          ) : null}
+        </DialogContent>
+        <DialogActions sx={{ p: 2, display: "flex", flexWrap: "wrap", gap: 1 }}>
+          <Button
+            variant="outlined"
+            onClick={handleReupload}
+            disabled={csvStatus === "processing"}
+          >
+            Reupload File
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => handleImportAction("skipErrors")}
+            disabled={csvStatus === "processing" || csvValidationSummary.totalRows === 0}
+          >
+            Skip Errors & Continue Import
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={() => handleImportAction("importValid")}
+            disabled={csvStatus === "processing" || csvValidationSummary.successCount === 0}
+          >
+            Import Only Valid Rows
+          </Button>
+          <Button
+            variant="text"
+            onClick={() => setUploadCSVModalOpen(false)}
+          // disabled={csvStatus === "processing"}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

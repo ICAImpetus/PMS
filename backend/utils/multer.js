@@ -17,6 +17,7 @@ export const uploadDoctorAssets = (req, res, next) => {
     { name: "image", maxCount: 1 },
   ])(req, res, async function (err) {
     try {
+
       if (err) {
         if (err.code === "LIMIT_FILE_SIZE") {
           return res.status(400).json({
@@ -31,8 +32,11 @@ export const uploadDoctorAssets = (req, res, next) => {
         });
       }
 
-      // 🔹 Handle CSV (save locally)
-      console.log("req.files", req.files);
+      const uploadDir = path.join(process.cwd(), "uploads");
+
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
 
       if (req.files?.csv?.[0]) {
         const csvFile = req.files.csv[0];
@@ -48,7 +52,7 @@ export const uploadDoctorAssets = (req, res, next) => {
             : originalName;
 
         const filePath = path.join(
-          "uploads",
+          uploadDir,
           `${Date.now()}-${fileName}`
         );
 
