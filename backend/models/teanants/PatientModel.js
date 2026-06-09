@@ -43,7 +43,7 @@ export const PatientSchema = new mongoose.Schema(
 
         alternateMobile: String,
 
-        patientAge: Number,
+        patientAge: { type: Number, default: 0 },
 
         location: String,
 

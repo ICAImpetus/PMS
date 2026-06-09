@@ -72,6 +72,8 @@ export const statusStyles = {
 export const FORMS_AVAILABLE_COLUMNS = [
     { key: "patientName", label: "Patient Name" },
     { key: "patientMobile", label: "Patient Mobile No" },
+    { key: "patientAge", label: "Patient Age" },
+    { key: "gender", label: "Gender" },
     { key: "status", label: "Patient Status" },
     { key: "lastVisit.purpose", label: "POC / Purpose" },
     { key: "lastVisit.formData.appointmentSlot", label: "Appointment Slot" },
@@ -79,6 +81,20 @@ export const FORMS_AVAILABLE_COLUMNS = [
     { key: "lastVisit.doctor.name", label: "Doctor" },
     { key: "lastVisit.department.name", label: "Department" },
     { key: "createdAt", label: "Created At" },
+];
+// Export helpers
+export const exportHeaders = [
+    "Patient Name",
+    "Patient Mobile No.",
+    "Patient Age",
+    "Gender",
+    "Patient Status",
+    "Purpose",
+    "Form Type",
+    "Doctor",
+    "Department",
+    "Remarks",
+    "Date",
 ];
 export const getNestedValue = (obj, path) => {
     return path.split(".").reduce((acc, part) => acc?.[part], obj);
@@ -115,6 +131,8 @@ export const PatientHistory = () => {
     const [selectedFormColumns, setSelectedFormColumns] = useState([
         "patientName",
         "status",
+        "patientAge",
+        "gender",
         "patientMobile",
         "lastVisit.purpose",
         "lastVisit.formType",
@@ -258,18 +276,7 @@ export const PatientHistory = () => {
         handleCloseDateFilter();
     };
 
-    // Export helpers
-    const exportHeaders = [
-        "Patient Name",
-        "Patient Mobile No.",
-        "Patient Status",
-        "Purpose",
-        "Form Type",
-        "Doctor",
-        "Department",
-        "Remarks",
-        "Date",
-    ];
+
 
     const exportRows = filteredPatients.map((patient) => [
         patient.patientName || "N/A",

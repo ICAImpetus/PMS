@@ -33,9 +33,11 @@ import {
     RadioGroup,
     FormControlLabel,
     Radio,
+    Menu
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import DownloadIcon from "@mui/icons-material/Download";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import jsPDF from "jspdf";
@@ -45,8 +47,10 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { UserContextHook } from "../../../contexts/UserContexts";
 import HospitalContext from "../../../contexts/HospitalContexts";
-import { FORMS_AVAILABLE_COLUMNS, getNestedValue } from "./PatientHistory";
+import { FORMS_AVAILABLE_COLUMNS, getNestedValue, exportHeaders } from "./PatientHistory";
 import moment from "moment";
+import { useApi } from "../../../api/useApi";
+import { commonRoutes } from "../../../api/apiService";
 
 // Format date
 const formatDate = (dateString) => {
@@ -70,12 +74,18 @@ export const PatientHistory = () => {
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
     const [error, setError] = useState(null);
+    const [appliedStartDate, setAppliedStartDate] = useState("");
+    const [appliedEndDate, setAppliedEndDate] = useState("");
+    const [dateFilterAnchorEl, setDateFilterAnchorEl] = useState(null);
     const [formTypeFilter, setFormTypeFilter] = useState("all");
     const [exportFormat, setExportFormat] = useState("csv");
     const [exportDialogOpen, setExportDialogOpen] = useState(false);
     const [formsColumnFilterOpen, setFormsColumnFilterOpen] = useState(false);
     const [selectedFormColumns, setSelectedFormColumns] = useState([
         "patientName",
+        "status",
+        "patientAge",
+        "gender",
         "patientMobile",
         "lastVisit.purpose",
         "lastVisit.formType",
@@ -92,18 +102,19 @@ export const PatientHistory = () => {
         setSelectedBranch,
         patients,
         pagination,
+        setPatients,
         setPagination,
         selectedHostpital,
         refetchPatients
     } = useContext(HospitalContext);
 
-    console.log("patient ", patients);
-    console.log("pagination ", pagination);
-
+    const { request: getPatients, loading: getPatientloading } = useApi(commonRoutes.getPatients)
 
     const visibleFormColumns = FORMS_AVAILABLE_COLUMNS.filter((col) =>
         selectedFormColumns.includes(col.key),
     );
+    const openDateFilter = Boolean(dateFilterAnchorEl);
+
     const toggleFormColumn = (colKey) => {
         setSelectedFormColumns((prev) =>
             prev.includes(colKey)
@@ -111,6 +122,59 @@ export const PatientHistory = () => {
                 : [...prev, colKey]
         );
     };
+
+    const handleOpenDateFilter = (event) => {
+        console.log("event", event.currentTarget);
+
+        setDateFilterAnchorEl(event.currentTarget);
+    };
+
+    const handleCloseDateFilter = () => {
+        setDateFilterAnchorEl(null);
+    };
+
+    const handleApplyDateFilter = async () => {
+        if (!startDate || !endDate) return;
+
+        try {
+
+            const res = await getPatients(null, pagination?.patient?.page, selectedBranch, selectedHostpital, startDate, endDate, true)
+            console.log("patinat fetch ", res);
+            if (res?.success) {
+                setPatients(res?.data)
+                setPagination((prev) => ({
+                    ...prev,
+                    patients: {
+                        ...res.pagination
+                    }
+                }))
+                handleCloseDateFilter();
+            }
+
+
+        } catch {
+
+            toast.error("Error To Fetch Patient")
+
+        }
+    };
+
+    const handleResetDateFilter = () => {
+        setStartDate("");
+        setEndDate("");
+        setAppliedStartDate("");
+        setAppliedEndDate("");
+        setDateRangeFilter({ startDate: "", endDate: "" });
+        setPagination((prev) => ({
+            ...prev,
+            patients: {
+                ...prev.patients,
+                page: 1,
+            },
+        }));
+        handleCloseDateFilter();
+    };
+
     // Handle click outside for dropdown
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -175,17 +239,7 @@ export const PatientHistory = () => {
 
 
 
-    // Export helpers
-    const exportHeaders = [
-        "Patient Name",
-        "Patient Mobile No.",
-        "Purpose",
-        "Form Type",
-        "Doctor",
-        "Department",
-        "Remarks",
-        "Date",
-    ];
+
 
     const exportRows = filteredPatients.map((patient) => [
         patient.patientName || "N/A",
@@ -428,32 +482,65 @@ export const PatientHistory = () => {
                             />
                         </Grid>
 
-                        {/* Start Date */}
                         <Grid item xs={12} sm={6} md={3}>
-                            <TextField
+                            <Button
                                 fullWidth
-                                label="Start Date"
-                                type="date"
                                 variant="outlined"
-                                size="small"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                InputLabelProps={{ shrink: true }}
-                            />
-                        </Grid>
-
-                        {/* End Date */}
-                        <Grid item xs={12} sm={6} md={3}>
-                            <TextField
-                                fullWidth
-                                label="End Date"
-                                type="date"
-                                variant="outlined"
-                                size="small"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                InputLabelProps={{ shrink: true }}
-                            />
+                                color="primary"
+                                startIcon={<FilterAltIcon />}
+                                onClick={handleOpenDateFilter}
+                                sx={{ justifyContent: 'flex-start' }}
+                            >
+                                {startDate && endDate
+                                    ? `Date: ${startDate} to ${endDate}`
+                                    : "Date Filter"}
+                            </Button>
+                            <Menu
+                                id="date-filter-menu"
+                                anchorEl={dateFilterAnchorEl}
+                                open={openDateFilter}
+                                onClose={handleCloseDateFilter}
+                                anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                                transformOrigin={{ vertical: "top", horizontal: "left" }}
+                            >
+                                <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2, width: 280 }}>
+                                    <TextField
+                                        label="Start Date"
+                                        type="date"
+                                        variant="outlined"
+                                        size="small"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                        InputLabelProps={{ shrink: true }}
+                                    />
+                                    <TextField
+                                        label="End Date"
+                                        type="date"
+                                        variant="outlined"
+                                        size="small"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        InputLabelProps={{ shrink: true }}
+                                    />
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+                                        <Button
+                                            color="secondary"
+                                            onClick={handleResetDateFilter}
+                                            disabled={(!startDate && !endDate) || getPatientloading}
+                                        >
+                                            Reset
+                                        </Button>
+                                        <Button
+                                            variant="contained"
+                                            color="primary"
+                                            onClick={handleApplyDateFilter}
+                                            disabled={(!startDate || !endDate) || getPatientloading}
+                                        >
+                                            {getPatientloading ? <CircularProgress size={22} /> : "Apply"}
+                                        </Button>
+                                    </Box>
+                                </Box>
+                            </Menu>
                         </Grid>
 
                         {/* Clear Filters Button */}
