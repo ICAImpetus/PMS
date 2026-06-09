@@ -60,6 +60,10 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     const [filter, setFilter] = useState(
         filterOptions[0]?.value || ""
     );
+    const [dateRangeFilter, setDateRangeFilter] = useState({
+        startDate: "",
+        endDate: ""
+    });
 
 
 
@@ -263,17 +267,29 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             selectedHostpital,
             selectedBranch,
             pagination.patients.page,
-            filter
+            filter,
+            dateRangeFilter.startDate,
+            dateRangeFilter.endDate,
         ],
 
         queryFn: async ({ queryKey }) => {
-            const [, hospitalId, branchId, page, filter] = queryKey;
+            const [
+                ,
+                hospitalId,
+                branchId,
+                page,
+                filter,
+                startDate,
+                endDate,
+            ] = queryKey;
 
             const res = await commonRoutes.getPatients(
                 filter,
                 page,
                 isNonAdmin ? branchId : null,
-                hospitalId
+                hospitalId,
+                startDate,
+                endDate
             );
 
             return res?.data || {};
@@ -739,6 +755,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         setSelectedBranch,
         setPagination,
         setFilter,
+        setPatients,
 
         isSuperAdmin,
         role,
@@ -752,7 +769,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         refetchAdmins,
         refetchUsers,
         refetchForms,
-        refetchAppointments
+        refetchAppointments,
+        dateRangeFilter,
+        setDateRangeFilter
 
     }), [
         hospitals,
@@ -775,10 +794,10 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         patientsData,
         pastAppointmentData,
         filter,
+        dateRangeFilter,
         loading,
         errors
     ]);
-
     return (
         <HospitalContext.Provider value={contextValue}>
             {children}

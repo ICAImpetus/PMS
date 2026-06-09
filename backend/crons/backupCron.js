@@ -155,5 +155,57 @@ export const uploadDatabaseBackup = async () => {
         console.error(error);
     }
 };
-uploadDatabaseBackup();
+
+
+export const changePatienStatus = async () => {
+    try {
+        let count = 0;
+        console.log("Starting update...");
+
+        const hospital = await HospitalModel.findById(
+            "6a22705f6f164344a2644a8a"
+        );
+
+        if (!hospital) {
+            throw new Error("Hospital not found");
+        }
+
+        const conn = await getConnection(hospital.trimmedName);
+
+        const FilledFormsModel = getFilledFormsModel(conn);
+        const PatientModel = getPatientModel(conn);
+
+        const patients = await PatientModel.find();
+
+        console.log("statging");
+
+        for (const patient of patients) {
+            const lastForm = await FilledFormsModel
+                .findOne({
+                    "formData.patientDetails": patient._id,
+                })
+                .sort({ createdAt: -1 });
+
+            if (lastForm) {
+                await PatientModel.findByIdAndUpdate(
+                    patient._id,
+                    {
+                        $set: {
+                            lastVisit: lastForm._id,
+                        },
+                    }
+                );
+            }
+            count++;
+            console.log("process", count);
+        }
+
+        console.log("Done");
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+// changePatienStatus()
+// uploadDatabaseBackup();
 

@@ -8006,9 +8006,10 @@ export const clearNotifications = async (req, res) => {
 
 export const getPatientByRole = async (req, res) => {
   try {
-    const { hospitalId, branchId, filter, page = 1 } = req.query;
+    const { hospitalId, branchId, filter, page = 1, isExport } = req.query;
 
     console.log("call", req.query);
+    const isExportMode = isExport === "true";
 
 
     const PAGE_LIMIT = 10;
@@ -8054,6 +8055,32 @@ export const getPatientByRole = async (req, res) => {
       match.branchId = branchId;
     }
 
+    if (req.query.startDate && req.query.endDate) {
+      match.createdAt = {};
+
+      if (req.query.startDate) {
+        const startDate = new Date(req.query.startDate);
+
+        if (isNaN(startDate.getTime())) {
+          throw new Error("Invalid startDate");
+        }
+
+        match.createdAt.$gte = startDate;
+      }
+
+      if (req.query.endDate) {
+        const endDate = new Date(req.query.endDate);
+
+        if (isNaN(endDate.getTime())) {
+          throw new Error("Invalid endDate");
+        }
+
+        // Include full day
+        endDate.setHours(23, 59, 59, 999);
+
+        match.createdAt.$lte = endDate;
+      }
+    }
     // Fetch data
     const [patients, totalDocument] = await Promise.all([
       PatientModel.find(match)
@@ -8073,8 +8100,8 @@ export const getPatientByRole = async (req, res) => {
             },
           ],
         })
-        .skip(skip)
-        .limit(PAGE_LIMIT)
+        .skip(isExportMode ? 0 : skip)
+        .limit(isExportMode ? 0 : PAGE_LIMIT)
         .sort({ createdAt: -1 })
         .lean(),
 
@@ -8106,7 +8133,9 @@ export const getPatientByRole = async (req, res) => {
 export const singlePatientHistory = async (req, res) => {
   try {
 
-    const { hospitalId, page, patientId } = req.query
+    const { hospitalId, page, patientId, startDate, endDate, isExport } = req.query
+
+    const isExportMode = isExport === "true";
 
     const PAGE_LIMIT = 10;
     const pageNum = Math.max(parseInt(page) || 1, 1);
@@ -8145,6 +8174,10 @@ export const singlePatientHistory = async (req, res) => {
       "formData.patientDetails": patientId,
       isDeleted: false
     };
+
+    if (startDate && endDate) {
+
+    }
 
 
 

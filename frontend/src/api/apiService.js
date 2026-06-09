@@ -277,7 +277,7 @@ export const commonRoutes = {
 
 
 
-  getFilledForms: (filter, page, branchId = null, hospitalId = null, isExport =false) => {
+  getFilledForms: (filter, page, branchId = null, hospitalId = null, isExport = false) => {
     // console.log("branchId", branchId);
     // console.log("hospitalId", hospitalId);
 
@@ -339,25 +339,28 @@ export const commonRoutes = {
     filter = null,
     page,
     branchId = null,
-    hospitalId = null
+    hospitalId = null,
+    startDate = null,
+    endDate = null,
+    isExport = false
   ) => {
-    // consosle.log("hospitalId", hospitalId);
-
-    const params = { page };
+    const params = { page, isExport };
 
     if (filter != null) params.filter = filter;
     if (branchId != null) params.branchId = branchId;
     if (hospitalId) params.hospitalId = hospitalId;
-
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
     return API.get("api/get-patients", { params });
   },
 
-  getSinglePatientsHistory: (hospitalId, patientId, page) =>
+  getSinglePatientsHistory: (hospitalId, patientId, page, isExport = false) =>
     API.get(`api/single-patient-history/`, {
       params: {
         hospitalId,
         patientId,
-        page
+        page,
+        isExport
       }
     }),
 

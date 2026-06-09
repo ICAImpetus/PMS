@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo, useContext, useRef } from "react";
 import {
     Box,
     TextField,
+    Menu,
     MenuItem,
     FormControl,
     Select,
@@ -39,12 +40,16 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import DownloadIcon from "@mui/icons-material/Download";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import * as XLSX from "xlsx";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import HospitalContext from "../../../contexts/HospitalContexts";
 import moment from "moment";
+import { useApi } from "../../../api/useApi.js"
+import { commonRoutes } from "../../../api/apiService";
+
 
 export const statusStyles = {
     pending: {
@@ -67,6 +72,7 @@ export const statusStyles = {
 export const FORMS_AVAILABLE_COLUMNS = [
     { key: "patientName", label: "Patient Name" },
     { key: "patientMobile", label: "Patient Mobile No" },
+    { key: "status", label: "Patient Status" },
     { key: "lastVisit.purpose", label: "POC / Purpose" },
     { key: "lastVisit.formData.appointmentSlot", label: "Appointment Slot" },
     { key: "lastVisit.formType", label: "Form Type" },
@@ -97,6 +103,9 @@ export const PatientHistory = () => {
     const [searchName, setSearchName] = useState("");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
+    const [appliedStartDate, setAppliedStartDate] = useState("");
+    const [appliedEndDate, setAppliedEndDate] = useState("");
+    const [dateFilterAnchorEl, setDateFilterAnchorEl] = useState(null);
     const [exportDialogOpen, setExportDialogOpen] = useState(false);
     const [exportFormat, setExportFormat] = useState("csv");
     const [formsColumnFilterOpen, setFormsColumnFilterOpen] = useState(false);
@@ -105,11 +114,13 @@ export const PatientHistory = () => {
     const [formTypeFilter, setFormTypeFilter] = useState("all");
     const [selectedFormColumns, setSelectedFormColumns] = useState([
         "patientName",
+        "status",
         "patientMobile",
         "lastVisit.purpose",
         "lastVisit.formType",
         "createdAt",
     ]);
+    const openDateFilter = Boolean(dateFilterAnchorEl);
 
 
     const toggleFormColumn = (colKey) => {
@@ -129,23 +140,36 @@ export const PatientHistory = () => {
         patients,
         pagination,
         setPagination,
-        refetchPatients
+        refetchPatients,
+        dateRangeFilter,
+        setDateRangeFilter,
+        setPatients
     } = useContext(HospitalContext);
+
+    const { request: getPatients, loading: getPatientloading } = useApi(commonRoutes.getPatients)
 
     // Clear all filters
     const handleClearFilters = () => {
         setSearchName("");
         setStartDate("");
         setEndDate("");
+        setAppliedStartDate("");
+        setAppliedEndDate("");
+        setDateRangeFilter({ startDate: "", endDate: "" });
         setFormTypeFilter("all");
         setPagination((prev) => ({
             ...prev,
             patients: {
                 ...prev.patients,
-                page: 0,
+                page: 1,
             },
         }));
     };
+    useEffect(() => {
+        setAppliedStartDate(dateRangeFilter.startDate || "");
+        setAppliedEndDate(dateRangeFilter.endDate || "");
+    }, [dateRangeFilter]);
+
     const visibleFormColumns = FORMS_AVAILABLE_COLUMNS.filter((col) =>
         selectedFormColumns.includes(col.key),
     );
@@ -170,25 +194,6 @@ export const PatientHistory = () => {
                     .includes(searchValue)
             );
         }
-
-        // Filter by date range
-        if (startDate || endDate) {
-            filtered = filtered.filter((patient) => {
-                const patientDate = new Date(patient.createdAt);
-                const start = startDate ? new Date(startDate) : null;
-                const end = endDate ? new Date(endDate) : null;
-
-                if (start && patientDate < start) return false;
-
-                if (end) {
-                    end.setHours(23, 59, 59, 999);
-                    if (patientDate > end) return false;
-                }
-
-                return true;
-            });
-        }
-
         // Filter by form type
         if (formTypeFilter !== "all") {
             filtered = filtered.filter(
@@ -199,14 +204,65 @@ export const PatientHistory = () => {
         }
 
         return filtered;
-    }, [patients, searchName, startDate, endDate, formTypeFilter]);
+    }, [patients, searchName, formTypeFilter]);
+
+    const handleOpenDateFilter = (event) => {
+        console.log("event", event.currentTarget);
+
+        setDateFilterAnchorEl(event.currentTarget);
+    };
+
+    const handleCloseDateFilter = () => {
+        setDateFilterAnchorEl(null);
+    };
+
+    const handleApplyDateFilter = async () => {
+        if (!startDate || !endDate) return;
+
+        try {
+
+            const res = await getPatients(null, pagination?.patient?.page, null, selectedHostpital, startDate, endDate, true)
+            console.log("patinat fetch ", res);
+            if (res?.success) {
+                setPatients(res?.data)
+                setPagination((prev) => ({
+                    ...prev,
+                    patients: {
+                        ...res.pagination
+                    }
+                }))
+                handleCloseDateFilter();
+            }
 
 
+        } catch {
+
+            toast.error("Error To Fetch Patient")
+
+        }
+    };
+
+    const handleResetDateFilter = () => {
+        setStartDate("");
+        setEndDate("");
+        setAppliedStartDate("");
+        setAppliedEndDate("");
+        setDateRangeFilter({ startDate: "", endDate: "" });
+        setPagination((prev) => ({
+            ...prev,
+            patients: {
+                ...prev.patients,
+                page: 1,
+            },
+        }));
+        handleCloseDateFilter();
+    };
 
     // Export helpers
     const exportHeaders = [
         "Patient Name",
         "Patient Mobile No.",
+        "Patient Status",
         "Purpose",
         "Form Type",
         "Doctor",
@@ -218,6 +274,7 @@ export const PatientHistory = () => {
     const exportRows = filteredPatients.map((patient) => [
         patient.patientName || "N/A",
         patient.patientMobile || "N/A",
+        patient.status || "N/A",
         patient?.lastVisit?.purpose || "N/A",
         patient?.lastVisit?.formType || "N/A",
         patient?.lastVisit?.doctor?.name || "N/A",
@@ -468,39 +525,76 @@ export const PatientHistory = () => {
                                 placeholder="Enter Patient Name,PhoneNo or Purpose"
                             />
                         </Grid>
-                        {/* Start Date */}
                         <Grid item xs={12} sm={6} md={3}>
-                            <TextField
+                            <Button
                                 fullWidth
-                                label="Start Date"
-                                type="date"
                                 variant="outlined"
-                                size="small"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                InputLabelProps={{ shrink: true }}
-                            />
-                        </Grid>
-                        {/* End Date */}
-                        <Grid item xs={12} sm={6} md={3}>
-                            <TextField
-                                fullWidth
-                                label="End Date"
-                                type="date"
-                                variant="outlined"
-                                size="small"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                InputLabelProps={{ shrink: true }}
-                            />
+                                color="primary"
+                                startIcon={<FilterAltIcon />}
+                                onClick={handleOpenDateFilter}
+                                sx={{ justifyContent: 'flex-start' }}
+                            >
+                                {startDate && endDate
+                                    ? `Date: ${startDate} to ${endDate}`
+                                    : "Date Filter"}
+                            </Button>
+                            <Menu
+                                id="date-filter-menu"
+                                anchorEl={dateFilterAnchorEl}
+                                open={openDateFilter}
+                                onClose={handleCloseDateFilter}
+                                anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                                transformOrigin={{ vertical: "top", horizontal: "left" }}
+                            >
+                                <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2, width: 280 }}>
+                                    <TextField
+                                        label="Start Date"
+                                        type="date"
+                                        variant="outlined"
+                                        size="small"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                        InputLabelProps={{ shrink: true }}
+                                    />
+                                    <TextField
+                                        label="End Date"
+                                        type="date"
+                                        variant="outlined"
+                                        size="small"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        InputLabelProps={{ shrink: true }}
+                                    />
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+                                        <Button
+                                            color="secondary"
+                                            onClick={handleResetDateFilter}
+                                            disabled={(!startDate && !endDate) || getPatientloading}
+                                        >
+                                            Reset
+                                        </Button>
+                                        <Button
+                                            variant="contained"
+                                            color="primary"
+                                            onClick={handleApplyDateFilter}
+                                            disabled={(!startDate || !endDate) || getPatientloading}
+                                        >
+                                            {getPatientloading ? <CircularProgress size={22} /> : "Apply"}
+                                        </Button>
+                                    </Box>
+                                </Box>
+                            </Menu>
                         </Grid>
                     </Grid>
 
                     {/* Active Filters Display and Clear Button (right) */}
-                    {(searchName || startDate || endDate) && (
+                    {(searchName || appliedStartDate || appliedEndDate) && (
                         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Typography variant="caption" sx={{ color: "#7c8fa3" }}>
                                 Showing {filteredPatients.length} of {patients.length} patient(s)
+                                {appliedStartDate && appliedEndDate && (
+                                    <>&nbsp;| Date: {appliedStartDate} to {appliedEndDate}</>
+                                )}
                             </Typography>
                             <Button
                                 variant="outlined"
@@ -726,7 +820,7 @@ export const PatientHistory = () => {
 
                                     {visibleFormColumns.map((col) => (
                                         <TableCell key={col.key}>
-                                            {col.label}
+                                            {col?.label || "-"}
                                         </TableCell>
                                     ))}
                                     <TableCell align="center">Action</TableCell>
@@ -780,11 +874,16 @@ export const PatientHistory = () => {
                                                     val = val.name || JSON.stringify(val);
                                                 }
 
+
+                                                const displayValue =
+                                                    val === null || val === undefined || val === ""
+                                                        ? "--"
+                                                        : val;
                                                 return (
                                                     <TableCell key={col.key}>
                                                         {["followupStatus", "lastVisit.formType", "appointmentStatus"].includes(col.key) ? (
                                                             <Chip
-                                                                label={val}
+                                                                label={displayValue}
                                                                 size="small"
                                                                 sx={{
                                                                     backgroundColor:
@@ -798,7 +897,7 @@ export const PatientHistory = () => {
                                                                 }}
                                                             />
                                                         ) : (
-                                                            val ?? "-"
+                                                            displayValue
                                                         )}
                                                     </TableCell>
                                                 );
