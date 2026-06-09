@@ -120,7 +120,7 @@ function App() {
         <>
           <Route path="/" element={<SuperManagerDashboard />} />
           <Route path="/patient-history" element={<PatientHistoryForNonAdmins />} />
-          <Route path="/single-patient-history:/id" element={<SInglePatientDetails />} />
+          <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
           <Route path="/user-management" element={<UserManagementSuperManager />} />
         </>
       )}
