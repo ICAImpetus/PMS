@@ -127,35 +127,66 @@
 .ff-header-actions {
     display: flex;
     gap: 12px;
-    position: relative; /* Ensure dropdown anchors correctly */
+    position: relative;
+    /* Ensure dropdown anchors correctly */
+    align-items: center;
+    flex-wrap: wrap;
 }
 
-/* Column Filter */
+.ff-filters-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+}
+
+.ff-search-box {
+    flex: 1;
+    min-width: 280px;
+    max-width: 560px;
+}
+
+.ff-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
 .ff-column-filter-wrap {
     position: relative;
     display: inline-block;
 }
 
 .executive-btn-columns {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 14px;
+    padding: 8px 16px;
+    min-height: 38px;
     background: #ffffff;
     border: 1px solid #e1e8ed;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 0.9rem;
     font-weight: 600;
     color: #2c3e50;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
     white-space: nowrap;
 }
 
+.executive-btn-columns.secondary {
+    background: #f8fafc;
+    color: #2c3e50;
+}
+
 .executive-btn-columns:hover {
-    background: #f8f9fa;
-    border-color: #5b2d8b;
-    color: #5b2d8b;
+    background: #f4f5f7;
+    border-color: #cbd5e1;
+    color: #2c3e50;
 }
 
 .ff-btn.columns {
@@ -175,11 +206,30 @@
     margin-top: 8px;
     background: white;
     border: 1px solid #e1e8ed;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    padding: 16px;
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
+    padding: 18px;
     z-index: 1001;
-    min-width: 280px;
+    min-width: 300px;
+    max-width: 380px;
+}
+
+.ff-select-all-row {
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.ff-date-filter-panel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.08);
 }
 
 .ff-column-checkboxes {
@@ -417,12 +467,15 @@
     overflow: auto;
     border: 1px solid #e1e8ed;
     border-radius: 12px;
+    min-height: 320px;
+    background: #ffffff;
 }
 
 .ff-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.9rem;
+    min-width: 720px;
 }
 
 .ff-table th {
@@ -478,10 +531,12 @@
 
 .ff-loading,
 .ff-empty {
-    padding: 40px;
+    padding: 48px 24px;
     text-align: center;
-    color: #7f8c8d;
+    color: #64748b;
     font-weight: 600;
+    background: #f8fafc;
+    border-radius: 0 0 12px 12px;
 }
 
 /* MUI Pagination Override for visibility */

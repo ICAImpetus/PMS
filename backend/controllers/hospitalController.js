@@ -8006,7 +8006,7 @@ export const clearNotifications = async (req, res) => {
 
 export const getPatientByRole = async (req, res) => {
   try {
-    const { hospitalId, branchId, filter, page = 1, isExport } = req.query;
+    const { hospitalId, branchId, filter, page = 1, isExport, searchInput } = req.query;
 
     console.log("call", req.query);
     const isExportMode = isExport === "true";
@@ -8053,6 +8053,25 @@ export const getPatientByRole = async (req, res) => {
 
     if (branchId && mongoose.isValidObjectId(branchId)) {
       match.branchId = branchId;
+    }
+
+    if (searchInput?.trim()) {
+      const search = searchInput.trim();
+
+      match.$or = [
+        {
+          patientName: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+        {
+          patientMobile: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+      ];
     }
 
     if (req.query.startDate && req.query.endDate) {
@@ -8132,8 +8151,15 @@ export const getPatientByRole = async (req, res) => {
 };
 export const singlePatientHistory = async (req, res) => {
   try {
-
-    const { hospitalId, page, patientId, startDate, endDate, isExport } = req.query
+    const {
+      hospitalId,
+      page,
+      patientId,
+      startDate,
+      endDate,
+      searchInput,
+      isExport,
+    } = req.query;
 
     const isExportMode = isExport === "true";
 
@@ -8141,11 +8167,16 @@ export const singlePatientHistory = async (req, res) => {
     const pageNum = Math.max(parseInt(page) || 1, 1);
     const skip = (pageNum - 1) * PAGE_LIMIT;
 
-    // Validate hospitalId
-    if (!hospitalId || !patientId || !mongoose.isValidObjectId(hospitalId) || !mongoose.isValidObjectId(patientId)) {
+    // Validate IDs
+    if (
+      !hospitalId ||
+      !patientId ||
+      !mongoose.isValidObjectId(hospitalId) ||
+      !mongoose.isValidObjectId(patientId)
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Valid Hospital Id  And Patient Id is required",
+        message: "Valid Hospital Id And Patient Id is required",
       });
     }
 
@@ -8164,22 +8195,38 @@ export const singlePatientHistory = async (req, res) => {
     // Multi-tenant connection
     const conn = await getConnection(hospital.trimmedName);
     const FilledFormsModel = getFilledFormsModel(conn);
-    const DoctorModel = getDoctorModel(conn)
-    const DepartmentModel = getDepartmentModel(conn)
+    const DoctorModel = getDoctorModel(conn);
+    const DepartmentModel = getDepartmentModel(conn);
 
-
-
+    // Base match
     let match = {
       isDeleted: false,
       "formData.patientDetails": patientId,
-      isDeleted: false
     };
 
-    if (startDate && endDate) {
+    //  DATE FILTER (FIXED)
+    if (startDate || endDate) {
+      match.createdAt = {};
 
+      if (startDate) {
+        match.createdAt.$gte = new Date(startDate);
+      }
+
+      if (endDate) {
+        // include full day end
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        match.createdAt.$lte = end;
+      }
     }
 
-
+    //  SEARCH FILTER (example: patient name / mobile inside formData)
+    if (searchInput && searchInput.trim()) {
+      match.$or = [
+        { "purpose": { $regex: searchInput, $options: "i" } },
+        // { "formData.patientMobile": { $regex: searchInput, $options: "i" } },
+      ];
+    }
 
     // Fetch data
     const [forms, totalDocument] = await Promise.all([
@@ -8188,15 +8235,15 @@ export const singlePatientHistory = async (req, res) => {
           path: "department",
           model: DepartmentModel,
           select: "name",
-        }).
-        populate(
-          {
-            path: "doctor",
-            model: DoctorModel,
-            select: "name",
-          })
-        .skip(skip)
-        .limit(PAGE_LIMIT)
+        })
+        .populate({
+          path: "doctor",
+          model: DoctorModel,
+          select: "name",
+        })
+        .sort({ createdAt: -1 })
+        .skip(isExportMode ? 0 : skip)
+        .limit(isExportMode ? 0 : PAGE_LIMIT)
         .lean(),
 
       FilledFormsModel.countDocuments(match),
@@ -8204,16 +8251,13 @@ export const singlePatientHistory = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-
       pagination: {
         totalDocument,
         page: pageNum,
         totalPages: Math.ceil(totalDocument / PAGE_LIMIT),
       },
-
       data: forms,
     });
-
   } catch (error) {
     console.error("Error fetching patients:", error);
 
@@ -8223,7 +8267,6 @@ export const singlePatientHistory = async (req, res) => {
     });
   }
 };
-
 
 
 export const getPatientByNumber = async (req, res) => {

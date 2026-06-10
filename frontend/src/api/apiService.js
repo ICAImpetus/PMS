@@ -276,19 +276,32 @@ export const commonRoutes = {
     }),
 
 
+  getFilledForms: (
+    filter,
+    page,
+    branchId = null,
+    hospitalId = null,
+    isExport = false,
+    startDate = null,
+    endDate = null,
+    searchName = ""
+  ) => {
+    const params = {
+      filter,
+      page,
+      isExport,
+    };
 
-  getFilledForms: (filter, page, branchId = null, hospitalId = null, isExport = false) => {
-    // console.log("branchId", branchId);
-    // console.log("hospitalId", hospitalId);
-
-    const params = { filter, page, isExport };
-
-    if (branchId != null) params.branchId = branchId;
+    if (branchId) params.branchId = branchId;
     if (hospitalId) params.hospitalId = hospitalId;
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    if (searchName?.trim()) params.searchName = searchName.trim();
+
+    console.log("params", params);
 
     return API.get("api/filled-forms", { params });
   },
-
 
 
   saveFilledForm: (hosId, branchId, data) =>
@@ -342,6 +355,7 @@ export const commonRoutes = {
     hospitalId = null,
     startDate = null,
     endDate = null,
+    searchInput = null,
     isExport = false
   ) => {
     const params = { page, isExport };
@@ -349,20 +363,41 @@ export const commonRoutes = {
     if (filter != null) params.filter = filter;
     if (branchId != null) params.branchId = branchId;
     if (hospitalId) params.hospitalId = hospitalId;
+    if (searchInput) params.searchInput = searchInput;
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
     return API.get("api/get-patients", { params });
   },
 
-  getSinglePatientsHistory: (hospitalId, patientId, page, isExport = false) =>
-    API.get(`api/single-patient-history/`, {
-      params: {
-        hospitalId,
-        patientId,
-        page,
-        isExport
-      }
-    }),
+  getSinglePatientsHistory: (
+    hospitalId,
+    patientId,
+    page,
+    startDate,
+    endDate,
+    searchInput,
+    isExport = false
+  ) => {
+
+    const params = {
+      hospitalId,
+      patientId,
+      page,
+      isExport,
+    };
+
+    console.log("params", params);
+
+
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    if (searchInput) params.searchInput = searchInput;
+
+    console.log("paramr", params);
+
+
+    return API.get(`api/single-patient-history/`, { params });
+  },
 
   getBookedSlotsApi: (hosId, branchId, data) =>
 

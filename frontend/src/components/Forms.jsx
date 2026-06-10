@@ -4107,32 +4107,29 @@ function Forms() {
         <div className="section" data-section="patient-latest-details">
           <div className="patient-latest-visit-heading">
             <h3>Latest Visit</h3>
-            <button>View More</button>
+            <button type="button">View More</button>
           </div>
 
           <div className="patient-latest-visit-table">
             <table className="patient-details-table">
               <thead>
                 <tr>
-                  <th>Form-Type</th>
+                  <th>Form Type</th>
                   <th>Purpose</th>
                   <th>Doctor</th>
                   <th>Department</th>
                   <th>Remarks</th>
-
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td>1</td>
-                  <td>John Doe</td>
-                  <td>30</td>
-                  <td>Male</td>
+                  <td colSpan="5" className="no-latest-visit">
+                    No latest visit data available.
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
-
         </div>
 
       </div>

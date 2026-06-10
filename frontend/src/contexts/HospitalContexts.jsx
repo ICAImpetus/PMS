@@ -36,8 +36,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     const isSuperManager = role === "supermanager";
     const isExecutive = role === "executive";
     const isDoctor = role === "doctor"
-    const isAdmin = ["superadmin", "admin", "supermanager"].includes(role);
-    const isNonAdmin = ["teamleader", "executive", "doctor"].includes(role);
+    const isAdmin = ["superadmin", "admin"].includes(role);
+    const isNonAdmin = ["teamleader", "supermanager", "executive", "doctor"].includes(role);
 
 
 
@@ -170,7 +170,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         queryKey: ["branches", selectedHostpital, role],
         queryFn: async () => {
 
-            const res = isAdmin
+            const res = (isAdmin || isSuperManager)
                 ? await commonRoutes.getHospitalBranchById(selectedHostpital)
                 : await commonRoutes.branchesByRole(selectedHostpital);
 
@@ -758,6 +758,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         setPatients,
 
         isSuperAdmin,
+        isAdmin,
+        isNonAdmin,
         role,
 
         loading,
@@ -795,6 +797,10 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         pastAppointmentData,
         filter,
         dateRangeFilter,
+        isSuperAdmin,
+        isAdmin,
+        isNonAdmin,
+        role,
         loading,
         errors
     ]);

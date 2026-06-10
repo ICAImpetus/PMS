@@ -110,7 +110,7 @@ function App() {
       {userRole === "teamLeader" || userRole === "teamleader" && (
         <>
           <Route path="/" element={<TeamDashboard />} />
-          <Route path="/patient-history" element={<PatientHistoryForNonAdmins />} />
+          <Route path="/patient-history" element={<PatientHistory />} />
           <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
           <Route path="/user-management" element={<UserManagementTeamLeader />} />
         </>
@@ -119,7 +119,7 @@ function App() {
       {userRole === "supermanager" && (
         <>
           <Route path="/" element={<SuperManagerDashboard />} />
-          <Route path="/patient-history" element={<PatientHistoryForNonAdmins />} />
+          <Route path="/patient-history" element={<PatientHistory />} />
           <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
           <Route path="/user-management" element={<UserManagementSuperManager />} />
         </>
@@ -170,7 +170,7 @@ function App() {
       ) : userRole === "executive" ? (
         <>
           <Route path="/" element={<ExecutiveDashboard />} />
-          <Route path="/patient-history" element={<PatientHistoryForNonAdmins />} />
+          <Route path="/patient-history" element={<PatientHistory />} />
           <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
         </>
       ) : null}

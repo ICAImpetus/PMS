@@ -271,297 +271,317 @@ const AdminDashboard = () => {
     );
   }
 
+  // return (
+
+  // );
+
   return (
-    <div className="dashboard-container">
+    <>
+      {formsModalOpen ? (
+        <FilledFormsComponent
+          filter={filter}
+          selectedHostpital={selectedHostpital}
+          formsModalOpen={formsModalOpen}
+          setFormsModalOpen={setFormsModalOpen}
+          formsData={formsData}
+          formsLoading={loading?.dashboardLoading}
+          formsTypeFilter={formsTypeFilter}
+          setFormsTypeFilter={setFormsTypeFilter}
+          setPagination={setPagination}
+          pagination={pagination}
+        >
+        </FilledFormsComponent>
+      ) : (
+        <div className="dashboard-container">
 
-      {/* --- FILTER BAR --- */}
-      <div className="hospital-info-card" style={{ borderLeft: "5px solid #0f172a" }}>
-        <div className="info-header">
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            // backgroundColor: "antiquewhite",
-            width: '650px',
-            gap: "20px"
+          {/* --- FILTER BAR --- */}
+          <div className="hospital-info-card" style={{ borderLeft: "5px solid #0f172a" }}>
+            <div className="info-header">
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                // backgroundColor: "antiquewhite",
+                width: '650px',
+                gap: "20px"
 
-          }}>
-            <h3 className="hospital-name">
-              {"Select Hospital"}
-            </h3>
-            <FormControl sx={{ width: '220px' }} size="small">
-              {/* <InputLabel id="hospital-label">Select Hospital</InputLabel> */}
+              }}>
+                <h3 className="hospital-name">
+                  {"Select Hospital"}
+                </h3>
+                <FormControl sx={{ width: '220px' }} size="small">
+                  {/* <InputLabel id="hospital-label">Select Hospital</InputLabel> */}
 
-              <Select
-                value={selectedHostpital}
-                onChange={(e) => setSelectedHostpital(e.target.value)}
-                disabled={loading?.hospitalsLoading}
-                displayEmpty
-                sx={{
-                  borderRadius: 2,
-                  color: "black",
-                  "&.Mui-focused": {
-                    color: "black",
-                  },
-                  backgroundColor: "#fff"
-                }}
-              >
-                {loading?.hospitalsLoading ? (
-                  <MenuItem value="">
-                    <CircularProgress size={20} sx={{ mr: 1 }} />
-                    Loading...
-                  </MenuItem>
-                ) : hospitals.length > 0 ? (
-                  hospitals.map((hospital) => (
-                    <MenuItem key={hospital._id} value={hospital._id}>
-                      {hospital.name}
+                  <Select
+                    value={selectedHostpital}
+                    onChange={(e) => setSelectedHostpital(e.target.value)}
+                    disabled={loading?.hospitalsLoading}
+                    displayEmpty
+                    sx={{
+                      borderRadius: 2,
+                      color: "black",
+                      "&.Mui-focused": {
+                        color: "black",
+                      },
+                      backgroundColor: "#fff"
+                    }}
+                  >
+                    {loading?.hospitalsLoading ? (
+                      <MenuItem value="">
+                        <CircularProgress size={20} sx={{ mr: 1 }} />
+                        Loading...
+                      </MenuItem>
+                    ) : hospitals.length > 0 ? (
+                      hospitals.map((hospital) => (
+                        <MenuItem key={hospital._id} value={hospital._id}>
+                          {hospital.name}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem value="">No hospitals Assigned</MenuItem>
+                    )}
+                  </Select>
+                </FormControl>
+                <FormControl sx={{ width: '220px' }} size="small">
+                  <Select
+                    labelId="hospital-label"
+                    value={filter}
+                    displayEmpty
+                    onChange={(e) => setFilter(e.target.value)}
+                    sx={{
+                      borderRadius: 2,
+                      backgroundColor: "#fff"
+                    }}
+                  >
+                    <MenuItem value="" disabled>
                     </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem value="">No hospitals Assigned</MenuItem>
-                )}
-              </Select>
-            </FormControl>
-            <FormControl sx={{ width: '220px' }} size="small">
-              <Select
-                labelId="hospital-label"
-                value={filter}
-                displayEmpty
-                onChange={(e) => setFilter(e.target.value)}
-                sx={{
-                  borderRadius: 2,
-                  backgroundColor: "#fff"
-                }}
-              >
-                <MenuItem value="" disabled>
-                </MenuItem>
-                {filterOptions.length > 0 ? (
-                  filterOptions.map((opt) => (
-                    <MenuItem key={opt.key} value={opt.value}>
-                      {opt.key}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem value="">No Options For Select</MenuItem>
-                )}
-              </Select>
-            </FormControl>
+                    {filterOptions.length > 0 ? (
+                      filterOptions.map((opt) => (
+                        <MenuItem key={opt.key} value={opt.value}>
+                          {opt.key}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem value="">No Options For Select</MenuItem>
+                    )}
+                  </Select>
+                </FormControl>
 
-          </div>
-          <div className="hospital-stats">
-            <div className="h-stat-box">
-              <div className="h-stat-val">
-                {hospitals.length || 0}
               </div>
-              <div className="h-stat-lbl">Hospitals</div>
-            </div>
-            {/* <div className="h-stat-box">
+              <div className="hospital-stats">
+                <div className="h-stat-box">
+                  <div className="h-stat-val">
+                    {hospitals.length || 0}
+                  </div>
+                  <div className="h-stat-lbl">Hospitals</div>
+                </div>
+                {/* <div className="h-stat-box">
               <div className="h-stat-val">{12}</div>
               <div className="h-stat-lbl">Branches</div>
             </div> */}
-          </div>
-        </div>
-      </div>
-
-      {/* --- ALERT SECTION --- */}
-      {codeAlerts?.length > 0 && (
-        <div>
-          {codeAlerts.map((alert, index) => {
-            const hospitalName = alert?.HospitalId?.name || "Unknown Hospital";
-            const branchName = alert?.BranchId?.name || "Unknown Branch";
-            const city = alert?.BranchId?.branchId?.city || "";
-            const codeName = alert?.code_id?.name || "Code Alert";
-
-            return (
-              <div
-                key={alert._id || index}
-                className="ai-recommendation alert-card"
-                style={{
-                  backgroundColor: alert?.code_id?.color || '#f1f5f9',
-                  color: "#1e293b",
-                  borderLeft: '5px solid #0f172a',
-                  borderRadius: '12px',
-                  display: 'flex',
-                  gap: '10px',
-                  padding: '10px',
-                  marginBottom: '10px'
-                }}
-              >
-                <AlertTriangle size={20} color="#0f172a" />
-
-                <div style={{ flexGrow: 1, fontWeight: '600' }}>
-                  {codeName}:{" "}
-                  <span style={{ fontWeight: '400' }}>
-                    {codeName} raised in {hospitalName} {branchName} {city && `(${city})`}.
-                    Immediate attention required.
-                  </span>
-                </div>
               </div>
-            );
-          })}
-        </div>
-      )}
+            </div>
+          </div>
 
-      {/* --- CRITICAL KPI STRIP --- */}
-      <section className="critical-strip">
-        <UsersCard label="Users" count={analytics?.totalUsers} onClick={() => navigate("/user-management", { replace: true, state: { selectedHostpital } })} />
-        <UsersCard label="Branches" count={analytics?.totalBranches || 0} onClick={() => {
-          const selectedHospitalData = hospitals.find(
-            (h) => h._id === selectedHostpital
-          );
-          navigate(`/hospital-management/edit-branches/${selectedHostpital}`, {
-            replace: true,
-            state: {
-              hospital: {
-                name: selectedHospitalData?.name,
-                hospitalCode: selectedHospitalData?.hospitalCode,
-                contact: selectedHospitalData?.contact,
-                hospitallogo: selectedHospitalData?.hospitallogo
+          {/* --- ALERT SECTION --- */}
+          {codeAlerts?.length > 0 && (
+            <div>
+              {codeAlerts.map((alert, index) => {
+                const hospitalName = alert?.HospitalId?.name || "Unknown Hospital";
+                const branchName = alert?.BranchId?.name || "Unknown Branch";
+                const city = alert?.BranchId?.branchId?.city || "";
+                const codeName = alert?.code_id?.name || "Code Alert";
+
+                return (
+                  <div
+                    key={alert._id || index}
+                    className="ai-recommendation alert-card"
+                    style={{
+                      backgroundColor: alert?.code_id?.color || '#f1f5f9',
+                      color: "#1e293b",
+                      borderLeft: '5px solid #0f172a',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      gap: '10px',
+                      padding: '10px',
+                      marginBottom: '10px'
+                    }}
+                  >
+                    <AlertTriangle size={20} color="#0f172a" />
+
+                    <div style={{ flexGrow: 1, fontWeight: '600' }}>
+                      {codeName}:{" "}
+                      <span style={{ fontWeight: '400' }}>
+                        {codeName} raised in {hospitalName} {branchName} {city && `(${city})`}.
+                        Immediate attention required.
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* --- CRITICAL KPI STRIP --- */}
+          <section className="critical-strip">
+            <UsersCard label="Users" count={analytics?.totalUsers} onClick={() => navigate("/user-management", { replace: true, state: { selectedHostpital } })} />
+            <UsersCard label="Branches" count={analytics?.totalBranches || 0} onClick={() => {
+              const selectedHospitalData = hospitals.find(
+                (h) => h._id === selectedHostpital
+              );
+              navigate(`/hospital-management/edit-branches/${selectedHostpital}`, {
+                replace: true,
+                state: {
+                  hospital: {
+                    name: selectedHospitalData?.name,
+                    hospitalCode: selectedHospitalData?.hospitalCode,
+                    contact: selectedHospitalData?.contact,
+                    hospitallogo: selectedHospitalData?.hospitallogo
 
 
 
-              }
+                  }
+                }
+              })
             }
-          })
-        }
 
-        } />
-        <UsersCard label="Appointments" count={metrics?.appointments?.total} onClick={() => {
-          setFormsTypeFilter("all");
-          setFormsModalOpen("Appointments");
-        }} option={
-          {
-            "inbound": metrics?.appointments?.inbound,
-            "outbound": metrics?.appointments?.outbound
-          }
-        } />
-        <UsersCard label="Forms" onClick={() => {
-          setFormsTypeFilter("all");
-          setFormsModalOpen("Forms");
-        }} count={metrics?.totalForms?.total} option={
-          {
-            "inbound": metrics?.totalForms?.inbound,
-            "outbound": metrics?.totalForms?.outbound
-          }
-        } />
+            } />
+            <UsersCard label="Appointments" count={metrics?.appointments?.total} onClick={() => {
+              setFormsTypeFilter("all");
+              setFormsModalOpen("Appointments");
+            }} option={
+              {
+                "inbound": metrics?.appointments?.inbound,
+                "outbound": metrics?.appointments?.outbound
+              }
+            } />
+            <UsersCard label="Forms" onClick={() => {
+              setFormsTypeFilter("all");
+              setFormsModalOpen("Forms");
+            }} count={metrics?.totalForms?.total} option={
+              {
+                "inbound": metrics?.totalForms?.inbound,
+                "outbound": metrics?.totalForms?.outbound
+              }
+            } />
 
-      </section>
-
-      <div
-        className="data-grid"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(2, 1fr)",
-          gap: "20px",
-          width: "100%",
-        }}
-      >
-        <div className="data-card" style={{ width: "100%", height: "480px", borderLeft: "5px solid #0f172a" }}>
-          <h4>
-            <Users size={18} className="mr-2" /> Hospital Activity
-          </h4>
+          </section>
 
           <div
-            className="chart-container-sm"
-            style={{ width: "100%", height: "350px" }}
+            className="data-grid"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: "20px",
+              width: "100%",
+            }}
           >
-            <Bar data={data} options={options} />
-          </div>
-        </div>
+            <div className="data-card" style={{ width: "100%", height: "480px", borderLeft: "5px solid #0f172a" }}>
+              <h4>
+                <Users size={18} className="mr-2" /> Hospital Activity
+              </h4>
 
-        <div className="data-card" style={{ width: "100%", height: "480px", borderLeft: "5px solid #0f172a" }}>
-          <h4>
-            <MedicalServicesIcon sx={{ mr: 1 }} /> Patient Analytics
-          </h4>
+              <div
+                className="chart-container-sm"
+                style={{ width: "100%", height: "350px" }}
+              >
+                <Bar data={data} options={options} />
+              </div>
+            </div>
 
-          <div className="scrollable-content">
-            <table className="metrics-table">
-              <thead>
-                <tr>
-                  <th>Month</th>
-                  <th>New Patient</th>
-                </tr>
-              </thead>
+            <div className="data-card" style={{ width: "100%", height: "480px", borderLeft: "5px solid #0f172a" }}>
+              <h4>
+                <MedicalServicesIcon sx={{ mr: 1 }} /> Patient Analytics
+              </h4>
 
-              <tbody>
-                {newPatientData?.length > 0 ? (
-                  newPatientData.map((item, i) => (
-                    <tr key={i}>
-                      <td>{item.month}</td>
-                      <td>{item.newPatients}</td>
+              <div className="scrollable-content">
+                <table className="metrics-table">
+                  <thead>
+                    <tr>
+                      <th>Month</th>
+                      <th>New Patient</th>
                     </tr>
-                  ))
+                  </thead>
+
+                  <tbody>
+                    {newPatientData?.length > 0 ? (
+                      newPatientData.map((item, i) => (
+                        <tr key={i}>
+                          <td>{item.month}</td>
+                          <td>{item.newPatients}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="2">No data available</td>
+                      </tr>
+                    )}
+
+                    <tr className="total-row">
+                      <td>
+                        <strong>Total</strong>
+                      </td>
+
+                      <td>
+                        <strong>{totalNew}</strong>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div className="patient-summary" style={{ marginTop: "15px" }}>
+                  <p><strong>New Patients :</strong> {totalNew}</p>
+                  <p><strong>Total Registered Patients :</strong> {totalNew}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="executive-dashboard-section">
+            <div className="executive-outbound-grid">
+              <div className="executive-outbound-card">
+                <div className="executive-chart-title">
+                  <PieChartIcon />Top Inbound Purpose
+                </div>
+                {analytics?.topInboundPurpose?.length === 0 ? (
+                  <div className="executive-leads-breakdown">
+                    <div>No Data Are Found</div>
+                  </div>
                 ) : (
-                  <tr>
-                    <td colSpan="2">No data available</td>
-                  </tr>
+                  analytics?.topInboundPurpose?.map((item, i) => {
+                    return <div key={i} className="executive-lead-source">
+                      <div className="executive-source-name">
+                        <LabelIcon sx={{ fontSize: 16 }} /> {item?.purpose || "-"}
+                      </div>
+                      <div className="executive-source-count">{item?.count || 0}</div>
+                    </div>
+                  })
+
+
                 )}
 
-                <tr className="total-row">
-                  <td>
-                    <strong>Total</strong>
-                  </td>
-
-                  <td>
-                    <strong>{totalNew}</strong>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-
-            <div className="patient-summary" style={{ marginTop: "15px" }}>
-              <p><strong>New Patients :</strong> {totalNew}</p>
-              <p><strong>Total Registered Patients :</strong> {totalNew}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="executive-dashboard-section">
-        <div className="executive-outbound-grid">
-          <div className="executive-outbound-card">
-            <div className="executive-chart-title">
-              <PieChartIcon />Top Inbound Purpose
-            </div>
-            {analytics?.topInboundPurpose?.length === 0 ? (
-              <div className="executive-leads-breakdown">
-                <div>No Data Are Found</div>
               </div>
-            ) : (
-              analytics?.topInboundPurpose?.map((item, i) => {
-                return <div key={i} className="executive-lead-source">
-                  <div className="executive-source-name">
-                    <LabelIcon sx={{ fontSize: 16 }} /> {item?.purpose || "-"}
-                  </div>
-                  <div className="executive-source-count">{item?.count || 0}</div>
+              <div className="executive-outbound-card">
+                <div className="executive-chart-title">
+                  <BarChartIcon />Top Outbound Purpose
                 </div>
-              })
+                {analytics?.topOutboundPurpose?.length === 0 ? (
+                  <div className="executive-leads-breakdown">
+                    <div>No Data Are Found</div>
+                  </div>
+                ) : (
+                  analytics?.topOutboundPurpose?.map((item, i) => {
+                    return <div key={i} className="executive-lead-source">
+                      <div className="executive-source-name">
+                        <i className="fab fa-facebook"></i> {item?.purpose || "-"}
+                      </div>
+                      <div className="executive-source-count">{item?.count || 0}</div>
+                    </div>
+                  })
+                )}
 
-
-            )}
-
-          </div>
-          <div className="executive-outbound-card">
-            <div className="executive-chart-title">
-              <BarChartIcon />Top Outbound Purpose
-            </div>
-            {analytics?.topOutboundPurpose?.length === 0 ? (
-              <div className="executive-leads-breakdown">
-                <div>No Data Are Found</div>
               </div>
-            ) : (
-              analytics?.topOutboundPurpose?.map((item, i) => {
-                return <div key={i} className="executive-lead-source">
-                  <div className="executive-source-name">
-                    <i className="fab fa-facebook"></i> {item?.purpose || "-"}
-                  </div>
-                  <div className="executive-source-count">{item?.count || 0}</div>
-                </div>
-              })
-            )}
 
-          </div>
-
-          {/* <div className="executive-outbound-card">
+              {/* <div className="executive-outbound-card">
               <div className="executive-chart-title">
                 <i className="fas fa-smile"></i> Customer Sentiment
               </div>
@@ -591,7 +611,7 @@ const AdminDashboard = () => {
               </div>
             </div> */}
 
-          {/* <div className="executive-outbound-card">
+              {/* <div className="executive-outbound-card">
               <div className="executive-chart-title">
                 <i className="fas fa-chart-line"></i> Conversion & Revenue
               </div>
@@ -618,80 +638,80 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </div> */}
-        </div>
-      </div>
-      <div className="data-grid row-3">
-        <div className="data-card">
-          <h4>Recent Activity</h4>
-          <div className="scrollable-content">
-            {analytics?.recentActivity?.length === 0 && (
-              <div className="log-entry">
-                <p>No Activity Found</p>
-              </div>
-            )}
-            {analytics?.recentActivity?.map((item, i) => (
-              <div key={i} className="log-entry">
-                <div className="log-icon info">
-                  <UserPlus size={16} />
-                </div>
-                <div style={{ flexGrow: 1 }}>
-                  <div>
-                    <strong style={{ fontSize: "12px" }}>{item?.customMessage || "Unknown Activity"}</strong>
-                  </div>
-                  <small style={{ color: "var(--muted)" }}>
-                    {item?.name} • {moment(item?.createdAt).format("hh:mm A")}
-                  </small>
-                </div>
-              </div>
-            ))}
+            </div>
           </div>
-        </div>
-
-        <div className="data-card">
-          <h4>Agent Performance</h4>
-          <div className="scrollable-content">
-            {analytics?.teamOverview?.map((item, i) => {
-              const status = statusClasses[i % statusClasses.length];
-              return (
-                <div
-                  key={i}
-                  className="log-entry"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: "10px",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div className={`log-icon ${status}`}>
-                      <User size={16} />
+          <div className="data-grid row-3">
+            <div className="data-card">
+              <h4>Recent Activity</h4>
+              <div className="scrollable-content">
+                {analytics?.recentActivity?.length === 0 && (
+                  <div className="log-entry">
+                    <p>No Activity Found</p>
+                  </div>
+                )}
+                {analytics?.recentActivity?.map((item, i) => (
+                  <div key={i} className="log-entry">
+                    <div className="log-icon info">
+                      <UserPlus size={16} />
                     </div>
-                    <strong>{item?.agentName || "name"}</strong>
+                    <div style={{ flexGrow: 1 }}>
+                      <div>
+                        <strong style={{ fontSize: "12px" }}>{item?.customMessage || "Unknown Activity"}</strong>
+                      </div>
+                      <small style={{ color: "var(--muted)" }}>
+                        {item?.name} • {moment(item?.createdAt).format("hh:mm A")}
+                      </small>
+                    </div>
                   </div>
-                  <span className={`badge ${status}`}>
-                    Forms: {item?.totalCalls || 0}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+                ))}
+              </div>
+            </div>
 
-        <div className="data-card">
-          <div className="chart-head">
-            <span>
-              <ShowChartIcon /> Patient Status Trend
-            </span>
-          </div>
-          <div style={{ flex: 1, minHeight: 0 }}>
-            <Line data={patientStatusData} options={lineOptions} />
-          </div>
-        </div>
-      </div>
+            <div className="data-card">
+              <h4>Agent Performance</h4>
+              <div className="scrollable-content">
+                {analytics?.teamOverview?.map((item, i) => {
+                  const status = statusClasses[i % statusClasses.length];
+                  return (
+                    <div
+                      key={i}
+                      className="log-entry"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: "10px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <div className={`log-icon ${status}`}>
+                          <User size={16} />
+                        </div>
+                        <strong>{item?.agentName || "name"}</strong>
+                      </div>
+                      <span className={`badge ${status}`}>
+                        Forms: {item?.totalCalls || 0}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
 
-      {/* --- TASKS TABLE --- */}
-      {/* <div className="card">
+            <div className="data-card">
+              <div className="chart-head">
+                <span>
+                  <ShowChartIcon /> Patient Status Trend
+                </span>
+              </div>
+              <div style={{ flex: 1, minHeight: 0 }}>
+                <Line data={patientStatusData} options={lineOptions} />
+              </div>
+            </div>
+          </div>
+
+          {/* --- TASKS TABLE --- */}
+          {/* <div className="card">
         <div className="card-header">
           <h3>
             <CheckCircle
@@ -755,35 +775,18 @@ const AdminDashboard = () => {
           </table>
         </div>
       </div> */}
+        </div >
+      )}
 
-      {/* Profile Modal */}
-      {
-        formsModalOpen && (
-          <FilledFormsComponent
-            filter={filter}
-            selectedHostpital={selectedHostpital}
-            formsModalOpen={formsModalOpen}
-            setFormsModalOpen={setFormsModalOpen}
-            formsData={formsData}
-            formsLoading={loading?.dashboardLoading}
-            formsTypeFilter={formsTypeFilter}
-            setFormsTypeFilter={setFormsTypeFilter}
-            setPagination={setPagination}
-            pagination={pagination}
-          >
-          </FilledFormsComponent>
-        )
-      }
-      {
-        profileModalOpen && (
-          <ProfilePopup
-            user={currentUser}
-            onClose={() => setProfileModalOpen(false)}
-          />
-        )
-      }
-    </div >
+      {profileModalOpen && (
+        <ProfilePopup
+          user={currentUser}
+          onClose={() => setProfileModalOpen(false)}
+        />
+      )}
+    </>
   );
+
 };
 
 export default AdminDashboard;

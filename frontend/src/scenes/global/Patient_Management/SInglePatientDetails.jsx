@@ -29,11 +29,19 @@ import {
     RadioGroup,
     FormControlLabel,
     Radio,
+    Menu,
+    MenuItem,
+    IconButton,
+    Popover,
+    Checkbox,
 } from "@mui/material";
+import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import SearchIcon from "@mui/icons-material/Search";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import DownloadIcon from "@mui/icons-material/Download";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
@@ -41,12 +49,12 @@ import { toast } from "react-toastify";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { commonRoutes } from "../../../api/apiService";
 import { useApi } from "../../../api/useApi";
-import { getNestedValue, statusStyles } from "./PatientHistory";
 import moment from "moment";
+import { getNestedValue, handleExport, statusStyles } from "../../../utils/exportUtils";
 
 
 export const FORMS_AVAILABLE_COLUMNS = [
-    { key: "createdAt", label: "Visit Date" },
+    { key: "createdAt", label: "Form Submission Date" },
     { key: "purpose", label: "POC / Purpose" },
     { key: "formType", label: "Form Type" },
     { key: "doctor.name", label: "Doctor" },
@@ -67,7 +75,10 @@ export const SInglePatientDetails = () => {
     const { id } = useParams();
     const location = useLocation()
     const [patient, setPatient] = useState(location.state?.patient || {});
+    const [searchName, setSearchName] = useState("");
+    const [searchInput, setSearchInput] = useState("");
     const [exportDialogOpen, setExportDialogOpen] = useState(false);
+    const [moreMenuAnchor, setMoreMenuAnchor] = useState(null);
     const [exportFormat, setExportFormat] = useState("csv");
     const [visits, setVisits] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -77,9 +88,13 @@ export const SInglePatientDetails = () => {
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
     const [formTypeFilter, setFormTypeFilter] = useState("all");
-    const [formsColumnFilterOpen, setFormsColumnFilterOpen] = useState(false);
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [showDateFilters, setShowDateFilters] = useState(false);
     const formsColumnFilterRef = React.useRef(null);
     const columnFilterButtonRef = React.useRef(null);
+    const [index, setIndex] = useState(0);
+    const [filteredVisits, setFilteredVisits] = useState([]);
+    const [dateFilterAnchorEl, setDateFilterAnchorEl] = useState(null);
     const [selectedFormColumns, setSelectedFormColumns] = useState([
         "patientName",
         "patientMobile",
@@ -92,59 +107,13 @@ export const SInglePatientDetails = () => {
         "formData.remarks",
         "createdAt",
     ]);
-    const [error, setError] = useState(null)
+    const [error, setError] = useState(null);
 
     const {
         loading: patientHistoryLoading,
         request: patientHistory,
         error: patientHistoryError,
     } = useApi(commonRoutes.getSinglePatientsHistory);
-
-    const filteredVisits = useMemo(() => {
-        let filtered = [...(visits || [])];
-
-
-        // Search by doctor name or department or purpose
-        if (searchTerm.trim()) {
-            const search = searchTerm.toLowerCase();
-
-            filtered = filtered.filter((visit) =>
-                visit?.doctor?.name?.toLowerCase().includes(search) ||
-                visit?.department?.name?.toLowerCase().includes(search) ||
-                visit?.purpose?.toLowerCase().includes(search)
-            );
-        }
-
-        // Filter by date range
-        if (startDate || endDate) {
-            const start = startDate ? new Date(startDate) : null;
-            const end = endDate ? new Date(endDate) : null;
-
-            if (end) {
-                end.setHours(23, 59, 59, 999);
-            }
-
-            filtered = filtered.filter((visit) => {
-                const visitDate = new Date(visit?.createdAt);
-
-                if (start && visitDate < start) return false;
-                if (end && visitDate > end) return false;
-
-                return true;
-            });
-        }
-
-        // Filter by form type
-        if (formTypeFilter !== "all") {
-            const type = formTypeFilter.toLowerCase();
-
-            filtered = filtered.filter(
-                (visit) => visit?.formType?.toLowerCase() === type
-            );
-        }
-
-        return filtered;
-    }, [visits, searchTerm, startDate, endDate, formTypeFilter]);
 
     const toggleFormColumn = (colKey) => {
         setSelectedFormColumns((prev) =>
@@ -154,9 +123,94 @@ export const SInglePatientDetails = () => {
         );
     };
 
+    const handleOpen = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const allSelected = selectedFormColumns.length === FORMS_AVAILABLE_COLUMNS.length;
+
+    const handleSelectAll = () => {
+        if (allSelected) {
+            setSelectedFormColumns([]);
+        } else {
+            setSelectedFormColumns(FORMS_AVAILABLE_COLUMNS.map((c) => c.key));
+        }
+    };
+
     const visibleFormColumns = FORMS_AVAILABLE_COLUMNS.filter((col) =>
         selectedFormColumns.includes(col.key),
     );
+    const handleSearchApply = async () => {
+        const searchValue = searchInput.trim().toLowerCase();
+
+        setSearchName(searchInput.trim());
+
+        let filtered = [...(visits || [])];
+
+        // 1. Frontend filtering
+        if (searchValue) {
+            filtered = filtered.filter(
+                (visit) =>
+                    visit?.doctor?.name?.toLowerCase().includes(searchValue) ||
+                    visit?.department?.name?.toLowerCase().includes(searchValue) ||
+                    visit?.purpose?.toLowerCase().includes(searchValue)
+            );
+        }
+
+        // 2. Form type filter
+        if (formTypeFilter !== "all") {
+            filtered = filtered.filter(
+                (visit) =>
+                    visit?.formType?.toLowerCase() === formTypeFilter.toLowerCase()
+            );
+        }
+
+        // 3. API fallback ONLY when needed
+        const shouldCallAPI = searchValue && filtered.length === 0;
+
+        if (shouldCallAPI) {
+            console.log("Calling API...");
+
+            try {
+                const res = await patientHistory(
+                    patient?.hospitalId,
+                    patient?._id,
+                    paginatedData.patient.page,
+                    startDate,
+                    endDate,
+                    searchInput,
+                    true
+                );
+
+                console.log("API res", res);
+
+                if (res?.success) {
+                    filtered = res.data || [];
+
+                    setPagination((prev) => ({
+                        ...prev,
+                        patients: {
+                            ...res.pagination,
+                        },
+                    }));
+                }
+            } catch (error) {
+                toast.error("Error To Fetch Patient History");
+            }
+        }
+
+        setVisits(filtered);
+    };
+    const handleSearchKeyDown = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            handleSearchApply();
+        }
+    };
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (
@@ -165,32 +219,33 @@ export const SInglePatientDetails = () => {
                 columnFilterButtonRef.current &&
                 !columnFilterButtonRef.current.contains(event.target)
             ) {
-                setFormsColumnFilterOpen(false);
+                setAnchorEl(null);
             }
         };
-        if (formsColumnFilterOpen) {
+        if (anchorEl) {
             document.addEventListener("mousedown", handleClickOutside);
         }
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [formsColumnFilterOpen]);
+    }, [anchorEl]);
 
     useEffect(() => {
         const fetchHistory = async () => {
             if (!patient?.hospitalId || !patient?._id) {
-                toast.error("Hospital Id And Patient id Not Found")
-                return
+                toast.error("Hospital Id And Patient id Not Found");
+                return;
             }
-            const res = await patientHistory(patient?.hospitalId, patient?._id)
+            const res = await patientHistory(patient?.hospitalId, patient?._id);
             if (res.success) {
-                setVisits(res?.data)
+                setVisits(res?.data);
+                setFilteredVisits(res?.data)
             } else {
-                toast.error("Error To Fetch Forms")
+                toast.error("Error To Fetch Forms");
             }
-        }
-        fetchHistory()
-    }, [patient?._id, patient?.hospitalId])
+        };
+        fetchHistory();
+    }, [patient?._id, patient?.hospitalId]);
 
     // Count by form type for tabs
     const calculateCounts = () => {
@@ -247,119 +302,103 @@ export const SInglePatientDetails = () => {
     };
 
 
-    // Export helpers
-    const exportHeaders = [
-        "Patient Name",
-        "Patient Mobile No.",
-        "Purpose",
-        "Form Type",
-        "Doctor",
-        "Department",
-        "Remarks",
-        "Date",
-    ];
-
-    const exportRows = filteredVisits.map((visit) => [
-        visit.patientName || "N/A",
-        visit.patientMobile || "N/A",
-        visit?.lastVisit?.purpose || "N/A",
-        visit?.lastVisit?.formType || "N/A",
-        visit?.lastVisit?.doctor?.name || "N/A",
-        visit?.lastVisit?.department?.name || "N/A",
-        visit?.lastVisit?.remarks || "N/A",
-        formatDate(visit.createdAt) || "N/A",
-    ]);
-
-    const handleExportCSV = () => {
-        if (filteredVisits.length === 0) {
-            toast.error("No data to export");
-            return;
-        }
-        const csvContent = [exportHeaders, ...exportRows]
-            .map((row) =>
-                row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
-            )
-            .join("\n");
-        const blob = new Blob([csvContent], {
-            type: "text/csv;charset=utf-8;",
-        });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `patients_${new Date().toISOString().split("T")[0]}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        toast.success("CSV exported successfully!");
-    };
-
-    const handleExportExcel = () => {
-        if (filteredVisits.length === 0) {
-            toast.error("No data to export");
-            return;
-        }
-        const ws = XLSX.utils.aoa_to_sheet([exportHeaders, ...exportRows]);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Patients");
-        XLSX.writeFile(wb, `patients_${new Date().toISOString().split("T")[0]}.xlsx`);
-        toast.success("Excel exported successfully!");
-    };
-
-    const handleExportPDF = () => {
-        if (filteredVisits.length === 0) {
-            toast.error("No data to export");
-            return;
-        }
-
-        const doc = new jsPDF();
-
-        // Title
-        doc.setFontSize(16);
-        doc.text("Patients Report", 14, 15);
-
-        // Date
-        doc.setFontSize(10);
-        doc.text(
-            `Export Date: ${moment().format("DD/MM/YYYY hh:mm A")}`,
-            14,
-            22
-        );
-
-        // Table
-        autoTable(doc, {
-            startY: 30,
-            head: [exportHeaders],
-            body: exportRows,
-            styles: {
-                fontSize: 8,
-                cellPadding: 2,
-            },
-            headStyles: {
-                fillColor: [33, 47, 61], // dark header
-                textColor: 255,
-                fontStyle: "bold",
-            },
-            alternateRowStyles: {
-                fillColor: [245, 245, 245],
-            },
-            margin: { top: 30 },
+    const onExport = () => {
+        handleExport({
+            format: exportFormat,
+            data: filteredVisits,
+            columns: FORMS_AVAILABLE_COLUMNS,
+            fileName: `patients_${moment().format("YYYY-MM-DD")}`,
+            title: "Patients Report",
         });
 
-        // Save
-        doc.save(
-            `patients_${new Date().toISOString().split("T")[0]}.pdf`
-        );
-
-        toast.success("PDF exported successfully!");
-    };
-
-
-    const handleExport = () => {
-        if (exportFormat === "csv") handleExportCSV();
-        else if (exportFormat === "excel") handleExportExcel();
-        else if (exportFormat === "pdf") handleExportPDF();
         setExportDialogOpen(false);
+    };
+
+    const handleMoreMenuOpen = (event) => {
+        setMoreMenuAnchor(event.currentTarget);
+    };
+
+    const handleMoreMenuClose = () => {
+        setMoreMenuAnchor(null);
+    };
+
+    const handleMenuExport = () => {
+        setExportDialogOpen(true);
+        handleMoreMenuClose();
+    };
+
+    const handleCloseDateFilter = () => {
+        setDateFilterAnchorEl(null);
+    };
+    const handleMenuClearDateFilter = () => {
+        setStartDate("");
+        setEndDate("");
+        setShowDateFilters(false);
+        handleMoreMenuClose();
+    };
+
+    const handleResetDateFilter = () => {
+        setStartDate("");
+        setEndDate("");
+        setAppliedStartDate("");
+        setAppliedEndDate("");
+        setDateRangeFilter({ startDate: "", endDate: "" });
+        setPagination((prev) => ({
+            ...prev,
+            patients: {
+                ...prev.patients,
+                page: 1,
+            },
+        }));
+        handleCloseDateFilter();
+    };
+
+    const handleOpenDateFilter = (event) => {
+        console.log("event", event.currentTarget);
+
+        setDateFilterAnchorEl(event.currentTarget);
+    };
+
+    const handleMenuOpenDateFilter = (event) => {
+        handleOpenDateFilter(event);
+        handleMoreMenuClose();
+    };
+
+    const handleApplyDateFilter = async () => {
+        if (!startDate || !endDate) return;
+
+        console.log("click");
+
+        try {
+
+            const res = await patientHistory(
+                patient?.hospitalId,
+                patient?._id,
+                paginatedData.patient.page,
+                startDate,
+                endDate,
+                searchInput,
+                true
+            );
+
+            console.log("patinat fetch ", res);
+            if (res?.success) {
+                setPatients(res?.data)
+                setPagination((prev) => ({
+                    ...prev,
+                    patients: {
+                        ...res.pagination
+                    }
+                }))
+                handleCloseDateFilter();
+            }
+
+
+        } catch {
+
+            toast.error("Error To Fetch Patient")
+
+        }
     };
 
     // Handle back button
@@ -367,6 +406,7 @@ export const SInglePatientDetails = () => {
         navigate(-1);
     };
 
+    const openDateFilter = Boolean(dateFilterAnchorEl);
     return (
         <Box sx={{ p: 3, backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
             {/* Header with Back Button */}
@@ -451,64 +491,162 @@ export const SInglePatientDetails = () => {
             {/* Filter Card */}
             <Card sx={{ mb: 3, boxShadow: 2 }}>
                 <CardContent>
-                    <Grid container spacing={2} alignItems="flex-end">
+                    <Grid container spacing={2} alignItems="center">
 
                         {/* Search */}
                         <Grid item xs={12} sm={6} md={3}>
                             <TextField
                                 fullWidth
-                                label="Search by Doctor/Department/Purpose"
+                                label="Search by Name/Phone No./Purpose"
                                 variant="outlined"
                                 size="small"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                value={searchInput}
+                                onChange={(e) => setSearchInput(e.target.value)}
+                                onKeyDown={handleSearchKeyDown}
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
                                             <SearchIcon sx={{ color: "#7c8fa3" }} />
                                         </InputAdornment>
                                     ),
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <Button
+                                                size="small"
+                                                variant="contained"
+                                                onClick={handleSearchApply}
+                                                sx={{
+                                                    textTransform: "none",
+                                                    minWidth: 72,
+                                                    height: 30,
+                                                    fontSize: "0.75rem",
+                                                }}
+                                            >
+                                                Search
+                                            </Button>
+                                        </InputAdornment>
+                                    ),
                                 }}
-                                placeholder="Enter doctor name or department or purpose"
                             />
                         </Grid>
 
-                        {/* Start Date */}
-                        <Grid item xs={12} sm={6} md={2}>
-                            <TextField
+                        {/* Column Selector */}
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Box sx={{ display: "flex", alignItems: "center", height: "100%" }}>
+                                <Button
+                                    fullWidth
+                                    variant="outlined"
+                                    startIcon={<ViewColumnIcon />}
+                                    onClick={handleOpen}
+                                    sx={{ height: 40, justifyContent: "flex-start" }}
+                                >
+                                    Select fields ({selectedFormColumns.length})
+                                </Button>
+
+                                <Popover
+                                    open={Boolean(anchorEl)}
+                                    anchorEl={anchorEl}
+                                    onClose={handleClose}
+                                    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                                >
+                                    <Box sx={{ width: 260, p: 1 }}>
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox checked={allSelected} onChange={handleSelectAll} />
+                                            }
+                                            label={allSelected ? "Unselect All" : "Select All"}
+                                        />
+
+                                        <Divider />
+
+                                        <Box sx={{ maxHeight: 300, overflowY: "auto" }}>
+                                            {FORMS_AVAILABLE_COLUMNS.map((col) => (
+                                                <FormControlLabel
+                                                    key={col.key}
+                                                    control={
+                                                        <Checkbox
+                                                            checked={selectedFormColumns.includes(col.key)}
+                                                            onChange={() => toggleFormColumn(col.key)}
+                                                        />
+                                                    }
+                                                    label={col.label}
+                                                />
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                </Popover>
+                            </Box>
+                        </Grid>
+
+                        {/* Date Filter */}
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Button
                                 fullWidth
-                                label="Start Date"
-                                type="date"
                                 variant="outlined"
-                                size="small"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                InputLabelProps={{ shrink: true }}
-                            />
+                                startIcon={<FilterAltIcon />}
+                                onClick={handleOpenDateFilter}
+                                sx={{ height: 40, justifyContent: "flex-start" }}
+                            >
+                                {startDate && endDate
+                                    ? `Date: ${startDate} to ${endDate}`
+                                    : "Date Filter"}
+                            </Button>
+
+                            <Menu
+                                anchorEl={dateFilterAnchorEl}
+                                open={openDateFilter}
+                                onClose={handleCloseDateFilter}
+                            >
+                                <Box sx={{ p: 2, width: 280, display: "flex", flexDirection: "column", gap: 2 }}>
+                                    <TextField
+                                        label="Start Date"
+                                        type="date"
+                                        size="small"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                        InputLabelProps={{ shrink: true }}
+                                    />
+                                    <TextField
+                                        label="End Date"
+                                        type="date"
+                                        size="small"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        InputLabelProps={{ shrink: true }}
+                                    />
+
+                                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                                        <Button
+                                            onClick={handleResetDateFilter}
+                                            disabled={!startDate && !endDate}
+                                        >
+                                            Reset
+                                        </Button>
+                                        <Button
+                                            variant="contained"
+                                            onClick={handleApplyDateFilter}
+                                            disabled={!startDate || !endDate}
+                                        >
+                                            Apply
+                                        </Button>
+                                    </Box>
+                                </Box>
+                            </Menu>
                         </Grid>
 
-                        {/* End Date */}
-                        <Grid item xs={12} sm={6} md={2}>
-                            <TextField
+                        {/* Export */}
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Button
                                 fullWidth
-                                label="End Date"
-                                type="date"
-                                variant="outlined"
-                                size="small"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                InputLabelProps={{ shrink: true }}
-                            />
+                                variant="contained"
+                                color="warning"
+                                startIcon={<DownloadIcon />}
+                                onClick={() => setExportDialogOpen(true)}
+                                sx={{ height: 40 }}
+                            >
+                                Export
+                            </Button>
                         </Grid>
-                        <Button
-                            variant="contained"
-                            color="warning"
-                            startIcon={<DownloadIcon />}
-                            onClick={() => setExportDialogOpen(true)}
-                        >
-                            Export
-                        </Button>
-
                         <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)}>
                             <DialogTitle>Select Export Format</DialogTitle>
                             <DialogContent>
@@ -523,13 +661,12 @@ export const SInglePatientDetails = () => {
                             </DialogContent>
                             <DialogActions>
                                 <Button onClick={() => setExportDialogOpen(false)} color="secondary">Cancel</Button>
-                                <Button onClick={handleExport} color="primary" variant="contained">Download</Button>
+                                <Button onClick={onExport} color="primary" variant="contained">Download</Button>
                             </DialogActions>
                         </Dialog>
-
                     </Grid>
 
-                    {/* Active Filters Display */}
+                    {/* Active Filters */}
                     {(searchTerm || startDate || endDate) && (
                         <Box sx={{ mt: 2 }}>
                             <Typography variant="caption" sx={{ color: "#7c8fa3" }}>
@@ -830,37 +967,7 @@ export const SInglePatientDetails = () => {
 
             {/* Visits Table */}
 
-            {formsColumnFilterOpen && (
-                <div
-                    ref={formsColumnFilterRef}
-                    className="ff-column-filter-dropdown"
-                    style={{
-                        position: "absolute",
-                        zIndex: 10,
-                        top: columnFilterButtonRef.current ? columnFilterButtonRef.current.getBoundingClientRect().bottom + window.scrollY + 8 : '100%',
-                        left: columnFilterButtonRef.current ? columnFilterButtonRef.current.getBoundingClientRect().left + window.scrollX : 0,
-                        background: "#fff",
-                        border: "1px solid #ccc",
-                        borderRadius: 6,
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                        padding: 12,
-                        minWidth: 180,
-                    }}
-                >
-                    <div className="ff-column-checkboxes">
-                        {FORMS_AVAILABLE_COLUMNS.map((col) => (
-                            <label key={col.key} className="ff-column-check" style={{ display: 'block', marginBottom: 6 }}>
-                                <input
-                                    type="checkbox"
-                                    checked={selectedFormColumns.includes(col.key)}
-                                    onChange={() => toggleFormColumn(col.key)}
-                                />
-                                <span style={{ marginLeft: 8 }}>{col.label}</span>
-                            </label>
-                        ))}
-                    </div>
-                </div>
-            )}
+
         </Box>
     );
 };

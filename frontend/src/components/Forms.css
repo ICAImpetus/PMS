@@ -633,10 +633,85 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.patient-latest-visit-heading h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.patient-latest-visit-heading button {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: #ffffff;
+  background-color: #2563eb;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.patient-latest-visit-heading button:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
 }
 
 .patient-latest-visit-table {
-  overflow-y: auto;
+  overflow-x: auto;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.patient-details-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 100%;
+}
+
+.patient-details-table thead tr {
+  background-color: #f8fafc;
+}
+
+.patient-details-table th,
+.patient-details-table td {
+  text-align: left;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #475569;
+}
+
+.patient-details-table th {
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.patient-details-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.patient-details-table th {
+  background-color: #f8fafc;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.patient-details-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.patient-details-table td.no-latest-visit {
+  text-align: center;
+  color: #64748b;
+  padding: 24px 16px;
 }
 
 /* =========================================

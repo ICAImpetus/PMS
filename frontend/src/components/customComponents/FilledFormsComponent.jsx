@@ -4,6 +4,7 @@ import moment from "moment";
 import "./FilledFormsComponent.css";
 import CloseIcon from "@mui/icons-material/Close";
 import IconButton from "@mui/material/IconButton";
+import SearchIcon from "@mui/icons-material/Search";
 import IosShareOutlinedIcon from '@mui/icons-material/IosShareOutlined';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -31,6 +32,8 @@ import {
   Typography,
   Paper,
   Alert,
+  Grid,
+  InputAdornment,
 } from "@mui/material";
 import { useApi } from "../../api/useApi";
 import { commonRoutes } from "../../api/apiService";
@@ -138,7 +141,11 @@ const FilledFormsComponent = ({
   const [csvParseError, setCSVParseError] = useState(null);
   const [csvActionResult, setCSVActionResult] = useState("");
   const [moreMenuAnchor, setMoreMenuAnchor] = useState(null);
+  const [dateFilterOpen, setDateFilterOpen] = useState(false);
+  const [dateFilterFrom, setDateFilterFrom] = useState("");
+  const [dateFilterTo, setDateFilterTo] = useState("");
   const [index, setIndex] = useState(0);
+  const [searchInput, setSearchInput] = useState("");
   const [selectedFormColumns, setSelectedFormColumns] = useState([
     "agentName",
     "callStatus",
@@ -287,6 +294,70 @@ const FilledFormsComponent = ({
     });
   };
 
+  const handleSearchApply = async () => {
+    const searchValue = searchInput.trim().toLowerCase();
+
+    setSearchName(searchInput.trim());
+
+    if (!searchValue) return;
+
+    let filtered = [...patients];
+
+    // Search in existing frontend data
+    filtered = filtered.filter(
+      (patient) =>
+        patient.patientName?.toLowerCase().includes(searchValue) ||
+        patient.lastVisit?.purpose?.toLowerCase().includes(searchValue) ||
+        patient.patientMobile?.toString().includes(searchValue)
+    );
+
+    // Form type filter
+    if (formTypeFilter !== "all") {
+      filtered = filtered.filter(
+        (patient) =>
+          patient?.lastVisit?.formType?.toLowerCase() ===
+          formTypeFilter.toLowerCase()
+      );
+    }
+
+    // If no data found locally, call API
+    if (filtered.length === 0) {
+      try {
+        const res = await getPatients(
+          null,
+          pagination?.patients?.page,
+          null,
+          selectedHostpital,
+          startDate,
+          endDate,
+          searchInput,
+          true
+        );
+
+        if (res?.success) {
+          filtered = res.data || [];
+
+          setPagination((prev) => ({
+            ...prev,
+            patients: {
+              ...res.pagination,
+            },
+          }));
+        }
+      } catch (error) {
+        toast.error("Error To Fetch Patient");
+      }
+    }
+
+    setFilteredPatients(filtered);
+  };
+  const handleSearchKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSearchApply();
+    }
+  };
+
   const startCSVValidation = async (file) => {
     resetCSVState();
     setCSVStatus("processing");
@@ -374,6 +445,44 @@ const FilledFormsComponent = ({
     setMoreMenuAnchor(null);
   };
 
+  const handleToggleDateFilter = () => {
+    setDateFilterOpen((prev) => !prev);
+    setMoreMenuAnchor(null);
+  };
+
+  const handleApplyDateFilter = async () => {
+    // if (!startDate || !endDate) return;
+
+    // try {
+
+    //   const res = await getPatients(null, pagination?.patient?.page, null, selectedHostpital, startDate, endDate, true)
+    //   console.log("patinat fetch ", res);
+    //   if (res?.success) {
+    //     setPatients(res?.data)
+    //     setPagination((prev) => ({
+    //       ...prev,
+    //       patients: {
+    //         ...res.pagination
+    //       }
+    //     }))
+    //     handleCloseDateFilter();
+    //   }
+
+
+    // } catch {
+
+    //   toast.error("Error To Fetch Patient")
+
+    // }
+  };
+
+  const handleClearDateFilter = () => {
+    setDateFilterFrom("");
+    setDateFilterTo("");
+    setDateFilterOpen(false);
+    setMoreMenuAnchor(null);
+  };
+
   const handleCSVDialogClose = (event, reason) => {
     if (csvStatus === "processing") return;
     if (reason === "escapeKeyDown") return;
@@ -423,6 +532,20 @@ const FilledFormsComponent = ({
           .some((field) =>
             field.toString().toLowerCase().includes(term)
           )
+      );
+    }
+
+    if (dateFilterFrom) {
+      const fromDate = moment(dateFilterFrom, "YYYY-MM-DD").startOf("day");
+      data = data.filter((r) =>
+        moment(r.createdAt, "DD MMM YYYY, hh:mm A").isSameOrAfter(fromDate),
+      );
+    }
+
+    if (dateFilterTo) {
+      const toDate = moment(dateFilterTo, "YYYY-MM-DD").endOf("day");
+      data = data.filter((r) =>
+        moment(r.createdAt, "DD MMM YYYY, hh:mm A").isSameOrBefore(toDate),
       );
     }
 
@@ -609,18 +732,43 @@ const FilledFormsComponent = ({
               ref={formsColumnFilterRef}
               style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: 0 }}
             >
-              <TextField
-                placeholder={searchOptions[index]}
-                value={searchTerm}
-                size="small"
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{
-                  "& .MuiInputBase-root": {
-                    height: 36, // Match button height
-                    fontSize: "0.85rem",
-                  },
-                }}
-              />
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  fullWidth
+                  label="Search by Name/Phone No./Purpose"
+                  variant="outlined"
+                  size="small"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={handleSearchKeyDown}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon sx={{ color: "#7c8fa3" }} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Button
+                          size="small"
+                          variant="contained"
+                          color="primary"
+                          onClick={handleSearchApply}
+                          sx={{
+                            textTransform: "none",
+                            minWidth: 72,
+                            height: 32,
+                            fontSize: "0.8rem",
+                          }}
+                        >
+                          Search
+                        </Button>
+                      </InputAdornment>
+                    ),
+                  }}
+                  placeholder="Enter Patient Name,PhoneNo or Purpose"
+                />
+              </Grid>
               <button
                 type="button"
                 className="executive-btn-columns"
@@ -704,6 +852,62 @@ const FilledFormsComponent = ({
                   </div>
                 </div>
               )}
+
+              {dateFilterOpen && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    flexWrap: "wrap",
+                    p: 1,
+                    border: "1px solid #e0e0e0",
+                    borderRadius: 2,
+                    backgroundColor: "#fff",
+                    boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
+                    width: "100%",
+                  }}
+                >
+                  <TextField
+                    label="From"
+                    type="date"
+                    size="small"
+                    value={dateFilterFrom}
+                    onChange={(e) => setDateFilterFrom(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ width: 170 }}
+                  />
+
+                  <TextField
+                    label="To"
+                    type="date"
+                    size="small"
+                    value={dateFilterTo}
+                    onChange={(e) => setDateFilterTo(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ width: 170 }}
+                  />
+
+                  {/* APPLY BUTTON */}
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    onClick={handleApplyDateFilter}
+                  >
+                    Apply
+                  </Button>
+
+                  {/* CLEAR BUTTON */}
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={handleClearDateFilter}
+                  >
+                    Clear
+                  </Button>
+                </Box>
+              )}
             </div>
             <IconButton
               className="ff-btn export"
@@ -732,12 +936,15 @@ const FilledFormsComponent = ({
               open={Boolean(moreMenuAnchor)}
               onClose={handleMoreMenuClose}
             >
-              <MenuItem onClick={downloadTemplate}>
-                Download Template
+              <MenuItem onClick={handleToggleDateFilter}>
+                Date Filter
               </MenuItem>
-              <MenuItem onClick={handleBrowseCSV}>
-                Upload CSV File
-              </MenuItem>
+              {/* <MenuItem
+                onClick={handleClearDateFilter}
+                disabled={!dateFilterFrom && !dateFilterTo}
+              >
+                Clear Date Filter
+              </MenuItem> */}
               <MenuItem
                 onClick={exportFormsToSheet}
                 disabled={
@@ -747,6 +954,12 @@ const FilledFormsComponent = ({
               >
                 {getFilledFormsLoading ? <CircularProgress size={22} /> : "Export"}
               </MenuItem>
+              <MenuItem onClick={downloadTemplate}>
+                Download Template
+              </MenuItem>
+              {/* <MenuItem onClick={handleBrowseCSV}>
+                Upload CSV File
+              </MenuItem> */}
             </Menu>
             <input
               ref={csvFileInputRef}

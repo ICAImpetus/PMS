@@ -47,10 +47,10 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { UserContextHook } from "../../../contexts/UserContexts";
 import HospitalContext from "../../../contexts/HospitalContexts";
-import { FORMS_AVAILABLE_COLUMNS, getNestedValue, exportHeaders } from "./PatientHistory";
 import moment from "moment";
 import { useApi } from "../../../api/useApi";
 import { commonRoutes } from "../../../api/apiService";
+import { handleExport, getNestedValue, FORMS_AVAILABLE_COLUMNS, statusStyles } from "../../../utils/exportUtils";
 
 // Format date
 const formatDate = (dateString) => {
@@ -69,14 +69,18 @@ const formatDate = (dateString) => {
 
 export const PatientHistory = () => {
     const [page, setPage] = useState(0);
+
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [searchName, setSearchName] = useState("");
+    const [searchInput, setSearchInput] = useState("");
+    const [moreMenuAnchor, setMoreMenuAnchor] = useState(null);
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
     const [error, setError] = useState(null);
     const [appliedStartDate, setAppliedStartDate] = useState("");
     const [appliedEndDate, setAppliedEndDate] = useState("");
     const [dateFilterAnchorEl, setDateFilterAnchorEl] = useState(null);
+    const [filteredPatients, setFilteredPatients] = useState([])
     const [formTypeFilter, setFormTypeFilter] = useState("all");
     const [exportFormat, setExportFormat] = useState("csv");
     const [exportDialogOpen, setExportDialogOpen] = useState(false);
@@ -115,6 +119,11 @@ export const PatientHistory = () => {
     );
     const openDateFilter = Boolean(dateFilterAnchorEl);
 
+
+    useEffect(() => {
+        setFilteredPatients(patients)
+    }, [patients])
+
     const toggleFormColumn = (colKey) => {
         setSelectedFormColumns((prev) =>
             prev.includes(colKey)
@@ -129,6 +138,69 @@ export const PatientHistory = () => {
         setDateFilterAnchorEl(event.currentTarget);
     };
 
+    const handleSearchKeyDown = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            handleSearchApply();
+        }
+    };
+    const handleSearchApply = async () => {
+        const searchValue = searchInput.trim().toLowerCase();
+
+        setSearchName(searchInput.trim());
+
+        if (!searchValue) return;
+
+        let filtered = [...patients];
+
+        // Search in existing frontend data
+        filtered = filtered.filter(
+            (patient) =>
+                patient.patientName?.toLowerCase().includes(searchValue) ||
+                patient.lastVisit?.purpose?.toLowerCase().includes(searchValue) ||
+                patient.patientMobile?.toString().includes(searchValue)
+        );
+
+        // Form type filter
+        if (formTypeFilter !== "all") {
+            filtered = filtered.filter(
+                (patient) =>
+                    patient?.lastVisit?.formType?.toLowerCase() ===
+                    formTypeFilter.toLowerCase()
+            );
+        }
+
+        // If no data found locally, call API
+        if (filtered.length === 0) {
+            try {
+                const res = await getPatients(
+                    null,
+                    pagination?.patients?.page,
+                    null,
+                    selectedHostpital,
+                    startDate,
+                    endDate,
+                    searchInput,
+                    true
+                );
+
+                if (res?.success) {
+                    filtered = res.data || [];
+
+                    setPagination((prev) => ({
+                        ...prev,
+                        patients: {
+                            ...res.pagination,
+                        },
+                    }));
+                }
+            } catch (error) {
+                toast.error("Error To Fetch Patient");
+            }
+        }
+
+        setFilteredPatients(filtered);
+    };
     const handleCloseDateFilter = () => {
         setDateFilterAnchorEl(null);
     };
@@ -195,157 +267,18 @@ export const PatientHistory = () => {
         };
     }, [formsColumnFilterOpen]);
 
-    const filteredPatients = useMemo(() => {
-        let filtered = [...patients];
 
-        // Search by patient name
-        if (searchName.trim()) {
-            filtered = filtered.filter((patient) =>
-                patient.patientName
-                    ?.toLowerCase()
-                    .includes(searchName.toLowerCase())
-            );
-        }
-
-        // Filter by date range
-        if (startDate || endDate) {
-            filtered = filtered.filter((patient) => {
-                const patientDate = new Date(patient.createdAt);
-                const start = startDate ? new Date(startDate) : null;
-                const end = endDate ? new Date(endDate) : null;
-
-                if (start && patientDate < start) return false;
-
-                if (end) {
-                    end.setHours(23, 59, 59, 999);
-                    if (patientDate > end) return false;
-                }
-
-                return true;
-            });
-        }
-
-        // Filter by form type
-        if (formTypeFilter !== "all") {
-            filtered = filtered.filter(
-                (patient) =>
-                    patient?.lastVisit?.formType?.toLowerCase() ===
-                    formTypeFilter.toLowerCase()
-            );
-        }
-
-        return filtered;
-    }, [patients, searchName, startDate, endDate, formTypeFilter]);
-
-
-
-
-
-    const exportRows = filteredPatients.map((patient) => [
-        patient.patientName || "N/A",
-        patient.patientMobile || "N/A",
-        patient?.lastVisit?.purpose || "N/A",
-        patient?.lastVisit?.formType || "N/A",
-        patient?.lastVisit?.doctor?.name || "N/A",
-        patient?.lastVisit?.department?.name || "N/A",
-        patient?.lastVisit?.remarks || "N/A",
-        formatDate(patient.createdAt) || "N/A",
-    ]);
-
-    const handleExportCSV = () => {
-        if (filteredPatients.length === 0) {
-            toast.error("No data to export");
-            return;
-        }
-        const csvContent = [exportHeaders, ...exportRows]
-            .map((row) =>
-                row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
-            )
-            .join("\n");
-        const blob = new Blob([csvContent], {
-            type: "text/csv;charset=utf-8;",
-        });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `patients_${new Date().toISOString().split("T")[0]}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        toast.success("CSV exported successfully!");
-    };
-
-    const handleExportExcel = () => {
-        if (filteredPatients.length === 0) {
-            toast.error("No data to export");
-            return;
-        }
-        const ws = XLSX.utils.aoa_to_sheet([exportHeaders, ...exportRows]);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Patients");
-        XLSX.writeFile(wb, `patients_${new Date().toISOString().split("T")[0]}.xlsx`);
-        toast.success("Excel exported successfully!");
-    };
-
-    const handleExportPDF = () => {
-        if (filteredPatients.length === 0) {
-            toast.error("No data to export");
-            return;
-        }
-
-        const doc = new jsPDF();
-
-        // Title
-        doc.setFontSize(16);
-        doc.text("Patients Report", 14, 15);
-
-        // Date
-        doc.setFontSize(10);
-        doc.text(
-            `Export Date: ${moment().format("DD/MM/YYYY hh:mm A")}`,
-            14,
-            22
-        );
-
-        // Table
-        autoTable(doc, {
-            startY: 30,
-            head: [exportHeaders],
-            body: exportRows,
-            styles: {
-                fontSize: 8,
-                cellPadding: 2,
-            },
-            headStyles: {
-                fillColor: [33, 47, 61], // dark header
-                textColor: 255,
-                fontStyle: "bold",
-            },
-            alternateRowStyles: {
-                fillColor: [245, 245, 245],
-            },
-            margin: { top: 30 },
+    const onExport = () => {
+        handleExport({
+            format: exportFormat,
+            data: filteredPatients,
+            columns: FORMS_AVAILABLE_COLUMNS,
+            fileName: `patients_${moment().format("YYYY-MM-DD")}`,
+            title: "Patients Report",
         });
 
-        // Save
-        doc.save(
-            `patients_${new Date().toISOString().split("T")[0]}.pdf`
-        );
-
-        toast.success("PDF exported successfully!");
-    };
-
-
-    const handleExport = () => {
-        if (exportFormat === "csv") handleExportCSV();
-        else if (exportFormat === "excel") handleExportExcel();
-        else if (exportFormat === "pdf") handleExportPDF();
         setExportDialogOpen(false);
     };
-
-
-
     // Handle form type tab change
     const handleFormTypeChange = (event, newValue) => {
         setFormTypeFilter(newValue);
@@ -466,22 +399,40 @@ export const PatientHistory = () => {
                         <Grid item xs={12} sm={6} md={3}>
                             <TextField
                                 fullWidth
-                                label="Search by Name"
+                                label="Search by Name/Phone No./Purpose"
                                 variant="outlined"
                                 size="small"
-                                value={searchName}
-                                onChange={(e) => setSearchName(e.target.value)}
+                                value={searchInput}
+                                onChange={(e) => setSearchInput(e.target.value)}
+                                onKeyDown={handleSearchKeyDown}
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
                                             <SearchIcon sx={{ color: "#7c8fa3" }} />
                                         </InputAdornment>
                                     ),
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <Button
+                                                size="small"
+                                                variant="contained"
+                                                color="primary"
+                                                onClick={handleSearchApply}
+                                                sx={{
+                                                    textTransform: "none",
+                                                    minWidth: 72,
+                                                    height: 32,
+                                                    fontSize: "0.8rem",
+                                                }}
+                                            >
+                                                Search
+                                            </Button>
+                                        </InputAdornment>
+                                    ),
                                 }}
-                                placeholder="Enter patient name"
+                                placeholder="Enter Patient Name,PhoneNo or Purpose"
                             />
                         </Grid>
-
                         <Grid item xs={12} sm={6} md={3}>
                             <Button
                                 fullWidth
@@ -542,36 +493,178 @@ export const PatientHistory = () => {
                                 </Box>
                             </Menu>
                         </Grid>
+                        <Grid
+                            item
+                            xs={12}
+                            sm={6}
+                            md={4}
+                            sx={{
 
-                        {/* Clear Filters Button */}
-                        {/* <Grid item xs={12} sm={6} md={2}>
+                                display: 'flex',
+                                gap: '5px',
+                                fontSize: "12px",
+                                textTransform: "none", // keeps "View More" normal
+                                minWidth: "auto",      // removes default large width
+                                px: 1.5,               // horizontal padding
+                                py: 0.5,               // vertical padding
+                            }}
+                        >
                             <Button
-                                fullWidth
+                                variant="outlined"
+                                color="primary"
+                                disabled={loading?.patients}
+                                startIcon={<RefreshIcon />}
+                                onClick={refetchPatients}
+
+                            >
+                                {loading?.patients ? <CircularProgress size={24} /> : "Refresh"}
+                            </Button>
+
+
+                            {/* <div
+                                    ref={columnFilterButtonRef}
+                                    style={{ position: "relative", display: "inline-block" }}
+                                >
+                                              <Button
+                                    variant="outlined"
+                                    color="secondary"
+                                    ref={columnFilterButtonRef}
+                                    onClick={() => setFormsColumnFilterOpen((prev) => !prev)}
+
+                                >
+                                    <i className="fas fa-columns"></i> Select Fields (
+                                    {selectedFormColumns.length})
+
+
+                                </Button>
+
+                                    {formsColumnFilterOpen && (
+                                        <div
+                                            ref={formsColumnFilterRef}
+                                            className="ff-column-filter-dropdown"
+                                            style={{
+                                                position: "absolute",
+                                                zIndex: 10,
+                                                top: "calc(100% + 8px)",
+                                                right: 0,
+                                                background: "#fff",
+                                                border: "1px solid #ccc",
+                                                borderRadius: 6,
+                                                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                                                padding: 12,
+                                                minWidth: 180,
+                                            }}
+                                        >
+                                            <div className="ff-column-checkboxes">
+                                                {FORMS_AVAILABLE_COLUMNS.map((col) => (
+                                                    <label
+                                                        key={col.key}
+                                                        className="ff-column-check"
+                                                        style={{
+                                                            display: "block",
+                                                            marginBottom: 6,
+                                                        }}
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedFormColumns.includes(col.key)}
+                                                            onChange={() => toggleFormColumn(col.key)}
+                                                        />
+
+                                                        <span style={{ marginLeft: 8 }}>
+                                                            {col.label}
+                                                        </span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}const searchOptions = [
+  "Search Patient...",
+  "Search Agent...",
+  "Search POC...",
+  "Search Remarks...",
+];
+
+                                </div> */}
+                            <Button
+                                variant="contained"
+                                color="warning"
+                                startIcon={<DownloadIcon />}
+                                onClick={() => setExportDialogOpen(true)}
+                            >
+                                Export
+                            </Button>
+                            {/* <IconButton
+                                onClick={handleMoreMenuOpen}
+                                sx={{
+                                    borderRadius: 2,
+                                    border: "1px solid rgba(0,0,0,0.08)",
+                                    color: "#212f3d",
+                                    ml: 1,
+                                }}
+                            >
+                                <MoreVertIcon />
+                            </IconButton> */}
+                            <Menu
+                                anchorEl={moreMenuAnchor}
+                                open={Boolean(moreMenuAnchor)}
+                                onClose={handleMoreMenuClose}
+                            >
+                                <MenuItem onClick={handleMenuOpenDateFilter}>
+                                    Date Filter
+                                </MenuItem>
+                                {/* <MenuItem
+                                    onClick={handleMenuClearDateFilter}
+                                    disabled={!startDate && !endDate}
+                                >
+                                    Clear Date Filter
+                                </MenuItem> */}
+                                <MenuItem onClick={handleMenuExport}>
+                                    Export
+                                </MenuItem>
+                            </Menu>
+
+                            <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)}>
+                                <DialogTitle>Select Export Format</DialogTitle>
+                                <DialogContent>
+                                    <RadioGroup
+                                        value={exportFormat}
+                                        onChange={e => setExportFormat(e.target.value)}
+                                    >
+                                        <FormControlLabel value="csv" control={<Radio />} label="CSV (.csv)" />
+                                        <FormControlLabel value="excel" control={<Radio />} label="Excel (.xlsx)" />
+                                        <FormControlLabel value="pdf" control={<Radio />} label="PDF (.pdf)" />
+                                    </RadioGroup>
+                                </DialogContent>
+                                <DialogActions>
+                                    <Button onClick={() => setExportDialogOpen(false)} color="secondary">Cancel</Button>
+                                    <Button onClick={onExport} color="primary" variant="contained">Download</Button>
+                                </DialogActions>
+                            </Dialog>
+                        </Grid>
+                    </Grid>
+
+                    {/* Active Filters Display and Clear Button (right) */}
+                    {(searchName || appliedStartDate || appliedEndDate) && (
+                        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="caption" sx={{ color: "#7c8fa3" }}>
+                                Showing {filteredPatients.length} of {patients.length} patient(s)
+                                {appliedStartDate && appliedEndDate && (
+                                    <>&nbsp;| Date: {appliedStartDate} to {appliedEndDate}</>
+                                )}
+                            </Typography>
+                            <Button
                                 variant="outlined"
                                 color="secondary"
-                                startIcon={<ClearIcon />}
                                 onClick={handleClearFilters}
+                                sx={{ ml: 2 }}
                             >
                                 Clear
                             </Button>
-                        </Grid> */}
-
-                        {/* Refresh Button */}
-
-
-                    </Grid>
-
-                    {/* Active Filters Display */}
-                    {(searchName || startDate || endDate) && (
-                        <Box sx={{ mt: 2 }}>
-                            <Typography variant="caption" sx={{ color: "#7c8fa3" }}>
-                                Showing {filteredPatients.length} of {patients.length} patient(s)
-                            </Typography>
                         </Box>
                     )}
                 </CardContent>
             </Card>
-
             {/* Error Alert */}
             {error && (
                 <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
@@ -762,7 +855,7 @@ export const PatientHistory = () => {
                                     </DialogContent>
                                     <DialogActions>
                                         <Button onClick={() => setExportDialogOpen(false)} color="secondary">Cancel</Button>
-                                        <Button onClick={handleExport} color="primary" variant="contained">Download</Button>
+                                        <Button onClick={onExport} color="primary" variant="contained">Download</Button>
                                     </DialogActions>
                                 </Dialog>
                             </Grid>
