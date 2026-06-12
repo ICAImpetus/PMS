@@ -6676,49 +6676,45 @@ export const superAdminDashboardService = async (
         {
           $facet: {
 
+            // ---------------- INBOUND COUNT ----------------
             inboundCount: [
-              { $match: { formType: "inbound" } },
-              { $count: "count" },
-            ],
-            outboundCount: [
-              { $match: { formType: "outbound" } },
+              { $match: { formType: { $regex: "^inbound$", $options: "i" } } },
               { $count: "count" },
             ],
 
-            appointmentForms: [
-              { $match: { purpose: { $regex: "^appointment$", $options: "i" }, callStatus: { $regex: "^connected$", $options: "i" } } },
-              { $group: { _id: "$formType", count: { $sum: 1 } } },
+            // ---------------- OUTBOUND COUNT ----------------
+            outboundCount: [
+              { $match: { formType: { $regex: "^outbound$", $options: "i" } } },
+              { $count: "count" },
             ],
-            // TOP INBOUND PURPOSE
+
+            // ---------------- APPOINTMENT FORMS ----------------
+            appointmentForms: [
+              {
+                $match: {
+                  purpose: { $regex: "^appointment$", $options: "i" },
+                  callStatus: { $regex: "^connected$", $options: "i" },
+                },
+              },
+              { $count: "count" },
+            ],
+
+            // ---------------- TOP INBOUND PURPOSE ----------------
             topInboundPurpose: [
               {
                 $match: {
                   formType: "inbound",
-                  purpose: {
-                    $nin: ["", null],
-                  },
+                  purpose: { $nin: ["", null] },
                 },
               },
-
               {
                 $group: {
                   _id: "$purpose",
-                  count: {
-                    $sum: 1,
-                  },
+                  count: { $sum: 1 },
                 },
               },
-
-              {
-                $sort: {
-                  count: -1,
-                },
-              },
-
-              {
-                $limit: 5,
-              },
-
+              { $sort: { count: -1 } },
+              { $limit: 5 },
               {
                 $project: {
                   _id: 0,
@@ -6728,36 +6724,22 @@ export const superAdminDashboardService = async (
               },
             ],
 
-            // TOP OUTBOUND PURPOSE
+            // ---------------- TOP OUTBOUND PURPOSE ----------------
             topOutboundPurpose: [
               {
                 $match: {
                   formType: "outbound",
-                  purpose: {
-                    $nin: ["", null],
-                  },
+                  purpose: { $nin: ["", null] },
                 },
               },
-
               {
                 $group: {
                   _id: "$purpose",
-                  count: {
-                    $sum: 1,
-                  },
+                  count: { $sum: 1 },
                 },
               },
-
-              {
-                $sort: {
-                  count: -1,
-                },
-              },
-
-              {
-                $limit: 5,
-              },
-
+              { $sort: { count: -1 } },
+              { $limit: 5 },
               {
                 $project: {
                   _id: 0,
@@ -6767,50 +6749,59 @@ export const superAdminDashboardService = async (
               },
             ],
 
-            // TOP AGENTS (OPTIMIZED)
+            // ---------------- TEAM OVERVIEW ----------------
             teamOverview: [
-              // ignore empty agents
               {
                 $match: {
                   agentId: { $ne: null },
                 },
               },
-
-              // group directly
               {
                 $group: {
                   _id: "$agentId",
+                  agentName: { $first: "$agentName" },
 
-                  agentName: {
-                    $first: "$agentName",
+                  totalCalls: { $sum: 1 },
+
+                  inbound: {
+                    $sum: {
+                      $cond: [{ $eq: ["$formType", "inbound"] }, 1, 0],
+                    },
                   },
 
-                  totalCalls: {
-                    $sum: 1,
-                  }
+                  outbound: {
+                    $sum: {
+                      $cond: [{ $eq: ["$formType", "outbound"] }, 1, 0],
+                    },
+                  },
+
+                  appointments: {
+                    $sum: {
+                      $cond: [
+                        {
+                          $and: [
+                            {
+                              $regexMatch: {
+                                input: "$purpose",
+                                regex: /^appointment$/i,
+                              },
+                            },
+                          ],
+                        },
+                        1,
+                        0,
+                      ],
+                    },
+                  },
                 },
               },
-
-              // sorting
-              {
-                $sort: {
-                  totalCalls: -1,
-                },
-              },
-
-              // top 10
-              {
-                $limit: 10,
-              },
-
-              // final response
+              { $sort: { totalCalls: -1 } },
+              { $limit: 10 },
               {
                 $project: {
                   _id: 0,
-
                   agentId: "$_id",
                   agentName: 1,
-
                   totalCalls: 1,
                   inbound: 1,
                   outbound: 1,
@@ -6819,7 +6810,7 @@ export const superAdminDashboardService = async (
               },
             ],
 
-            // CALL CATEGORIZATION
+            // ---------------- CALL CATEGORIZATION ----------------
             callCategorization: [
               {
                 $group: {
@@ -6835,7 +6826,12 @@ export const superAdminDashboardService = async (
                   appointment: {
                     $sum: {
                       $cond: [
-                        { $eq: ["$purpose", "Appointment"] },
+                        {
+                          $regexMatch: {
+                            input: "$purpose",
+                            regex: /^appointment$/i,
+                          },
+                        },
                         1,
                         0,
                       ],
@@ -6843,7 +6839,6 @@ export const superAdminDashboardService = async (
                   },
                 },
               },
-
               {
                 $project: {
                   _id: 0,
@@ -6853,7 +6848,7 @@ export const superAdminDashboardService = async (
               },
             ],
           },
-        },
+        }
       ]).allowDiskUse(true),
 
       // UNIQUE PATIENT MONTH-WISE
@@ -6980,8 +6975,8 @@ export const superAdminDashboardService = async (
         totalUsers,
         totalBranches,
         forms: {
-          inbound: analytics?.inbound,
-          outbound: analytics?.outbound
+          inbound: analytics?.inboundCount,
+          outbound: analytics?.outboundCount
 
         },
         appointmentForms: analytics?.appointmentForms,
