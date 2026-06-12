@@ -531,22 +531,22 @@ const SuperAdminDashboard = () => {
             }
 
             } />
-            <UsersCard label="Appointments" count={metrics?.appointments?.total} onClick={() => {
+            <UsersCard label="Appointments" count={analytics?.appointments?.total} onClick={() => {
               setFormsTypeFilter("all");
               setFormsModalOpen("Appointments");
             }} option={
               {
-                "inbound": metrics?.appointments?.inbound,
-                "outbound": metrics?.appointments?.outbound
+                "inbound": analytics?.appointments?.inbound,
+                "outbound": analytics?.appointments?.outbound
               }
             } />
             <UsersCard label="Forms" onClick={() => {
               setFormsTypeFilter("all");
               setFormsModalOpen("Forms");
-            }} count={metrics?.totalForms?.total} option={
+            }} count={analytics?.forms.total} option={
               {
-                "inbound": metrics?.totalForms?.inbound,
-                "outbound": metrics?.totalForms?.outbound
+                "inbound": analytics?.forms.inbound,
+                "outbound": analytics?.forms.outbound
               }
             } />
 
