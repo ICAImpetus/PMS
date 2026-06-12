@@ -6310,14 +6310,38 @@ export const superManagerDashboardService = async (conn, branchId) => {
         {
           $facet: {
 
-            totalForms: [
-              { $count: "total" }
+            // ---------------- INBOUND COUNT ----------------
+            inboundCount: [
+              { $match: { formType: { $regex: "^inbound$", $options: "i" } } },
+              { $count: "count" },
             ],
 
-            //  Appointment Total Count (fastest)
-            appointmentForms: [
-              { $match: { purpose: "Appointment" } },
-              { $count: "total" }
+            // ---------------- OUTBOUND COUNT ----------------
+            outboundCount: [
+              { $match: { formType: { $regex: "^outbound$", $options: "i" } } },
+              { $count: "count" },
+            ],
+
+            // ---------------- APPOINTMENT FORMS ----------------
+            appointmentFormsIn: [ // Fixed: Now matches inbound
+              {
+                $match: {
+                  purpose: { $regex: "^appointment$", $options: "i" },
+                  // callStatus: { $regex: "^connected$", $options: "i" },
+                  formType: { $regex: "^inbound$", $options: "i" }
+                },
+              },
+              { $count: "count" },
+            ],
+            appointmentFormsOut: [ // Fixed: Now matches outbound
+              {
+                $match: {
+                  purpose: { $regex: "^appointment$", $options: "i" },
+                  // callStatus: { $regex: "^connected$", $options: "i" },
+                  formType: { $regex: "^outbound$", $options: "i" }
+                },
+              },
+              { $count: "count" },
             ],
             topInboundPurpose: [
               { $match: { formType: "inbound", purpose: { $ne: "" } } },
@@ -6539,6 +6563,11 @@ export const superManagerDashboardService = async (conn, branchId) => {
       );
     });
 
+    const totalInbound = raw?.inboundCount?.[0]?.count || 0;
+    const totalOutbound = raw?.outboundCount?.[0]?.count || 0;
+
+    const apptInbound = raw?.appointmentFormsIn?.[0]?.count || 0;
+    const apptOutbound = raw?.appointmentFormsOut?.[0]?.count || 0;
 
     return {
       analytics: {
@@ -6689,16 +6718,26 @@ export const superAdminDashboardService = async (
             ],
 
             // ---------------- APPOINTMENT FORMS ----------------
-            appointmentForms: [
+            appointmentFormsIn: [ // Fixed: Now matches inbound
               {
                 $match: {
                   purpose: { $regex: "^appointment$", $options: "i" },
-                  callStatus: { $regex: "^connected$", $options: "i" },
+                  // callStatus: { $regex: "^connected$", $options: "i" },
+                  formType: { $regex: "^inbound$", $options: "i" }
                 },
               },
               { $count: "count" },
             ],
-
+            appointmentFormsOut: [ // Fixed: Now matches outbound
+              {
+                $match: {
+                  purpose: { $regex: "^appointment$", $options: "i" },
+                  // callStatus: { $regex: "^connected$", $options: "i" },
+                  formType: { $regex: "^outbound$", $options: "i" }
+                },
+              },
+              { $count: "count" },
+            ],
             // ---------------- TOP INBOUND PURPOSE ----------------
             topInboundPurpose: [
               {
@@ -6970,16 +7009,25 @@ export const superAdminDashboardService = async (
     //   count: item.oldPatient,
     // });
 
+    const totalInbound = analytics?.inboundCount?.[0]?.count || 0;
+    const totalOutbound = analytics?.outboundCount?.[0]?.count || 0;
+
+    const apptInbound = analytics?.appointmentFormsIn?.[0]?.count || 0;
+    const apptOutbound = analytics?.appointmentFormsOut?.[0]?.count || 0;
     return {
       analytics: {
         totalUsers,
         totalBranches,
         forms: {
-          inbound: analytics?.inboundCount,
-          outbound: analytics?.outboundCount
-
+          total: totalInbound + totalOutbound,
+          inbound: totalInbound,
+          outbound: totalOutbound
         },
-        appointmentForms: analytics?.appointmentForms,
+        appointments: {
+          total: apptInbound + apptOutbound, // Fixed: Adding appointment specific data
+          inbound: apptInbound,             // Fixed: Mapping to correct key
+          outbound: apptOutbound            // Fixed: Mapping to correct key
+        },
         topInboundPurpose:
           analytics.topInboundPurpose || [],
 
