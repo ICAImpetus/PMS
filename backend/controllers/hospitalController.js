@@ -6293,7 +6293,7 @@ export const superManagerDashboardService = async (conn, branchId) => {
 
 
 
-    const notAre = ["superadmin", "admin", "supermanager"];
+    const notAre = ["superadmin", "admin", "supermanager", "doctor"];
     const branchObjectId = new mongoose.Types.ObjectId(branchId);
     const [totalDoctors, totalDepartment, totalUsers, aggResult] = await Promise.all([
       DoctorModel.countDocuments({ branch: branchId }),
@@ -6565,17 +6565,22 @@ export const superManagerDashboardService = async (conn, branchId) => {
 
     const totalInbound = raw?.inboundCount?.[0]?.count || 0;
     const totalOutbound = raw?.outboundCount?.[0]?.count || 0;
+    const totalForms = totalInbound + totalOutbound || 0;
+
+    // console.log("totalInbound", totalInbound)
+    // console.log("totalOutbound", totalOutbound)
 
     const apptInbound = raw?.appointmentFormsIn?.[0]?.count || 0;
     const apptOutbound = raw?.appointmentFormsOut?.[0]?.count || 0;
+    const appointmentForms = apptInbound + apptOutbound || 0;
 
     return {
       analytics: {
         totalUsers,
         totalDoctors,
         totalDepartment,
-        totalForms: raw?.totalForms[0] || 0,
-        appointmentForms: raw?.appointmentForms[0] || 0,
+        totalForms: totalForms || 0,
+        appointmentForms: appointmentForms || 0,
         topInboundPurpose: raw.topInboundPurpose || [],
         topOutboundPurpose: raw.topOutboundPurpose,
         topReference: raw.topReference || [],
@@ -6636,12 +6641,15 @@ export const superAdminDashboardService = async (
 
       ...(role === "admin" || role === "superadmin"
         ? {
-          type: { $nin: ["superadmin", "admin"] }
+          type: { $nin: ["superadmin", "admin", "doctor"] }
         }
         : {})
     };
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - 2);
+
+    console.log("userQuery", userQuery);
+
 
     const [
       totalUsers,
@@ -6651,7 +6659,6 @@ export const superAdminDashboardService = async (
       patientData,
     ] = await Promise.all([
 
-      // TOTAL USERS
       AdminAndAgentModel.countDocuments(userQuery),
 
       // TOTAL BRANCHES
@@ -7015,7 +7022,9 @@ export const superAdminDashboardService = async (
     const apptInbound = analytics?.appointmentFormsIn?.[0]?.count || 0;
     const apptOutbound = analytics?.appointmentFormsOut?.[0]?.count || 0;
     return {
+      totalUser,
       analytics: {
+
         totalUsers,
         totalBranches,
         forms: {

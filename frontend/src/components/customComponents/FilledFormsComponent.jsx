@@ -178,8 +178,6 @@ const FilledFormsComponent = ({
     formsModalOpen,
     dateRange?.startDate,
     dateRange?.endDate,
-    searchInput,
-
     pagination.page,
   ]);
 

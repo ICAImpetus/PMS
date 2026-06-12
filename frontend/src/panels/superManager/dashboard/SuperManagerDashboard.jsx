@@ -83,7 +83,7 @@ const Dashboard = () => {
   const [formsModalOpen, setFormsModalOpen] = useState(false);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
-  const [categoryType, setCategoryType] = useState("gender");
+  const [categoryType, setCategoryType] = useState("doctor");
 
 
 
@@ -435,7 +435,7 @@ const Dashboard = () => {
             <EventAvailableIcon />
           </div>
           <div className="qs-info">
-            <div className="qs-val">{analytics?.appointmentForms?.total || 0}</div>
+            <div className="qs-val">{analytics?.appointmentForms || 0}</div>
             <div className="qs-lbl">Total Appointments</div>
           </div>
         </div>
@@ -445,7 +445,7 @@ const Dashboard = () => {
           </div>
           <div className="qs-info">
             <div className="qs-val">
-              {analytics?.totalForms?.total || 0}
+              {analytics?.totalForms || 0}
             </div>
             <div className="qs-lbl">Forms</div>
           </div>
@@ -511,11 +511,12 @@ const Dashboard = () => {
                 }
               }}
             >
+              <MenuItem value="doctor">Doctor Wise</MenuItem>
               <MenuItem value="gender">Gender Wise</MenuItem>
               {/* <MenuItem value="location">Location Wise</MenuItem> */}
               <MenuItem value="age">Age Wise</MenuItem>
 
-              <MenuItem value="doctor">Doctor Wise</MenuItem>
+
               <MenuItem value="poc">Purpose of Call</MenuItem>
             </Select>
           </FormControl>
@@ -594,7 +595,7 @@ const Dashboard = () => {
         </div >
       </div >
       {/* lveel 3 */}
-      < div className="dashboard-section" >
+      {/* < div className="dashboard-section" >
         <div className="section-header">
           <div className="section-title">
             <i className="fas fa-phone-slash"></i> TOTAL MISSED CALLS
@@ -668,7 +669,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-      </div >
+      </div > */}
 
       <div className="executive-dashboard-section">
         <div className="executive-outbound-grid">
