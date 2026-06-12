@@ -346,37 +346,30 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         onError: () =>
             toast.error("Failed to fetch Hospital Code")
     });
-
     const {
-        data: patientsData,
+        data: patientsData = null,
         isLoading: patientsLoading,
         error: patientsError,
         isFetching: patientsRefetchLoader,
-        refetch: refetchPatients
+        refetch: refetchPatients,
     } = useQuery({
         queryKey: [
-
+            "patients",
             pagination.patients.page,
             selectedHostpital,
             selectedBranch,
-            "patients",
-
         ],
 
         queryFn: async ({ queryKey }) => {
-            const [
-                page,
-                selectedHostpital,
-                selectedBranch,
-            ] = queryKey;
+            const [, page, hospitalId, branchId] = queryKey;
 
             const res = await commonRoutes.getPatients(
                 page,
-                selectedHostpital,
-                isNonAdmin ? selectedBranch : null,
+                hospitalId,
+                isNonAdmin ? branchId : null
             );
 
-            return res?.data || {};
+            return res?.data;
         },
 
         enabled:
@@ -384,38 +377,26 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             !!selectedHostpital &&
             (!!selectedBranch || !isNonAdmin),
 
-        keepPreviousData: true,
-
-        onError: () =>
-            toast.error("Failed to fetch patients")
+        placeholderData: (previousData) => previousData,
     });
     useEffect(() => {
-        if (!patientsData?.data) return;
+        if (!patientsData) {
+            return;
+        }
 
-        const currentPage = patientsData?.pagination?.page || 1;
+        console.log("patientsData =>", patientsData);
 
-        console.log("pateutn", patients);
+        if (!patientsData?.data?.length) {
+            setPatients([]);
+            return;
+        }
 
+        setPatients(patientsData.data);
 
-        setPatients((prev) => {
-            //  If first page → replace data
-            if (currentPage === 1) {
-                return patientsData.data;
-            }
-
-            //  If next pages → append
-            return [
-                ...prev,
-                ...patientsData.data.filter(
-                    (newItem) =>
-                        !prev.some((p) => p._id === newItem._id)
-                ),
-            ];
-        });
-
-        updatePagination("patients", patientsData.pagination);
-
-    }, [patientsData]);
+        if (patientsData?.pagination) {
+            updatePagination("patients", patientsData.pagination);
+        }
+    }, [patientsData, updatePagination]);
 
 
     const {
