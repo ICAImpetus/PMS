@@ -456,12 +456,13 @@ export const commonRoutes = {
       },
     });
   },
-  getDashboard: (branch = null, hospitalId = null) => {
+  getDashboard: (branch = null, hospitalId = null, startDate, endDate) => {
     const params = {};
 
     if (branch != null) params.branch = branch;
     if (hospitalId != null && hospitalId !== '' && hospitalId !== "") params.hospitalId = hospitalId;
-
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
     return API.get("api/dashboard", { params });
   }
   ,

@@ -8,7 +8,7 @@ export const NewsTicker = ({ currentUser }) => {
   if (currentUser?.type?.includes("admin")) return null;
 
   const hospital = currentUser?.hospitals?.[0]
-  const hospitalName = hospital?.hospitalId.name || "Hospital";
+  const hospitalName = hospital?.hospitalId?.name || "Hospital";
   const hospitalAddress = hospital?.hospitalId?.corporateAddress || "Corporate Address";
   const hospitallogo = hospital?.hospitalId?.hospitallogo || null
 

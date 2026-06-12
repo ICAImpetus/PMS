@@ -775,7 +775,7 @@ const SuperAdminDashboard = () => {
                         </div>
                         <strong>{item?.agentName || "name"}</strong>
                       </div>
-                      <span className={`badge ${status}`}>
+                      <span>
                         Forms: {item?.totalCalls || 0}
                       </span>
                     </div>

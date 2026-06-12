@@ -983,9 +983,9 @@ function Forms() {
                   <label className="checkbox-label">
                     <input
                       type="checkbox"
-                      checked={form.formData.useForFollowup}
+                      checked={form.useForFollowup}
                       onChange={(e) =>
-                        handleChange("formData.useForFollowup", e.target.checked)
+                        handleChange("useForFollowup", e.target.checked)
                       }
                       className="checkbox-input"
                     />
@@ -1170,9 +1170,9 @@ function Forms() {
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
                     type="checkbox"
-                    checked={form.formData.useForFollowup}
+                    checked={form.useForFollowup}
                     onChange={(e) =>
-                      handleChange("formData.useForFollowup", e.target.checked)
+                      handleChange("useForFollowup", e.target.checked)
                     }
                     style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                   />
@@ -1297,9 +1297,9 @@ function Forms() {
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
                     type="checkbox"
-                    checked={form.formData.useForFollowup}
+                    checked={form.useForFollowup}
                     onChange={(e) =>
-                      handleChange("formData.useForFollowup", e.target.checked)
+                      handleChange("useForFollowup", e.target.checked)
                     }
                     style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                   />
@@ -1431,9 +1431,9 @@ function Forms() {
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
                     type="checkbox"
-                    checked={form.formData.useForFollowup}
+                    checked={form.useForFollowup}
                     onChange={(e) =>
-                      handleChange("formData.useForFollowup", e.target.checked)
+                      handleChange("useForFollowup", e.target.checked)
                     }
                     style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                   />
@@ -1560,9 +1560,9 @@ function Forms() {
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
                     type="checkbox"
-                    checked={form.formData.useForFollowup}
+                    checked={form.useForFollowup}
                     onChange={(e) =>
-                      handleChange("formData.useForFollowup", e.target.checked)
+                      handleChange("useForFollowup", e.target.checked)
                     }
                     style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                   />
@@ -1700,9 +1700,9 @@ function Forms() {
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
                     type="checkbox"
-                    checked={form.formData.useForFollowup}
+                    checked={form.useForFollowup}
                     onChange={(e) =>
-                      handleChange("formData.useForFollowup", e.target.checked)
+                      handleChange("useForFollowup", e.target.checked)
                     }
                     style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                   />
@@ -1812,9 +1812,9 @@ function Forms() {
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
                     type="checkbox"
-                    checked={form.formData.useForFollowup}
+                    checked={form.useForFollowup}
                     onChange={(e) =>
-                      handleChange("formData.useForFollowup", e.target.checked)
+                      handleChange("useForFollowup", e.target.checked)
                     }
                     style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                   />
@@ -1924,9 +1924,9 @@ function Forms() {
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
                     type="checkbox"
-                    checked={form.formData.useForFollowup}
+                    checked={form.useForFollowup}
                     onChange={(e) =>
-                      handleChange("formData.useForFollowup", e.target.checked)
+                      handleChange("useForFollowup", e.target.checked)
                     }
                     style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                   />
@@ -2054,9 +2054,9 @@ function Forms() {
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
                     type="checkbox"
-                    checked={form.formData.useForFollowup}
+                    checked={form.useForFollowup}
                     onChange={(e) =>
-                      handleChange("formData.useForFollowup", e.target.checked)
+                      handleChange("useForFollowup", e.target.checked)
                     }
                     style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                   />
@@ -2109,9 +2109,9 @@ function Forms() {
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
                     type="checkbox"
-                    checked={form.formData.useForFollowup}
+                    checked={form.useForFollowup}
                     onChange={(e) =>
-                      handleChange("formData.useForFollowup", e.target.checked)
+                      handleChange("useForFollowup", e.target.checked)
                     }
                     style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                   />
@@ -2235,9 +2235,9 @@ function Forms() {
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
                     type="checkbox"
-                    checked={form.formData.useForFollowup}
+                    checked={form.useForFollowup}
                     onChange={(e) =>
-                      handleChange("formData.useForFollowup", e.target.checked)
+                      handleChange("useForFollowup", e.target.checked)
                     }
                     style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                   />
@@ -2364,9 +2364,9 @@ function Forms() {
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
                     type="checkbox"
-                    checked={form.formData.useForFollowup}
+                    checked={form.useForFollowup}
                     onChange={(e) =>
-                      handleChange("formData.useForFollowup", e.target.checked)
+                      handleChange("useForFollowup", e.target.checked)
                     }
                     style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                   />
@@ -2445,9 +2445,9 @@ function Forms() {
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
                     type="checkbox"
-                    checked={form.formData.useForFollowup}
+                    checked={form.useForFollowup}
                     onChange={(e) =>
-                      handleChange("formData.useForFollowup", e.target.checked)
+                      handleChange("useForFollowup", e.target.checked)
                     }
                     style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                   />

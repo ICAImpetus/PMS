@@ -284,13 +284,15 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         refetch: refetchDashboard,
         error: dashboardError
     } = useQuery({
-        queryKey: ["dashboard", selectedHostpital, selectedBranch],
+        queryKey: ["dashboard", selectedHostpital, selectedBranch, dateRange.startDate, dateRange.endDate],
         queryFn: async () => {
-
             const [dashboardRes, alertRes] = await Promise.all([
                 commonRoutes.getDashboard(
                     selectedBranch,
-                    selectedHostpital
+                    selectedHostpital,
+                    dateRange.startDate,
+                    dateRange.endDate
+
                 ),
 
                 commonRoutes.getCreatedCodeAlerts(

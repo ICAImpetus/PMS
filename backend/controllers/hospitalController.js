@@ -5683,7 +5683,10 @@ export const getDashboard = async (req, res) => {
   try {
     const user = req.user;
     const role = user.type?.toLowerCase(); //
-    const { branch, hospitalId } = req.query;
+    const { branch, hospitalId, startDate, endDate } = req.query;
+
+    console.log("req.quer",);
+
 
     //  Validate hospitalId
     if (!hospitalId || !mongoose.isValidObjectId(hospitalId)) {
@@ -5712,14 +5715,21 @@ export const getDashboard = async (req, res) => {
     const bfPage = parseInt(req.query.bfPage) || 1;
     const bfLimit = parseInt(req.query.bfLimit) || 10;
 
+    const date = {
+      startDate: new Date(startDate),
+      endDate: new Date(endDate)
+    }
+    date.startDate.setHours(0, 0, 0, 0);
+    date.endDate.setHours(23, 59, 59, 999);
+
     switch (role) {
       case "executive":
 
-        dashboardData = await executiveDashboardService(conn, branch, user, bfPage, bfLimit);
+        dashboardData = await executiveDashboardService(conn, branch, user, bfPage, bfLimit, date);
         break;
 
       case "teamleader": // single clean case superManagerDashboardService
-        dashboardData = await teamLeaderDashboardService(conn, branch, user, bfPage, bfLimit);
+        dashboardData = await teamLeaderDashboardService(conn, branch, user, bfPage, bfLimit, date);
         break;
 
       case "supermanager": // single clean case superManagerDashboardService
@@ -5727,11 +5737,11 @@ export const getDashboard = async (req, res) => {
         break;
 
       case "superadmin": // single clean case superManagerDashboardService
-        dashboardData = await superAdminDashboardService(conn, hospitalId, user);
+        dashboardData = await superAdminDashboardService(conn, hospitalId, user, date);
         break;
 
       case "admin": // single clean case superManagerDashboardService
-        dashboardData = await superAdminDashboardService(conn, hospitalId, user);
+        dashboardData = await superAdminDashboardService(conn, hospitalId, user, date);
         break;
       default:
         return res.status(403).json({
@@ -5821,14 +5831,19 @@ const getLast3Months = () => {
   return result;
 };
 
-export const executiveDashboardService = async (conn, branchId, user, bfPage = 1, bfLimit = 10) => {
+export const executiveDashboardService = async (conn, branchId, user, bfPage = 1, bfLimit = 10, date) => {
   try {
 
     // const startDate = calculateFilter(filter);
     const agentId = user.id;
     const matchStage = {
-      agentId: new mongoose.Types.ObjectId(agentId),
-      isDeleted: false
+      // agentId: new mongoose.Types.ObjectId(agentId),
+      branchId: new mongoose.Types.ObjectId(branchId),
+      isDeleted: false,
+      createdAt: {
+        $gte: date.startDate,
+        $lte: date.endDate,
+      },
     };
 
     // if (startDate) {
@@ -5839,65 +5854,68 @@ export const executiveDashboardService = async (conn, branchId, user, bfPage = 1
 
     // Branch-scoped pending follow-ups (all executives in same branch)
     const FilledFormsModel = await getFilledFormsModel(conn)
+    const PatientModel = await getPatientModel(conn)
+    const DepartmentModel = await getDepartmentModel(conn)
+    const DoctorModel = await getDoctorModel(conn)
     const skip = (bfPage - 1) * bfLimit;
 
-    const branchFollowupsQuery = branchId
-      ? FilledFormsModel.aggregate([
-        {
-          $match: {
-            branchId: new mongoose.Types.ObjectId(branchId),
-            followupStatus: "pending",
-            isDeleted: false,
-          },
-        },
-        {
-          $lookup: {
-            from: "doctors",
-            localField: "doctor",
-            foreignField: "_id",
-            as: "doctor",
-          },
-        },
-        { $unwind: { path: "$doctor", preserveNullAndEmptyArrays: true } },
-        {
-          $lookup: {
-            from: "departments",
-            localField: "department",
-            foreignField: "_id",
-            as: "department",
-          },
-        },
-        { $unwind: { path: "$department", preserveNullAndEmptyArrays: true } },
-        {
-          $project: {
-            _id: 1,
-            agentId: 1,
-            purpose: 1,
-            formType: 1,
-            callStatus: 1,
-            createdAt: 1,
-            agentName: 1,
-            followupStatus: 1,
-            callerType: "$formData.callerType",
-            remarks: "$formData.remarks",
-            patientName: "$formData.patientDetails.patientName",
-            patientMobile: "$formData.patientDetails.patientMobile",
-            referenceFrom: "$formData.referenceFrom",
-            followupType: "$formData.followupType",
-            doctorName: "$doctor.name",
-            departmentName: "$department.name",
-          },
-        },
-        {
-          $addFields: {
-            isMine: { $eq: ["$agentId", new mongoose.Types.ObjectId(agentId)] },
-          },
-        },
-        { $sort: { isMine: -1, createdAt: -1 } },
-        { $skip: skip },
-        { $limit: bfLimit },
-      ])
-      : Promise.resolve([]);
+    // const branchFollowupsQuery = branchId
+    //   ? FilledFormsModel.aggregate([
+    //     {
+    //       $match: {
+    //         branchId: new mongoose.Types.ObjectId(branchId),
+    //         followupStatus: "pending",
+    //         isDeleted: false,
+    //       },
+    //     },
+    //     {
+    //       $lookup: {
+    //         from: "doctors",
+    //         localField: "doctor",
+    //         foreignField: "_id",
+    //         as: "doctor",
+    //       },
+    //     },
+    //     { $unwind: { path: "$doctor", preserveNullAndEmptyArrays: true } },
+    //     {
+    //       $lookup: {
+    //         from: "departments",
+    //         localField: "department",
+    //         foreignField: "_id",
+    //         as: "department",
+    //       },
+    //     },
+    //     { $unwind: { path: "$department", preserveNullAndEmptyArrays: true } },
+    //     {
+    //       $project: {
+    //         _id: 1,
+    //         agentId: 1,
+    //         purpose: 1,
+    //         formType: 1,
+    //         callStatus: 1,
+    //         createdAt: 1,
+    //         agentName: 1,
+    //         followupStatus: 1,
+    //         callerType: "$formData.callerType",
+    //         remarks: "$formData.remarks",
+    //         patientName: "$formData.patientDetails.patientName",
+    //         patientMobile: "$formData.patientDetails.patientMobile",
+    //         referenceFrom: "$formData.referenceFrom",
+    //         followupType: "$formData.followupType",
+    //         doctorName: "$doctor.name",
+    //         departmentName: "$department.name",
+    //       },
+    //     },
+    //     {
+    //       $addFields: {
+    //         isMine: { $eq: ["$agentId", new mongoose.Types.ObjectId(agentId)] },
+    //       },
+    //     },
+    //     { $sort: { isMine: -1, createdAt: -1 } },
+    //     { $skip: skip },
+    //     { $limit: bfLimit },
+    //   ])
+    //   : Promise.resolve([]);
 
     const [result, branchFollowups, branchFollowupsTotal] = await Promise.all([
       FilledFormsModel.aggregate([
@@ -5905,6 +5923,47 @@ export const executiveDashboardService = async (conn, branchId, user, bfPage = 1
 
         {
           $facet: {
+            // ---------------- INBOUND COUNT ----------------
+            inboundCount: [
+              { $match: { formType: { $regex: "^inbound$", $options: "i" } } },
+              { $count: "count" },
+            ],
+
+            // ---------------- OUTBOUND COUNT ----------------
+            outboundCount: [
+              { $match: { formType: { $regex: "^outbound$", $options: "i" } } },
+              { $count: "count" },
+            ],
+
+            // ---------------- APPOINTMENT FORMS ----------------
+            appointmentFormsIn: [ // Fixed: Now matches inbound
+              {
+                $match: {
+                  purpose: { $regex: "^appointment$", $options: "i" },
+                  // callStatus: { $regex: "^connected$", $options: "i" },
+                  formType: { $regex: "^inbound$", $options: "i" }
+                },
+              },
+              { $count: "count" },
+            ],
+            appointmentFormsOut: [ // Fixed: Now matches outbound
+              {
+                $match: {
+                  purpose: { $regex: "^appointment$", $options: "i" },
+                  // callStatus: { $regex: "^connected$", $options: "i" },
+                  formType: { $regex: "^outbound$", $options: "i" }
+                },
+              },
+              { $count: "count" },
+            ],
+            followup: [ // Fixed: Now matches outbound
+              {
+                $match: {
+                  useForFollowup: true
+                },
+              },
+              { $count: "count" },
+            ],
             // TOP INBOUND PURPOSE
             topInboundPurpose: [
               { $match: { formType: "inbound", purpose: { $ne: "" } } },
@@ -5962,28 +6021,147 @@ export const executiveDashboardService = async (conn, branchId, user, bfPage = 1
                   count: 1
                 }
               }
+            ],
+            latestAppointment: [
+              {
+                $match: {
+                  ...matchStage,
+                  purpose: { $regex: "^appointment$", $options: "i" }
+                }
+              },
+
+              // 🔥 sabse pehle latest 5 nikaalo
+              { $sort: { createdAt: -1 } },
+              { $limit: 5 },
+
+              // ================= PATIENT =================
+              {
+                $lookup: {
+                  from: PatientModel.collection.name,
+                  let: { patientId: "$formData.patientDetails" },
+                  pipeline: [
+                    {
+                      $match: {
+                        $expr: { $eq: ["$_id", "$$patientId"] }
+                      }
+                    },
+                    {
+                      $project: {
+                        patientName: 1,
+                        patientMobile: 1,
+                        status: 1,
+                        gender: 1
+                      }
+                    }
+                  ],
+                  as: "patientInfo"
+                }
+              },
+              { $set: { patientInfo: { $first: "$patientInfo" } } },
+
+              // ================= DOCTOR =================
+              {
+                $lookup: {
+                  from: DoctorModel.collection.name,
+                  let: { doctorId: "$doctor" },
+                  pipeline: [
+                    {
+                      $match: {
+                        $expr: { $eq: ["$_id", "$$doctorId"] }
+                      }
+                    },
+                    {
+                      $project: { name: 1 }
+                    }
+                  ],
+                  as: "doctorInfo"
+                }
+              },
+              { $set: { doctorInfo: { $first: "$doctorInfo" } } },
+
+              // ================= DEPARTMENT =================
+              {
+                $lookup: {
+                  from: DepartmentModel.collection.name,
+                  let: { deptId: "$department" },
+                  pipeline: [
+                    {
+                      $match: {
+                        $expr: { $eq: ["$_id", "$$deptId"] }
+                      }
+                    },
+                    {
+                      $project: { name: 1 }
+                    }
+                  ],
+                  as: "departmentInfo"
+                }
+              },
+              { $set: { departmentInfo: { $first: "$departmentInfo" } } },
+
+              // ================= FINAL OUTPUT =================
+              {
+                $project: {
+                  _id: 1,
+
+                  // ✅ Patient
+                  patientName: "$patientInfo.patientName",
+                  patientMobile: "$patientInfo.patientMobile",
+                  patientStatus: "$patientInfo.status",
+                  gender: "$patientInfo.gender",
+
+                  // ✅ Appointment
+                  appointmentSlot: "$formData.appointmentSlot",
+                  patientArrivalTime: "$formData.patientArrivalTime",
+                  dateTime: "$formData.dateTime",
+
+                  // ✅ Doctor
+                  doctorName: "$doctorInfo.name",
+
+                  // ✅ Department
+                  departmentName: "$departmentInfo.name"
+                }
+              }
             ]
 
           }
         }
       ]),
-      branchFollowupsQuery,
+      // branchFollowupsQuery,
     ]);
 
     const data = result[0] || {};
+    const totalInbound = data?.inboundCount?.[0]?.count || 0;
+    const totalOutbound = data?.outboundCount?.[0]?.count || 0;
+
+    const apptInbound = data?.appointmentFormsIn?.[0]?.count || 0;
+    const apptOutbound = data?.appointmentFormsOut?.[0]?.count || 0;
+    const followup = data?.followup?.[0]?.count || 0;
 
     return {
       analytics: {
+        forms: {
+          total: totalInbound + totalOutbound,
+          inbound: totalInbound,
+          outbound: totalOutbound
+        },
+        appointments: {
+          total: apptInbound + apptOutbound, // Fixed: Adding appointment specific data
+          inbound: apptInbound,             // Fixed: Mapping to correct key
+          outbound: apptOutbound            // Fixed: Mapping to correct key
+        },
+        followups: followup,
         topInboundPurpose: data.topInboundPurpose || [],
         topOutboundPurpose: data.topOutboundPurpose || [],
-        topReference: data.topReference || []
+        topReference: data.topReference || [],
+        latestAppointment: data.latestAppointment || []
       },
-      branchFollowups: {
-        data: branchFollowups || [],
-        total: Math.max(branchFollowupsTotal || 0, (branchFollowups?.length || 0) + (bfPage - 1) * bfLimit),
-        page: bfPage,
-        limit: bfLimit
-      }
+      // branchFollowups: {
+      //   data: branchFollowups || [],
+      //   total: Math.max(branchFollowupsTotal || 0, (branchFollowups?.length || 0) + (bfPage - 1) * bfLimit),
+      //   page: bfPage,
+      //   limit: bfLimit
+      // }
     };
 
   } catch (error) {
@@ -5993,15 +6171,20 @@ export const executiveDashboardService = async (conn, branchId, user, bfPage = 1
   }
 };
 
-export const teamLeaderDashboardService = async (conn, branchId = null, user, bfPage = 1, bfLimit = 10) => {
+export const teamLeaderDashboardService = async (conn, branchId = null, user, bfPage = 1, bfLimit = 10, date) => {
   try {
 
     const branchObjectId = new mongoose.Types.ObjectId(branchId);
     const agentId = user.id;
     const skip = (bfPage - 1) * bfLimit;
+
     const matchStage = {
       isDeleted: false,
-      branchId: branchObjectId
+      branchId: branchObjectId,
+      createdAt: {
+        $gte: date.startDate,
+        $lte: date.endDate,
+      },
     };
 
     const agentFilter = {
@@ -6011,6 +6194,7 @@ export const teamLeaderDashboardService = async (conn, branchId = null, user, bf
     };
     // console.log("agentfilter", agentFilter);
     const FilledFormsModel = await getFilledFormsModel(conn)
+
     const branchFollowupsQuery = branchId
       ? FilledFormsModel.aggregate([
         {
@@ -6075,6 +6259,47 @@ export const teamLeaderDashboardService = async (conn, branchId = null, user, bf
         { $match: matchStage },
         {
           $facet: {
+            // ---------------- INBOUND COUNT ----------------
+            inboundCount: [
+              { $match: { formType: { $regex: "^inbound$", $options: "i" } } },
+              { $count: "count" },
+            ],
+
+            // ---------------- OUTBOUND COUNT ----------------
+            outboundCount: [
+              { $match: { formType: { $regex: "^outbound$", $options: "i" } } },
+              { $count: "count" },
+            ],
+
+            // ---------------- APPOINTMENT FORMS ----------------
+            appointmentFormsIn: [ // Fixed: Now matches inbound
+              {
+                $match: {
+                  purpose: { $regex: "^appointment$", $options: "i" },
+                  // callStatus: { $regex: "^connected$", $options: "i" },
+                  formType: { $regex: "^inbound$", $options: "i" }
+                },
+              },
+              { $count: "count" },
+            ],
+            appointmentFormsOut: [ // Fixed: Now matches outbound
+              {
+                $match: {
+                  purpose: { $regex: "^appointment$", $options: "i" },
+                  // callStatus: { $regex: "^connected$", $options: "i" },
+                  formType: { $regex: "^outbound$", $options: "i" }
+                },
+              },
+              { $count: "count" },
+            ],
+            followup: [ // Fixed: Now matches outbound
+              {
+                $match: {
+                  useForFollowup: true
+                },
+              },
+              { $count: "count" },
+            ],
             // TOP INBOUND PURPOSE
             topInboundPurpose: [
               { $match: { formType: "inbound", purpose: { $ne: "" } } },
@@ -6186,8 +6411,8 @@ export const teamLeaderDashboardService = async (conn, branchId = null, user, bf
               },
               {
                 $lookup: {
-                  from: "adminandagents",
-                  localField: "_id",
+                  from: AdminAndAgentModel.collection.name,
+                  localField: "agentId",
                   foreignField: "_id",
                   as: "agent"
                 }
@@ -6241,10 +6466,30 @@ export const teamLeaderDashboardService = async (conn, branchId = null, user, bf
 
     const labels = calls.map(item => item.purpose || "Other");
     const callData = calls.map(item => item.count || 0);
+
+    const totalInbound = data?.inboundCount?.[0]?.count || 0;
+    const totalOutbound = data?.outboundCount?.[0]?.count || 0;
+
+    const apptInbound = data?.appointmentFormsIn?.[0]?.count || 0;
+    const apptOutbound = data?.appointmentFormsOut?.[0]?.count || 0;
+    const followup = data?.followup?.[0]?.count || 0;
     return {
       analytics: {
 
         totalAgents,
+
+        forms: {
+          total: totalInbound + totalOutbound,
+          inbound: totalInbound,
+          outbound: totalOutbound
+        },
+        appointments: {
+          total: apptInbound + apptOutbound, // Fixed: Adding appointment specific data
+          inbound: apptInbound,             // Fixed: Mapping to correct key
+          outbound: apptOutbound            // Fixed: Mapping to correct key
+        },
+        followups: followup,
+
         topInboundPurpose: data.topInboundPurpose || [],
         topOutboundPurpose: data.topOutboundPurpose || [],
         connectionStatus: data.connectionStatus || [],
@@ -6597,7 +6842,8 @@ export const superManagerDashboardService = async (conn, branchId) => {
 export const superAdminDashboardService = async (
   conn,
   hospitalId,
-  user
+  user,
+  date
 ) => {
   try {
     const FilledFormsModel = getFilledFormsModel(conn);
@@ -6617,19 +6863,17 @@ export const superAdminDashboardService = async (
     const hospitalObjectId = new mongoose.Types.ObjectId(
       hospitalId
     );
-
-    // last 90 days optimization
-    const last90Days = new Date();
-    last90Days.setDate(last90Days.getDate() - 90);
-
     // base match
+
+
     const matchStage = {
       isDeleted: false,
-      createdAt: { $gte: last90Days },
+      createdAt: {
+        $gte: date.startDate,
+        $lte: date.endDate,
+      },
     };
 
-    // user query
-    console.log("hospitalId", hospitalObjectId);
     const userQuery = {
       isDeleted: false,
 
@@ -6647,9 +6891,6 @@ export const superAdminDashboardService = async (
     };
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - 2);
-
-    console.log("userQuery", userQuery);
-
 
     const [
       totalUsers,
@@ -6700,13 +6941,7 @@ export const superAdminDashboardService = async (
       // DASHBOARD ANALYTICS
       FilledFormsModel.aggregate([
         {
-          $match: {
-            ...matchStage,
-
-            createdAt: {
-              $gte: startDate,
-            },
-          },
+          $match: matchStage
         },
 
         {
@@ -6902,13 +7137,8 @@ export const superAdminDashboardService = async (
         {
           $match: {
             isDeleted: false,
-
             patientMobile: {
               $nin: [null, ""],
-            },
-
-            createdAt: {
-              $gte: startDate,
             },
           },
         },

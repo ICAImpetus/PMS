@@ -46,6 +46,7 @@ export const FORMS_AVAILABLE_COLUMNS = [
     { key: "callStatus", label: "Call Status" },
     { key: "purpose", label: "POC / Purpose" },
     { key: "appointmentSlot", label: "App. Slot" },
+    { key: "formData.patientArrivalTime", label: "PatientArrivalTime" },
     { key: "formData.remarks", label: "Remarks" },
     { key: "createdAt", label: "Submitted At" },
     // Additional unique fields from second array
@@ -59,6 +60,7 @@ export const FORMS_AVAILABLE_COLUMNS = [
     { key: "formData.reportName", label: "Report Name" },
     { key: "followupStatus", label: "Follow-up Status" },
     { key: "formData.referenceFrom", label: "Reference From" },
+
     { key: "formData.callerType", label: "Caller Type" },
 ];
 export const getNestedValue = (obj, path) => {

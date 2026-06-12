@@ -94,6 +94,8 @@ const FilledFormsComponent = ({
     totalPages: 1,
     totalDocument: 0,
   })
+  console.log("formsModalOpen", formsModalOpen);
+
   const [selectedFormColumns, setSelectedFormColumns] = useState([
     "agentName",
     "formType",
@@ -150,7 +152,7 @@ const FilledFormsComponent = ({
           dateRange?.endDate || null,
           searchInput || "",
           purpose,
-          formsTypeFilter,
+          formsModalOpen,
           false
         );
 
@@ -354,7 +356,7 @@ const FilledFormsComponent = ({
         dateRange?.endDate || null,
         searchInput || "",
         purpose,
-        formsTypeFilter,
+        formsModalOpen,
         false
       );
 
@@ -529,7 +531,7 @@ const FilledFormsComponent = ({
         dateFilterTo,
         searchInput || "",
         purpose,
-        formsTypeFilter,
+        formsModalOpen,
         true
       );
 

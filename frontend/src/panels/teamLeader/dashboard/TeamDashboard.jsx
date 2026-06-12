@@ -75,7 +75,8 @@ const TeamDashboard = () => {
     setFilter,
     setPagination,
     dateRange,
-    setDateRange
+    setDateRange,
+    handleFilterChange
   } = useContext(HospitalContext);
 
   const formsDataMap = {
@@ -185,7 +186,7 @@ const TeamDashboard = () => {
           {/* Date Filter Section */}
           <div className="tld-date-filter">
             <select id="global-date-range" onChange={(e) => {
-              setFilter(e.target.value);
+              handleFilterChange(e.target.value);
             }}>
               {filterOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -358,7 +359,7 @@ const TeamDashboard = () => {
                     </div>
                     <div className="content-wrapper">
                       <div className="executive-metric-value">
-                        {metrics?.totalForms?.total || 0}
+                        {analytics?.forms?.total || 0}
                       </div>
                       <div className="executive-metric-breakdown">
                         <div
@@ -371,7 +372,7 @@ const TeamDashboard = () => {
                         >
                           <div className="executive-breakdown-label">Inbound</div>
                           <div className="executive-breakdown-value executive-inbound-breakdown">
-                            {metrics?.totalForms?.inbound || 0}
+                            {analytics?.forms?.inbound || 0}
                           </div>
                         </div>
                         <div
@@ -384,7 +385,7 @@ const TeamDashboard = () => {
                         >
                           <div className="executive-breakdown-label">Outbound</div>
                           <div className="executive-breakdown-value executive-outbound-breakdown">
-                            {metrics?.totalForms?.outbound || 0}
+                            {analytics?.forms?.outbound || 0}
                           </div>
                         </div>
                       </div>
@@ -411,7 +412,7 @@ const TeamDashboard = () => {
                     </div>
                     <div className="content-wrapper">
                       <div className="executive-metric-value">
-                        {metrics?.appointments?.total || 0}
+                        {analytics?.appointments?.total || 0}
                       </div>
                       <div className="executive-metric-breakdown">
                         <div
@@ -424,7 +425,7 @@ const TeamDashboard = () => {
                         >
                           <div className="executive-breakdown-label">Inbound</div>
                           <div className="executive-breakdown-value executive-inbound-breakdown">
-                            {metrics?.appointments?.inbound || 0}
+                            {analytics?.appointments?.inbound || 0}
                           </div>
                         </div>
                         <div
@@ -437,7 +438,7 @@ const TeamDashboard = () => {
                         >
                           <div className="executive-breakdown-label">Outbound</div>
                           <div className="executive-breakdown-value executive-outbound-breakdown">
-                            {metrics?.appointments?.outbound || 0}
+                            {analytics?.appointments?.outbound || 0}
                           </div>
                         </div>
                       </div>
@@ -464,9 +465,9 @@ const TeamDashboard = () => {
                     </div>
                     <div className="content-wrapper">
                       <div className="executive-metric-value">
-                        {metrics?.followupsPending?.total || 0}
+                        {analytics?.followups || 0}
                       </div>
-                      <div className="executive-metric-breakdown">
+                      {/* <div className="executive-metric-breakdown">
                         <div
                           className="executive-breakdown-item executive-breakdown-clickable"
                           onClick={(e) => {
@@ -493,7 +494,7 @@ const TeamDashboard = () => {
                             {metrics?.followupsPending?.outbound || 0}
                           </div>
                         </div>
-                      </div>
+                      </div> */}
                       {/* <div className="executive-metric-change executive-positive">
                     <i className="fas fa-arrow-up"></i> 26% from last month
                   </div> */}

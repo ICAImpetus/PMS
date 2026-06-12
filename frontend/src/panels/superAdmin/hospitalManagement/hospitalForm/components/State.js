@@ -1252,7 +1252,6 @@ export const initialFormData = {
   slotDuration: "",
   appointmentSlot: null,
   patientArrivalTime: "",
-  useForFollowup: false
 };
 
 export const initialFormState = {
@@ -1263,5 +1262,6 @@ export const initialFormState = {
   branchId: null,
   hospitalId: null,
   callStatus: "",
+  useForFollowup: false,
   formData: initialFormData
 };

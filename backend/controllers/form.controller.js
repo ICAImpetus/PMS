@@ -198,6 +198,7 @@ export const createFilledForm = async (req, res) => {
       agentName: user.name,
 
       doctor: data.doctor,
+      useForFollowup: data.useForFollowup,
 
       department: data.department,
 
@@ -434,15 +435,23 @@ export const getFilledForms = async (req, res) => {
       }
     }
 
-    if (purpose && purpose !== "All") {
-      matchStage.purpose = purpose;
-    }
+    // if (purpose && purpose !== "All") {
+    //   matchStage.purpose = purpose;
+    // }
 
     if (formsTypeFilter && formsTypeFilter !== "all") {
-      matchStage.formType = {
-        $regex: formsTypeFilter.trim(),
-        $options: "i",
-      };
+
+      if (formsTypeFilter === "Appointments") {
+        matchStage.purpose = {
+          $regex: "appointment",
+          $options: "i",
+        };
+      }
+
+      if (formsTypeFilter === "Followups") {
+        matchStage.useForFollowup = true
+      }
+
     }
     // ================= START PIPELINE =================
     const pipeline = [
@@ -541,10 +550,13 @@ export const getFilledForms = async (req, res) => {
               gender: "$patientInfo.gender",
               // Raw/Nested fields from form
               appointmentSlot: "$formData.appointmentSlot",
+              "formData.patientArrivalTime": "$formData.patientArrivalTime",
               // Doctor mapping
+
               "doctor.name": "$doctorInfo.name",
 
               // Department mapping
+
               "department.name": "$departmentInfo.name",
               "formData.surgeryName": "$formData.surgeryName",
               "formData.healthPackageName": "$formData.healthPackageName",
