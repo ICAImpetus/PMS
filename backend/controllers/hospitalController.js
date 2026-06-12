@@ -7022,7 +7022,6 @@ export const superAdminDashboardService = async (
     const apptInbound = analytics?.appointmentFormsIn?.[0]?.count || 0;
     const apptOutbound = analytics?.appointmentFormsOut?.[0]?.count || 0;
     return {
-      totalUser,
       analytics: {
 
         totalUsers,
