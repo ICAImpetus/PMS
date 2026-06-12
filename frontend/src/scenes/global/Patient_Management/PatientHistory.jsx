@@ -51,7 +51,8 @@ import HospitalContext from "../../../contexts/HospitalContexts";
 import moment from "moment";
 import { useApi } from "../../../api/useApi.js"
 import { commonRoutes } from "../../../api/apiService";
-import { handleExport, getNestedValue, FORMS_AVAILABLE_COLUMNS, statusStyles } from "../../../utils/exportUtils.js";
+import { handleExport, getNestedValue, PATIENT_AVAILABLE_COLUMNS, statusStyles } from "../../../utils/exportUtils.js";
+import { Toaster } from "react-hot-toast";
 
 export const generateExportData = (data, columns) => {
     const headers = columns.map((col) => col.label);
@@ -203,13 +204,12 @@ export const PatientHistory = () => {
         if (filtered.length === 0) {
             try {
                 const res = await getPatients(
-                    null,
-                    pagination?.patients?.page,
-                    null,
+                    pagination?.patient?.page,
                     selectedHostpital,
+                    isAdmin ? null : selectedBranch,
                     startDate,
                     endDate,
-                    searchInput,
+                    searchInput || "",
                     true
                 );
 
@@ -241,7 +241,7 @@ export const PatientHistory = () => {
         setAppliedEndDate(dateRangeFilter.endDate || "");
     }, [dateRangeFilter]);
 
-    const visibleFormColumns = FORMS_AVAILABLE_COLUMNS.filter((col) =>
+    const visibleFormColumns = PATIENT_AVAILABLE_COLUMNS.filter((col) =>
         selectedFormColumns.includes(col.key),
     );
 
@@ -274,74 +274,105 @@ export const PatientHistory = () => {
         handleMoreMenuClose();
     };
 
-    const handleMenuExport = () => {
-        setExportDialogOpen(true);
-        handleMoreMenuClose();
-    };
+    // const handleApplyDateFilter = async () => {
+    //     if (!startDate || !endDate) return;
 
-    const handleApplyDateFilter = async () => {
-        if (!startDate || !endDate) return;
+    //     try {
 
-        try {
-
-            const res = await getPatients(null, pagination?.patient?.page, null, selectedHostpital, startDate, endDate, true)
-            console.log("patinat fetch ", res);
-            if (res?.success) {
-                setPatients(res?.data)
-                setPagination((prev) => ({
-                    ...prev,
-                    patients: {
-                        ...res.pagination
-                    }
-                }))
-                handleCloseDateFilter();
-            }
+    //         const res = await getPatients(null, pagination?.patient?.page, null, selectedHostpital, startDate, endDate, searchInput, true)
+    //         console.log("patinat fetch ", res);
+    //         if (res?.success) {
+    //             setPatients(res?.data)
+    //             setPagination((prev) => ({
+    //                 ...prev,
+    //                 patients: {
+    //                     ...res.pagination
+    //                 }
+    //             }))
+    //             handleCloseDateFilter();
+    //         }
 
 
-        } catch {
+    //     } catch {
 
-            toast.error("Error To Fetch Patient")
+    //         toast.error("Error To Fetch Patient")
 
-        }
-    };
+    //     }
+    // };
 
     const handleResetDateFilter = () => {
         setStartDate("");
         setEndDate("");
-        setAppliedStartDate("");
-        setAppliedEndDate("");
-        setDateRangeFilter({ startDate: "", endDate: "" });
-        setPagination((prev) => ({
-            ...prev,
-            patients: {
-                ...prev.patients,
-                page: 1,
-            },
-        }));
+
+        ;
         handleCloseDateFilter();
     };
 
-    const onExport = () => {
-        handleExport({
-            format: exportFormat,
-            data: filteredPatients,
-            columns: FORMS_AVAILABLE_COLUMNS,
-            fileName: `patients_${moment().format("YYYY-MM-DD")}`,
-            title: "Patients Report",
-        });
+    const onExport = async () => {
+        if (!startDate || !endDate) {
+            toast.warn("Please Enter Start And End Date");
+            return;
+        }
 
-        setExportDialogOpen(false);
+        if (new Date(startDate) > new Date(endDate)) {
+            toast.warn("Start date cannot be greater than end date");
+            return;
+        }
+
+        try {
+            const res = await getPatients(
+                pagination?.patient?.page,
+                selectedHostpital,
+                isAdmin ? null : selectedBranch,
+                startDate,
+                endDate,
+                searchInput || "",
+                true
+            );
+
+            console.log("patient fetch", res);
+
+            if (res?.success) {
+                const data = res?.data || [];
+
+                setPatients(data);
+                setFilteredPatients(data);
+
+                if (!data.length) {
+                    toast.info("No data found for export");
+                    return;
+                }
+
+                handleExport({
+                    format: exportFormat,
+                    data,
+                    columns: PATIENT_AVAILABLE_COLUMNS,
+                    fileName: `patients_${startDate}_${endDate}`,
+                    title: "Patients Report",
+                });
+
+                setPagination((prev) => ({
+                    ...prev,
+                    patients: {
+                        ...res.pagination,
+                    },
+                }));
+
+                setStartDate("");
+                setEndDate("");
+                setExportDialogOpen(false);
+                toast.success("Export successful");
+            } else {
+                toast.error("Failed to fetch patients");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Error fetching patient");
+        }
     };
     // Handle form type tab change
     const handleFormTypeChange = (event, newValue) => {
         setFormTypeFilter(newValue);
-        setPagination((prev) => ({
-            ...prev,
-            patients: {
-                ...prev.patients,
-                page: 0,
-            },
-        }));;
     };
 
     // Calculate counts for each form type
@@ -413,233 +444,259 @@ export const PatientHistory = () => {
     }, [errors?.patientsError])
 
 
+    useEffect(() => {
+        if (formTypeFilter?.toLowerCase() === "all") {
+            setFilteredPatients(patients);
+            return;
+        }
+
+        setFilteredPatients(
+            patients.filter(
+                (pat) =>
+                    pat?.lastVisit?.formType?.toLowerCase() ===
+                    formTypeFilter?.toLowerCase()
+            )
+        );
+    }, [formTypeFilter, patients]);
+
     return (
-        <Box sx={{ p: 3, backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
-            {/* Header */}
-            <Typography
-                variant="h4"
-                sx={{ mb: 3, fontWeight: 600, color: "#212f3d" }}
-            >
-                Patient Management
-            </Typography>
+        <>
+            <Toaster
+                position="top-right"
+                toastOptions={{
+                    duration: 5000,
+                    style: {
+                        zIndex: 999999,
+                    },
+                }}
+            />
+            <Box sx={{ p: 3, backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
+                {/* Header */}
+                <Typography
+                    variant="h4"
+                    sx={{ mb: 3, fontWeight: 600, color: "#212f3d" }}
+                >
+                    Patient Management
+                </Typography>
 
-            {/* Filter Card */}
-            <Card sx={{ mb: 3, boxShadow: 2 }}>
-                <CardContent>
-                    <Grid container spacing={2} alignItems="flex-end">
-                        {isAdmin ? (<FormControl sx={{ width: "220px" }} size="small">
-                            <InputLabel id="demo-multiple-checkbox-label">Select Hospital</InputLabel>
-                            <Select
-                                labelId="hospital-label"
-                                label="Select Hospital"
-                                value={selectedHostpital || ""}
-                                onChange={(e) => setSelectedHostpital(e.target.value)}
-                                disabled={loading?.hospitalsLoading}
-                                sx={{
-                                    borderRadius: 2,
-                                    backgroundColor: "black",
-                                    color: "black",
-                                    ".MuiSvgIcon-root": {
-                                        color: "black",
-                                    },
-                                }}
-                            >
-                                {loading?.hospitalsLoading ? (
-                                    <MenuItem value="">
-                                        <CircularProgress size={20} sx={{ mr: 1 }} />
-                                        Loading...
-                                    </MenuItem>
-                                ) : hospitals.length > 0 ? (
-                                    hospitals.map((hospital) => (
-                                        <MenuItem
-                                            key={hospital._id}
-                                            value={hospital._id}
-                                        >
-                                            {hospital.name}
-                                        </MenuItem>
-                                    ))
-                                ) : (
-                                    <MenuItem value="">
-                                        No hospitals Assigned
-                                    </MenuItem>
-                                )}
-                            </Select>
-                        </FormControl>) : (
-                            <FormControl sx={{ width: "220px" }} size="small">
-                                <InputLabel
-                                    id="hospital-label"
-                                >
-                                    Select Branch
-                                </InputLabel>
-
+                {/* Filter Card */}
+                <Card sx={{ mb: 3, boxShadow: 2 }}>
+                    <CardContent>
+                        <Grid container spacing={2} alignItems="flex-end">
+                            {isAdmin ? (<FormControl sx={{ width: "220px" }} size="small">
+                                <InputLabel id="demo-multiple-checkbox-label">Select Hospital</InputLabel>
                                 <Select
                                     labelId="hospital-label"
-                                    label="Select Branch"
-                                    value={selectedBranch}
-                                    onChange={(e) => setSelectedBranch(e.target.value)}
-                                    disabled={loading?.branchesLoading}
-                                    displayEmpty
+                                    label="Select Hospital"
+                                    value={selectedHostpital || ""}
+                                    onChange={(e) => setSelectedHostpital(e.target.value)}
+                                    disabled={loading?.hospitalsLoading}
                                     sx={{
                                         borderRadius: 2,
                                         backgroundColor: "black",
                                         color: "black",
-
+                                        ".MuiSvgIcon-root": {
+                                            color: "black",
+                                        },
                                     }}
                                 >
-                                    {/* <MenuItem value="">
-                                                                <em>Select Hospital</em>
-                                                            </MenuItem> */}
-
-                                    {loading?.branchesLoading ? (
+                                    {loading?.hospitalsLoading ? (
                                         <MenuItem value="">
                                             <CircularProgress size={20} sx={{ mr: 1 }} />
                                             Loading...
                                         </MenuItem>
-                                    ) : branches.length > 0 ? (
-                                        branches.map((branch) => (
+                                    ) : hospitals.length > 0 ? (
+                                        hospitals.map((hospital) => (
                                             <MenuItem
-                                                key={branch._id}
-                                                value={branch._id}
+                                                key={hospital._id}
+                                                value={hospital._id}
                                             >
-                                                {branch.name}
+                                                {hospital.name}
                                             </MenuItem>
                                         ))
                                     ) : (
                                         <MenuItem value="">
-                                            No Branch Assigned
+                                            No hospitals Assigned
                                         </MenuItem>
                                     )}
                                 </Select>
-                            </FormControl>
-                        )}
+                            </FormControl>) : (
+                                <FormControl sx={{ width: "220px" }} size="small">
+                                    <InputLabel
+                                        id="hospital-label"
+                                    >
+                                        Select Branch
+                                    </InputLabel>
 
-                        {/* Search by Name */}
-                        <Grid item xs={12} sm={6} md={3}>
-                            <TextField
-                                fullWidth
-                                label="Search by Name/Phone No./Purpose"
-                                variant="outlined"
-                                size="small"
-                                value={searchInput}
-                                onChange={(e) => setSearchInput(e.target.value)}
-                                onKeyDown={handleSearchKeyDown}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <SearchIcon sx={{ color: "#7c8fa3" }} />
-                                        </InputAdornment>
-                                    ),
-                                    endAdornment: (
-                                        <InputAdornment position="end">
+                                    <Select
+                                        labelId="hospital-label"
+                                        label="Select Branch"
+                                        value={selectedBranch}
+                                        onChange={(e) => setSelectedBranch(e.target.value)}
+                                        disabled={loading?.branchesLoading}
+                                        displayEmpty
+                                        sx={{
+                                            borderRadius: 2,
+                                            backgroundColor: "black",
+                                            color: "black",
+
+                                        }}
+                                    >
+                                        {/* <MenuItem value="">
+                                                                <em>Select Hospital</em>
+                                                            </MenuItem> */}
+
+                                        {loading?.branchesLoading ? (
+                                            <MenuItem value="">
+                                                <CircularProgress size={20} sx={{ mr: 1 }} />
+                                                Loading...
+                                            </MenuItem>
+                                        ) : branches.length > 0 ? (
+                                            branches.map((branch) => (
+                                                <MenuItem
+                                                    key={branch._id}
+                                                    value={branch._id}
+                                                >
+                                                    {branch.name}
+                                                </MenuItem>
+                                            ))
+                                        ) : (
+                                            <MenuItem value="">
+                                                No Branch Assigned
+                                            </MenuItem>
+                                        )}
+                                    </Select>
+                                </FormControl>
+                            )}
+
+                            {/* Search by Name */}
+                            <Grid item xs={12} sm={6} md={3}>
+                                <TextField
+                                    fullWidth
+                                    label="Search by Name/Phone No./Purpose"
+                                    variant="outlined"
+                                    size="small"
+                                    value={searchInput}
+                                    onChange={(e) => setSearchInput(e.target.value)}
+                                    onKeyDown={handleSearchKeyDown}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <SearchIcon sx={{ color: "#7c8fa3" }} />
+                                            </InputAdornment>
+                                        ),
+                                        endAdornment: (
+                                            <InputAdornment position="end">
+                                                <Button
+                                                    size="small"
+                                                    variant="contained"
+                                                    color="primary"
+                                                    onClick={handleSearchApply}
+                                                    disabled={getPatientloading || searchInput?.trim() === ""}
+                                                    sx={{
+                                                        textTransform: "none",
+                                                        minWidth: 72,
+                                                        height: 32,
+                                                        fontSize: "0.8rem",
+                                                    }}
+                                                >
+                                                    {getPatientloading ? <CircularProgress size={22} /> : "Search"}
+                                                </Button>
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                    placeholder="Enter Patient Name,PhoneNo or Purpose"
+                                />
+                            </Grid>
+                            {/* <Grid item xs={12} sm={6} md={3}>
+                                <Button
+                                    fullWidth
+                                    variant="outlined"
+                                    color="primary"
+                                    startIcon={<FilterAltIcon />}
+                                    onClick={handleOpenDateFilter}
+                                    sx={{ justifyContent: 'flex-start' }}
+                                >
+                                    {startDate && endDate
+                                        ? `Date: ${startDate} to ${endDate}`
+                                        : "Date Filter"}
+                                </Button>
+                                <Menu
+                                    id="date-filter-menu"
+                                    anchorEl={dateFilterAnchorEl}
+                                    open={openDateFilter}
+                                    onClose={handleCloseDateFilter}
+                                    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                                    transformOrigin={{ vertical: "top", horizontal: "left" }}
+                                >
+                                    <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2, width: 280 }}>
+                                        <TextField
+                                            label="Start Date"
+                                            type="date"
+                                            variant="outlined"
+                                            size="small"
+                                            value={startDate}
+                                            onChange={(e) => setStartDate(e.target.value)}
+                                            InputLabelProps={{ shrink: true }}
+                                        />
+                                        <TextField
+                                            label="End Date"
+                                            type="date"
+                                            variant="outlined"
+                                            size="small"
+                                            value={endDate}
+                                            onChange={(e) => setEndDate(e.target.value)}
+                                            InputLabelProps={{ shrink: true }}
+                                        />
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
                                             <Button
-                                                size="small"
+                                                color="secondary"
+                                                onClick={handleResetDateFilter}
+                                                disabled={(!startDate && !endDate) || getPatientloading}
+                                            >
+                                                Reset
+                                            </Button>
+                                            <Button
                                                 variant="contained"
                                                 color="primary"
-                                                onClick={handleSearchApply}
-                                                sx={{
-                                                    textTransform: "none",
-                                                    minWidth: 72,
-                                                    height: 32,
-                                                    fontSize: "0.8rem",
-                                                }}
+                                                onClick={handleApplyDateFilter}
+                                                disabled={(!startDate || !endDate) || getPatientloading}
                                             >
-                                                Search
+                                                {getPatientloading ? <CircularProgress size={22} /> : "Apply"}
                                             </Button>
-                                        </InputAdornment>
-                                    ),
-                                }}
-                                placeholder="Enter Patient Name,PhoneNo or Purpose"
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Button
-                                fullWidth
-                                variant="outlined"
-                                color="primary"
-                                startIcon={<FilterAltIcon />}
-                                onClick={handleOpenDateFilter}
-                                sx={{ justifyContent: 'flex-start' }}
-                            >
-                                {startDate && endDate
-                                    ? `Date: ${startDate} to ${endDate}`
-                                    : "Date Filter"}
-                            </Button>
-                            <Menu
-                                id="date-filter-menu"
-                                anchorEl={dateFilterAnchorEl}
-                                open={openDateFilter}
-                                onClose={handleCloseDateFilter}
-                                anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                                transformOrigin={{ vertical: "top", horizontal: "left" }}
-                            >
-                                <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2, width: 280 }}>
-                                    <TextField
-                                        label="Start Date"
-                                        type="date"
-                                        variant="outlined"
-                                        size="small"
-                                        value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
-                                        InputLabelProps={{ shrink: true }}
-                                    />
-                                    <TextField
-                                        label="End Date"
-                                        type="date"
-                                        variant="outlined"
-                                        size="small"
-                                        value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
-                                        InputLabelProps={{ shrink: true }}
-                                    />
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
-                                        <Button
-                                            color="secondary"
-                                            onClick={handleResetDateFilter}
-                                            disabled={(!startDate && !endDate) || getPatientloading}
-                                        >
-                                            Reset
-                                        </Button>
-                                        <Button
-                                            variant="contained"
-                                            color="primary"
-                                            onClick={handleApplyDateFilter}
-                                            disabled={(!startDate || !endDate) || getPatientloading}
-                                        >
-                                            {getPatientloading ? <CircularProgress size={22} /> : "Apply"}
-                                        </Button>
+                                        </Box>
                                     </Box>
-                                </Box>
-                            </Menu>
-                        </Grid>
-                        <Grid
-                            item
-                            xs={12}
-                            sm={6}
-                            md={4}
-                            sx={{
+                                </Menu>
+                            </Grid> */}
+                            <Grid
+                                item
+                                xs={12}
+                                sm={6}
+                                md={4}
+                                sx={{
 
-                                display: 'flex',
-                                gap: '5px',
-                                fontSize: "12px",
-                                textTransform: "none", // keeps "View More" normal
-                                minWidth: "auto",      // removes default large width
-                                px: 1.5,               // horizontal padding
-                                py: 0.5,               // vertical padding
-                            }}
-                        >
-                            <Button
-                                variant="outlined"
-                                color="primary"
-                                disabled={loading?.patients}
-                                startIcon={<RefreshIcon />}
-                                onClick={refetchPatients}
-
+                                    display: 'flex',
+                                    gap: '5px',
+                                    fontSize: "12px",
+                                    textTransform: "none", // keeps "View More" normal
+                                    minWidth: "auto",      // removes default large width
+                                    px: 1.5,               // horizontal padding
+                                    py: 0.5,               // vertical padding
+                                }}
                             >
-                                {loading?.patients ? <CircularProgress size={24} /> : "Refresh"}
-                            </Button>
+                                <Button
+                                    variant="outlined"
+                                    color="primary"
+                                    disabled={loading?.patients}
+                                    startIcon={<RefreshIcon />}
+                                    onClick={refetchPatients}
+
+                                >
+                                    {loading?.patients ? <CircularProgress size={24} /> : "Refresh"}
+                                </Button>
 
 
-                            {/* <div
+                                {/* <div
                                     ref={columnFilterButtonRef}
                                     style={{ position: "relative", display: "inline-block" }}
                                 >
@@ -674,7 +731,7 @@ export const PatientHistory = () => {
                                             }}
                                         >
                                             <div className="ff-column-checkboxes">
-                                                {FORMS_AVAILABLE_COLUMNS.map((col) => (
+                                                {PATIENT_AVAILABLE_COLUMNS.map((col) => (
                                                     <label
                                                         key={col.key}
                                                         className="ff-column-check"
@@ -704,415 +761,434 @@ export const PatientHistory = () => {
 ];
 
                                 </div> */}
-                            <Button
-                                variant="contained"
-                                color="warning"
-                                startIcon={<DownloadIcon />}
-                                onClick={() => setExportDialogOpen(true)}
-                            >
-                                Export
-                            </Button>
-                            {/* <IconButton
-                                onClick={handleMoreMenuOpen}
-                                sx={{
-                                    borderRadius: 2,
-                                    border: "1px solid rgba(0,0,0,0.08)",
-                                    color: "#212f3d",
-                                    ml: 1,
-                                }}
-                            >
-                                <MoreVertIcon />
-                            </IconButton> */}
-                            <Menu
-                                anchorEl={moreMenuAnchor}
-                                open={Boolean(moreMenuAnchor)}
-                                onClose={handleMoreMenuClose}
-                            >
-                                <MenuItem onClick={handleMenuOpenDateFilter}>
-                                    Date Filter
-                                </MenuItem>
-                                {/* <MenuItem
-                                    onClick={handleMenuClearDateFilter}
-                                    disabled={!startDate && !endDate}
+                                <Button
+                                    variant="contained"
+                                    color="warning"
+                                    startIcon={<DownloadIcon />}
+                                    onClick={() => setExportDialogOpen(true)}
                                 >
-                                    Clear Date Filter
-                                </MenuItem> */}
-                                <MenuItem onClick={handleMenuExport}>
                                     Export
-                                </MenuItem>
-                            </Menu>
+                                </Button>
 
-                            <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)}>
-                                <DialogTitle>Select Export Format</DialogTitle>
-                                <DialogContent>
-                                    <RadioGroup
-                                        value={exportFormat}
-                                        onChange={e => setExportFormat(e.target.value)}
-                                    >
-                                        <FormControlLabel value="csv" control={<Radio />} label="CSV (.csv)" />
-                                        <FormControlLabel value="excel" control={<Radio />} label="Excel (.xlsx)" />
-                                        <FormControlLabel value="pdf" control={<Radio />} label="PDF (.pdf)" />
-                                    </RadioGroup>
-                                </DialogContent>
-                                <DialogActions>
-                                    <Button onClick={() => setExportDialogOpen(false)} color="secondary">Cancel</Button>
-                                    <Button onClick={onExport} color="primary" variant="contained">Download</Button>
-                                </DialogActions>
-                            </Dialog>
+
+                                <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} fullWidth maxWidth="sm">
+                                    <DialogTitle>Export Data</DialogTitle>
+
+                                    <DialogContent>
+
+                                        {/* Date Range Section */}
+                                        <div style={{ display: "flex", gap: "12px", marginTop: "10px" }}>
+                                            <TextField
+                                                label="Start Date"
+                                                type="date"
+                                                fullWidth
+                                                InputLabelProps={{ shrink: true }}
+                                                value={startDate}
+                                                onChange={(e) => setStartDate(e.target.value)}
+                                            />
+
+                                            <TextField
+                                                label="End Date"
+                                                type="date"
+                                                fullWidth
+                                                InputLabelProps={{ shrink: true }}
+                                                value={endDate}
+                                                onChange={(e) => setEndDate(e.target.value)}
+                                            />
+                                        </div>
+
+                                        {/* Format Selection */}
+                                        <div style={{ marginTop: "20px" }}>
+                                            <RadioGroup
+                                                value={exportFormat}
+                                                onChange={(e) => setExportFormat(e.target.value)}
+                                            >
+                                                <FormControlLabel value="csv" control={<Radio />} label="CSV (.csv)" />
+                                                <FormControlLabel value="excel" control={<Radio />} label="Excel (.xlsx)" />
+                                                <FormControlLabel value="pdf" control={<Radio />} label="PDF (.pdf)" />
+                                            </RadioGroup>
+                                        </div>
+
+                                    </DialogContent>
+
+                                    <DialogActions>
+                                        <Button disabled={getPatientloading} onClick={() => setExportDialogOpen(false)} color="secondary">
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            onClick={onExport}
+                                            color="primary"
+                                            variant="contained"
+                                            disabled={
+                                                !startDate ||
+                                                !endDate ||
+                                                getPatientloading
+                                            }
+                                        >
+                                            {getPatientloading ? (
+                                                <CircularProgress size={22} color="inherit" />
+                                            ) : (
+                                                "Download"
+                                            )}
+                                        </Button>
+                                    </DialogActions>
+                                </Dialog>
+                            </Grid>
                         </Grid>
-                    </Grid>
 
-                    {/* Active Filters Display and Clear Button (right) */}
-                    {(searchName || appliedStartDate || appliedEndDate) && (
-                        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography variant="caption" sx={{ color: "#7c8fa3" }}>
-                                Showing {filteredPatients.length} of {patients.length} patient(s)
-                                {appliedStartDate && appliedEndDate && (
-                                    <>&nbsp;| Date: {appliedStartDate} to {appliedEndDate}</>
-                                )}
-                            </Typography>
-                            <Button
-                                variant="outlined"
-                                color="secondary"
-                                onClick={handleClearFilters}
-                                sx={{ ml: 2 }}
-                            >
-                                Clear
-                            </Button>
-                        </Box>
-                    )}
-                </CardContent>
-            </Card>
+                        {/* Active Filters Display and Clear Button (right) */}
+                        {(searchName || appliedStartDate || appliedEndDate) && (
+                            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="caption" sx={{ color: "#7c8fa3" }}>
+                                    Showing {filteredPatients.length} of {patients.length} patient(s)
+                                    {appliedStartDate && appliedEndDate && (
+                                        <>&nbsp;| Date: {appliedStartDate} to {appliedEndDate}</>
+                                    )}
+                                </Typography>
+                                <Button
+                                    variant="outlined"
+                                    color="secondary"
+                                    onClick={handleClearFilters}
+                                    sx={{ ml: 2 }}
+                                >
+                                    Clear
+                                </Button>
+                            </Box>
+                        )}
+                    </CardContent>
+                </Card>
 
-            {/* Error Alert */}
-            {errors?.patientsError && (
-                <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
-                    {errors?.patientsError}
-                </Alert>
-            )}
+                {/* Error Alert */}
+                {errors?.patientsError && (
+                    <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
+                        {errors?.patientsError}
+                    </Alert>
+                )}
 
-            {/* Loading State */}
+                {/* Loading State */}
 
-            {loading?.patients ? (
-                <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-                    <CircularProgress />
-                </Box>
-            ) : (
-                <>
-                    {/* Table */}
-                    <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
-                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <Tabs
-                                value={formTypeFilter}
-                                onChange={handleFormTypeChange}
-                                sx={{
-                                    borderBottom: "2px solid #e0e0e0",
-                                }}
-                            >
-                                <Tab
-                                    label={
-                                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                            <span>All</span>
-                                            <Chip
-                                                label={counts.allCount}
-                                                size="small"
-                                                sx={{
-                                                    backgroundColor:
-                                                        formTypeFilter === "all" ? "#212f3d" : "#e0e0e0",
-                                                    color: formTypeFilter === "all" ? "white" : "#212f3d",
-                                                    fontWeight: 600,
-                                                }}
-                                            />
-                                        </Box>
-                                    }
-                                    value="all"
-                                />
-                                <Tab
-                                    label={
-                                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                            <span>Inbound</span>
-                                            <Chip
-                                                label={counts.inboundCount}
-                                                size="small"
-                                                sx={{
-                                                    backgroundColor:
-                                                        formTypeFilter === "inbound" ? "#212f3d" : "#c8e6c9",
-                                                    color: formTypeFilter === "inbound" ? "white" : "#212f3d",
-                                                    fontWeight: 600,
-                                                }}
-                                            />
-                                        </Box>
-                                    }
-                                    value="inbound"
-                                />
-                                <Tab
-                                    label={
-                                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                            <span>Outbound</span>
-                                            <Chip
-                                                label={counts.outboundCount}
-                                                size="small"
-                                                sx={{
-                                                    backgroundColor:
-                                                        formTypeFilter === "outbound" ? "#212f3d" : "#ffccbc",
-                                                    color: formTypeFilter === "outbound" ? "white" : "#212f3d",
-                                                    fontWeight: 600,
-                                                }}
-                                            />
-                                        </Box>
-                                    }
-                                    value="outbound"
-                                />
-                            </Tabs>
-
-                        </Box>
-
-                        <Table>
-                            <TableHead>
-                                <TableRow
+                {loading?.patients ? (
+                    <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+                        <CircularProgress />
+                    </Box>
+                ) : (
+                    <>
+                        {/* Table */}
+                        <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
+                            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                <Tabs
+                                    value={formTypeFilter}
+                                    onChange={handleFormTypeChange}
                                     sx={{
-                                        backgroundColor: "#212f3d",
-                                        "& th": {
-                                            fontWeight: 600,
-                                            fontSize: "0.95rem",
-                                        },
+                                        borderBottom: "2px solid #e0e0e0",
                                     }}
                                 >
-                                    <TableCell align="center">S.No</TableCell>
-
-                                    {visibleFormColumns.map((col) => (
-                                        <TableCell key={col.key}>
-                                            {col?.label || "-"}
-                                        </TableCell>
-                                    ))}
-                                    <TableCell align="center">Action</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {filteredPatients.length > 0 ? (
-                                    filteredPatients.map((row, index) => (
-                                        <TableRow
-                                            key={row._id}
-                                            sx={{
-                                                "&:hover": { backgroundColor: "#f0f0f0" },
-                                                "&:nth-of-type(odd)": { backgroundColor: "#fafafa" },
-                                            }}
-                                        >
-                                            <TableCell align="center">
-                                                {index + 1}
-                                            </TableCell>
-                                            {visibleFormColumns.map((col) => {
-                                                let val = getNestedValue(row, col.key);
-
-                                                // Handle appointmentSlot object
-                                                if (
-                                                    col.key === "lastVisit.formData.appointmentSlot" &&
-                                                    val
-                                                ) {
-                                                    const formattedDate = val?.date
-                                                        ? moment(val.date).format("dddd, DD MMM YYYY")
-                                                        : null;
-
-                                                    val = formattedDate
-                                                        ? `${formattedDate} | ${val.start} to ${val.end}`
-                                                        : `${val.start} to ${val.end}`;
-                                                }
-
-                                                // Handle dates
-                                                else if (val && typeof val === "string") {
-                                                    const date = moment(val);
-
-                                                    if (date.isValid()) {
-                                                        val = date.format("DD/MM/YYYY hh:mm A");
-                                                    }
-                                                }
-
-                                                // Handle generic objects
-                                                else if (
-                                                    val &&
-                                                    typeof val === "object" &&
-                                                    !Array.isArray(val)
-                                                ) {
-                                                    val = val.name || JSON.stringify(val);
-                                                }
-
-
-                                                const displayValue =
-                                                    val === null || val === undefined || val === ""
-                                                        ? "--"
-                                                        : val;
-                                                return (
-                                                    <TableCell key={col.key}>
-                                                        {["followupStatus", "lastVisit.formType", "appointmentStatus"].includes(col.key) ? (
-                                                            <Chip
-                                                                label={displayValue}
-                                                                size="small"
-                                                                sx={{
-                                                                    backgroundColor:
-                                                                        statusStyles[val]?.bg || "#e0e0e0",
-
-                                                                    color:
-                                                                        statusStyles[val]?.color || "#000",
-
-                                                                    fontWeight: 600,
-                                                                    minWidth: 90,
-                                                                }}
-                                                            />
-                                                        ) : (
-                                                            displayValue
-                                                        )}
-                                                    </TableCell>
-                                                );
-                                            })}
-                                            <TableCell>
-                                                <Button
-                                                    onClick={() => {
-                                                        navigate(`/single-patient-history/${row?._id}`, {
-                                                            state: {
-
-                                                                patient: {
-                                                                    ...row,
-                                                                    hospitalId: selectedHostpital
-                                                                }
-                                                            }
-                                                        })
-                                                    }}
-                                                    variant="contained"
-                                                    color="success"
+                                    <Tab
+                                        label={
+                                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                                <span>All</span>
+                                                <Chip
+                                                    label={counts.allCount}
                                                     size="small"
                                                     sx={{
-                                                        fontSize: "12px",
-                                                        textTransform: "none", // keeps "View More" normal
-                                                        minWidth: "auto",      // removes default large width
-                                                        px: 1.5,               // horizontal padding
-                                                        py: 0.5,               // vertical padding
+                                                        backgroundColor:
+                                                            formTypeFilter === "all" ? "#212f3d" : "#e0e0e0",
+                                                        color: formTypeFilter === "all" ? "white" : "#212f3d",
+                                                        fontWeight: 600,
                                                     }}
-                                                >
-                                                    View More
-                                                </Button>
+                                                />
+                                            </Box>
+                                        }
+                                        value="all"
+                                    />
+                                    <Tab
+                                        label={
+                                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                                <span>Inbound</span>
+                                                <Chip
+                                                    label={counts.inboundCount}
+                                                    size="small"
+                                                    sx={{
+                                                        backgroundColor:
+                                                            formTypeFilter === "inbound" ? "#212f3d" : "#c8e6c9",
+                                                        color: formTypeFilter === "inbound" ? "white" : "#212f3d",
+                                                        fontWeight: 600,
+                                                    }}
+                                                />
+                                            </Box>
+                                        }
+                                        value="inbound"
+                                    />
+                                    <Tab
+                                        label={
+                                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                                <span>Outbound</span>
+                                                <Chip
+                                                    label={counts.outboundCount}
+                                                    size="small"
+                                                    sx={{
+                                                        backgroundColor:
+                                                            formTypeFilter === "outbound" ? "#212f3d" : "#ffccbc",
+                                                        color: formTypeFilter === "outbound" ? "white" : "#212f3d",
+                                                        fontWeight: 600,
+                                                    }}
+                                                />
+                                            </Box>
+                                        }
+                                        value="outbound"
+                                    />
+                                </Tabs>
+
+                            </Box>
+
+                            <Table>
+                                <TableHead>
+                                    <TableRow
+                                        sx={{
+                                            backgroundColor: "#212f3d",
+                                            "& th": {
+                                                fontWeight: 600,
+                                                fontSize: "0.95rem",
+                                            },
+                                        }}
+                                    >
+                                        <TableCell align="center">S.No</TableCell>
+
+                                        {visibleFormColumns.map((col) => (
+                                            <TableCell key={col.key}>
+                                                {col?.label || "-"}
+                                            </TableCell>
+                                        ))}
+                                        <TableCell align="center">Action</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {filteredPatients.length > 0 ? (
+                                        filteredPatients.map((row, index) => (
+                                            <TableRow
+                                                key={row._id}
+                                                sx={{
+                                                    "&:hover": { backgroundColor: "#f0f0f0" },
+                                                    "&:nth-of-type(odd)": { backgroundColor: "#fafafa" },
+                                                }}
+                                            >
+                                                <TableCell align="center">
+                                                    {index + 1}
+                                                </TableCell>
+                                                {visibleFormColumns.map((col) => {
+                                                    let val = getNestedValue(row, col.key);
+
+                                                    // Handle appointmentSlot object
+                                                    if (
+                                                        col.key === "lastVisit.formData.appointmentSlot" &&
+                                                        val
+                                                    ) {
+                                                        const formattedDate = val?.date
+                                                            ? moment(val.date).format("dddd, DD MMM YYYY")
+                                                            : null;
+
+                                                        val = formattedDate
+                                                            ? `${formattedDate} | ${val.start} to ${val.end}`
+                                                            : `${val.start} to ${val.end}`;
+                                                    }
+
+                                                    // Handle dates
+                                                    else if (val && typeof val === "string") {
+                                                        const date = moment(val);
+
+                                                        if (date.isValid()) {
+                                                            val = date.format("DD/MM/YYYY hh:mm A");
+                                                        }
+                                                    }
+
+                                                    // Handle generic objects
+                                                    else if (
+                                                        val &&
+                                                        typeof val === "object" &&
+                                                        !Array.isArray(val)
+                                                    ) {
+                                                        val = val.name || JSON.stringify(val);
+                                                    }
+
+
+                                                    const displayValue =
+                                                        val === null || val === undefined || val === ""
+                                                            ? "--"
+                                                            : val;
+                                                    return (
+                                                        <TableCell key={col.key}>
+                                                            {["followupStatus", "lastVisit.formType", "appointmentStatus"].includes(col.key) ? (
+                                                                <Chip
+                                                                    label={displayValue}
+                                                                    size="small"
+                                                                    sx={{
+                                                                        backgroundColor:
+                                                                            statusStyles[val]?.bg || "#e0e0e0",
+
+                                                                        color:
+                                                                            statusStyles[val]?.color || "#000",
+
+                                                                        fontWeight: 600,
+                                                                        minWidth: 90,
+                                                                    }}
+                                                                />
+                                                            ) : (
+                                                                displayValue
+                                                            )}
+                                                        </TableCell>
+                                                    );
+                                                })}
+                                                <TableCell>
+                                                    <Button
+                                                        onClick={() => {
+                                                            navigate(`/single-patient-history/${row?._id}`, {
+                                                                state: {
+
+                                                                    patient: {
+                                                                        ...row,
+                                                                        hospitalId: selectedHostpital
+                                                                    }
+                                                                }
+                                                            })
+                                                        }}
+                                                        variant="contained"
+                                                        color="success"
+                                                        size="small"
+                                                        sx={{
+                                                            fontSize: "12px",
+                                                            textTransform: "none", // keeps "View More" normal
+                                                            minWidth: "auto",      // removes default large width
+                                                            px: 1.5,               // horizontal padding
+                                                            py: 0.5,               // vertical padding
+                                                        }}
+                                                    >
+                                                        View More
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                            // <TableRow
+                                            //     key={patient._id}
+                                            //     sx={{
+                                            //         "&:hover": { backgroundColor: "#f0f0f0" },
+                                            //         "&:nth-of-type(odd)": { backgroundColor: "#fafafa" },
+                                            //     }}
+                                            // >
+                                            //     <TableCell align="center">
+                                            //         {index + 1}
+                                            //     </TableCell>
+                                            //     <TableCell sx={{ fontWeight: 500 }}>
+                                            //         {patient.patientName || "N/A"}
+                                            //     </TableCell>
+                                            //     <TableCell>{patient.patientMobile || "N/A"}</TableCell>
+                                            //     <TableCell>
+                                            //         <Box
+                                            //             sx={{
+                                            //                 display: "inline-block",
+                                            //                 px: 1.5,
+                                            //                 py: 0.5,
+                                            //                 backgroundColor:
+                                            //                     patient.purpose === "Appointment"
+                                            //                         ? "#e3f2fd"
+                                            //                         : patient.purpose === "followup"
+                                            //                             ? "#f3e5f5"
+                                            //                             : "#fce4ec",
+                                            //                 borderRadius: 1,
+                                            //                 fontSize: "0.85rem",
+                                            //                 fontWeight: 500,
+                                            //             }}
+                                            //         >
+                                            //             {patient?.lastVisit?.purpose || "N/A"}
+                                            //         </Box>
+                                            //     </TableCell>
+                                            //     <TableCell>
+                                            //         <Box
+                                            //             sx={{
+                                            //                 display: "inline-block",
+                                            //                 px: 1.5,
+                                            //                 py: 0.5,
+                                            //                 backgroundColor:
+                                            //                     patient?.lastVisit?.formType === "inbound"
+                                            //                         ? "#c8e6c9"
+                                            //                         : "#ffccbc",
+                                            //                 borderRadius: 1,
+                                            //                 fontSize: "0.85rem",
+                                            //                 fontWeight: 500,
+                                            //             }}
+                                            //         >
+                                            //             {patient?.lastVisit?.formType || "N/A"}
+                                            //         </Box>
+                                            //     </TableCell>
+                                            //     <TableCell>{patient?.lastVisit?.doctor?.name || "N/A"}</TableCell>
+                                            //     <TableCell>{patient?.lastVisit?.department?.name || "N/A"}</TableCell>
+                                            //     <TableCell sx={{ fontSize: "0.9rem" }}>
+                                            //         {formatDate(patient.createdAt)}
+                                            //     </TableCell>
+                                            // <TableCell>
+                                            //     <Button
+                                            //         onClick={() => {
+                                            //             navigate(`/single-patient-history/${patient?._id}`, {
+                                            //                 state: {
+
+                                            //                     patient: {
+                                            //                         ...patient,
+                                            //                         hospitalId: selectedHostpital
+                                            //                     }
+                                            //                 }
+                                            //             })
+                                            //         }}
+                                            //         variant="contained"
+                                            //         color="success"
+                                            //         size="small"
+                                            //         sx={{
+                                            //             fontSize: "12px",
+                                            //             textTransform: "none", // keeps "View More" normal
+                                            //             minWidth: "auto",      // removes default large width
+                                            //             px: 1.5,               // horizontal padding
+                                            //             py: 0.5,               // vertical padding
+                                            //         }}
+                                            //     >
+                                            //         View More
+                                            //     </Button>
+                                            // </TableCell>
+                                            // </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                                                <Typography variant="body2" sx={{ color: "#7c8fa3" }}>
+                                                    No patients found matching your criteria
+                                                </Typography>
                                             </TableCell>
                                         </TableRow>
-                                        // <TableRow
-                                        //     key={patient._id}
-                                        //     sx={{
-                                        //         "&:hover": { backgroundColor: "#f0f0f0" },
-                                        //         "&:nth-of-type(odd)": { backgroundColor: "#fafafa" },
-                                        //     }}
-                                        // >
-                                        //     <TableCell align="center">
-                                        //         {index + 1}
-                                        //     </TableCell>
-                                        //     <TableCell sx={{ fontWeight: 500 }}>
-                                        //         {patient.patientName || "N/A"}
-                                        //     </TableCell>
-                                        //     <TableCell>{patient.patientMobile || "N/A"}</TableCell>
-                                        //     <TableCell>
-                                        //         <Box
-                                        //             sx={{
-                                        //                 display: "inline-block",
-                                        //                 px: 1.5,
-                                        //                 py: 0.5,
-                                        //                 backgroundColor:
-                                        //                     patient.purpose === "Appointment"
-                                        //                         ? "#e3f2fd"
-                                        //                         : patient.purpose === "followup"
-                                        //                             ? "#f3e5f5"
-                                        //                             : "#fce4ec",
-                                        //                 borderRadius: 1,
-                                        //                 fontSize: "0.85rem",
-                                        //                 fontWeight: 500,
-                                        //             }}
-                                        //         >
-                                        //             {patient?.lastVisit?.purpose || "N/A"}
-                                        //         </Box>
-                                        //     </TableCell>
-                                        //     <TableCell>
-                                        //         <Box
-                                        //             sx={{
-                                        //                 display: "inline-block",
-                                        //                 px: 1.5,
-                                        //                 py: 0.5,
-                                        //                 backgroundColor:
-                                        //                     patient?.lastVisit?.formType === "inbound"
-                                        //                         ? "#c8e6c9"
-                                        //                         : "#ffccbc",
-                                        //                 borderRadius: 1,
-                                        //                 fontSize: "0.85rem",
-                                        //                 fontWeight: 500,
-                                        //             }}
-                                        //         >
-                                        //             {patient?.lastVisit?.formType || "N/A"}
-                                        //         </Box>
-                                        //     </TableCell>
-                                        //     <TableCell>{patient?.lastVisit?.doctor?.name || "N/A"}</TableCell>
-                                        //     <TableCell>{patient?.lastVisit?.department?.name || "N/A"}</TableCell>
-                                        //     <TableCell sx={{ fontSize: "0.9rem" }}>
-                                        //         {formatDate(patient.createdAt)}
-                                        //     </TableCell>
-                                        // <TableCell>
-                                        //     <Button
-                                        //         onClick={() => {
-                                        //             navigate(`/single-patient-history/${patient?._id}`, {
-                                        //                 state: {
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
 
-                                        //                     patient: {
-                                        //                         ...patient,
-                                        //                         hospitalId: selectedHostpital
-                                        //                     }
-                                        //                 }
-                                        //             })
-                                        //         }}
-                                        //         variant="contained"
-                                        //         color="success"
-                                        //         size="small"
-                                        //         sx={{
-                                        //             fontSize: "12px",
-                                        //             textTransform: "none", // keeps "View More" normal
-                                        //             minWidth: "auto",      // removes default large width
-                                        //             px: 1.5,               // horizontal padding
-                                        //             py: 0.5,               // vertical padding
-                                        //         }}
-                                        //     >
-                                        //         View More
-                                        //     </Button>
-                                        // </TableCell>
-                                        // </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                                            <Typography variant="body2" sx={{ color: "#7c8fa3" }}>
-                                                No patients found matching your criteria
-                                            </Typography>
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-
-                    {/* Pagination */}
-                    {filteredPatients.length > 0 && (
-                        <TablePagination
-                            rowsPerPageOptions={[5, 10, 25, 50]}
-                            component="div"
-                            count={pagination?.patients?.totalDocument || 0}
-                            rowsPerPage={pagination?.patients?.limit || 10}
-                            page={pagination?.patients?.page - 1}   // IMPORTANT FIX
-                            onRowsPerPageChange={handleChangeRowsPerPage}
-                            onPageChange={handleChangePage}
-                            sx={{
-                                backgroundColor: "white",
-                                mt: 2,
-                                borderRadius: 1,
-                            }}
-                        />
-                    )}
-                </>
-            )
-            }
+                        {/* Pagination */}
+                        {filteredPatients.length > 0 && (
+                            <TablePagination
+                                rowsPerPageOptions={[5, 10, 25, 50]}
+                                component="div"
+                                count={pagination?.patients?.totalDocument || 0}
+                                rowsPerPage={pagination?.patients?.limit || 10}
+                                page={pagination?.patients?.page - 1}   // IMPORTANT FIX
+                                onRowsPerPageChange={handleChangeRowsPerPage}
+                                onPageChange={handleChangePage}
+                                sx={{
+                                    backgroundColor: "white",
+                                    mt: 2,
+                                    borderRadius: 1,
+                                }}
+                            />
+                        )}
+                    </>
+                )
+                }
 
 
-        </Box >
+            </Box >
+        </>
+
     );
 };

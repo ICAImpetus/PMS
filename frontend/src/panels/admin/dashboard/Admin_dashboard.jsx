@@ -104,9 +104,12 @@ const AdminDashboard = () => {
     errors,
     codeAlerts,
     setFilter,
+    handleFilterChange,
     setSelectedHostpital,
     pagination,
-    setPagination
+    setPagination,
+    dateRange,
+    setDateRange
   } = useContext(HospitalContext);
 
   const categoryData =
@@ -279,18 +282,13 @@ const AdminDashboard = () => {
     <>
       {formsModalOpen ? (
         <FilledFormsComponent
-          filter={filter}
           selectedHostpital={selectedHostpital}
           formsModalOpen={formsModalOpen}
           setFormsModalOpen={setFormsModalOpen}
-          formsData={formsData}
-          formsLoading={loading?.dashboardLoading}
           formsTypeFilter={formsTypeFilter}
           setFormsTypeFilter={setFormsTypeFilter}
-          setPagination={setPagination}
-          pagination={pagination}
-        >
-        </FilledFormsComponent>
+          dateRange={dateRange}
+        />
       ) : (
         <div className="dashboard-container">
 
@@ -346,7 +344,7 @@ const AdminDashboard = () => {
                     labelId="hospital-label"
                     value={filter}
                     displayEmpty
-                    onChange={(e) => setFilter(e.target.value)}
+                    onChange={(e) => handleFilterChange(e.target.value)}
                     sx={{
                       borderRadius: 2,
                       backgroundColor: "#fff"

@@ -275,34 +275,29 @@ export const commonRoutes = {
       }
     }),
 
-
   getFilledForms: (
-    filter,
     page,
-    branchId = null,
-    hospitalId = null,
-    isExport = false,
-    startDate = null,
-    endDate = null,
-    searchName = ""
+    hospitalId,
+    branchId,
+    startDate,
+    endDate,
+    searchName,
+    purpose,
+    formsTypeFilter,
+    isExport = false
   ) => {
-    const params = {
-      filter,
-      page,
-      isExport,
-    };
+    const params = { page, isExport };
 
-    if (branchId) params.branchId = branchId;
     if (hospitalId) params.hospitalId = hospitalId;
+    if (branchId) params.branchId = branchId;
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
     if (searchName?.trim()) params.searchName = searchName.trim();
+    if (purpose && purpose !== "All") params.purpose = purpose;
+    if (formsTypeFilter && formsTypeFilter !== "all") params.formsTypeFilter = formsTypeFilter;
 
-    console.log("params", params);
-
-    return API.get("api/filled-forms", { params });
+    return API.get("/api/filled-forms", { params });
   },
-
 
   saveFilledForm: (hosId, branchId, data) =>
 
@@ -349,18 +344,15 @@ export const commonRoutes = {
   },
 
   getPatients: (
-    filter = null,
     page,
-    branchId = null,
     hospitalId = null,
+    branchId = null,
     startDate = null,
     endDate = null,
     searchInput = null,
     isExport = false
   ) => {
     const params = { page, isExport };
-
-    if (filter != null) params.filter = filter;
     if (branchId != null) params.branchId = branchId;
     if (hospitalId) params.hospitalId = hospitalId;
     if (searchInput) params.searchInput = searchInput;

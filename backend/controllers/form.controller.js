@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { getConnection, getDoctorModel, getFilledFormsModel, getHospitalModel, getPatientModel, MasterConn } from "../utils/db.manager.js";
+import { getConnection, getDepartmentModel, getDoctorModel, getFilledFormsModel, getHospitalModel, getPatientModel, MasterConn } from "../utils/db.manager.js";
 import { calculateFilterRange } from "./hospitalController.js";
 import { auditLog } from "../middlewares/apiLogger.middleware.js";
 
@@ -370,27 +370,29 @@ export const createFilledForm = async (req, res) => {
   }
 };
 
+
 export const getFilledForms = async (req, res) => {
   try {
-    const { hospitalId, branchId, filter, page = 1, isExport } = req.query;
+    const {
+      hospitalId,
+      branchId,
+      startDate,
+      endDate,
+      page = 1,
+      searchName,
+      isExport,
+      purpose,
+      formsTypeFilter
+    } = req.query;
 
-    //  FIXED (IMPORTANT)
     const isExportMode = isExport === "true";
-
     const PAGE_LIMIT = 10;
     const pageNum = Math.max(parseInt(page) || 1, 1);
-
     const skip = isExportMode ? 0 : (pageNum - 1) * PAGE_LIMIT;
 
-    //  Dynamic pagination stages
-    const paginationStages = isExportMode
-      ? []
-      : [
-        { $skip: skip },
-        { $limit: PAGE_LIMIT },
-      ];
+    console.log("req.query", req.query);
 
-    //  Validate hospitalId
+    // ================= VALIDATION =================
     if (!hospitalId || !mongoose.isValidObjectId(hospitalId)) {
       return res.status(400).json({
         success: false,
@@ -411,284 +413,174 @@ export const getFilledForms = async (req, res) => {
 
     const conn = await getConnection(hospital.trimmedName);
     const FilledFormsModel = getFilledFormsModel(conn);
+    const PatientModel = getPatientModel(conn);
+    const DoctorModel = getDoctorModel(conn);
+    const DepartmentModel = getDepartmentModel(conn);
 
+    // ================= BASE MATCH STAGE =================
     const matchStage = { isDeleted: false };
 
     if (branchId && mongoose.isValidObjectId(branchId)) {
       matchStage.branchId = new mongoose.Types.ObjectId(branchId);
     }
 
-    if (filter) {
-      const { start, end } = calculateFilterRange(filter);
-      if (start && end) {
-        matchStage.createdAt = {
-          $gte: new Date(start),
-          $lte: new Date(end),
-        };
+    if (startDate || endDate) {
+      matchStage.createdAt = {};
+      if (startDate) matchStage.createdAt.$gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        matchStage.createdAt.$lte = end;
       }
     }
 
-    const [data] = await FilledFormsModel.aggregate([
+    if (purpose && purpose !== "All") {
+      matchStage.purpose = purpose;
+    }
+
+    if (formsTypeFilter && formsTypeFilter !== "all") {
+      matchStage.formType = {
+        $regex: formsTypeFilter.trim(),
+        $options: "i",
+      };
+    }
+    // ================= START PIPELINE =================
+    const pipeline = [
       { $match: matchStage },
 
+      // ================= PATIENT JOIN =================
       {
-        $facet: {
-          inboundCount: [
-            { $match: { formType: "inbound" } },
-            { $count: "count" },
-          ],
-          outboundCount: [
-            { $match: { formType: "outbound" } },
-            { $count: "count" },
-          ],
-
-          appointmentForms: [
-            { $match: { purpose: { $regex: "^appointment$", $options: "i" }, callStatus: { $regex: "^connected$", $options: "i" } } },
-            { $group: { _id: "$formType", count: { $sum: 1 } } },
-          ],
-
-          followupForms: [
-            { $match: { followupStatus: "pending" } },
-            { $group: { _id: "$formType", count: { $sum: 1 } } },
-          ],
-
-          //  APPOINTMENTS
-          appointmentData: [
-            {
-              $match: {
-                purpose: { $regex: "^appointment$", $options: "i" },
-                callStatus: { $regex: "^connected$", $options: "i" },
-              },
-            },
-            { $sort: { createdAt: -1 } },
-
-            ...paginationStages, //  FIX
-
-            {
-              $lookup: {
-                from: "doctors",
-                localField: "doctor",
-                foreignField: "_id",
-                as: "doctor",
-              },
-            },
-            { $unwind: { path: "$doctor", preserveNullAndEmptyArrays: true } },
-
-            {
-              $lookup: {
-                from: "departments",
-                localField: "department",
-                foreignField: "_id",
-                as: "department",
-              },
-            },
-            { $unwind: { path: "$department", preserveNullAndEmptyArrays: true } },
-
-            {
-              $lookup: {
-                from: "patients",
-                localField: "formData.patientDetails",
-                foreignField: "_id",
-                as: "patientDetails",
-              },
-            },
-            { $unwind: { path: "$patientDetails", preserveNullAndEmptyArrays: true } },
-
-            {
-              $project: {
-                _id: 1,
-                purpose: 1,
-                formType: 1,
-                createdAt: 1,
-                agentName: 1,
-                callStatus: 1,
-                appointmentSlot: "$formData.appointmentSlot",
-                patientArrivalTime: "$formData.patientArrivalTime",
-                dateTime: "$formData.dateTime",
-                callerType: "$formData.callerType",
-                patientName: "$patientDetails.patientName",
-                patientMobile: "$patientDetails.patientMobile",
-                remarks: "$formData.remarks",
-                referenceFrom: "$formData.referenceFrom",
-                doctorName: "$doctor.name",
-                departmentName: "$department.name",
-              },
-            },
-          ],
-
-          //  FOLLOWUPS
-          followupData: [
-            { $match: { followupStatus: "pending" } },
-            { $sort: { createdAt: -1 } },
-
-            ...paginationStages, //  FIX
-
-            {
-              $lookup: {
-                from: "doctors",
-                localField: "doctor",
-                foreignField: "_id",
-                as: "doctor",
-              },
-            },
-            { $unwind: { path: "$doctor", preserveNullAndEmptyArrays: true } },
-
-            {
-              $lookup: {
-                from: "departments",
-                localField: "department",
-                foreignField: "_id",
-                as: "department",
-              },
-            },
-            { $unwind: { path: "$department", preserveNullAndEmptyArrays: true } },
-
-            {
-              $lookup: {
-                from: "patients",
-                localField: "formData.patientDetails",
-                foreignField: "_id",
-                as: "patientDetails",
-              },
-            },
-            { $unwind: { path: "$patientDetails", preserveNullAndEmptyArrays: true } },
-
-            {
-              $project: {
-                _id: 1,
-                purpose: 1,
-                formType: 1,
-                createdAt: 1,
-                agentName: 1,
-                callStatus: 1,
-                appointmentSlot: "$formData.appointmentSlot",
-                callerType: "$formData.callerType",
-                patientName: "$patientDetails.patientName",
-                patientMobile: "$patientDetails.patientMobile",
-                remarks: "$formData.remarks",
-                referenceFrom: "$formData.referenceFrom",
-                doctorName: "$doctor.name",
-                departmentName: "$department.name",
-              },
-            },
-          ],
-
-          //  ALL FORMS
-          forms: [
-            { $sort: { createdAt: -1 } },
-
-            ...paginationStages, //  FIX
-
-            {
-              $lookup: {
-                from: "doctors",
-                localField: "doctor",
-                foreignField: "_id",
-                as: "doctor",
-              },
-            },
-            { $unwind: { path: "$doctor", preserveNullAndEmptyArrays: true } },
-
-            {
-              $lookup: {
-                from: "departments",
-                localField: "department",
-                foreignField: "_id",
-                as: "department",
-              },
-            },
-            { $unwind: { path: "$department", preserveNullAndEmptyArrays: true } },
-
-            {
-              $lookup: {
-                from: "patients",
-                localField: "formData.patientDetails",
-                foreignField: "_id",
-                as: "patientDetails",
-              },
-            },
-            { $unwind: { path: "$patientDetails", preserveNullAndEmptyArrays: true } },
-
-            {
-              $project: {
-                _id: 1,
-                purpose: 1,
-                formType: 1,
-                createdAt: 1,
-                agentName: 1,
-                callStatus: 1,
-                appointmentSlot: "$formData.appointmentSlot",
-                callerType: "$formData.callerType",
-                patientName: "$patientDetails.patientName",
-                patientMobile: "$patientDetails.patientMobile",
-                remarks: "$formData.remarks",
-                referenceFrom: "$formData.referenceFrom",
-                doctorName: "$doctor.name",
-                departmentName: "$department.name",
-              },
-            },
-          ],
-
-          totalCount: [{ $count: "count" }],
+        $lookup: {
+          from: PatientModel.collection.name,
+          localField: "formData.patientDetails",
+          foreignField: "_id",
+          as: "patientInfo",
         },
       },
-    ]);
+      {
+        $unwind: {
+          path: "$patientInfo",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
 
-    const inbound = data.inboundCount?.[0]?.count || 0;
-    const outbound = data.outboundCount?.[0]?.count || 0;
-    const totalDocument = data.totalCount?.[0]?.count || 0;
+      // ================= DOCTOR JOIN =================
+      {
+        $lookup: {
+          from: DoctorModel.collection.name, // Safely matches dynamic tenant collection
+          localField: "doctor",
+          foreignField: "_id",
+          as: "doctorInfo",
+        },
+      },
+      {
+        $unwind: {
+          path: "$doctorInfo",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
 
-    const appointmentMap = { inbound: 0, outbound: 0 };
-    const followupMap = { inbound: 0, outbound: 0 };
+      // ================= DEPARTMENT JOIN =================
+      {
+        $lookup: {
+          from: DepartmentModel.collection.name, // Safely matches dynamic tenant collection
+          localField: "department",
+          foreignField: "_id",
+          as: "departmentInfo",
+        },
+      },
+      {
+        $unwind: {
+          path: "$departmentInfo",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+    ];
 
-    (data.appointmentForms || []).forEach((i) => {
-      appointmentMap[i._id] = i.count;
+    // ================= SEARCH FILTER (Agent, Patient, or Doctor) =================
+    if (searchName && searchName.trim()) {
+      const safeSearch = searchName.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const searchRegex = new RegExp(safeSearch, "i");
+
+      // Now we can search across all joined fields perfectly!
+      pipeline.push({
+        $match: {
+          $or: [
+            { agentName: searchRegex },
+            { "patientInfo.patientName": searchRegex },
+            { "patientInfo.patientMobile": searchRegex },
+            { "doctorInfo.name": searchRegex },
+            { "departmentInfo.name": searchRegex }
+          ],
+        },
+      });
+    }
+
+    // ================= FACET FOR DATA & COUNT =================
+    pipeline.push({
+      $facet: {
+        metadata: [{ $count: "total" }],
+        data: [
+          { $sort: { createdAt: -1 } },
+          ...(isExportMode ? [] : [{ $skip: skip }, { $limit: PAGE_LIMIT }]),
+          {
+            $project: {
+              _id: 1,
+              formType: 1,
+              purpose: 1,
+              agentName: 1,
+              callStatus: 1,
+              createdAt: 1,
+              followupStatus: 1,
+
+              referenceFrom: "$formData.referenceFrom",
+              // Flattened patient mapping
+              patientName: "$patientInfo.patientName",
+              patientMobile: "$patientInfo.patientMobile",
+              patientStatus: "$patientInfo.status",
+              gender: "$patientInfo.gender",
+              // Raw/Nested fields from form
+              appointmentSlot: "$formData.appointmentSlot",
+              // Doctor mapping
+              "doctor.name": "$doctorInfo.name",
+
+              // Department mapping
+              "department.name": "$departmentInfo.name",
+              "formData.surgeryName": "$formData.surgeryName",
+              "formData.healthPackageName": "$formData.healthPackageName",
+              "formData.govertHealthSchemeName": "$formData.govertHealthSchemeName",
+              "formData.nonGovtHealthSchemeName": "$formData.nonGovtHealthSchemeName",
+              "formData.reportName": "$formData.reportName",
+              "formData.referenceFrom": "$formData.referenceFrom",
+              "formData.callerType": "$formData.callerType",
+              "formData.remarks": "$formData.remarks",
+            },
+          },
+        ],
+      },
     });
 
-    (data.followupForms || []).forEach((i) => {
-      followupMap[i._id] = i.count;
-    });
+    const aggregationResult = await FilledFormsModel.aggregate(pipeline);
 
+    const data = aggregationResult[0]?.data || [];
+    const total = aggregationResult[0]?.metadata[0]?.total || 0;
+
+    // ================= RESPONSE =================
     return res.status(200).json({
       success: true,
-      data: {
-        metrics: {
-          pagination: {
-            totalDocument,
-            page: isExportMode ? 1 : pageNum, //  FIX
-            totalPages: isExportMode
-              ? 1
-              : Math.ceil(totalDocument / PAGE_LIMIT), //  FIX
-          },
-          totalForms: {
-            total: inbound + outbound,
-            inbound,
-            outbound,
-          },
-          appointments: {
-            total: appointmentMap.inbound + appointmentMap.outbound,
-            inbound: appointmentMap.inbound,
-            outbound: appointmentMap.outbound,
-          },
-          followupsPending: {
-            total: followupMap.inbound + followupMap.outbound,
-            inbound: followupMap.inbound,
-            outbound: followupMap.outbound,
-          },
-        },
-        forms: {
-          today: data.forms || [],
-          appointments: data.appointmentData || [],
-          followups: data.followupData || [],
-        },
+      data,
+      pagination: {
+        total,
+        page: pageNum,
+        pageSize: PAGE_LIMIT,
+        totalPages: Math.ceil(total / PAGE_LIMIT),
       },
     });
   } catch (error) {
     console.error("Error fetching filled forms:", error);
-
     return res.status(500).json({
       success: false,
-      message: error || "Internal Server Error",
+      message: error.message || "Internal Server Error",
     });
   }
 };

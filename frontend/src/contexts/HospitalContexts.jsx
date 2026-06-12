@@ -29,6 +29,14 @@ const defaultPagination = {
 
 export const GlobalHospitalContextProvider = ({ children }) => {
 
+    const today = new Date();
+
+    const startOfToday = new Date(today);
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const endOfToday = new Date(today);
+    endOfToday.setHours(23, 59, 59, 999);
+
     const { currentUser } = UserContextHook();
     const role = currentUser?.type?.toLowerCase();
 
@@ -96,7 +104,89 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     const [metrics, setMetrics] = useState({});
 
     const [dateFilter, setDateFilter] = useState("today");
+    const [dateRange, setDateRange] = useState({
+        startDate: startOfToday.toISOString(),
+        endDate: endOfToday.toISOString(),
+    });
 
+    const getDateRange = (filter) => {
+        const now = new Date();
+
+        switch (filter) {
+            case "today": {
+                const startDate = new Date(now);
+                startDate.setHours(0, 0, 0, 0);
+
+                const endDate = new Date(now);
+                endDate.setHours(23, 59, 59, 999);
+
+                return { startDate, endDate };
+            }
+
+            case "yesterday": {
+                const startDate = new Date(now);
+                startDate.setDate(startDate.getDate() - 1);
+                startDate.setHours(0, 0, 0, 0);
+
+                const endDate = new Date(now);
+                endDate.setDate(endDate.getDate() - 1);
+                endDate.setHours(23, 59, 59, 999);
+
+                return { startDate, endDate };
+            }
+
+            case "last7": {
+                const startDate = new Date(now);
+                startDate.setDate(startDate.getDate() - 6);
+                startDate.setHours(0, 0, 0, 0);
+
+                return {
+                    startDate,
+                    endDate: now,
+                };
+            }
+
+            case "last30": {
+                const startDate = new Date(now);
+                startDate.setDate(startDate.getDate() - 29);
+                startDate.setHours(0, 0, 0, 0);
+
+                return {
+                    startDate,
+                    endDate: now,
+                };
+            }
+
+            case "last3M": {
+                const startDate = new Date(now);
+                startDate.setMonth(startDate.getMonth() - 3);
+                startDate.setHours(0, 0, 0, 0);
+
+                return {
+                    startDate,
+                    endDate: now,
+                };
+            }
+
+            default:
+                return {
+                    startDate: null,
+                    endDate: null,
+                };
+        }
+    };
+
+    const handleFilterChange = (value) => {
+        setFilter(value);
+
+        const range = getDateRange(value);
+
+        setDateRange({
+            startDate: range.startDate?.toISOString(),
+            endDate: range.endDate?.toISOString(),
+        });
+
+    };
 
 
 
@@ -263,33 +353,25 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         refetch: refetchPatients
     } = useQuery({
         queryKey: [
-            "patients",
+
+            pagination.patients.page,
             selectedHostpital,
             selectedBranch,
-            pagination.patients.page,
-            filter,
-            dateRangeFilter.startDate,
-            dateRangeFilter.endDate,
+            "patients",
+
         ],
 
         queryFn: async ({ queryKey }) => {
             const [
-                ,
-                hospitalId,
-                branchId,
                 page,
-                filter,
-                startDate,
-                endDate,
+                selectedHostpital,
+                selectedBranch,
             ] = queryKey;
 
             const res = await commonRoutes.getPatients(
-                filter,
                 page,
-                isNonAdmin ? branchId : null,
-                hospitalId,
-                startDate,
-                endDate
+                selectedHostpital,
+                isNonAdmin ? selectedBranch : null,
             );
 
             return res?.data || {};
@@ -309,6 +391,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         if (!patientsData?.data) return;
 
         const currentPage = patientsData?.pagination?.page || 1;
+
+        console.log("pateutn", patients);
+
 
         setPatients((prev) => {
             //  If first page → replace data
@@ -397,75 +482,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         enabled: isSuperAdmin,
         onError: () => toast.error("Admins fetch failed")
     });
-
-
-
-    const {
-        data: formsData,
-        isFetching: formsLoading,
-        refetch: refetchForms,
-        error: formsError
-    } = useQuery({
-        queryKey: [
-            "forms",
-            selectedHostpital,
-            selectedBranch,
-            filter,
-            pagination.forms.page
-        ],
-
-        queryFn: async () => {
-
-            const res = await commonRoutes.getFilledForms(
-                filter,
-                pagination.forms.page,
-                isAdmin ? null : selectedBranch,
-                selectedHostpital
-            );
-
-            return res.data?.data;
-        },
-
-        enabled: !!selectedHostpital && !isDoctor,
-
-        keepPreviousData: true,
-
-        onError: () =>
-            toast.error("Forms fetch failed")
-    });
-
-    useEffect(() => {
-
-        if (!formsData) return;
-
-        setForms((prev) => ({
-            today: mergePaginatedData(
-                prev.today,
-                formsData?.forms?.today || [],
-                pagination.forms.page
-            ),
-
-            appointments: mergePaginatedData(
-                prev.appointments,
-                formsData?.forms?.appointments || [],
-                pagination.forms.page
-            ),
-
-            followups: mergePaginatedData(
-                prev.followups,
-                formsData?.forms?.followups || [],
-                pagination.forms.page
-            )
-        }));
-
-        setMetrics(formsData?.metrics || {});
-
-        updatePagination(
-            "forms",
-            formsData?.metrics?.pagination
-        );
-
-    }, [formsData]);
 
     // doctor api
     const enabledQuery =
@@ -689,7 +705,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         patients: patientsRefetchLoader,
         users: usersLoading,
         admins: adminsLoading,
-        forms: formsLoading,
         auditLogs: auditLogsLoading,
         appointmentLoading,
         pastAppointmentLoading,
@@ -711,7 +726,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         patients: patientsError,
         users: usersError,
         admins: adminsError,
-        forms: formsError,
         auditLogs: auditLogsError,
         appointmentError,
         pastAppointmentError
@@ -745,6 +759,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
         pagination,
         filter,
+        dateRange,
 
         filterOptions,
 
@@ -755,7 +770,10 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         setSelectedBranch,
         setPagination,
         setFilter,
+        setForms,
         setPatients,
+        setDateRangeFilter,
+        setDateRange,
 
         isSuperAdmin,
         isAdmin,
@@ -770,10 +788,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         refetchHospital,
         refetchAdmins,
         refetchUsers,
-        refetchForms,
         refetchAppointments,
         dateRangeFilter,
-        setDateRangeFilter
+        handleFilterChange
 
     }), [
         hospitals,
@@ -802,7 +819,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         isNonAdmin,
         role,
         loading,
-        errors
+        errors,
+        dateRange,
+        handleFilterChange
     ]);
     return (
         <HospitalContext.Provider value={contextValue}>

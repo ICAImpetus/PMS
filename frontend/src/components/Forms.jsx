@@ -3638,7 +3638,7 @@ function Forms() {
     <form onSubmit={submitForm} className="all-sections-container">
 
       <div className="patient-classification-section">
-        <div>
+        <div style={{ flex: 1 }}>
           <div className="section">
             <h3>Primary Classification</h3>
 
@@ -4104,7 +4104,7 @@ function Forms() {
             )}
         </div>
 
-        <div className="section" data-section="patient-latest-details">
+        {/* <div className="section" data-section="patient-latest-details">
           <div className="patient-latest-visit-heading">
             <h3>Latest Visit</h3>
             <button type="button">View More</button>
@@ -4130,7 +4130,7 @@ function Forms() {
               </tbody>
             </table>
           </div>
-        </div>
+        </div> */}
 
       </div>
 

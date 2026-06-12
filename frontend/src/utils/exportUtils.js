@@ -22,7 +22,7 @@ export const statusStyles = {
         color: "#ef6c00",
     },
 };
-export const FORMS_AVAILABLE_COLUMNS = [
+export const PATIENT_AVAILABLE_COLUMNS = [
     { key: "patientName", label: "Patient Name" },
     { key: "patientMobile", label: "Patient Mobile No" },
     { key: "patientAge", label: "Patient Age" },
@@ -36,8 +36,37 @@ export const FORMS_AVAILABLE_COLUMNS = [
     { key: "createdAt", label: "Created At" },
 ];
 
+export const FORMS_AVAILABLE_COLUMNS = [
+    { key: "agentName", label: "Agent Name" },
+    { key: "formType", label: "Form Type" },
+    { key: "patientName", label: "Patient Name" },
+    { key: "patientMobile", label: "Patient Mobile No" },
+    { key: "patientStatus", label: "Patient Status" },
+    { key: "gender", label: "Patient Gender" },
+    { key: "callStatus", label: "Call Status" },
+    { key: "purpose", label: "POC / Purpose" },
+    { key: "appointmentSlot", label: "App. Slot" },
+    { key: "formData.remarks", label: "Remarks" },
+    { key: "createdAt", label: "Submitted At" },
+    // Additional unique fields from second array
+    { key: "doctor.name", label: "Doctor" },
+    { key: "department.name", label: "Department" },
+    { key: "formData.surgeryName", label: "Surgery Name" },
+    { key: "formData.healthPackageName", label: "Health Package" },
+    { key: "formData.healthSchemeName", label: "Health Scheme Name" },
+    { key: "formData.govertHealthSchemeName", label: "On-Govt Health Scheme Name" },
+    { key: "formData.nonGovtHealthSchemeName", label: "Non-Govt Health Scheme Name" },
+    { key: "formData.reportName", label: "Report Name" },
+    { key: "followupStatus", label: "Follow-up Status" },
+    { key: "formData.referenceFrom", label: "Reference From" },
+    { key: "formData.callerType", label: "Caller Type" },
+];
 export const getNestedValue = (obj, path) => {
-    return path.split(".").reduce((acc, key) => acc?.[key], obj);
+    const value = path.split(".").reduce((acc, key) => acc?.[key], obj);
+
+    return value === "" || value === null || value === undefined
+        ? "-"
+        : value;
 };
 
 export const generateExportData = (data, columns) => {

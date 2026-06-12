@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import Papa from "papaparse";
 import moment from "moment";
 import "./FilledFormsComponent.css";
@@ -8,6 +8,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import IosShareOutlinedIcon from '@mui/icons-material/IosShareOutlined';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
   Box,
@@ -34,74 +35,17 @@ import {
   Alert,
   Grid,
   InputAdornment,
+  Popover,
+  FormControlLabel,
+  Checkbox,
+  Divider
 } from "@mui/material";
 import { useApi } from "../../api/useApi";
 import { commonRoutes } from "../../api/apiService";
+import { toast } from "react-toastify";
+import HospitalContext from "../../contexts/HospitalContexts";
+import { FORMS_AVAILABLE_COLUMNS, getNestedValue } from "../../utils/exportUtils";
 
-
-const FORMS_AVAILABLE_COLUMNS_FOR_TEMP = [
-  { key: "agentName", label: "Agent Name" },
-  { key: "formType", label: "Form Type" },
-  { key: "patientMobile", label: "Patient Mobile No" },
-  { key: "patientName", label: "Patient Name" },
-  { key: "callStatus", label: "Call Status" },
-  { key: "purpose", label: "POC / Purpose" },
-  { key: "appointmentSlot", label: "App. Slot" },
-  { key: "referenceFrom", label: "Reference From" },
-  { key: "callerType", label: "Caller Type" },
-  { key: "departmentName", label: "Department" },
-  { key: "doctorName", label: "Doctor" },
-  { key: "remarks", label: "Remarks" },
-  { key: "createdAt", label: "Submitted At" },
-];
-
-const FORMS_AVAILABLE_COLUMNS = [
-  { key: "agentName", label: "Agent Name" },
-  { key: "formType", label: "Form Type" },
-  { key: "patientMobile", label: "Patient Mobile No" },
-  { key: "patientName", label: "Patient Name" },
-  { key: "callStatus", label: "Call Status" },
-  { key: "purpose", label: "POC / Purpose" },
-  { key: "appointmentSlot", label: "App. Slot" },
-  { key: "referenceFrom", label: "Reference From" },
-  { key: "callerType", label: "Caller Type" },
-  { key: "departmentName", label: "Department" },
-  { key: "doctorName", label: "Doctor" },
-  { key: "remarks", label: "Remarks" },
-  { key: "createdAt", label: "Submitted At" },
-];
-
-const flattenFilledForm = (doc) => {
-  return {
-    _id: doc._id,
-
-    patientName: doc.patientName || "-",
-    patientMobile: doc.patientMobile || "-",
-    callStatus: doc.callStatus || "-",
-
-    formType: doc.formType || "-",
-    purpose: doc.purpose || "-",
-
-
-    appointmentSlot: doc?.appointmentSlot || "-",
-
-    referenceFrom: doc.referenceFrom || "-",
-    callerType: doc.callerType || "-",
-
-    departmentName: doc?.departmentName || "-",
-    doctorName: doc?.doctorName || "-",
-
-
-    remarks: doc.remarks || "-",
-    hospitalName: doc.hospitalId?.name || "-",
-
-    agentName:
-      doc.agentName ||
-      (typeof doc.agentId === "object" ? doc.agentId?.name : doc.agentId) ||
-      "-",
-    createdAt: moment(doc.createdAt).format("DD MMM YYYY, hh:mm A") || "-",
-  };
-};
 
 const searchOptions = [
   "Search Patient...",
@@ -116,15 +60,11 @@ const searchOptions = [
 const FilledFormsComponent = ({
   selectedBranch = null,
   selectedHostpital = null,
-  filter = "today",
   formsModalOpen,
   setFormsModalOpen,
-  formsData = [],
   formsTypeFilter,
   setFormsTypeFilter,
-  pagination,
-  setPagination,
-  formsLoading = false,
+  dateRange
 }) => {
   const [formsColumnFilterOpen, setFormsColumnFilterOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("")
@@ -146,17 +86,28 @@ const FilledFormsComponent = ({
   const [dateFilterTo, setDateFilterTo] = useState("");
   const [index, setIndex] = useState(0);
   const [searchInput, setSearchInput] = useState("");
+  const [filterForm, setFilterForm] = useState([])
+  const [form, setForm] = useState([])
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    totalPages: 1,
+    totalDocument: 0,
+  })
   const [selectedFormColumns, setSelectedFormColumns] = useState([
     "agentName",
+    "formType",
     "callStatus",
     "patientName",
     "patientMobile",
+    "patientStatus",
     "purpose",
+    "formData.remarks",
     ...(formsModalOpen === "Appointments"
-      ? ["appointmentSlot", "departmentName", "doctorName"]
+      ? ["appointmentSlot", "department.name", "doctor.name"]
       : []),
-    "createdAt",
-    "remarks"
+    "createdAt"
+
 
   ]);
   // const { request } = useApi(commonRoutes.getFilledForms);
@@ -175,6 +126,82 @@ const FilledFormsComponent = ({
     setCSVParseError(null);
     setCSVActionResult("");
   };
+
+  const { request: getFilledForms, loading: getFilledFormsLoading, error: getFilledformError } = useApi(commonRoutes.getFilledForms)
+
+  useEffect(() => {
+    const fetchForms = async () => {
+      try {
+        const purpose =
+          formsModalOpen === "Appointments"
+            ? "Appointments"
+            : formsModalOpen === "Followup"
+              ? "Followup"
+              : "All";
+
+
+        // console.log("Call", purpose);
+
+        const res = await getFilledForms(
+          pagination.page,
+          selectedHostpital,
+          selectedBranch,
+          dateRange?.startDate || null,
+          dateRange?.endDate || null,
+          searchInput || "",
+          purpose,
+          formsTypeFilter,
+          false
+        );
+
+        if (res?.success) {
+          setFilterForm(res.data || []);
+          setForm(res?.data || [])
+
+          setPagination((prev) => ({
+            ...prev,
+            page: res.pagination?.page || 1,
+            totalPages: res.pagination?.totalPages || 1,
+            totalDocument: res.pagination?.total || 0,
+          }));
+        }
+      } catch (err) {
+        console.error("fetchForms error:", err);
+      }
+    };
+
+
+    fetchForms();
+  }, [
+    selectedBranch,
+    selectedHostpital,
+    formsModalOpen,
+    dateRange?.startDate,
+    dateRange?.endDate,
+    searchInput,
+
+    pagination.page,
+  ]);
+
+  React.useEffect(() => {
+    if (!form) return;
+
+    if (formsTypeFilter === "all") {
+      setFilterForm(form);
+    }
+    else if (formsTypeFilter?.toLowerCase() === "inbound") {
+      const filtered = form.filter(
+        (item) => item.formType?.toLowerCase() === "inbound"
+      );
+      setFilterForm(filtered);
+    }
+    else if (formsTypeFilter?.toLowerCase() === "outbound") {
+      const filtered = form.filter(
+        (item) => item.formType?.toLowerCase() === "outbound"
+      );
+      setFilterForm(filtered);
+    }
+  }, [formsTypeFilter, form]);
 
   const normalizeValue = (value) => {
     if (value === null || value === undefined) return "";
@@ -293,64 +320,62 @@ const FilledFormsComponent = ({
       processBatch();
     });
   };
+  const handleOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+
+  const allSelected = selectedFormColumns.length === FORMS_AVAILABLE_COLUMNS.length;
+
+  const handleSelectAll = () => {
+    if (allSelected) {
+      setSelectedFormColumns([]);
+    } else {
+      setSelectedFormColumns(FORMS_AVAILABLE_COLUMNS.map((c) => c.key));
+    }
+  };
 
   const handleSearchApply = async () => {
-    const searchValue = searchInput.trim().toLowerCase();
+    try {
+      const purpose =
+        formsModalOpen === "Appointments"
+          ? "Appointments"
+          : formsModalOpen === "Followup"
+            ? "Followup"
+            : "All";
 
-    setSearchName(searchInput.trim());
-
-    if (!searchValue) return;
-
-    let filtered = [...patients];
-
-    // Search in existing frontend data
-    filtered = filtered.filter(
-      (patient) =>
-        patient.patientName?.toLowerCase().includes(searchValue) ||
-        patient.lastVisit?.purpose?.toLowerCase().includes(searchValue) ||
-        patient.patientMobile?.toString().includes(searchValue)
-    );
-
-    // Form type filter
-    if (formTypeFilter !== "all") {
-      filtered = filtered.filter(
-        (patient) =>
-          patient?.lastVisit?.formType?.toLowerCase() ===
-          formTypeFilter.toLowerCase()
+      const res = await getFilledForms(
+        1,
+        selectedHostpital,
+        selectedBranch,
+        dateRange?.startDate || null,
+        dateRange?.endDate || null,
+        searchInput || "",
+        purpose,
+        formsTypeFilter,
+        false
       );
-    }
 
-    // If no data found locally, call API
-    if (filtered.length === 0) {
-      try {
-        const res = await getPatients(
-          null,
-          pagination?.patients?.page,
-          null,
-          selectedHostpital,
-          startDate,
-          endDate,
-          searchInput,
-          true
-        );
+      if (res?.success) {
+        setFilterForm(res.data || []);
 
-        if (res?.success) {
-          filtered = res.data || [];
-
-          setPagination((prev) => ({
-            ...prev,
-            patients: {
-              ...res.pagination,
-            },
-          }));
-        }
-      } catch (error) {
-        toast.error("Error To Fetch Patient");
+        setPagination((prev) => ({
+          ...prev,
+          page: 1,
+          totalPages: res.pagination?.totalPages || 1,
+          totalDocument: res.pagination?.total || 0,
+        }));
       }
+    } catch (error) {
+      toast.error("Error fetching forms");
     }
-
-    setFilteredPatients(filtered);
   };
+
+
   const handleSearchKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -450,31 +475,6 @@ const FilledFormsComponent = ({
     setMoreMenuAnchor(null);
   };
 
-  const handleApplyDateFilter = async () => {
-    // if (!startDate || !endDate) return;
-
-    // try {
-
-    //   const res = await getPatients(null, pagination?.patient?.page, null, selectedHostpital, startDate, endDate, true)
-    //   console.log("patinat fetch ", res);
-    //   if (res?.success) {
-    //     setPatients(res?.data)
-    //     setPagination((prev) => ({
-    //       ...prev,
-    //       patients: {
-    //         ...res.pagination
-    //       }
-    //     }))
-    //     handleCloseDateFilter();
-    //   }
-
-
-    // } catch {
-
-    //   toast.error("Error To Fetch Patient")
-
-    // }
-  };
 
   const handleClearDateFilter = () => {
     setDateFilterFrom("");
@@ -502,192 +502,216 @@ const FilledFormsComponent = ({
     setUploadCSVModalOpen(false);
   };
 
-  const flattenedForms = React.useMemo(() => {
-    return formsData?.map(flattenFilledForm);
-  }, [formsData]);
-
-  const filteredForms = React.useMemo(() => {
-    let data = flattenedForms || [];
-
-
-    if (formsTypeFilter !== "all") {
-      data = data.filter((r) => r.formType === formsTypeFilter);
-    }
-
-
-    if (searchTerm?.trim()) {
-      const term = searchTerm.toLowerCase();
-
-      data = data.filter((r) =>
-        [
-          r.patientName,
-          r.agentName,
-          r.referenceFrom,
-          r.remarks,
-          r.patientMobile,
-          r.departmentName,
-          r.purpose,
-        ]
-          .filter(Boolean) // null/undefined hatao
-          .some((field) =>
-            field.toString().toLowerCase().includes(term)
-          )
-      );
-    }
-
-    if (dateFilterFrom) {
-      const fromDate = moment(dateFilterFrom, "YYYY-MM-DD").startOf("day");
-      data = data.filter((r) =>
-        moment(r.createdAt, "DD MMM YYYY, hh:mm A").isSameOrAfter(fromDate),
-      );
-    }
-
-    if (dateFilterTo) {
-      const toDate = moment(dateFilterTo, "YYYY-MM-DD").endOf("day");
-      data = data.filter((r) =>
-        moment(r.createdAt, "DD MMM YYYY, hh:mm A").isSameOrBefore(toDate),
-      );
-    }
-
-    return data;
-  }, [flattenedForms, formsTypeFilter, searchTerm]);
-
-
-  const { request: getFilledForms, loading: getFilledFormsLoading } = useApi(commonRoutes.getFilledForms)
-  const rowParPage = 10
-
-  const paginationData = filteredForms.slice((pagination?.forms?.page - 1) * rowParPage, pagination?.forms?.page * rowParPage)
-
-  const visibleFormColumns = FORMS_AVAILABLE_COLUMNS.filter((col) =>
-    selectedFormColumns.includes(col.key),
-  );
-
   const toggleFormColumn = (key) => {
     setSelectedFormColumns((prev) =>
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
     );
   };
 
-  const exportFormsToSheet = async () => {
+  const handleApplyDateFilter = async () => {
+    if (!dateFilterFrom || !dateFilterTo) return;
+
     try {
-
-      //  STEP 2: ALL data fetch (NO pagination)
-      const res = await getFilledForms(filter, pagination.forms.page, selectedBranch, selectedHostpital, true)
-
-      const map = {
-        "Forms": res?.data?.forms?.today || [],
-        "Appointments": res?.data?.forms?.appointments || [],
-        "Followups": res?.data?.forms?.followups || []
-      }
-      const allForms = map[formsModalOpen] || [];
-      console.log("allForms", allForms);
+      const purpose =
+        formsModalOpen === "Appointments"
+          ? "Appointments"
+          : formsModalOpen === "Followup"
+            ? "Followup"
+            : "All";
 
 
-      if (allForms.length === 0) return;
-
-      //  STEP 3: CSV logic (same tera)
-      const headers = visibleFormColumns.map((c) => c.label);
-
-      const rows = allForms.map((row) =>
-        visibleFormColumns.map((c) => {
-          console.log("visibleFormColumns", c);
-          console.log("rows", visibleFormColumns);
-
-          let val = row[c.key];
+      console.log("selectedHostpital", selectedHostpital);
 
 
-
-          // appointment slot format
-          if (c.key === "appointmentSlot") {
-            console.log("c.key ", c.key);
-            console.log("val", val);
-            if (val && typeof val === "object") {
-              console.log("val", val);
-
-              const date = val.date
-                ? moment(val.date).format("DD MMM YYYY")
-                : "";
-
-              const start = val.start || "";
-              const end = val.end || "";
-
-              val = `${date} | ${start} - ${end}`;
-            } else {
-              val = "-";
-            }
-          }
-
-          if ((val instanceof Date || c.key === "createdAt") && val) {
-            val = moment(val).format("D/M/YYYY h:mm:ss A");
-          }
-          return typeof val === "string" && val.includes(",")
-            ? `"${val}"`
-            : String(val ?? "");
-        })
+      const res = await getFilledForms(
+        1,
+        selectedHostpital,
+        selectedBranch,
+        dateFilterFrom,
+        dateFilterTo,
+        searchInput || "",
+        purpose,
+        formsTypeFilter,
+        true
       );
 
-      const csvContent = [
-        headers.join(","),
-        ...rows.map((r) => r.join(",")),
-      ].join("\n");
+      if (res?.success) {
+        setFilterForm(res.data || []);
+        setForm(res.data || []);
 
-      const blob = new Blob(["\uFEFF" + csvContent], {
-        type: "text/csv;charset=utf-8;",
-      });
+        const allForms = res.data || [];
 
-      const url = URL.createObjectURL(blob);
 
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `filled-forms-${moment().format(
-        "YYYY-MM-DD-HHmm"
-      )}.csv`;
+        if (allForms.length === 0) {
+          toast.success("No Data is Found TO Export")
+          return
+        }
+        const headers = visibleFormColumns.map((c) => c.label);
 
-      a.click();
-      URL.revokeObjectURL(url);
+        const rows = allForms.map((row) =>
+          visibleFormColumns.map((c) => {
+            let val = getNestedValue(row, c.key);
 
-    } catch (err) {
-      console.error("Export error:", err);
+            if (c.key === "appointmentSlot") {
+              if (val !== "-") {
+                const date = val?.date
+                  ? moment(val.date).format("DD MMM YYYY")
+                  : "";
+
+                val = `${date} | ${val?.start || ""} - ${val?.end || ""}`;
+              } else {
+                const formattedDate = row?.dateTime
+                  ? moment(row.dateTime).format("DD MMM YYYY")
+                  : "";
+
+                val = formattedDate
+                  ? `${formattedDate} | Arrival Time: ${row?.patientArrivalTime || "-"
+                  }`
+                  : `Arrival Time: ${row?.patientArrivalTime || "-"}`;
+              }
+            }
+
+            if (
+              c.key === "createdAt" &&
+              val !== "-" &&
+              moment(val).isValid()
+            ) {
+              val = moment(val).format("DD MMM YYYY hh:mm A");
+            }
+
+            if (
+              val &&
+              typeof val === "object" &&
+              !Array.isArray(val)
+            ) {
+              val = val.name || JSON.stringify(val);
+            }
+
+            // CSV safe
+            return `"${String(val).replace(/"/g, '""')}"`;
+          })
+        );
+
+        const csvContent = [
+          headers.join(","),
+          ...rows.map((r) => r.join(",")),
+        ].join("\n");
+
+        const blob = new Blob(["\uFEFF" + csvContent], {
+          type: "text/csv;charset=utf-8;",
+        });
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+
+        a.href = url;
+        a.download = `filled-forms-${dateFilterFrom}-${dateFilterTo}.csv`;
+        a.click();
+
+        URL.revokeObjectURL(url);
+
+        setPagination((prev) => ({
+          ...prev,
+          page: 1,
+          totalPages: res.pagination?.totalPages || 1,
+          totalDocument: res.pagination?.total || 0,
+        }));
+
+        setDateFilterOpen(false);
+        setDateFilterFrom("")
+        setDateFilterTo("")
+        toast.success(`Data is Exported From ${dateFilterFrom} to ${dateFilterTo}`)
+      }
+    } catch {
+      toast.error("Error To Fetch Patient");
     }
   };
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        formsColumnFilterRef.current &&
-        !formsColumnFilterRef.current.contains(event.target)
-      ) {
-        setFormsColumnFilterOpen(false);
-      }
-    };
-    if (formsColumnFilterOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
+
+  const visibleFormColumns = FORMS_AVAILABLE_COLUMNS.filter((col) =>
+    selectedFormColumns.includes(col.key),
+  );
+  const exportFormsToSheet = async () => {
+    // console.log("click");
+    // console.log("dateFilterFrom", dateFilterFrom);
+    // console.log("dateFilterTo", dateFilterTo);
+
+    if (!dateFilterFrom || !dateFilterTo) {
+      toast.info("Please select a start date and end date before exporting.");
+
+      // console.log("Please", dateFilterOpen);
+      setDateFilterOpen(true);
+      // console.log("Please", dateFilterOpen);
+      setMoreMenuAnchor(null);
+
+      // console.log("Please");
+
+      return;
     }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [formsColumnFilterOpen]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % searchOptions.length);
-      return () => clearInterval(interval);
-    }, 2000); // 2 sec me change hoga
+    // try {
+    //   const purpose =
+    //     formsModalOpen === "Appointments"
+    //       ? "Appointments"
+    //       : formsModalOpen === "Followup"
+    //         ? "Followup"
+    //         : "All";
 
-  }, []);
-  useEffect(() => {
-    setPagination((prev) => ({
-      ...prev,
-      forms: {
-        ...prev.forms,
-        page: 1,
-      },
-    }));
-  }, [searchTerm, formsTypeFilter]);
+    //   const res = await getFilledForms(
+    //     1,
+    //     selectedHostpital,
+    //     selectedBranch,
+    //     dateFilterFrom,
+    //     dateFilterTo,
+    //     searchInput || "",
+    //     purpose,
+    //     formsTypeFilter,
+    //     true
+    //   );
 
+    //   const allForms = res.data || [];
 
+    //   if (!allForms.length) return;
 
+    //   const headers = visibleFormColumns.map((c) => c.label);
+
+    //   const rows = allForms.map((row) =>
+    //     visibleFormColumns.map((c) => {
+    //       let val = row[c.key];
+
+    //       if (c.key === "appointmentSlot" && val) {
+    //         const date = val.date ? moment(val.date).format("DD MMM YYYY") : "";
+    //         val = `${date} | ${val.start || ""} - ${val.end || ""}`;
+    //       }
+
+    //       if (val instanceof Date || c.key === "createdAt") {
+    //         val = moment(val).format("D/M/YYYY h:mm:ss A");
+    //       }
+
+    //       return String(val ?? "");
+    //     })
+    //   );
+
+    //   const csvContent = [
+    //     headers.join(","),
+    //     ...rows.map((r) => r.join(",")),
+    //   ].join("\n");
+
+    //   const blob = new Blob(["\uFEFF" + csvContent], {
+    //     type: "text/csv;charset=utf-8;",
+    //   });
+
+    //   const url = URL.createObjectURL(blob);
+    //   const a = document.createElement("a");
+
+    //   a.href = url;
+    //   a.download = `filled-forms-${moment().format("YYYY-MM-DD-HHmm")}.csv`;
+    //   a.click();
+
+    //   URL.revokeObjectURL(url);
+    // } catch (err) {
+    //   console.error("Export error:", err);
+    // }
+  };
 
   return (
     <div
@@ -753,6 +777,7 @@ const FilledFormsComponent = ({
                           size="small"
                           variant="contained"
                           color="primary"
+                          disabled={getFilledFormsLoading}
                           onClick={handleSearchApply}
                           sx={{
                             textTransform: "none",
@@ -761,7 +786,7 @@ const FilledFormsComponent = ({
                             fontSize: "0.8rem",
                           }}
                         >
-                          Search
+                          {getFilledFormsLoading ? <CircularProgress size={22} /> : "Search"}
                         </Button>
                       </InputAdornment>
                     ),
@@ -769,89 +794,52 @@ const FilledFormsComponent = ({
                   placeholder="Enter Patient Name,PhoneNo or Purpose"
                 />
               </Grid>
-              <button
-                type="button"
-                className="executive-btn-columns"
-                onClick={() => setFormsColumnFilterOpen((prev) => !prev)}
-                style={{ height: "36px", margin: 0, padding: "0 12px", fontSize: "0.85rem" }}
-              >
-                <i className="fas fa-columns"></i> Select fields (
-                {selectedFormColumns.length})
-              </button>
-
-              {formsColumnFilterOpen && (
-                <div
-                  className="ff-column-filter-dropdown"
-                  style={{ top: "100%", marginTop: "8px" }}
-                >
-                  {/* Select All */}
-                  <div
-                    style={{
-                      // padding: "8px 12px",
-                      borderBottom: "1px solid #e0e0e0",
-                    }}
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ display: "flex", alignItems: "center", height: "100%" }}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<ViewColumnIcon />}
+                    onClick={handleOpen}
+                    sx={{ height: 40, justifyContent: "flex-start" }}
                   >
-                    <label
-                      className="ff-column-check"
-                      style={{
-                        fontWeight: 600,
-                        cursor: "pointer",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={
-                          selectedFormColumns.length ===
-                          FORMS_AVAILABLE_COLUMNS.length
+                    Select fields ({selectedFormColumns.length})
+                  </Button>
+
+                  <Popover
+                    open={Boolean(anchorEl)}
+                    anchorEl={anchorEl}
+                    onClose={handleClose}
+                    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                  >
+                    <Box sx={{ width: 260, p: 1 }}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox checked={allSelected} onChange={handleSelectAll} />
                         }
-                        onChange={() => {
-                          if (
-                            selectedFormColumns.length ===
-                            FORMS_AVAILABLE_COLUMNS.length
-                          ) {
-                            setSelectedFormColumns([]);
-                          } else {
-                            setSelectedFormColumns(
-                              FORMS_AVAILABLE_COLUMNS.map(
-                                (col) => col.key
-                              )
-                            );
-                          }
-                        }}
+                        label={allSelected ? "Unselect All" : "Select All"}
                       />
 
-                      <span>
-                        {selectedFormColumns.length ===
-                          FORMS_AVAILABLE_COLUMNS.length
-                          ? "Unselect All"
-                          : "Select All"}
-                      </span>
-                    </label>
-                  </div>
+                      <Divider />
 
-                  {/* Individual Columns */}
-                  <div className="ff-column-checkboxes">
-                    {FORMS_AVAILABLE_COLUMNS.map((col) => (
-                      <label
-                        key={col.key}
-                        className="ff-column-check"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedFormColumns.includes(
-                            col.key
-                          )}
-                          onChange={() =>
-                            toggleFormColumn(col.key)
-                          }
-                        />
-
-                        <span>{col.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
+                      <Box sx={{ maxHeight: 300, overflowY: "auto" }}>
+                        {FORMS_AVAILABLE_COLUMNS.map((col) => (
+                          <FormControlLabel
+                            key={col.key}
+                            control={
+                              <Checkbox
+                                checked={selectedFormColumns.includes(col.key)}
+                                onChange={() => toggleFormColumn(col.key)}
+                              />
+                            }
+                            label={col.label}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  </Popover>
+                </Box>
+              </Grid>
 
               {dateFilterOpen && (
                 <Box
@@ -893,9 +881,10 @@ const FilledFormsComponent = ({
                     variant="contained"
                     color="primary"
                     size="small"
+                    disabled={getFilledFormsLoading}
                     onClick={handleApplyDateFilter}
                   >
-                    Apply
+                    {getFilledFormsLoading ? <CircularProgress size={22} /> : "Apply"}
                   </Button>
 
                   {/* CLEAR BUTTON */}
@@ -936,9 +925,9 @@ const FilledFormsComponent = ({
               open={Boolean(moreMenuAnchor)}
               onClose={handleMoreMenuClose}
             >
-              <MenuItem onClick={handleToggleDateFilter}>
+              {/* <MenuItem onClick={handleToggleDateFilter}>
                 Date Filter
-              </MenuItem>
+              </MenuItem> */}
               {/* <MenuItem
                 onClick={handleClearDateFilter}
                 disabled={!dateFilterFrom && !dateFilterTo}
@@ -948,7 +937,7 @@ const FilledFormsComponent = ({
               <MenuItem
                 onClick={exportFormsToSheet}
                 disabled={
-                  filteredForms?.length === 0 ||
+                  filterForm?.length === 0 ||
                   visibleFormColumns.length === 0 || getFilledFormsLoading
                 }
               >
@@ -989,11 +978,11 @@ const FilledFormsComponent = ({
         <div className="ff-modal-body">
 
           <div className="ff-table-wrapper">
-            {formsLoading ? (
+            {getFilledFormsLoading ? (
               <div className="ff-loading">
                 Loading forms...
               </div>
-            ) : filteredForms?.length === 0 ? (
+            ) : filterForm?.length === 0 ? (
               <div className="ff-empty">
                 No filled forms found.
               </div>
@@ -1012,65 +1001,63 @@ const FilledFormsComponent = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {paginationData?.map((row) => (
-                    <tr key={row._id}>
-                      {visibleFormColumns.map((col) => {
+                  {
+                    filterForm?.map((row) => (
+                      <tr key={row._id}>
+                        {visibleFormColumns.map((col) => {
+                          let val = getNestedValue(row, col.key);
 
+                          // Handle appointmentSlot object
+                          if (col.key === "appointmentSlot") {
+                            if (val !== "-") {
+                              const formattedDate = val?.date
+                                ? moment(val.date).format("dddd, DD MMM YYYY")
+                                : null;
 
+                              val = formattedDate
+                                ? `${formattedDate} | ${val.start || "N/A"} to ${val.end || "N/A"
+                                }`
+                                : `${val.start || "N/A"} to ${val.end || "N/A"}`;
+                            } else {
+                              const formattedDate = row?.dateTime
+                                ? moment(row.dateTime).format("dddd, DD MMM YYYY")
+                                : null;
 
-                        let val = row[col.key];
-
-
-                        // Handle appointmentSlot object
-                        if (
-                          col.key === "appointmentSlot"
-                        ) {
-
-                          if (val) {
-
-                            const formattedDate = val?.date
-                              ? moment(val.date).format(
-                                "dddd, DD MMM YYYY"
-                              )
-                              : null;
-
-                            val = formattedDate
-                              ? `${formattedDate} | ${val.start || "N/A"
-                              } to ${val.end || "N/A"}`
-                              : `${val.start || "N/A"} to ${val.end || "N/A"
-                              }`;
-
-                          } else {
-
-                            const formattedDate = row?.dateTime
-                              ? moment(row.dateTime).format(
-                                "dddd, DD MMM YYYY"
-                              )
-                              : null;
-
-                            val = formattedDate
-                              ? `${formattedDate} | Arrival Time: ${row?.patientArrivalTime || "-"
-                              }`
-                              : `Arrival Time: ${row?.patientArrivalTime || "-"
-                              }`;
+                              val = formattedDate
+                                ? `${formattedDate} | Arrival Time: ${row?.patientArrivalTime || "-"
+                                }`
+                                : `Arrival Time: ${row?.patientArrivalTime || "-"}`;
+                            }
                           }
-                        }
-                        if (val instanceof Date)
-                          val = moment(val).format("DD/MM/YYYY hh:mm A");
 
+                          // Handle createdAt
+                          if (
+                            col.key === "createdAt" &&
+                            val !== "-" &&
+                            moment(val).isValid()
+                          ) {
+                            val = moment(val).format("DD MMM YYYY, hh:mm A");
+                          }
 
-                        if (
-                          val &&
-                          typeof val === "object" &&
-                          !Array.isArray(val)
-                        ) {
-                          val = val.name || JSON.stringify(val);
-                        }
+                          // Handle Date objects
+                          if (val instanceof Date) {
+                            val = moment(val).format("DD/MM/YYYY hh:mm A");
+                          }
 
-                        return <td key={col.key}>{val ?? "-"}</td>;
-                      })}
-                    </tr>
-                  ))}
+                          // Handle objects
+                          if (
+                            val &&
+                            typeof val === "object" &&
+                            !Array.isArray(val)
+                          ) {
+                            val = val.name || JSON.stringify(val);
+                          }
+
+                          return <td key={col.key}>{val}</td>;
+                        })}
+                      </tr>
+                    ))
+                  }
                 </tbody>
               </table>
             )}

@@ -77,7 +77,9 @@ const ExecutiveDashboard = () => {
     refetchDashboard,
     refetchForms,
     refetchPatients,
-    branchFollowups
+    branchFollowups,
+    dateRange,
+    setDateRange
 
   } = useContext(HospitalContext);
 
@@ -248,20 +250,17 @@ const ExecutiveDashboard = () => {
   return (
     <>
       {
-        formsModalOpen ? (<FilledFormsComponent
-          filter={filter}
-          selectedBranch={selectedBranch}
-          selectedHostpital={selectedHostpital}
-          formsModalOpen={formsModalOpen}
-          setFormsModalOpen={setFormsModalOpen}
-          formsData={formsData}
-          formsLoading={loading?.dashboard}
-          formsTypeFilter={formsTypeFilter}
-          setFormsTypeFilter={setFormsTypeFilter}
-          setPagination={setPagination}
-          pagination={pagination}
-        >
-        </FilledFormsComponent >) : (
+        formsModalOpen ? (
+          <FilledFormsComponent
+            selectedBranch={selectedBranch}
+            selectedHostpital={selectedHostpital}
+            formsModalOpen={formsModalOpen}
+            setFormsModalOpen={setFormsModalOpen}
+            formsTypeFilter={formsTypeFilter}
+            setFormsTypeFilter={setFormsTypeFilter}
+            dateRange={dateRange}
+          />
+        ) : (
           <div className="executive-dashboard-page">
 
             {loading?.dashboard && (

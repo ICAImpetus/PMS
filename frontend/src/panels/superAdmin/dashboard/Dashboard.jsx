@@ -130,10 +130,13 @@ const SuperAdminDashboard = () => {
     setCodeAlerts,
     setbranCount,
     setFilter,
+    handleFilterChange,
     setMetrics,
     setSelectedHostpital,
     setPagination,
-    pagination
+    pagination,
+    dateRange,
+    setDateRange
   } = useContext(HospitalContext);
   const navigate = useNavigate()
 
@@ -369,16 +372,12 @@ const SuperAdminDashboard = () => {
     <>
       {formsModalOpen ? (
         <FilledFormsComponent
-          filter={filter}
           selectedHostpital={selectedHostpital}
           formsModalOpen={formsModalOpen}
           setFormsModalOpen={setFormsModalOpen}
-          formsData={formsData}
-          formsLoading={loading?.dashboard}
           formsTypeFilter={formsTypeFilter}
           setFormsTypeFilter={setFormsTypeFilter}
-          setPagination={setPagination}
-          pagination={pagination}
+          dateRange={dateRange}
         />
       ) : (
         <div className="dashboard-container">
@@ -435,7 +434,7 @@ const SuperAdminDashboard = () => {
                     labelId="hospital-label"
                     value={filter}
                     displayEmpty
-                    onChange={(e) => setFilter(e.target.value)}
+                    onChange={(e) => handleFilterChange(e.target.value)}
                     sx={{
                       borderRadius: 2,
                       backgroundColor: "#fff"

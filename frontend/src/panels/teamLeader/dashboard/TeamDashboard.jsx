@@ -73,7 +73,9 @@ const TeamDashboard = () => {
     setSelectedBranch,
     filter,
     setFilter,
-    setPagination
+    setPagination,
+    dateRange,
+    setDateRange
   } = useContext(HospitalContext);
 
   const formsDataMap = {
@@ -169,18 +171,13 @@ const TeamDashboard = () => {
     <>
       {formsModalOpen ? (
         <FilledFormsComponent
-          filter={filter}
           selectedBranch={selectedBranch}
           selectedHostpital={selectedHostpital}
           formsModalOpen={formsModalOpen}
           setFormsModalOpen={setFormsModalOpen}
-          formsData={formsData}
-          formsLoading={loading?.formLoading}
           formsTypeFilter={formsTypeFilter}
           setFormsTypeFilter={setFormsTypeFilter}
-          pagination={pagination}
-          setPagination={setPagination}
-          totalPages={metrics?.pagination?.totalPages}
+          dateRange={dateRange}
         >
         </FilledFormsComponent>
       ) : (

@@ -6676,6 +6676,19 @@ export const superAdminDashboardService = async (
         {
           $facet: {
 
+            inboundCount: [
+              { $match: { formType: "inbound" } },
+              { $count: "count" },
+            ],
+            outboundCount: [
+              { $match: { formType: "outbound" } },
+              { $count: "count" },
+            ],
+
+            appointmentForms: [
+              { $match: { purpose: { $regex: "^appointment$", $options: "i" }, callStatus: { $regex: "^connected$", $options: "i" } } },
+              { $group: { _id: "$formType", count: { $sum: 1 } } },
+            ],
             // TOP INBOUND PURPOSE
             topInboundPurpose: [
               {
@@ -6966,6 +6979,12 @@ export const superAdminDashboardService = async (
       analytics: {
         totalUsers,
         totalBranches,
+        forms: {
+          inbound: analytics?.inbound,
+          outbound: analytics?.outbound
+
+        },
+        appointmentForms: analytics?.appointmentForms,
         topInboundPurpose:
           analytics.topInboundPurpose || [],
 
@@ -8006,7 +8025,7 @@ export const clearNotifications = async (req, res) => {
 
 export const getPatientByRole = async (req, res) => {
   try {
-    const { hospitalId, branchId, filter, page = 1, isExport, searchInput } = req.query;
+    const { hospitalId, branchId, page = 1, isExport, searchInput, startDate, endDate } = req.query;
 
     console.log("call", req.query);
     const isExportMode = isExport === "true";
@@ -8048,7 +8067,6 @@ export const getPatientByRole = async (req, res) => {
 
     let match = {
       isDeleted: false,
-      "hospitalId.hospitalId": hospitalId,
     };
 
     if (branchId && mongoose.isValidObjectId(branchId)) {
@@ -8074,32 +8092,16 @@ export const getPatientByRole = async (req, res) => {
       ];
     }
 
-    if (req.query.startDate && req.query.endDate) {
-      match.createdAt = {};
+    // if (startDate || endDate) {
+    //   match.createdAt = {};
+    //   if (startDate) match.createdAt.$gte = new Date(startDate);
+    //   if (endDate) {
+    //     const end = new Date(endDate);
+    //     end.setHours(23, 59, 59, 999);
+    //     match.createdAt.$lte = end;
+    //   }
+    // }
 
-      if (req.query.startDate) {
-        const startDate = new Date(req.query.startDate);
-
-        if (isNaN(startDate.getTime())) {
-          throw new Error("Invalid startDate");
-        }
-
-        match.createdAt.$gte = startDate;
-      }
-
-      if (req.query.endDate) {
-        const endDate = new Date(req.query.endDate);
-
-        if (isNaN(endDate.getTime())) {
-          throw new Error("Invalid endDate");
-        }
-
-        // Include full day
-        endDate.setHours(23, 59, 59, 999);
-
-        match.createdAt.$lte = endDate;
-      }
-    }
     // Fetch data
     const [patients, totalDocument] = await Promise.all([
       PatientModel.find(match)

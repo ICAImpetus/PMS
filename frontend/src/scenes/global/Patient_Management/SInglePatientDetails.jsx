@@ -50,26 +50,10 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { commonRoutes } from "../../../api/apiService";
 import { useApi } from "../../../api/useApi";
 import moment from "moment";
-import { getNestedValue, handleExport, statusStyles } from "../../../utils/exportUtils";
+import { getNestedValue, handleExport, statusStyles, FORMS_AVAILABLE_COLUMNS } from "../../../utils/exportUtils";
 
 
-export const FORMS_AVAILABLE_COLUMNS = [
-    { key: "createdAt", label: "Form Submission Date" },
-    { key: "purpose", label: "POC / Purpose" },
-    { key: "formType", label: "Form Type" },
-    { key: "doctor.name", label: "Doctor" },
-    { key: "department.name", label: "Department" },
-    { key: "formData.surgeryName", label: "Surgery Name" },
-    { key: "formData.healthPackageName", label: "Health Package" },
-    { key: "formData.department.name", label: "Health Scheme Name" },
-    { key: "formData.govertHealthSchemeName", label: "On-Govt Health Scheme Name" },
-    { key: "formData.nonGovtHealthSchemeName", label: "Non-Govt Health Scheme Name" },
-    { key: "formData.reportName", label: "Report Name" },
-    { key: "formData.callerType", label: "Caller Type" },
-    { key: "followupStatus", label: "Follow-up Status" },
-    { key: "formData.referenceFrom", label: "Reference From" },
-    { key: "formData.remarks", label: "Remarks" },
-];
+
 export const SInglePatientDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams();
@@ -179,7 +163,7 @@ export const SInglePatientDetails = () => {
                 const res = await patientHistory(
                     patient?.hospitalId,
                     patient?._id,
-                    paginatedData.patient.page,
+                    1,
                     startDate,
                     endDate,
                     searchInput,
@@ -302,16 +286,67 @@ export const SInglePatientDetails = () => {
     };
 
 
-    const onExport = () => {
-        handleExport({
-            format: exportFormat,
-            data: filteredVisits,
-            columns: FORMS_AVAILABLE_COLUMNS,
-            fileName: `patients_${moment().format("YYYY-MM-DD")}`,
-            title: "Patients Report",
-        });
+    const onExport = async () => {
+        if (!startDate || !endDate) {
+            toast.warn("Please Enter Start And End Date");
+            return;
+        }
 
-        setExportDialogOpen(false);
+        if (new Date(startDate) > new Date(endDate)) {
+            toast.warn("Start date cannot be greater than end date");
+            return;
+        }
+
+        try {
+            const res = await patientHistory(
+                patient?.hospitalId,
+                patient?._id,
+                1,
+                startDate,
+                endDate,
+                searchInput,
+                true
+            );
+
+            console.log("patient fetch", res);
+
+            if (res?.success) {
+                const data = res?.data || [];
+
+                setVisits(data);
+                setFilteredVisits(data)
+
+                if (!data.length) {
+                    toast.info("No data found for export");
+                    return;
+                }
+
+                handleExport({
+                    format: exportFormat,
+                    data,
+                    columns: FORMS_AVAILABLE_COLUMNS,
+                    fileName: `forms${startDate}_${endDate}`,
+                    title: "Form-Submiitted Report",
+                });
+
+                setPagination((prev) => ({
+                    ...prev,
+                    patients: {
+                        ...res.pagination,
+                    },
+                }));
+
+                setStartDate("");
+                setEndDate("");
+                setExportDialogOpen(false);
+                toast.success("Export successful");
+            } else {
+                toast.error("Failed to fetch patients");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Error fetching patient");
+        }
     };
 
     const handleMoreMenuOpen = (event) => {
@@ -364,42 +399,6 @@ export const SInglePatientDetails = () => {
         handleMoreMenuClose();
     };
 
-    const handleApplyDateFilter = async () => {
-        if (!startDate || !endDate) return;
-
-        console.log("click");
-
-        try {
-
-            const res = await patientHistory(
-                patient?.hospitalId,
-                patient?._id,
-                paginatedData.patient.page,
-                startDate,
-                endDate,
-                searchInput,
-                true
-            );
-
-            console.log("patinat fetch ", res);
-            if (res?.success) {
-                setPatients(res?.data)
-                setPagination((prev) => ({
-                    ...prev,
-                    patients: {
-                        ...res.pagination
-                    }
-                }))
-                handleCloseDateFilter();
-            }
-
-
-        } catch {
-
-            toast.error("Error To Fetch Patient")
-
-        }
-    };
 
     // Handle back button
     const handleBack = () => {
@@ -497,7 +496,7 @@ export const SInglePatientDetails = () => {
                         <Grid item xs={12} sm={6} md={3}>
                             <TextField
                                 fullWidth
-                                label="Search by Name/Phone No./Purpose"
+                                label="Search by Purpose"
                                 variant="outlined"
                                 size="small"
                                 value={searchInput}
@@ -578,61 +577,6 @@ export const SInglePatientDetails = () => {
                             </Box>
                         </Grid>
 
-                        {/* Date Filter */}
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Button
-                                fullWidth
-                                variant="outlined"
-                                startIcon={<FilterAltIcon />}
-                                onClick={handleOpenDateFilter}
-                                sx={{ height: 40, justifyContent: "flex-start" }}
-                            >
-                                {startDate && endDate
-                                    ? `Date: ${startDate} to ${endDate}`
-                                    : "Date Filter"}
-                            </Button>
-
-                            <Menu
-                                anchorEl={dateFilterAnchorEl}
-                                open={openDateFilter}
-                                onClose={handleCloseDateFilter}
-                            >
-                                <Box sx={{ p: 2, width: 280, display: "flex", flexDirection: "column", gap: 2 }}>
-                                    <TextField
-                                        label="Start Date"
-                                        type="date"
-                                        size="small"
-                                        value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
-                                        InputLabelProps={{ shrink: true }}
-                                    />
-                                    <TextField
-                                        label="End Date"
-                                        type="date"
-                                        size="small"
-                                        value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
-                                        InputLabelProps={{ shrink: true }}
-                                    />
-
-                                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                                        <Button
-                                            onClick={handleResetDateFilter}
-                                            disabled={!startDate && !endDate}
-                                        >
-                                            Reset
-                                        </Button>
-                                        <Button
-                                            variant="contained"
-                                            onClick={handleApplyDateFilter}
-                                            disabled={!startDate || !endDate}
-                                        >
-                                            Apply
-                                        </Button>
-                                    </Box>
-                                </Box>
-                            </Menu>
-                        </Grid>
 
                         {/* Export */}
                         <Grid item xs={12} sm={6} md={3}>
@@ -647,21 +591,66 @@ export const SInglePatientDetails = () => {
                                 Export
                             </Button>
                         </Grid>
-                        <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)}>
-                            <DialogTitle>Select Export Format</DialogTitle>
+                        <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} fullWidth maxWidth="sm">
+                            <DialogTitle>Export Data</DialogTitle>
+
                             <DialogContent>
-                                <RadioGroup
-                                    value={exportFormat}
-                                    onChange={e => setExportFormat(e.target.value)}
-                                >
-                                    <FormControlLabel value="csv" control={<Radio />} label="CSV (.csv)" />
-                                    <FormControlLabel value="excel" control={<Radio />} label="Excel (.xlsx)" />
-                                    <FormControlLabel value="pdf" control={<Radio />} label="PDF (.pdf)" />
-                                </RadioGroup>
+
+                                {/* Date Range Section */}
+                                <div style={{ display: "flex", gap: "12px", marginTop: "10px" }}>
+                                    <TextField
+                                        label="Start Date"
+                                        type="date"
+                                        fullWidth
+                                        InputLabelProps={{ shrink: true }}
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                    />
+
+                                    <TextField
+                                        label="End Date"
+                                        type="date"
+                                        fullWidth
+                                        InputLabelProps={{ shrink: true }}
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                    />
+                                </div>
+
+                                {/* Format Selection */}
+                                <div style={{ marginTop: "20px" }}>
+                                    <RadioGroup
+                                        value={exportFormat}
+                                        onChange={(e) => setExportFormat(e.target.value)}
+                                    >
+                                        <FormControlLabel value="csv" control={<Radio />} label="CSV (.csv)" />
+                                        <FormControlLabel value="excel" control={<Radio />} label="Excel (.xlsx)" />
+                                        <FormControlLabel value="pdf" control={<Radio />} label="PDF (.pdf)" />
+                                    </RadioGroup>
+                                </div>
+
                             </DialogContent>
+
                             <DialogActions>
-                                <Button onClick={() => setExportDialogOpen(false)} color="secondary">Cancel</Button>
-                                <Button onClick={onExport} color="primary" variant="contained">Download</Button>
+                                <Button disabled={patientHistoryLoading} onClick={() => setExportDialogOpen(false)} color="secondary">
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={onExport}
+                                    color="primary"
+                                    variant="contained"
+                                    disabled={
+                                        !startDate ||
+                                        !endDate ||
+                                        patientHistoryLoading
+                                    }
+                                >
+                                    {patientHistoryLoading ? (
+                                        <CircularProgress size={22} color="inherit" />
+                                    ) : (
+                                        "Download"
+                                    )}
+                                </Button>
                             </DialogActions>
                         </Dialog>
                     </Grid>
