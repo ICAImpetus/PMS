@@ -543,10 +543,10 @@ const SuperAdminDashboard = () => {
             <UsersCard label="Forms" onClick={() => {
               setFormsTypeFilter("all");
               setFormsModalOpen("Forms");
-            }} count={analytics?.forms.total} option={
+            }} count={analytics?.forms?.total} option={
               {
-                "inbound": analytics?.forms.inbound,
-                "outbound": analytics?.forms.outbound
+                "inbound": analytics?.forms?.inbound,
+                "outbound": analytics?.forms?.outbound
               }
             } />
 

@@ -443,22 +443,22 @@ const AdminDashboard = () => {
             }
 
             } />
-            <UsersCard label="Appointments" count={analytics?.appointments.total} onClick={() => {
+            <UsersCard label="Appointments" count={analytics?.appointments?.total} onClick={() => {
               setFormsTypeFilter("all");
               setFormsModalOpen("Appointments");
             }} option={
               {
-                "inbound": analytics?.appointments.inbound,
-                "outbound": analytics?.appointments.outbound
+                "inbound": analytics?.appointments?.inbound,
+                "outbound": analytics?.appointments?.outbound
               }
             } />
             <UsersCard label="Forms" onClick={() => {
               setFormsTypeFilter("all");
               setFormsModalOpen("Forms");
-            }} count={analytics?.forms.total} option={
+            }} count={analytics?.forms?.total} option={
               {
-                "inbound": analytics?.forms.inbound,
-                "outbound": analytics?.forms.outbound
+                "inbound": analytics?.forms?.inbound,
+                "outbound": analytics?.forms?.outbound
               }
             } />
 
