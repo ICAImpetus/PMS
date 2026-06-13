@@ -50,8 +50,6 @@ import { FORMS_AVAILABLE_COLUMNS, getNestedValue } from "../../utils/exportUtils
 const searchOptions = [
   "Search Patient...",
   "Search Agent...",
-  "Search POC...",
-  "Search Remarks...",
 ];
 
 
