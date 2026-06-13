@@ -8480,7 +8480,7 @@ export const singlePatientHistory = async (req, res) => {
     const FilledFormsModel = getFilledFormsModel(conn);
     const DoctorModel = getDoctorModel(conn);
     const DepartmentModel = getDepartmentModel(conn);
-
+    const PatientModel = getPatientModel(conn)
     // Base match
     let match = {
       isDeleted: false,
@@ -8523,6 +8523,11 @@ export const singlePatientHistory = async (req, res) => {
           path: "doctor",
           model: DoctorModel,
           select: "name",
+        })
+        .populate({
+          path: "formData.patientDetails",
+          model: PatientModel,
+          select: "patientName patientMobile",
         })
         .sort({ createdAt: -1 })
         .skip(isExportMode ? 0 : skip)

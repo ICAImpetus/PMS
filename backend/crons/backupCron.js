@@ -1,6 +1,6 @@
 import cron from "node-cron";
 import { runBackup } from "../services/backupService.js";
-import { getConnection, getDoctorModel, getFilledFormsModel, getHospitalModel, getPatientModel, MasterConn } from "../utils/db.manager.js";
+import { getConnection, getDepartmentModel, getDoctorModel, getFilledFormsModel, getHospitalModel, getPatientModel, MasterConn } from "../utils/db.manager.js";
 import csv from "csv-parser"
 import fs from "fs";
 import mongoose from "mongoose";
@@ -14,11 +14,19 @@ cron.schedule("0 2 * * 0", async () => {
 });
 // await runBackup();
 
+const STATUSMAP = {
+    "": "other",
+    "New Patient": "new",
+    "Old Patient": "old",
+    "Non-Patient": "other"
+};
+
 // const STATUSMAP = {
-//     "Non-Patient": "other",
+//     "Prefer not to say": "Other",
 //     "New Patient": "new",
 //     "Old Patient": "old",
 // };
+
 // export const uploadDatabaseBackup = async () => {
 //     try {
 //         console.log("Starting database backup...");
@@ -34,6 +42,7 @@ cron.schedule("0 2 * * 0", async () => {
 //         const FilledFormsModel = getFilledFormsModel(conn);
 //         const PatientModel = getPatientModel(conn);
 //         const DoctorModel = getDoctorModel(conn);
+//         const DepartmentModel = getDepartmentModel(conn)
 
 //         const results = [];
 //         const processedRows = new Set();
@@ -61,6 +70,8 @@ cron.schedule("0 2 * * 0", async () => {
 //                 patientMobile: mobile,
 //             });
 
+
+//             console.log("patient", data)
 //             if (!patient) {
 //                 patient = await PatientModel.create({
 //                     hospitalId: {
@@ -70,29 +81,45 @@ cron.schedule("0 2 * * 0", async () => {
 //                     branchId: new mongoose.Types.ObjectId(
 //                         "6a2270606f164344a2644a8f"
 //                     ),
+//                     gender: data.gender || "Other",
 //                     patientName: data.patientName,
 //                     status: STATUSMAP[data.status] || "",
 //                     patientMobile: mobile,
-//                     patientAge:
-//                         parseInt(data.patientAge, 10) || undefined,
+//                     patientAge: parseInt(data.patientAge, 10) || 0,
 //                     location: data.location,
 //                     category: data.category,
+
 //                 });
 //             }
+
+//             console.log("patient", patient)
+
 
 //             // ======================
 //             // DOCTOR VALIDATION
 //             // ======================
 //             let doctor = null;
+//             let department = null;
 //             if (
 //                 data.doctor &&
 //                 mongoose.Types.ObjectId.isValid(data.doctor)
 //             ) {
 //                 doctor = await DoctorModel.findById(
 //                     data.doctor
-//                 );
+//                 ).lean();
 //                 // continue;
 //             }
+
+//             if (
+//                 data.department &&
+//                 mongoose.Types.ObjectId.isValid(data.department)
+//             ) {
+//                 department = await DepartmentModel.findById(
+//                     data.department
+//                 ).lean();
+//                 // continue;
+//             }
+
 
 
 
@@ -118,7 +145,7 @@ cron.schedule("0 2 * * 0", async () => {
 //                 ),
 //                 callStatus: "connected",
 //                 doctor: doctor ? doctor._id : null,
-//                 department: doctor ? doctor.department : null,
+//                 department: department ? (department?._id || doctor.department) : null,
 //                 formData: {
 //                     referenceFrom: data.referenceFrom,
 //                     callerType: data.callerType,
@@ -156,6 +183,8 @@ cron.schedule("0 2 * * 0", async () => {
 //     }
 // };
 
+
+// await uploadDatabaseBackup()
 
 // export const changePatienStatus = async () => {
 //     try {
