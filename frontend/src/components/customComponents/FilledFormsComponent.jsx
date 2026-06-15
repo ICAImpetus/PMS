@@ -151,6 +151,7 @@ const FilledFormsComponent = ({
           searchInput || "",
           purpose,
           formsModalOpen,
+          formsTypeFilter,
           false
         );
 
@@ -355,6 +356,7 @@ const FilledFormsComponent = ({
         searchInput || "",
         purpose,
         formsModalOpen,
+        formsTypeFilter,
         false
       );
 
@@ -392,6 +394,7 @@ const FilledFormsComponent = ({
         searchInput || "",
         purpose,
         formsModalOpen,
+        formsTypeFilter,
         false
       );
 
@@ -537,6 +540,7 @@ const FilledFormsComponent = ({
           searchInput || "",
           purpose,
           formsModalOpen,
+          formsTypeFilter,
           false
         );
 
@@ -601,6 +605,7 @@ const FilledFormsComponent = ({
         searchInput || "",
         purpose,
         formsModalOpen,
+        formsTypeFilter,
         false
       );
 
@@ -650,6 +655,7 @@ const FilledFormsComponent = ({
         searchInput || "",
         purpose,
         formsModalOpen,
+        formsTypeFilter,
         true
       );
 

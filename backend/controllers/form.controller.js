@@ -383,6 +383,7 @@ export const getFilledForms = async (req, res) => {
       searchName,
       isExport,
       purpose,
+      formsModalOpen,
       formsTypeFilter
     } = req.query;
 
@@ -391,7 +392,7 @@ export const getFilledForms = async (req, res) => {
     const pageNum = Math.max(parseInt(page) || 1, 1);
     const skip = isExportMode ? 0 : (pageNum - 1) * PAGE_LIMIT;
 
-    console.log("req.query", req.query);
+    // console.log("req.query", req.query);
 
     // ================= VALIDATION =================
     if (!hospitalId || !mongoose.isValidObjectId(hospitalId)) {
@@ -439,20 +440,41 @@ export const getFilledForms = async (req, res) => {
     //   matchStage.purpose = purpose;
     // }
 
-    if (formsTypeFilter && formsTypeFilter !== "all") {
+    if (formsModalOpen && formsModalOpen !== "all") {
 
-      if (formsTypeFilter === "Appointments") {
+      if (formsModalOpen === "Appointments") {
         matchStage.purpose = {
           $regex: "appointment",
           $options: "i",
         };
       }
 
-      if (formsTypeFilter === "Followups") {
+      if (formsModalOpen === "Followups") {
         matchStage.useForFollowup = true
       }
 
     }
+
+    if (formsTypeFilter && formsTypeFilter !== "all") {
+
+      if (formsTypeFilter === "inbound") {
+        matchStage.formType = {
+          $regex: "inbound",
+          $options: "i",
+        };
+      }
+
+      if (formsTypeFilter === "outbound") {
+        matchStage.formType = {
+          $regex: "outbound",
+          $options: "i",
+        };
+      }
+
+
+    }
+
+
     // ================= START PIPELINE =================
     const pipeline = [
       { $match: matchStage },
