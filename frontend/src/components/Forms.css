@@ -70,7 +70,7 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
 
   flex-wrap: wrap;
-  /* 🔥 important for responsiveness */
+  /*  important for responsiveness */
   gap: 10px;
 }
 
@@ -78,7 +78,7 @@ body {
 .header-top {
   display: flex;
   flex-direction: column;
-  /* 🔥 stack title + badge */
+  /*  stack title + badge */
   gap: 4px;
 }
 

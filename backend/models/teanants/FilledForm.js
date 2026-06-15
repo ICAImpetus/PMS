@@ -167,8 +167,13 @@ export const FilledFormSchema = new mongoose.Schema(
       cancelReason: String,
     },
     isDeleted: { type: Boolean, index: true, default: false },
+    createdAt: Date,
+    updatedAt: Date,
   },
-  { timestamps: true, versionKey: false }
+  {
+    timestamps: true,
+    versionKey: false
+  }
 );
 
 // const FilledFormsModel = mongoose.model("filledForms", filledFormSchema);
