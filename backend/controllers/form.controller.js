@@ -544,9 +544,9 @@ export const getFilledForms = async (req, res) => {
 
               referenceFrom: "$formData.referenceFrom",
               // Flattened patient mapping
-              patientName: "$patientInfo.patientName",
-              patientMobile: "$patientInfo.patientMobile",
-              patientStatus: "$patientInfo.status",
+              "formData.patientDetails.patientName": "$patientInfo.patientName",
+              "formData.patientDetails.patientMobile": "$patientInfo.patientMobile",
+              "formData.patientDetails.patientStatus": "$patientInfo.status",
               gender: "$patientInfo.gender",
               // Raw/Nested fields from form
               appointmentSlot: "$formData.appointmentSlot",

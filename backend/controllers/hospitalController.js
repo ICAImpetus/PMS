@@ -5709,13 +5709,13 @@ export const getDashboard = async (req, res) => {
     const bfPage = parseInt(req.query.bfPage) || 1;
     const bfLimit = parseInt(req.query.bfLimit) || 10;
 
+    console.log("startdata", startDate);
+    console.log("startdata", endDate);
+
     const date = {
       startDate: new Date(startDate),
       endDate: new Date(endDate)
-    }
-    date.startDate.setHours(0, 0, 0, 0);
-    date.endDate.setHours(23, 59, 59, 999);
-
+    };
     switch (role) {
       case "executive":
 
@@ -6024,7 +6024,7 @@ export const executiveDashboardService = async (conn, branchId, user, bfPage = 1
                 }
               },
 
-              // 🔥 sabse pehle latest 5 nikaalo
+              //  sabse pehle latest 5 nikaalo
               { $sort: { createdAt: -1 } },
               { $limit: 5 },
 
@@ -6860,6 +6860,8 @@ export const superAdminDashboardService = async (
     // base match
 
 
+
+
     const matchStage = {
       isDeleted: false,
       createdAt: {
@@ -6885,6 +6887,9 @@ export const superAdminDashboardService = async (
     };
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - 2);
+
+
+    console.log("matchstage", matchStage)
 
     const [
       totalUsers,
@@ -8143,7 +8148,7 @@ const uploadLabTestCSV = async ({ conn, branchId, rows, normalize, session }) =>
       if (!row.testName) continue;
 
       if (existingSet.has(row.testCode)) {
-        continue; // 🔥 skip duplicate
+        continue; //  skip duplicate
       }
 
       existingSet.add(row.testCode);
@@ -8160,7 +8165,7 @@ const uploadLabTestCSV = async ({ conn, branchId, rows, normalize, session }) =>
         floor: row.floor,
         description: row.description,
         categoryApplicability: splitComma(row.categoryApplicability),
-        packageTests: [], // 🔥 later fill
+        packageTests: [], //  later fill
         precaution: row.precaution,
         remarks: row.remarks,
         serviceTime: row.serviceTime,
