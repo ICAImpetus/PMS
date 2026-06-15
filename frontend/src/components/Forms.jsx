@@ -8,6 +8,7 @@ import DoctorDropdown from "./DoctorDropdown";
 import { useApi } from "../api/useApi";
 import { commonRoutes } from "../api/apiService";
 import toast from "react-hot-toast";
+import moment from "moment";
 import {
   CircularProgress, Box,
   TextField,
@@ -216,6 +217,7 @@ function Forms() {
   const [filteredDoctors, setfilteredDoctors] = useState([]);
   const [selectedDay, setSelectedDay] = useState(null);
   const [bookedSlotIds, setBookedSlotIds] = useState([]);
+  const [latestVisits, setLatestVisits] = useState([])
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [liveTime, setLiveTime] = useState("");
   const [bookedSlotModal, setBookedSlotModal] = useState({ open: false, slot: null, });
@@ -301,7 +303,7 @@ function Forms() {
 
         if (res?.success) {
 
-          const patient = res.data?.patient;
+          const patient = res?.data;
 
           setForm((prev) => ({
             ...prev,
@@ -332,6 +334,8 @@ function Forms() {
               },
             },
           }));
+
+          setLatestVisits(res?.latestVisits || [])
 
           toast.success("Patient details auto-filled based on mobile number.");
           return;
@@ -673,6 +677,50 @@ function Forms() {
     }
 
     return slotDateTime.isBefore(dayjs());
+  };
+
+  const LatestPatientComponents = () => {
+    return (
+      form?.formData?.patientDetails?.patientMobile !== "" &&
+      latestVisits?.length > 0 && (
+        <div className="section" data-section="patient-latest-details">
+          <div className="patient-latest-visit-heading">
+            <h3>Latest Visit</h3>
+            <button type="button">View More</button>
+          </div>
+
+          <table className="patient-details-table">
+            <thead>
+              <tr>
+                <th>Form Type</th>
+                <th>Purpose</th>
+                <th>Doctor</th>
+                <th>Department</th>
+                <th>Remarks</th>
+                <th>Submitted Date</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {latestVisits?.map((lv, index) => (
+                <tr key={lv?._id || index}>
+                  <td>{lv?.formType || "-"}</td>
+                  <td>{lv?.purpose || "-"}</td>
+                  <td>{lv?.doctor || "-"}</td>
+                  <td>{lv?.department || "-"}</td>
+                  <td>{lv?.remarks || "-"}</td>
+                  <td>
+                    {lv?.createdAt
+                      ? moment(lv.createdAt).format("DD MMM YYYY, hh:mm A")
+                      : "-"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    );
   };
 
   const renderInboundPurposeDetails = () => {
@@ -4103,14 +4151,15 @@ function Forms() {
               </div>
             )}
         </div>
+        {/* 
+        {form.formData.patientDetails.patientMobile !== "" && latestVisits.length > 0 && (
+          <div className="section" data-section="patient-latest-details">
+            <div className="patient-latest-visit-heading">
+              <h3>Latest Visit</h3>
+              <button type="button">View More</button>
+            </div>
 
-        {/* <div className="section" data-section="patient-latest-details">
-          <div className="patient-latest-visit-heading">
-            <h3>Latest Visit</h3>
-            <button type="button">View More</button>
-          </div>
 
-          <div className="patient-latest-visit-table">
             <table className="patient-details-table">
               <thead>
                 <tr>
@@ -4119,160 +4168,188 @@ function Forms() {
                   <th>Doctor</th>
                   <th>Department</th>
                   <th>Remarks</th>
+                  <th>Submitted Date</th>
                 </tr>
               </thead>
+
               <tbody>
-                <tr>
-                  <td colSpan="5" className="no-latest-visit">
-                    No latest visit data available.
-                  </td>
-                </tr>
+                {latestVisits && latestVisits.length > 0 ? (
+                  latestVisits.map((lv, index) => (
+                    <tr key={lv?._id || index}>
+                      <td>{lv?.formType || "-"}</td>
+                      <td>{lv?.purpose || "-"}</td>
+                      <td>{lv?.doctor || "-"}</td>
+                      <td>{lv?.department || "-"}</td>
+                      <td>{lv?.remarks || "-"}</td>
+                      <td>
+                        {lv?.createdAt
+                          ? moment(lv.createdAt).format("DD MMM YYYY, hh:mm A")
+                          : "-"}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="no-latest-visit">
+                      No latest visit data available.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
+      
           </div>
-        </div> */}
+        )} */}
 
-      </div>
+        <LatestPatientComponents />
 
-      {form.callStatus === "Connected" && (
-        <div className="section" data-section="call-purpose">
-          <h3>Call Purpose</h3>
+      </div >
 
-          <div className="input-row">
-            <div className="input-group">
-              <label className="required">Purpose Of Call</label>
-              <Autocomplete freeSolo
-                sx={{
-                  width: "100%", "& .MuiOutlinedInput-root":
-                  {
-                    minHeight: 38, border: "1px solid var(--border-color)",
-                    borderRadius:
-                      "var(--radius)",
-                    backgroundColor: "#fff", fontSize: "13px", "& fieldset": { border: "none", },
-                  },
-                  "& .MuiInputBase-input": { fontSize: "13px", padding: "0 14px", },
-                }}
-                options={INBOUND_PURPOSE_OPTIONS}
-                getOptionLabel={(option) => typeof option === "string" ?
-                  option : option.label}
-                value={INBOUND_PURPOSE_OPTIONS.find((item) => item.value === form.purpose) || form.purpose}
-                onChange={(_, newValue) => { handleChange("purpose", typeof newValue === "string" ? newValue : newValue?.value || ""); }}
-                onInputChange={(_, newInputValue) => { handleChange("purpose", newInputValue); }}
-                renderInput={(params) =>
-                  (<TextField {...params} placeholder="Search or type purpose" />)} />
-            </div>
-          </div>
+      {
+        form.callStatus === "Connected" && (
+          <div className="section" data-section="call-purpose">
+            <h3>Call Purpose</h3>
 
-          {form.formType === "inbound" && form.purpose && (
-            <div className="purpose-details" data-section="purpose-details">
-              {renderInboundPurposeDetails()}
-            </div>
-          )}
-        </div>
-      )}
-
-      {form.callStatus === "Call-Drop" && (
-        <div className="sub-section">
-          <h3>Call Drop Details</h3>
-
-          <div className="input-row">
-            <div className="input-group">
-              <label className="required">Call Back Made?</label>
-
-              <div className="callback-buttons">
-                <button
-                  type="button"
-                  className={`callback-btn ${form.formData.callBack === "Yes" ? "active" : ""}`}
-                  onClick={() => handleChange("formData.callBack", "Yes")}
-                >
-                  Yes
-                </button>
-
-                <button
-                  type="button"
-                  className={`callback-btn ${form.formData.callBack === "No" ? "active" : ""}`}
-                  onClick={() => handleChange("formData.callBack", "No")}
-                >
-                  No
-                </button>
+            <div className="input-row">
+              <div className="input-group">
+                <label className="required">Purpose Of Call</label>
+                <Autocomplete freeSolo
+                  sx={{
+                    width: "100%", "& .MuiOutlinedInput-root":
+                    {
+                      minHeight: 38, border: "1px solid var(--border-color)",
+                      borderRadius:
+                        "var(--radius)",
+                      backgroundColor: "#fff", fontSize: "13px", "& fieldset": { border: "none", },
+                    },
+                    "& .MuiInputBase-input": { fontSize: "13px", padding: "0 14px", },
+                  }}
+                  options={INBOUND_PURPOSE_OPTIONS}
+                  getOptionLabel={(option) => typeof option === "string" ?
+                    option : option.label}
+                  value={INBOUND_PURPOSE_OPTIONS.find((item) => item.value === form.purpose) || form.purpose}
+                  onChange={(_, newValue) => { handleChange("purpose", typeof newValue === "string" ? newValue : newValue?.value || ""); }}
+                  onInputChange={(_, newInputValue) => { handleChange("purpose", newInputValue); }}
+                  renderInput={(params) =>
+                    (<TextField {...params} placeholder="Search or type purpose" />)} />
               </div>
             </div>
 
-            <div className="input-group">
-              <label className="required">Connected?</label>
+            {form.formType === "inbound" && form.purpose && (
+              <div className="purpose-details" data-section="purpose-details">
+                {renderInboundPurposeDetails()}
+              </div>
+            )}
+          </div>
+        )
+      }
 
-              <div className="connected-buttons">
-                <button
-                  type="button"
-                  className={`connected-btn ${form.formData.connected === "Yes" ? "active" : ""}`}
-                  onClick={() => handleChange("formData.connected", "Yes")}
-                >
-                  Yes
-                </button>
+      {
+        form.callStatus === "Call-Drop" && (
+          <div className="sub-section">
+            <h3>Call Drop Details</h3>
 
-                <button
-                  type="button"
-                  className={`connected-btn ${form.formData.connected === "No" ? "active" : ""}`}
-                  onClick={() => handleChange("formData.connected", "No")}
-                >
-                  No
-                </button>
+            <div className="input-row">
+              <div className="input-group">
+                <label className="required">Call Back Made?</label>
+
+                <div className="callback-buttons">
+                  <button
+                    type="button"
+                    className={`callback-btn ${form.formData.callBack === "Yes" ? "active" : ""}`}
+                    onClick={() => handleChange("formData.callBack", "Yes")}
+                  >
+                    Yes
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`callback-btn ${form.formData.callBack === "No" ? "active" : ""}`}
+                    onClick={() => handleChange("formData.callBack", "No")}
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label className="required">Connected?</label>
+
+                <div className="connected-buttons">
+                  <button
+                    type="button"
+                    className={`connected-btn ${form.formData.connected === "Yes" ? "active" : ""}`}
+                    onClick={() => handleChange("formData.connected", "Yes")}
+                  >
+                    Yes
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`connected-btn ${form.formData.connected === "No" ? "active" : ""}`}
+                    onClick={() => handleChange("formData.connected", "No")}
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label>Disconnection Reason</label>
+
+                <input
+                  type="text"
+                  className="input-field"
+                  value={form.formData.disconnectionReason}
+                  onChange={(e) =>
+                    handleChange("formData.disconnectionReason", e.target.value)
+                  }
+
+
+                />
               </div>
             </div>
 
-            <div className="input-group">
-              <label>Disconnection Reason</label>
+            <div className="input-row">
+              <div className="input-group textarea-field-container">
+                <label className="required">Remarks</label>
 
-              <input
-                type="text"
-                className="input-field"
-                value={form.formData.disconnectionReason}
-                onChange={(e) =>
-                  handleChange("formData.disconnectionReason", e.target.value)
-                }
-
-
-              />
+                <textarea
+                  className="textarea-field"
+                  value={form.formData.remarks}
+                  onChange={(e) =>
+                    handleChange("formData.remarks", e.target.value)
+                  }
+                  required
+                  rows="2"
+                />
+              </div>
             </div>
           </div>
+        )
+      }
 
-          <div className="input-row">
-            <div className="input-group textarea-field-container">
-              <label className="required">Remarks</label>
+      {
+        (form.callStatus === "Connected" && form.purpose !== "" || (form.callStatus === "Call-Drop")) && form.formType !== "outbound" && (
+          <div className="button-group">
+            <button
+              disabled={saveFilledFormLoading}
+              type="button"
+              className="btn btn-clear"
+              onClick={resetForm}
+            >
+              Clear Form
+            </button>
 
-              <textarea
-                className="textarea-field"
-                value={form.formData.remarks}
-                onChange={(e) =>
-                  handleChange("formData.remarks", e.target.value)
-                }
-                required
-                rows="2"
-              />
-            </div>
+            <button type="submit" disabled={saveFilledFormLoading} className="btn btn-submit">
+              {saveFilledFormLoading ? <CircularProgress size={20} color="inherit" /> : "Submit"}
+            </button>
           </div>
-        </div>
-      )}
-
-      {(form.callStatus === "Connected" && form.purpose !== "" || (form.callStatus === "Call-Drop")) && form.formType !== "outbound" && (
-        <div className="button-group">
-          <button
-            disabled={saveFilledFormLoading}
-            type="button"
-            className="btn btn-clear"
-            onClick={resetForm}
-          >
-            Clear Form
-          </button>
-
-          <button type="submit" disabled={saveFilledFormLoading} className="btn btn-submit">
-            {saveFilledFormLoading ? <CircularProgress size={20} color="inherit" /> : "Submit"}
-          </button>
-        </div>
-      )}
+        )
+      }
 
 
-    </form>
+    </form >
   );
 
   const renderOutboundForm = () => (

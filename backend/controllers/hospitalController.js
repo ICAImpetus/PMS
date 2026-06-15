@@ -768,12 +768,6 @@ export const updateBranch = async (req, res) => {
   }
 };
 
-// * Updates hospital details from the hospital admin side.
-// * Requires 'keyToUpdate' and 'trimmedName' in the request body.
-// ! Returns error if required fields are missing or no update fields are provided.
-// * Updates hospital details by hospital ID.
-// * Requires 'ID' in req.params and update fields in req.body.
-// ! Returns error if ID or update fields are missing, or if no hospital is found.
 export const updateHospital = async (req, res) => {
   try {
     const hospitalData = sanitizeHospitalPayload(req.body || {});
@@ -8617,10 +8611,9 @@ export const getPatientByNumber = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Patient fetched successfully",
-      data: {
-        patient,
-        latestVisits: latestVisits || []
-      },
+      data: patient,
+      latestVisits: latestVisits || []
+
 
     });
 

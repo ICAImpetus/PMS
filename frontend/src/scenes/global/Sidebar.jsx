@@ -339,6 +339,13 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
               {
                 isTeamLeader && (
                   <>
+                    <Item
+                      title="Executive Forms"
+                      to="/executive-forms"
+                      icon={<AssignmentIndOutlinedIcon />}
+                      selected={selected}
+                      setSelected={setSelected}
+                    />
                     {/* <Item
                     title="Team Reports"
                     to="/team-reports"
