@@ -5715,8 +5715,8 @@ export const getDashboard = async (req, res) => {
     const bfPage = parseInt(req.query.bfPage) || 1;
     const bfLimit = parseInt(req.query.bfLimit) || 10;
 
-    console.log("startdata", startDate);
-    console.log("startdata", endDate);
+    // console.log("startdata", startDate);
+    // console.log("startdata", endDate);
 
     const date = {
       startDate: new Date(startDate),
