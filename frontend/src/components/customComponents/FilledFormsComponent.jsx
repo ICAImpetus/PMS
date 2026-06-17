@@ -1045,7 +1045,7 @@ const FilledFormsComponent = ({
                                 ? `${formattedDate} | ${val.start || "N/A"} to ${val.end || "N/A"
                                 }`
                                 : `${val.start || "N/A"} to ${val.end || "N/A"}`;
-                            } else {
+                            } else if (col.value === "Appointment") {
                               const formattedDate = row?.dateTime
                                 ? moment(row.dateTime).format("dddd, DD MMM YYYY")
                                 : null;
