@@ -23,6 +23,11 @@ dayjs.extend(customParseFormat);
 const HospitalModel = getHospitalModel(MasterConn)
 const AdminAndAgentModel = getAdminAgentModel(MasterConn)
 const AuditLog = getAuditLogModel(MasterConn)
+const pop = (path, model, select = null) => ({
+  path,
+  model,
+  ...(select && { select })
+});
 
 
 function generateSlots(
@@ -6397,34 +6402,44 @@ export const teamLeaderDashboardService = async (conn, branchId = null, user, bf
               }
             ],
             teamOverview: [
+              // 1. Filter early (best performance gain)
+              {
+                $match: {
+                  agentId: { $ne: null }
+                }
+              },
+
+              // 2. Group & compute stats
               {
                 $group: {
                   _id: "$agentId",
-                  count: { $sum: 1 }
+
+                  agentName: { $first: "$agentName" },
+
+                  totalCalls: { $sum: 1 },
                 }
               },
+
+              // 3. Sort top performers
               {
-                $lookup: {
-                  from: AdminAndAgentModel.collection.name,
-                  localField: "agentId",
-                  foreignField: "_id",
-                  as: "agent"
-                }
+                $sort: { totalCalls: -1 }
               },
+
+              // 4. Limit early after sort
               {
-                $unwind: {
-                  path: "$agent",
-                  preserveNullAndEmptyArrays: true
-                }
+                $limit: 10
               },
-              { $sort: { count: -1 } },
-              { $limit: 10 },
+
+              // 5. Clean output
               {
                 $project: {
                   _id: 0,
                   agentId: "$_id",
-                  name: "$agent.name",
-                  count: 1
+                  agentName: 1,
+                  totalCalls: 1,
+                  inbound: 1,
+                  outbound: 1,
+                  appointments: 1
                 }
               }
             ],
@@ -7029,68 +7044,46 @@ export const superAdminDashboardService = async (
               },
             ],
 
-            // ---------------- TEAM OVERVIEW ----------------
             teamOverview: [
+              // 1. Filter early (best performance gain)
               {
                 $match: {
-                  agentId: { $ne: null },
-                },
+                  agentId: { $ne: null }
+                }
               },
+
+              // 2. Group & compute stats
               {
                 $group: {
                   _id: "$agentId",
+
                   agentName: { $first: "$agentName" },
 
                   totalCalls: { $sum: 1 },
-
-                  inbound: {
-                    $sum: {
-                      $cond: [{ $eq: ["$formType", "inbound"] }, 1, 0],
-                    },
-                  },
-
-                  outbound: {
-                    $sum: {
-                      $cond: [{ $eq: ["$formType", "outbound"] }, 1, 0],
-                    },
-                  },
-
-                  appointments: {
-                    $sum: {
-                      $cond: [
-                        {
-                          $and: [
-                            {
-                              $regexMatch: {
-                                input: "$purpose",
-                                regex: /^appointment$/i,
-                              },
-                            },
-                          ],
-                        },
-                        1,
-                        0,
-                      ],
-                    },
-                  },
-                },
+                }
               },
-              { $sort: { totalCalls: -1 } },
-              { $limit: 10 },
+
+              // 3. Sort top performers
+              {
+                $sort: { totalCalls: -1 }
+              },
+
+              // 4. Limit early after sort
+              {
+                $limit: 10
+              },
+
+              // 5. Clean output
               {
                 $project: {
                   _id: 0,
                   agentId: "$_id",
                   agentName: 1,
                   totalCalls: 1,
-                  inbound: 1,
-                  outbound: 1,
-                  appointments: 1,
-                },
-              },
-            ],
 
-            // ---------------- CALL CATEGORIZATION ----------------
+                }
+              }
+            ],
             callCategorization: [
               {
                 $group: {
@@ -8591,6 +8584,8 @@ export const getPatientByNumber = async (req, res) => {
     const conn = await getConnection(hospital.trimmedName);
     const PatientModel = getPatientModel(conn);
     const FilledFormsModel = getFilledFormsModel(conn);
+    const DoctorModel = getDoctorModel(conn)
+    const DepartmentModel = getDepartmentModel(conn)
 
 
     const patient = await PatientModel.findOne({
@@ -8607,7 +8602,9 @@ export const getPatientByNumber = async (req, res) => {
     const latestVisits = await FilledFormsModel.find({
       "formData.patientDetails": patient._id,
       isDeleted: false,
-    })
+    }).select("formType doctor department purpose formData.remarks createdAt")
+      .populate(pop("doctor", DoctorModel, "name"))
+      .populate(pop("department", DepartmentModel, "name"))
       .sort({ createdAt: -1 })
       .limit(5)
       .lean();

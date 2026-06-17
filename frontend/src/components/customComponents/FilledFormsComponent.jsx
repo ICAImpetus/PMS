@@ -680,7 +680,7 @@ const FilledFormsComponent = ({
                   : "";
 
                 val = `${date} | ${val?.start || ""} - ${val?.end || ""}`;
-              } else {
+              } else if (c.value === "Appointment") {
                 const formattedDate = row?.dateTime
                   ? moment(row.dateTime).format("DD MMM YYYY")
                   : "";

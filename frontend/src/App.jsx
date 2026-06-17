@@ -8,7 +8,7 @@ import { ColorModeContext, useMode } from "./theme";
 import { GlobalHospitalContextProvider } from "./contexts/HospitalContexts";
 import Login from "./components/Login/Login";
 import { UserContextHook } from "./contexts/UserContexts";
-import { Toaster } from "react-hot-toast";
+// Toaster moved to `main.jsx` so it's mounted before app-level providers
 import GlobalLoader from "./components/GlobalLoader";
 import { Outlet } from "react-router-dom";
 
@@ -186,7 +186,7 @@ function App() {
   return (
 
     <>
-      <Toaster position="top-right" reverseOrder={false} />
+      {/* Toaster is rendered at root (main.jsx) */}
       {currentUser ? (
         <ColorModeContext.Provider value={colorMode}>
           <ThemeProvider theme={theme}>

@@ -643,11 +643,11 @@ const TeamDashboard = () => {
                             <User size={20} />
                           </div>
                           <div className="tld-member-info">
-                            <div className="tld-member-name">{item?.name || "Sandeep"}</div>
-                            <div className="tld-member-role">Active Executive</div>
+                            <div className="tld-member-name">{item?.agentName || "Sandeep"}</div>
+                            <div className="tld-member-role">Active Agent</div>
                           </div>
                           <div className={`tld-member-stats-badge ${status}`}>
-                            {item?.count || 0} Forms
+                            {item?.totalCalls || 0} Forms
                           </div>
                         </div>
                       );
