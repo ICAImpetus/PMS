@@ -46,7 +46,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import * as XLSX from "xlsx";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import HospitalContext from "../../../contexts/HospitalContexts";
 import moment from "moment";
 import { useApi } from "../../../api/useApi.js"
@@ -74,20 +74,19 @@ export const generateExportData = (data, columns) => {
     return { headers, rows };
 };
 
-export     // Format date
-    const formatDate = (dateString) => {
-        try {
-            return new Date(dateString).toLocaleDateString("en-IN", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-            });
-        } catch {
-            return "N/A";
-        }
-    };
+export const formatDate = (dateString) => {
+    try {
+        return new Date(dateString).toLocaleDateString("en-IN", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    } catch {
+        return "N/A";
+    }
+};
 export const PatientHistory = () => {
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [searchName, setSearchName] = useState("");
@@ -116,6 +115,7 @@ export const PatientHistory = () => {
         "createdAt",
     ]);
     const openDateFilter = Boolean(dateFilterAnchorEl);
+    const navigate = useNavigate()
 
 
     const toggleFormColumn = (colKey) => {
@@ -125,7 +125,6 @@ export const PatientHistory = () => {
                 : [...prev, colKey]
         );
     };
-    const navigate = useNavigate()
 
     const {
         selectedBranch,
@@ -151,28 +150,11 @@ export const PatientHistory = () => {
     const { request: getPatients, loading: getPatientloading } = useApi(commonRoutes.getPatients)
 
 
-    useEffect(() => {
-        setFilteredPatients(patients)
-    }, [patients])
+    const [searchParams] = useSearchParams();
 
-    // Clear all filters
-    const handleClearFilters = () => {
-        setSearchName("");
-        setSearchInput("");
-        setStartDate("");
-        setEndDate("");
-        setAppliedStartDate("");
-        setAppliedEndDate("");
-        setDateRangeFilter({ startDate: "", endDate: "" });
-        setFormTypeFilter("all");
-        setPagination((prev) => ({
-            ...prev,
-            patients: {
-                ...prev.patients,
-                page: 1,
-            },
-        }));
-    };
+    console.log("searchParams", searchParams);
+
+
 
     const handleSearchApply = async () => {
         const searchValue = searchInput.trim().toLowerCase();
@@ -230,6 +212,53 @@ export const PatientHistory = () => {
 
         setFilteredPatients(filtered);
     };
+
+    useEffect(() => {
+        const page = searchParams.get("page");
+        const startDate = searchParams.get("startDate");
+        const endDate = searchParams.get("endDate");
+        const search = searchParams.get("search");
+
+        if (page) {
+            setPage(Number(page));
+        }
+
+        if (startDate) {
+            setStartDate(startDate);
+        }
+
+        if (endDate) {
+            setEndDate(endDate);
+        }
+
+        if (search) {
+            setSearchInput(search);
+        }
+    }, [searchParams]);
+    useEffect(() => {
+        setFilteredPatients(patients)
+    }, [patients])
+
+    // Clear all filters
+    const handleClearFilters = () => {
+        setSearchName("");
+        setSearchInput("");
+        setStartDate("");
+        setEndDate("");
+        setAppliedStartDate("");
+        setAppliedEndDate("");
+        setDateRangeFilter({ startDate: "", endDate: "" });
+        setFormTypeFilter("all");
+        setPagination((prev) => ({
+            ...prev,
+            patients: {
+                ...prev.patients,
+                page: 1,
+            },
+        }));
+    };
+
+
     const handleSearchKeyDown = (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
@@ -274,31 +303,7 @@ export const PatientHistory = () => {
         handleMoreMenuClose();
     };
 
-    // const handleApplyDateFilter = async () => {
-    //     if (!startDate || !endDate) return;
 
-    //     try {
-
-    //         const res = await getPatients(null, pagination?.patient?.page, null, selectedHostpital, startDate, endDate, searchInput, true)
-    //         console.log("patinat fetch ", res);
-    //         if (res?.success) {
-    //             setPatients(res?.data)
-    //             setPagination((prev) => ({
-    //                 ...prev,
-    //                 patients: {
-    //                     ...res.pagination
-    //                 }
-    //             }))
-    //             handleCloseDateFilter();
-    //         }
-
-
-    //     } catch {
-
-    //         toast.error("Error To Fetch Patient")
-
-    //     }
-    // };
 
     const handleResetDateFilter = () => {
         setStartDate("");
@@ -570,6 +575,8 @@ export const PatientHistory = () => {
                             )}
 
                             {/* Search by Name */}
+                            {console.log("searchin lut", searchInput)
+                            }
                             <Grid item xs={12} sm={6} md={3}>
                                 <TextField
                                     fullWidth
@@ -591,6 +598,7 @@ export const PatientHistory = () => {
                                                     size="small"
                                                     variant="contained"
                                                     color="primary"
+
                                                     onClick={handleSearchApply}
                                                     disabled={getPatientloading || searchInput?.trim() === ""}
                                                     sx={{
@@ -1041,15 +1049,24 @@ export const PatientHistory = () => {
                                                 <TableCell>
                                                     <Button
                                                         onClick={() => {
-                                                            navigate(`/single-patient-history/${row?._id}`, {
-                                                                state: {
+                                                            const params = new URLSearchParams({
+                                                                page: pagination?.patient?.page || 1,
+                                                                startDate: startDate || "",
+                                                                endDate: endDate || "",
+                                                                search: searchInput || "",
+                                                            });
 
-                                                                    patient: {
-                                                                        ...row,
-                                                                        hospitalId: selectedHostpital
-                                                                    }
+                                                            navigate(
+                                                                `/single-patient-history/${row?._id}?${params.toString()}`,
+                                                                {
+                                                                    state: {
+                                                                        patient: {
+                                                                            ...row,
+                                                                            hospitalId: selectedHostpital,
+                                                                        },
+                                                                    },
                                                                 }
-                                                            })
+                                                            );
                                                         }}
                                                         variant="contained"
                                                         color="success"

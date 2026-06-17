@@ -90,7 +90,6 @@ const ExecutiveDashboard = () => {
       if (hourlyChartInstance.current) {
         hourlyChartInstance.current.destroy();
       }
-
       const hourlyCtx = hourlyChartRef.current.getContext("2d");
 
       // Build hourly data from forms.today

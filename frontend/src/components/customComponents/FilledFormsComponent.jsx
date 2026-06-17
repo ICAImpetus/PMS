@@ -79,7 +79,7 @@ const FilledFormsComponent = ({
   const [csvParseError, setCSVParseError] = useState(null);
   const [csvActionResult, setCSVActionResult] = useState("");
   const [moreMenuAnchor, setMoreMenuAnchor] = useState(null);
-  const [dateFilterOpen, setDateFilterOpen] = useState(false);
+  const [dateFilterOpen, setDateFilterOpen] = useState(true);
   const [dateFilterFrom, setDateFilterFrom] = useState("");
   const [dateFilterTo, setDateFilterTo] = useState("");
   const [index, setIndex] = useState(0);
@@ -151,6 +151,7 @@ const FilledFormsComponent = ({
           searchInput || "",
           purpose,
           formsModalOpen,
+          formsTypeFilter,
           false
         );
 
@@ -160,9 +161,9 @@ const FilledFormsComponent = ({
 
           setPagination((prev) => ({
             ...prev,
-            page: res.pagination?.page || 1,
-            totalPages: res.pagination?.totalPages || 1,
-            totalDocument: res.pagination?.total || 0,
+            page: Number(res.pagination?.page ?? res.pagination?.forms?.page ?? res.pagination?.currentPage ?? prev.page ?? 1),
+            totalPages: Number(res.pagination?.totalPages ?? res.pagination?.forms?.totalPages ?? 1),
+            totalDocument: Number(res.pagination?.total ?? res.pagination?.forms?.total ?? 0),
           }));
         }
       } catch (err) {
@@ -355,6 +356,7 @@ const FilledFormsComponent = ({
         searchInput || "",
         purpose,
         formsModalOpen,
+        formsTypeFilter,
         false
       );
 
@@ -364,8 +366,8 @@ const FilledFormsComponent = ({
         setPagination((prev) => ({
           ...prev,
           page: 1,
-          totalPages: res.pagination?.totalPages || 1,
-          totalDocument: res.pagination?.total || 0,
+          totalPages: Number(res.pagination?.totalPages ?? res.pagination?.forms?.totalPages ?? 1),
+          totalDocument: Number(res.pagination?.total ?? res.pagination?.forms?.total ?? 0),
         }));
       }
     } catch (error) {
@@ -373,11 +375,50 @@ const FilledFormsComponent = ({
     }
   };
 
+  const handleApplyAll = async () => {
+    // Apply search + date filter together and reset to page 1
+    try {
+      const purpose =
+        formsModalOpen === "Appointments"
+          ? "Appointments"
+          : formsModalOpen === "Followup"
+            ? "Followup"
+            : "All";
 
+      const res = await getFilledForms(
+        1,
+        selectedHostpital,
+        selectedBranch,
+        dateFilterFrom || null,
+        dateFilterTo || null,
+        searchInput || "",
+        purpose,
+        formsModalOpen,
+        formsTypeFilter,
+        false
+      );
+
+      if (res?.success) {
+        setFilterForm(res.data || []);
+        setForm(res.data || []);
+
+        setPagination((prev) => ({
+          ...prev,
+          page: 1,
+          totalPages: Number(res.pagination?.totalPages ?? res.pagination?.forms?.totalPages ?? 1),
+          totalDocument: Number(res.pagination?.total ?? res.pagination?.forms?.total ?? 0),
+        }));
+        toast.success("Filters applied");
+      }
+    } catch (err) {
+      console.error("applyAll error:", err);
+      toast.error("Error applying filters");
+    }
+  };
   const handleSearchKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      handleSearchApply();
+      handleApplyAll();
     }
   };
 
@@ -477,8 +518,47 @@ const FilledFormsComponent = ({
   const handleClearDateFilter = () => {
     setDateFilterFrom("");
     setDateFilterTo("");
-    setDateFilterOpen(false);
+    setDateFilterOpen(true);
     setMoreMenuAnchor(null);
+
+    // Refresh list without date filters
+    (async () => {
+      try {
+        const purpose =
+          formsModalOpen === "Appointments"
+            ? "Appointments"
+            : formsModalOpen === "Followup"
+              ? "Followup"
+              : "All";
+
+        const res = await getFilledForms(
+          1,
+          selectedHostpital,
+          selectedBranch,
+          null,
+          null,
+          searchInput || "",
+          purpose,
+          formsModalOpen,
+          formsTypeFilter,
+          false
+        );
+
+        if (res?.success) {
+          setFilterForm(res.data || []);
+          setForm(res.data || []);
+
+          setPagination((prev) => ({
+            ...prev,
+            page: Number(res.pagination?.page ?? res.pagination?.forms?.page ?? res.pagination?.currentPage ?? prev.page ?? 1),
+            totalPages: Number(res.pagination?.totalPages ?? res.pagination?.forms?.totalPages ?? 1),
+            totalDocument: Number(res.pagination?.total ?? res.pagination?.forms?.total ?? 0),
+          }));
+        }
+      } catch (err) {
+        console.error("clear date filter fetch error:", err);
+      }
+    })();
   };
 
   const handleCSVDialogClose = (event, reason) => {
@@ -507,8 +587,7 @@ const FilledFormsComponent = ({
   };
 
   const handleApplyDateFilter = async () => {
-    if (!dateFilterFrom || !dateFilterTo) return;
-
+    // Apply date range to the current listing (not export)
     try {
       const purpose =
         formsModalOpen === "Appointments"
@@ -517,9 +596,55 @@ const FilledFormsComponent = ({
             ? "Followup"
             : "All";
 
+      const res = await getFilledForms(
+        1,
+        selectedHostpital,
+        selectedBranch,
+        dateFilterFrom || null,
+        dateFilterTo || null,
+        searchInput || "",
+        purpose,
+        formsModalOpen,
+        formsTypeFilter,
+        false
+      );
 
-      console.log("selectedHostpital", selectedHostpital);
+      if (res?.success) {
+        setFilterForm(res.data || []);
+        setForm(res.data || []);
 
+        setPagination((prev) => ({
+          ...prev,
+          page: Number(res.pagination?.page ?? res.pagination?.forms?.page ?? res.pagination?.currentPage ?? prev.page ?? 1),
+          totalPages: Number(res.pagination?.totalPages ?? res.pagination?.forms?.totalPages ?? 1),
+          totalDocument: Number(res.pagination?.total ?? res.pagination?.forms?.total ?? 0),
+        }));
+        toast.success("Date filter applied");
+      }
+    } catch (err) {
+      console.error("apply date filter error:", err);
+      toast.error("Error applying date filter");
+    }
+  };
+
+  const visibleFormColumns = FORMS_AVAILABLE_COLUMNS.filter((col) =>
+    selectedFormColumns.includes(col.key),
+  );
+  const exportFormsToSheet = async () => {
+    if (!dateFilterFrom || !dateFilterTo) {
+      toast.info("Please select a start date and end date before exporting.");
+      setDateFilterOpen(true);
+      setMoreMenuAnchor(null);
+      return;
+    }
+
+    try {
+      const purpose =
+        formsModalOpen === "Appointments"
+          ? "Appointments"
+          : formsModalOpen === "Followup"
+            ? "Followup"
+            : "All";
 
       const res = await getFilledForms(
         1,
@@ -530,20 +655,18 @@ const FilledFormsComponent = ({
         searchInput || "",
         purpose,
         formsModalOpen,
+        formsTypeFilter,
         true
       );
 
       if (res?.success) {
-        setFilterForm(res.data || []);
-        setForm(res.data || []);
-
         const allForms = res.data || [];
 
-
         if (allForms.length === 0) {
-          toast.success("No Data is Found TO Export")
-          return
+          toast.success("No Data is Found TO Export");
+          return;
         }
+
         const headers = visibleFormColumns.map((c) => c.label);
 
         const rows = allForms.map((row) =>
@@ -557,43 +680,30 @@ const FilledFormsComponent = ({
                   : "";
 
                 val = `${date} | ${val?.start || ""} - ${val?.end || ""}`;
-              } else {
+              } else if (c.value === "Appointment") {
                 const formattedDate = row?.dateTime
                   ? moment(row.dateTime).format("DD MMM YYYY")
                   : "";
 
                 val = formattedDate
-                  ? `${formattedDate} | Arrival Time: ${row?.patientArrivalTime || "-"
-                  }`
+                  ? `${formattedDate} | Arrival Time: ${row?.patientArrivalTime || "-"}`
                   : `Arrival Time: ${row?.patientArrivalTime || "-"}`;
               }
             }
 
-            if (
-              c.key === "createdAt" &&
-              val !== "-" &&
-              moment(val).isValid()
-            ) {
+            if (c.key === "createdAt" && val !== "-" && moment(val).isValid()) {
               val = moment(val).format("DD MMM YYYY hh:mm A");
             }
 
-            if (
-              val &&
-              typeof val === "object" &&
-              !Array.isArray(val)
-            ) {
+            if (val && typeof val === "object" && !Array.isArray(val)) {
               val = val.name || JSON.stringify(val);
             }
 
-            // CSV safe
             return `"${String(val).replace(/"/g, '""')}"`;
           })
         );
 
-        const csvContent = [
-          headers.join(","),
-          ...rows.map((r) => r.join(",")),
-        ].join("\n");
+        const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
 
         const blob = new Blob(["\uFEFF" + csvContent], {
           type: "text/csv;charset=utf-8;",
@@ -601,114 +711,33 @@ const FilledFormsComponent = ({
 
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
-
         a.href = url;
         a.download = `filled-forms-${dateFilterFrom}-${dateFilterTo}.csv`;
         a.click();
-
         URL.revokeObjectURL(url);
 
         setPagination((prev) => ({
           ...prev,
           page: 1,
-          totalPages: res.pagination?.totalPages || 1,
-          totalDocument: res.pagination?.total || 0,
+          totalPages: Number(res.pagination?.totalPages ?? res.pagination?.forms?.totalPages ?? 1),
+          totalDocument: Number(res.pagination?.total ?? res.pagination?.forms?.total ?? 0),
         }));
 
-        setDateFilterOpen(false);
-        setDateFilterFrom("")
-        setDateFilterTo("")
-        toast.success(`Data is Exported From ${dateFilterFrom} to ${dateFilterTo}`)
+        toast.success(`Data is Exported From ${dateFilterFrom} to ${dateFilterTo}`);
+        setMoreMenuAnchor(null);
       }
-    } catch {
-      toast.error("Error To Fetch Patient");
+    } catch (err) {
+      console.error("export error:", err);
+      toast.error("Error exporting data");
     }
   };
 
-  const visibleFormColumns = FORMS_AVAILABLE_COLUMNS.filter((col) =>
-    selectedFormColumns.includes(col.key),
-  );
-  const exportFormsToSheet = async () => {
-    // console.log("click");
-    // console.log("dateFilterFrom", dateFilterFrom);
-    // console.log("dateFilterTo", dateFilterTo);
-
-    if (!dateFilterFrom || !dateFilterTo) {
-      toast.info("Please select a start date and end date before exporting.");
-
-      // console.log("Please", dateFilterOpen);
-      setDateFilterOpen(true);
-      // console.log("Please", dateFilterOpen);
-      setMoreMenuAnchor(null);
-
-      // console.log("Please");
-
-      return;
-    }
-
-    // try {
-    //   const purpose =
-    //     formsModalOpen === "Appointments"
-    //       ? "Appointments"
-    //       : formsModalOpen === "Followup"
-    //         ? "Followup"
-    //         : "All";
-
-    //   const res = await getFilledForms(
-    //     1,
-    //     selectedHostpital,
-    //     selectedBranch,
-    //     dateFilterFrom,
-    //     dateFilterTo,
-    //     searchInput || "",
-    //     purpose,
-    //     formsTypeFilter,
-    //     true
-    //   );
-
-    //   const allForms = res.data || [];
-
-    //   if (!allForms.length) return;
-
-    //   const headers = visibleFormColumns.map((c) => c.label);
-
-    //   const rows = allForms.map((row) =>
-    //     visibleFormColumns.map((c) => {
-    //       let val = row[c.key];
-
-    //       if (c.key === "appointmentSlot" && val) {
-    //         const date = val.date ? moment(val.date).format("DD MMM YYYY") : "";
-    //         val = `${date} | ${val.start || ""} - ${val.end || ""}`;
-    //       }
-
-    //       if (val instanceof Date || c.key === "createdAt") {
-    //         val = moment(val).format("D/M/YYYY h:mm:ss A");
-    //       }
-
-    //       return String(val ?? "");
-    //     })
-    //   );
-
-    //   const csvContent = [
-    //     headers.join(","),
-    //     ...rows.map((r) => r.join(",")),
-    //   ].join("\n");
-
-    //   const blob = new Blob(["\uFEFF" + csvContent], {
-    //     type: "text/csv;charset=utf-8;",
-    //   });
-
-    //   const url = URL.createObjectURL(blob);
-    //   const a = document.createElement("a");
-
-    //   a.href = url;
-    //   a.download = `filled-forms-${moment().format("YYYY-MM-DD-HHmm")}.csv`;
-    //   a.click();
-
-    //   URL.revokeObjectURL(url);
-    // } catch (err) {
-    //   console.error("Export error:", err);
-    // }
+  const handlePageChange = async (newPage) => {
+    // Only set the requested page number; let the main useEffect fetch data
+    setPagination((prev) => ({
+      ...prev,
+      page: Number(newPage || 1),
+    }));
   };
 
   return (
@@ -717,16 +746,15 @@ const FilledFormsComponent = ({
     // onClick={() => setFormsModalOpen(null)}
     >
       <div
-
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="ff-modal-header" style={{ padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
+        <div className="ff-modal-header" style={{ padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "nowrap", gap: "12px" }}>
           <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "8px", fontSize: "1.2rem", color: "#2c3e50" }}>
             <IconButton onClick={() => setFormsModalOpen(false)}>
               <ArrowBackIcon />
-            </IconButton>  <ArticleOutlinedIcon /> Filled Forms
+            </IconButton>
+            {/* <ArticleOutlinedIcon /> Filled Forms */}
           </h3>
-
           <div className="ff-tabs" style={{ margin: 0 }}>
             <button
               className={formsTypeFilter === "all" ? "active" : ""}
@@ -747,6 +775,39 @@ const FilledFormsComponent = ({
               Outbound
             </button>
           </div>
+          <Box sx={{ width: 250 }}>
+            <TextField
+              label="Search by Name/Phone No./Purpose"
+              variant="outlined"
+              size="small"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleApplyAll(); } }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: "#7c8fa3" }} />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    {/* <Button
+                      size="small"
+                      variant="contained"
+                      color="primary"
+                      disabled={getFilledFormsLoading}
+                      onClick={handleApplyAll}
+                      sx={{ textTransform: "none", minWidth: 72, height: 32, fontSize: "0.8rem" }}
+                    >
+                      {getFilledFormsLoading ? <CircularProgress size={22} /> : "Apply"}
+                    </Button> */}
+                  </InputAdornment>
+                ),
+              }}
+              placeholder="Enter Patient Name,PhoneNo or Purpose"
+              fullWidth
+            />
+          </Box>
 
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <div
@@ -754,104 +815,23 @@ const FilledFormsComponent = ({
               ref={formsColumnFilterRef}
               style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: 0 }}
             >
-              <Grid item xs={12} sm={6} md={3}>
-                <TextField
-                  fullWidth
-                  label="Search by Name/Phone No./Purpose"
-                  variant="outlined"
-                  size="small"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  onKeyDown={handleSearchKeyDown}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon sx={{ color: "#7c8fa3" }} />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <Button
-                          size="small"
-                          variant="contained"
-                          color="primary"
-                          disabled={getFilledFormsLoading}
-                          onClick={handleSearchApply}
-                          sx={{
-                            textTransform: "none",
-                            minWidth: 72,
-                            height: 32,
-                            fontSize: "0.8rem",
-                          }}
-                        >
-                          {getFilledFormsLoading ? <CircularProgress size={22} /> : "Search"}
-                        </Button>
-                      </InputAdornment>
-                    ),
-                  }}
-                  placeholder="Enter Patient Name,PhoneNo or Purpose"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Box sx={{ display: "flex", alignItems: "center", height: "100%" }}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    startIcon={<ViewColumnIcon />}
-                    onClick={handleOpen}
-                    sx={{ height: 40, justifyContent: "flex-start" }}
-                  >
-                    Select fields ({selectedFormColumns.length})
-                  </Button>
 
-                  <Popover
-                    open={Boolean(anchorEl)}
-                    anchorEl={anchorEl}
-                    onClose={handleClose}
-                    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                  >
-                    <Box sx={{ width: 260, p: 1 }}>
-                      <FormControlLabel
-                        control={
-                          <Checkbox checked={allSelected} onChange={handleSelectAll} />
-                        }
-                        label={allSelected ? "Unselect All" : "Select All"}
-                      />
 
-                      <Divider />
-
-                      <Box sx={{ maxHeight: 300, overflowY: "auto" }}>
-                        {FORMS_AVAILABLE_COLUMNS.map((col) => (
-                          <FormControlLabel
-                            key={col.key}
-                            control={
-                              <Checkbox
-                                checked={selectedFormColumns.includes(col.key)}
-                                onChange={() => toggleFormColumn(col.key)}
-                              />
-                            }
-                            label={col.label}
-                          />
-                        ))}
-                      </Box>
-                    </Box>
-                  </Popover>
-                </Box>
-              </Grid>
 
               {dateFilterOpen && (
                 <Box
                   sx={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 2,
+                    gap: 1,
                     flexWrap: "wrap",
                     p: 1,
                     border: "1px solid #e0e0e0",
                     borderRadius: 2,
                     backgroundColor: "#fff",
-                    boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
-                    width: "100%",
+                    boxShadow: "0 6px 16px rgba(0,0,0,0.06)",
+                    width: "auto",
+                    minWidth: 300,
                   }}
                 >
                   <TextField
@@ -861,7 +841,7 @@ const FilledFormsComponent = ({
                     value={dateFilterFrom}
                     onChange={(e) => setDateFilterFrom(e.target.value)}
                     InputLabelProps={{ shrink: true }}
-                    sx={{ width: 170 }}
+                    sx={{ width: 150 }}
                   />
 
                   <TextField
@@ -871,7 +851,7 @@ const FilledFormsComponent = ({
                     value={dateFilterTo}
                     onChange={(e) => setDateFilterTo(e.target.value)}
                     InputLabelProps={{ shrink: true }}
-                    sx={{ width: 170 }}
+                    sx={{ width: 150 }}
                   />
 
                   {/* APPLY BUTTON */}
@@ -880,7 +860,7 @@ const FilledFormsComponent = ({
                     color="primary"
                     size="small"
                     disabled={getFilledFormsLoading}
-                    onClick={handleApplyDateFilter}
+                    onClick={handleApplyAll}
                   >
                     {getFilledFormsLoading ? <CircularProgress size={22} /> : "Apply"}
                   </Button>
@@ -895,7 +875,54 @@ const FilledFormsComponent = ({
                   </Button>
                 </Box>
               )}
+
             </div>
+            <Grid item xs={12} sm={6} md={3}>
+              <Box sx={{ display: "flex", alignItems: "center", height: "100%" }}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<ViewColumnIcon />}
+                  onClick={handleOpen}
+                  sx={{ height: 40, justifyContent: "flex-start" }}
+                >
+                  Select fields ({selectedFormColumns.length})
+                </Button>
+
+                <Popover
+                  open={Boolean(anchorEl)}
+                  anchorEl={anchorEl}
+                  onClose={handleClose}
+                  anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                >
+                  <Box sx={{ width: 260, p: 1 }}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox checked={allSelected} onChange={handleSelectAll} />
+                      }
+                      label={allSelected ? "Unselect All" : "Select All"}
+                    />
+
+                    <Divider />
+
+                    <Box sx={{ maxHeight: 300, overflowY: "auto" }}>
+                      {FORMS_AVAILABLE_COLUMNS.map((col) => (
+                        <FormControlLabel
+                          key={col.key}
+                          control={
+                            <Checkbox
+                              checked={selectedFormColumns.includes(col.key)}
+                              onChange={() => toggleFormColumn(col.key)}
+                            />
+                          }
+                          label={col.label}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
+                </Popover>
+              </Box>
+            </Grid>
             <IconButton
               className="ff-btn export"
               onClick={handleMoreMenuOpen}
@@ -971,7 +998,9 @@ const FilledFormsComponent = ({
               <CloseIcon sx={{ fontSize: "1.2rem" }} />
             </IconButton>
           </div>
+
         </div>
+
 
         <div className="ff-modal-body">
 
@@ -1073,15 +1102,9 @@ const FilledFormsComponent = ({
           }}
         >
           <Pagination
-            count={pagination?.forms?.totalPages || 1}
-            page={pagination?.forms?.page}
-            onChange={(e, value) => setPagination((prev) => ({
-              ...prev,
-              forms: {
-                ...prev.forms,
-                page: value,
-              },
-            }))}
+            count={Number(pagination?.totalPages ?? 1)}
+            page={Number(pagination?.page ?? 1)}
+            onChange={(e, value) => handlePageChange(Number(value))}
             color="primary"
             size="large"
           />
@@ -1127,90 +1150,52 @@ const FilledFormsComponent = ({
               sx={{ height: 10, borderRadius: 2 }}
             />
             <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
-              <Typography variant="caption" color="text.secondary">
-                {csvProgress.current} of {csvProgress.total} rows processed
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {csvStatus === "processing" ? "Validating rows..." : csvParseError ? "Validation finished with errors" : "Validation finished"}
-              </Typography>
+              {/* <Typography variant="caption" color="text.secondary"> */}
+
+              <Typography variant="h6">{csvValidationSummary.errorCount}</Typography>
+              {/* </Paper> */}
             </Box>
-          </Box>
 
-          {csvParseError ? (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {csvParseError}
-            </Alert>
-          ) : null}
-
-          {csvStatus === "completed" ? (
-            <Box sx={{ mb: 3 }}>
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                  gap: 2,
-                }}
-              >
-                <Paper sx={{ p: 2, bgcolor: "#f5f7fa" }}>
-                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
-                    Total Rows
-                  </Typography>
-                  <Typography variant="h6">{csvValidationSummary.totalRows}</Typography>
-                </Paper>
-                <Paper sx={{ p: 2, bgcolor: "#e8f5e9" }}>
-                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
-                    Successfully Processed
-                  </Typography>
-                  <Typography variant="h6">{csvValidationSummary.successCount}</Typography>
-                </Paper>
-                <Paper sx={{ p: 2, bgcolor: "#ffebee" }}>
-                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
-                    Rows With Errors
-                  </Typography>
-                  <Typography variant="h6">{csvValidationSummary.errorCount}</Typography>
-                </Paper>
-              </Box>
-
-              {csvValidationErrors.length > 0 ? (
-                <Box sx={{ mt: 3 }}>
-                  <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 700 }}>
-                    Validation issues preview
-                  </Typography>
-                  <TableContainer component={Paper} sx={{ maxHeight: 320 }}>
-                    <Table stickyHeader size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 700 }}>Row</TableCell>
-                          <TableCell sx={{ fontWeight: 700 }}>Column</TableCell>
-                          <TableCell sx={{ fontWeight: 700 }}>Value</TableCell>
-                          <TableCell sx={{ fontWeight: 700 }}>Error</TableCell>
+            {csvValidationErrors.length > 0 ? (
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 700 }}>
+                  Validation issues preview
+                </Typography>
+                <TableContainer component={Paper} sx={{ maxHeight: 320 }}>
+                  <Table stickyHeader size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 700 }}>Row</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Column</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Value</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Error</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {csvValidationErrors.slice(0, 12).map((error, index) => (
+                        <TableRow key={`${error.rowNumber}-${index}`} sx={{ bgcolor: index % 2 === 0 ? "#fff5f5" : "#fff" }}>
+                          <TableCell>{error.rowNumber}</TableCell>
+                          <TableCell>{error.columnName}</TableCell>
+                          <TableCell>{error.invalidValue || "Empty"}</TableCell>
+                          <TableCell>{error.message}</TableCell>
                         </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {csvValidationErrors.slice(0, 12).map((error, index) => (
-                          <TableRow key={`${error.rowNumber}-${index}`} sx={{ bgcolor: index % 2 === 0 ? "#fff5f5" : "#fff" }}>
-                            <TableCell>{error.rowNumber}</TableCell>
-                            <TableCell>{error.columnName}</TableCell>
-                            <TableCell>{error.invalidValue || "Empty"}</TableCell>
-                            <TableCell>{error.message}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                  {csvValidationErrors.length > 12 ? (
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
-                      Showing first 12 errors. Review all issues before importing.
-                    </Typography>
-                  ) : null}
-                </Box>
-              ) : (
-                <Alert severity="success" sx={{ mt: 3 }}>
-                  No validation issues found. All rows are ready for import.
-                </Alert>
-              )}
-            </Box>
-          ) : null}
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                {csvValidationErrors.length > 12 ? (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                    Showing first 12 errors. Review all issues before importing.
+                  </Typography>
+                ) : null}
+              </Box>
+            ) : (
+              <Alert severity="success" sx={{ mt: 3 }}>
+                No validation issues found. All rows are ready for import.
+              </Alert>
+            )}
+          </Box>
+          {/* ) : null} */}
         </DialogContent>
         <DialogActions sx={{ p: 2, display: "flex", flexWrap: "wrap", gap: 1 }}>
           <Button

@@ -383,9 +383,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         if (!patientsData) {
             return;
         }
-
-        console.log("patientsData =>", patientsData);
-
         if (!patientsData?.data?.length) {
             setPatients([]);
             return;

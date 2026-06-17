@@ -8,6 +8,7 @@ import { GlobalUserContextProvider } from "./contexts/UserContexts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { ColorModeContext, useMode } from "./theme";
+import { Toaster } from "react-hot-toast";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,10 +29,12 @@ function Root() {
       <ColorModeContext.Provider value={colorMode}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
+          {/* Global Toaster mounted here so it's available to providers below */}
+          <Toaster position="top-right" reverseOrder={false} />
           <BrowserRouter>
             <QueryClientProvider client={queryClient}>
               <GlobalUserContextProvider>
-              <App />
+                <App />
               </GlobalUserContextProvider>
             </QueryClientProvider>
           </BrowserRouter>

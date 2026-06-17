@@ -8,7 +8,7 @@ import { ColorModeContext, useMode } from "./theme";
 import { GlobalHospitalContextProvider } from "./contexts/HospitalContexts";
 import Login from "./components/Login/Login";
 import { UserContextHook } from "./contexts/UserContexts";
-import { Toaster } from "react-hot-toast";
+// Toaster moved to `main.jsx` so it's mounted before app-level providers
 import GlobalLoader from "./components/GlobalLoader";
 import { Outlet } from "react-router-dom";
 
@@ -19,7 +19,6 @@ import {
   EditBranches,
   BranchInfo,
   HospitalCreationNew,
-  HospitalCreation,
   HospitalList,
   UserManagement,
   AuditLogs,
@@ -110,6 +109,8 @@ function App() {
       {userRole === "teamLeader" || userRole === "teamleader" && (
         <>
           <Route path="/" element={<TeamDashboard />} />
+
+          <Route path="/executive-forms" element={<ExecutiveForms />} />
           <Route path="/patient-history" element={<PatientHistory />} />
           <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
           <Route path="/user-management" element={<UserManagementTeamLeader />} />
@@ -148,7 +149,7 @@ function App() {
           <Route path="edit-branches/:id" element={<EditBranches />} />
           <Route path="edit-branches/:id/edit" element={<BranchInfo />} />
           <Route path="edit/:id" element={<EditHospitalSuperadmin />} />
-          <Route path="create" element={<HospitalCreation />} />
+          {/* <Route path="create" element={<HospitalCreation />} /> */}
           <Route path="assigned" element={<HospitalList />} />
         </Route>
       )}
@@ -185,7 +186,7 @@ function App() {
   return (
 
     <>
-      <Toaster position="top-right" reverseOrder={false} />
+      {/* Toaster is rendered at root (main.jsx) */}
       {currentUser ? (
         <ColorModeContext.Provider value={colorMode}>
           <ThemeProvider theme={theme}>
