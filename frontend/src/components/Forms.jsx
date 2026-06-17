@@ -1124,7 +1124,7 @@ function Forms() {
                     )
                   }
 
-                  {
+                  {/* {
                     liveTime && (
                       <div className="live-arrival-time">
 
@@ -1138,7 +1138,7 @@ function Forms() {
 
                       </div>
                     )
-                  }
+                  } */}
 
                 </div>
 
