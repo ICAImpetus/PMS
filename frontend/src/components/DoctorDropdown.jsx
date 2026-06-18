@@ -109,6 +109,21 @@ export default function DoctorDropdown({
 
       <Autocomplete
         options={doctors}
+        sx={{
+                  "& .MuiOutlinedInput-root": {
+                    height: 28,
+                    minHeight: 28,
+                    border: "1px solid var(--border-color)",
+                    borderRadius: "var(--radius)",
+                    backgroundColor: "#fff",
+                    fontSize: "12px",
+                  },
+
+                  "& .MuiInputBase-input": {
+                    fontSize: "12px",
+                    padding: "0 14px",
+                  },
+                }}
         value={value}
         onChange={(event, newValue) => {
           if (!newValue) {

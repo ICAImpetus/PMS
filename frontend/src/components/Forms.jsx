@@ -93,14 +93,14 @@ const getSlotStyles = ({
   isBooked,
   isSelected,
 }) => ({
-  padding: "10px 12px",
+  padding: "4px 8px",
 
   cursor:
     isPast ? "not-allowed" : "pointer",
 
   border: "1px solid #ddd",
 
-  borderRadius: "6px",
+  borderRadius: "4px",
 
   backgroundColor: isPast
     ? "#ececec"
@@ -118,7 +118,7 @@ const getSlotStyles = ({
         ? "#888"
         : "#333",
 
-  fontSize: "13px",
+  fontSize: "11px",
 
   fontWeight: isSelected
     ? "bold"
@@ -691,7 +691,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -768,6 +769,21 @@ function Forms() {
                         fullWidth: true,
                         size: "small",
                         className: "input-field",
+                        sx:{
+                          "& .MuiOutlinedInput-root": {
+                            height: 28,
+                            minHeight: 28,
+                            border: "1px solid var(--border-color)",
+                            borderRadius: "var(--radius)",
+                            backgroundColor: "#fff",
+                            fontSize: "12px",
+                          },
+
+                          "& .MuiInputBase-input": {
+                            fontSize: "12px",
+                            padding: "0 14px",
+                          },
+                        }
                       },
                     }}
                   />
@@ -806,21 +822,18 @@ function Forms() {
               selectedDoctor &&
               selectedDoctor?.slots?.length > 0 && (
                 <div>
-
                   <div className="input-group">
-
                     <label className="required">
                       Select Appointment Slot
                     </label>
-
                     <div
                       style={{
                         width: "100%",
                         display: "grid",
                         gridTemplateColumns:
-                          "repeat(auto-fill, minmax(140px, 1fr))",
-                        gap: "8px",
-                        padding: "10px 0",
+                          "repeat(auto-fill, minmax(110px, 1fr))",
+                        gap: "4px",
+                        padding: "4px 0",
                       }}
                     >
 
@@ -975,9 +988,13 @@ function Forms() {
               </div>
             )}
 
-            <div className="input-group textarea-field-container">
+            <div className="input-group textarea-field-container"
+
+            >
               <label className="required">Patient Status</label>
-              <div className="followup-container">
+              <div className="followup-container"
+              
+              >
                 {/* Follow-up Checkbox */}
                 <div className="followup-card">
                   <label className="checkbox-label">
@@ -1002,6 +1019,7 @@ function Forms() {
                   </label>
 
                   <input
+                    
                     type="time"
 
                     disabled={form.formData.appointmentSlot?.start ? true : false}
@@ -1030,6 +1048,7 @@ function Forms() {
 
                     required
                     className="time-input"
+                    
                   />
 
                   {
@@ -1097,7 +1116,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -1228,7 +1248,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -1343,7 +1364,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -1474,7 +1496,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -1743,7 +1766,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -1854,7 +1878,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -1967,7 +1992,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -2151,7 +2177,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -2278,7 +2305,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -2537,7 +2565,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -3925,7 +3954,8 @@ function Forms() {
                         width: 300,
                         // fontSize: '12px',
                         "& .MuiOutlinedInput-root": {
-                          height: 33,
+                          height: 28,
+                          minHeight: 28,
                           border: "1px solid var(--border-color)",
                           borderRadius: "var(--radius)",
                           backgroundColor: "#fff",
@@ -4028,8 +4058,6 @@ function Forms() {
                       </button>
                     </div>
                   </div>
-                </div>
-                <div className="input-row">
                   <div className="input-group">
                     <label className={isRequired ? "required" : ""}>Category</label>
                     <Autocomplete
@@ -4037,7 +4065,8 @@ function Forms() {
                         width: 300,
 
                         "& .MuiOutlinedInput-root": {
-                          height: 33,
+                          height: 28,
+                          minHeight: 28,
                           border: "1px solid var(--border-color)",
                           borderRadius: "var(--radius)",
                           backgroundColor: "#fff",
@@ -4100,6 +4129,9 @@ function Forms() {
                     </div>
                   </div>
                 </div>
+                <div className="input-row">
+
+                </div>
               </div>
             )}
         </div>
@@ -4145,7 +4177,7 @@ function Forms() {
                 sx={{
                   width: "100%", "& .MuiOutlinedInput-root":
                   {
-                    minHeight: 38, border: "1px solid var(--border-color)",
+                    minHeight: 28, height: 28, border: "1px solid var(--border-color)",
                     borderRadius:
                       "var(--radius)",
                     backgroundColor: "#fff", fontSize: "13px", "& fieldset": { border: "none", },
