@@ -13,34 +13,6 @@
     --tld-border: #e2e8f0;
 }
 
-.team-forms-button-container {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.team-forms-button {
-    background: var(--success);
-    color: white;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.9rem;
-}
-
-
-.team-forms-button:hover {
-    background: #229954;
-    transform: translateY(-2px);
-}
-
-
 .tld-dashboard-content-wrapper {
     width: 100%;
     background-color: var(--tld-bg-color);
@@ -100,7 +72,7 @@
 /* Global Form Elements for this page */
 .tld-date-filter select,
 .tld-date-filter input,
-.tld-date-filter button,
+/* .tld-date-filter button, */
 .tld-section-filters select,
 .tld-aca-filters select,
 .tld-table-filters select {
@@ -114,14 +86,108 @@
 /* Top Date Filter Bar */
 .tld-date-filter {
     display: flex;
-    gap: 12px;
+    gap: 16px;
     margin-bottom: 25px;
     background: var(--tld-card-bg);
     padding: 18px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     align-items: center;
+    justify-content: space-between;
     flex-wrap: wrap;
+}
+
+.tld-filter-fields {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.tld-filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 180px;
+}
+
+.tld-filter-item label {
+    font-size: 0.8rem;
+    color: var(--tld-gray);
+    font-weight: 600;
+}
+
+.tld-date-filter select {
+    min-width: 220px;
+}
+
+.team-forms-button-container {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    /* background-color: #0369A1; */
+}
+
+.team-forms-button {
+    color: white;
+    transform: translateY(-2px);
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    background-color: var(--tld-success)
+}
+
+.team-forms-button:hover {
+    background: #229954;
+    transform: translateY(-2px);
+}
+
+.executive-forms-button,
+.executiveannoucementbutton {
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: white;
+}
+
+.executive-forms-button {
+    background: var(--tld-success);
+}
+
+.executive-forms-button:hover,
+.executiveannoucementbutton:hover {
+    transform: translateY(-2px);
+}
+
+.executiveannoucementbutton {
+    background: #4f46e5;
+}
+
+.tld-date-filter .MuiIconButton-root {
+    min-width: 42px;
+    min-height: 42px;
+    border: 1px solid #e2e8f0;
+    /* background: white; */
+}
+
+.tld-date-filter .MuiIconButton-root:hover {
+    /* background: #f8fafc; */
 }
 
 .tld-btn-primary {

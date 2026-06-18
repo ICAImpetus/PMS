@@ -8,6 +8,7 @@ import DoctorDropdown from "./DoctorDropdown";
 import { useApi } from "../api/useApi";
 import { commonRoutes } from "../api/apiService";
 import toast from "react-hot-toast";
+import moment from "moment";
 import {
   CircularProgress, Box,
   TextField,
@@ -216,6 +217,10 @@ function Forms() {
   const [filteredDoctors, setfilteredDoctors] = useState([]);
   const [selectedDay, setSelectedDay] = useState(null);
   const [bookedSlotIds, setBookedSlotIds] = useState([]);
+  const [latestVisits, setLatestVisits] = useState([]);
+  const [latestVisitsModalOpen, setLatestVisitsModalOpen] = useState(false);
+  const [latestVisitSearch, setLatestVisitSearch] = useState("");
+  const [latestVisitFilter, setLatestVisitFilter] = useState("all");
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [liveTime, setLiveTime] = useState("");
   const [bookedSlotModal, setBookedSlotModal] = useState({ open: false, slot: null, });
@@ -301,7 +306,7 @@ function Forms() {
 
         if (res?.success) {
 
-          const patient = res.data?.patient;
+          const patient = res?.data;
 
           setForm((prev) => ({
             ...prev,
@@ -332,6 +337,8 @@ function Forms() {
               },
             },
           }));
+
+          setLatestVisits(res?.latestVisits || [])
 
           toast.success("Patient details auto-filled based on mobile number.");
           return;
@@ -525,17 +532,25 @@ function Forms() {
   const submitForm = async (e) => {
     e.preventDefault();
     if (!selectedHostpital) {
-      toast.error("No Hospital Is Found")
+      toast.error("No Hospital Is Found");
+      return;
     }
     if (!selectedBranch) {
-      toast.error("No Branch Is Found")
+      toast.error("No Branch Is Found");
+      return;
     }
-    const res = await saveFilledForm(selectedHostpital, selectedBranch, form);
-    if (res.success) {
-      resetForm();
-      toast.success("Form submitted successfully!");
+    try {
+      const res = await saveFilledForm(selectedHostpital, selectedBranch, form);
+      if (res?.success) {
+        resetForm();
+        toast.success("Form submitted successfully!");
+      } else {
+        toast.error(res?.message || "Failed to submit form. Please try again.");
+      }
+    } catch (error) {
+      console.error("Form submission error:", error);
+      toast.error("An error occurred while submitting the form.");
     }
-
   }
 
 
@@ -673,6 +688,74 @@ function Forms() {
     }
 
     return slotDateTime.isBefore(dayjs());
+  };
+
+  const filteredLatestVisits = useMemo(() => {
+    if (!Array.isArray(latestVisits)) {
+      return [];
+    }
+
+    const normalizedSearch = latestVisitSearch.trim().toLowerCase();
+    return latestVisits.filter((visit) => {
+      const purpose = String(visit?.purpose || "").toLowerCase();
+      const type = String(visit?.formType || "").toLowerCase();
+
+      const matchesPurpose =
+        normalizedSearch === "" || purpose.includes(normalizedSearch);
+      const matchesType =
+        latestVisitFilter === "all" || type === latestVisitFilter;
+
+      return matchesPurpose && matchesType;
+    });
+  }, [latestVisits, latestVisitSearch, latestVisitFilter]);
+
+  const LatestPatientComponents = () => {
+    return (
+      form?.formData?.patientDetails?.patientMobile !== "" && !getSinglePatientLoading &&
+      latestVisits?.length > 0 && (
+        <div className="section" data-section="patient-latest-details">
+          <div className="patient-latest-visit-heading">
+            <h4>Latest Visit</h4>
+            <button
+              type="button"
+              onClick={() => setLatestVisitsModalOpen(true)}
+            >
+              View More
+            </button>
+          </div>
+
+          <table className="patient-details-table">
+            <thead>
+              <tr>
+                <th>Form Type</th>
+                <th>Purpose</th>
+                <th>Doctor</th>
+                <th>Department</th>
+                <th>Remarks</th>
+                <th>Submitted Date</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {latestVisits?.map((lv, index) => (
+                <tr key={lv?._id || index}>
+                  <td>{lv?.formType || "-"}</td>
+                  <td>{lv?.purpose || "-"}</td>
+                  <td>{lv?.doctor?.name || "-"}</td>
+                  <td>{lv?.department?.name || "-"}</td>
+                  <td>{lv?.formData?.remarks || "-"}</td>
+                  <td>
+                    {lv?.createdAt
+                      ? moment(lv.createdAt).format("DD MMM YYYY, hh:mm A")
+                      : "-"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    );
   };
 
   const renderInboundPurposeDetails = () => {
@@ -1012,8 +1095,7 @@ function Forms() {
                 </div>
 
                 {/* Patient Arrival Time */}
-                <div className="followup-card">
-
+                <div className="followup-card time-card">
                   <label className="input-label">
                     Patient Arrival Time
                   </label>
@@ -3102,18 +3184,15 @@ function Forms() {
                       className="textarea-field"
                       value={
                         form.formData.feedbackType === "noFeedback"
-                          ? form.formData.noFeedbackRemarks
-                          : form.formData.notConnectedRemarks
+                          ? form.formData.remarks
+                          : form.formData.remarks
                       }
-                      onChange={(e) =>
-                        handleChange(
-                          form.formData.feedbackType === "noFeedback"
-                            ? "formData.noFeedbackRemarks"
-                            : "formData.notConnectedRemarks",
 
-                          e.target.value,
-                        )
-                      }
+
+                      onChange={(e) => {
+                        handleChange("callStatus", "Not-Conected")
+                        handleChange("formData.remarks", e.target.value)
+                      }}
                       required
                       rows="3"
                     />
@@ -3698,9 +3777,11 @@ function Forms() {
                 </div>
               </div>
 
+              {console.log("Reference From", isRequired)}
               {(form.formData.callerType === "Patient" ||
                 form.formData.callerType === "Attendant")
                 && (
+
                   <div className="input-group">
                     <label className={isRequired ? "required" : ""}>
                       Reference From
@@ -3708,6 +3789,7 @@ function Forms() {
 
                     <Autocomplete
                       freeSolo
+
                       sx={{
                         width: "100%",
 
@@ -3758,6 +3840,7 @@ function Forms() {
                       }}
                       renderInput={(params) => (
                         <TextField
+                          required={isRequired}
                           {...params}
                           placeholder="Search or select reference"
                         />
@@ -4135,14 +4218,15 @@ function Forms() {
               </div>
             )}
         </div>
+        {/* 
+        {form.formData.patientDetails.patientMobile !== "" && latestVisits.length > 0 && (
+          <div className="section" data-section="patient-latest-details">
+            <div className="patient-latest-visit-heading">
+              <h3>Latest Visit</h3>
+              <button type="button">View More</button>
+            </div>
 
-        {/* <div className="section" data-section="patient-latest-details">
-          <div className="patient-latest-visit-heading">
-            <h3>Latest Visit</h3>
-            <button type="button">View More</button>
-          </div>
 
-          <div className="patient-latest-visit-table">
             <table className="patient-details-table">
               <thead>
                 <tr>
@@ -4151,24 +4235,47 @@ function Forms() {
                   <th>Doctor</th>
                   <th>Department</th>
                   <th>Remarks</th>
+                  <th>Submitted Date</th>
                 </tr>
               </thead>
+
               <tbody>
-                <tr>
-                  <td colSpan="5" className="no-latest-visit">
-                    No latest visit data available.
-                  </td>
-                </tr>
+                {latestVisits && latestVisits.length > 0 ? (
+                  latestVisits.map((lv, index) => (
+                    <tr key={lv?._id || index}>
+                      <td>{lv?.formType || "-"}</td>
+                      <td>{lv?.purpose || "-"}</td>
+                      <td>{lv?.doctor || "-"}</td>
+                      <td>{lv?.department || "-"}</td>
+                      <td>{lv?.remarks || "-"}</td>
+                      <td>
+                        {lv?.createdAt
+                          ? moment(lv.createdAt).format("DD MMM YYYY, hh:mm A")
+                          : "-"}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="no-latest-visit">
+                      No latest visit data available.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
+      
           </div>
-        </div> */}
+        )} */}
 
-      </div>
+        <LatestPatientComponents />
 
-      {form.callStatus === "Connected" && (
-        <div className="section" data-section="call-purpose">
-          <h3>Call Purpose</h3>
+      </div >
+
+      {
+        form.callStatus === "Connected" && (
+          <div className="section" data-section="call-purpose">
+            <h3>Call Purpose</h3>
 
           <div className="input-row">
             <div className="input-group">
@@ -4195,213 +4302,223 @@ function Forms() {
             </div>
           </div>
 
-          {form.formType === "inbound" && form.purpose && (
-            <div className="purpose-details" data-section="purpose-details">
-              {renderInboundPurposeDetails()}
-            </div>
-          )}
-        </div>
-      )}
+            {form.formType === "inbound" && form.purpose && (
+              <div className="purpose-details" data-section="purpose-details">
+                {renderInboundPurposeDetails()}
+              </div>
+            )}
+          </div>
+        )
+      }
 
-      {form.callStatus === "Call-Drop" && (
-        <div className="sub-section">
-          <h3>Call Drop Details</h3>
+      {
+        form.callStatus === "Call-Drop" && (
+          <div className="sub-section">
+            <h3>Call Drop Details</h3>
 
-          <div className="input-row">
-            <div className="input-group">
-              <label className="required">Call Back Made?</label>
+            <div className="input-row">
+              <div className="input-group">
+                <label className="required">Call Back Made?</label>
 
-              <div className="callback-buttons">
-                <button
-                  type="button"
-                  className={`callback-btn ${form.formData.callBack === "Yes" ? "active" : ""}`}
-                  onClick={() => handleChange("formData.callBack", "Yes")}
-                >
-                  Yes
-                </button>
+                <div className="callback-buttons">
+                  <button
+                    type="button"
+                    className={`callback-btn ${form.formData.callBack === "Yes" ? "active" : ""}`}
+                    onClick={() => handleChange("formData.callBack", "Yes")}
+                  >
+                    Yes
+                  </button>
 
-                <button
-                  type="button"
-                  className={`callback-btn ${form.formData.callBack === "No" ? "active" : ""}`}
-                  onClick={() => handleChange("formData.callBack", "No")}
-                >
-                  No
-                </button>
+                  <button
+                    type="button"
+                    className={`callback-btn ${form.formData.callBack === "No" ? "active" : ""}`}
+                    onClick={() => handleChange("formData.callBack", "No")}
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label className="required">Connected?</label>
+
+                <div className="connected-buttons">
+                  <button
+                    type="button"
+                    className={`connected-btn ${form.formData.connected === "Yes" ? "active" : ""}`}
+                    onClick={() => handleChange("formData.connected", "Yes")}
+                  >
+                    Yes
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`connected-btn ${form.formData.connected === "No" ? "active" : ""}`}
+                    onClick={() => handleChange("formData.connected", "No")}
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label>Disconnection Reason</label>
+
+                <input
+                  type="text"
+                  className="input-field"
+                  value={form.formData.disconnectionReason}
+                  onChange={(e) =>
+                    handleChange("formData.disconnectionReason", e.target.value)
+                  }
+
+
+                />
               </div>
             </div>
 
-            <div className="input-group">
-              <label className="required">Connected?</label>
+            <div className="input-row">
+              <div className="input-group textarea-field-container">
+                <label className="required">Remarks</label>
 
-              <div className="connected-buttons">
-                <button
-                  type="button"
-                  className={`connected-btn ${form.formData.connected === "Yes" ? "active" : ""}`}
-                  onClick={() => handleChange("formData.connected", "Yes")}
-                >
-                  Yes
-                </button>
-
-                <button
-                  type="button"
-                  className={`connected-btn ${form.formData.connected === "No" ? "active" : ""}`}
-                  onClick={() => handleChange("formData.connected", "No")}
-                >
-                  No
-                </button>
+                <textarea
+                  className="textarea-field"
+                  value={form.formData.remarks}
+                  onChange={(e) =>
+                    handleChange("formData.remarks", e.target.value)
+                  }
+                  required
+                  rows="2"
+                />
               </div>
             </div>
-
-            <div className="input-group">
-              <label>Disconnection Reason</label>
-
-              <input
-                type="text"
-                className="input-field"
-                value={form.formData.disconnectionReason}
-                onChange={(e) =>
-                  handleChange("formData.disconnectionReason", e.target.value)
-                }
-
-
-              />
-            </div>
           </div>
+        )
+      }
 
-          <div className="input-row">
-            <div className="input-group textarea-field-container">
-              <label className="required">Remarks</label>
+      {
+        (form.callStatus === "Connected" && form.purpose !== "" || (form.callStatus === "Call-Drop")) && form.formType !== "outbound" && (
+          <div className="button-group">
+            <button
+              disabled={saveFilledFormLoading}
+              type="button"
+              className="btn btn-clear"
+              onClick={resetForm}
+            >
+              Clear Form
+            </button>
 
-              <textarea
-                className="textarea-field"
-                value={form.formData.remarks}
-                onChange={(e) =>
-                  handleChange("formData.remarks", e.target.value)
-                }
-                required
-                rows="2"
-              />
-            </div>
+            <button type="submit" disabled={saveFilledFormLoading} className="btn btn-submit">
+              {saveFilledFormLoading ? <CircularProgress size={20} color="inherit" /> : "Submit"}
+            </button>
           </div>
-        </div>
-      )}
-
-      {(form.callStatus === "Connected" && form.purpose !== "" || (form.callStatus === "Call-Drop")) && form.formType !== "outbound" && (
-        <div className="button-group">
-          <button
-            disabled={saveFilledFormLoading}
-            type="button"
-            className="btn btn-clear"
-            onClick={resetForm}
-          >
-            Clear Form
-          </button>
-
-          <button type="submit" disabled={saveFilledFormLoading} className="btn btn-submit">
-            {saveFilledFormLoading ? <CircularProgress size={20} color="inherit" /> : "Submit"}
-          </button>
-        </div>
-      )}
+        )
+      }
 
 
-    </form>
+    </form >
   );
 
   const renderOutboundForm = () => (
     <form onSubmit={submitForm} className="all-sections-container">
-      <div className="section">
-        <h3>Caller Details</h3>
+      <div className="patient-classification-section">
+        <LatestPatientComponents />
+        <div className="section">
+          <h3>Caller Details</h3>
 
-        <div className="input-row">
-          <div className="input-group">
-            <label className="required">Mobile Number</label>
+          <div className="input-row">
+            <div className="input-group">
+              <label className="required">Mobile Number</label>
 
-            <input
-              type="tel"
-              className="input-field"
-              value={form.formData.patientDetails.patientMobile}
-              onChange={(e) => {
-                const digits = e.target.value.replace(/\D/g, "").slice(0, 12);
-                handleChange("formData.patientDetails.patientMobile", digits);
-              }}
-              required
-              pattern="[0-9]{10,12}"
-              maxLength="12"
-              minLength="10"
-              title="Enter exactly 10-12 digit mobile number"
-              placeholder="10-12 digit number"
-            />
-          </div>
-          <div className="input-group">
-            <label className="required">Patient Name</label>
+              <input
+                type="tel"
+                className="input-field"
+                value={form.formData.patientDetails.patientMobile}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, "").slice(0, 12);
+                  handleChange("formData.patientDetails.patientMobile", digits);
+                }}
+                required
+                pattern="[0-9]{10,12}"
+                maxLength="12"
+                minLength="10"
+                title="Enter exactly 10-12 digit mobile number"
+                placeholder="10-12 digit number"
+              />
+            </div>
+            <div className="input-group">
+              <label className="required">Patient Name</label>
 
-            <input
-              type="text"
-              className="input-field"
-              value={form.formData.patientDetails.patientName}
-              onChange={(e) =>
-                handleChange("formData.patientDetails.patientName", e.target.value)
-              }
-              required
-            />
-          </div>
-          <div className="input-group">
-            <label className="required">Purpose</label>
+              <input
+                type="text"
+                className="input-field"
+                value={form.formData.patientDetails.patientName}
+                onChange={(e) =>
+                  handleChange("formData.patientDetails.patientName", e.target.value)
+                }
+                required
+              />
+            </div>
+            <div className="input-group">
+              <label className="required">Purpose</label>
 
-            <Autocomplete
-              freeSolo
-              sx={{
-                width: "100%",
+              <Autocomplete
+                freeSolo
+                sx={{
+                  width: "100%",
 
-                "& .MuiOutlinedInput-root": {
-                  minHeight: 38,
-                  border: "1px solid var(--border-color)",
-                  borderRadius: "var(--radius)",
-                  backgroundColor: "#fff",
-                  fontSize: "13px",
+                  "& .MuiOutlinedInput-root": {
+                    minHeight: 38,
+                    border: "1px solid var(--border-color)",
+                    borderRadius: "var(--radius)",
+                    backgroundColor: "#fff",
+                    fontSize: "13px",
 
-                  "& fieldset": {
-                    border: "none",
+                    "& fieldset": {
+                      border: "none",
+                    },
                   },
-                },
 
-                "& .MuiInputBase-input": {
-                  fontSize: "13px",
-                  padding: "0 14px",
-                },
-              }}
-              options={OUTBOUND_PURPOSE_OPTIONS}
-              getOptionLabel={(option) =>
-                typeof option === "string"
-                  ? option
-                  : option.label
-              }
-              value={
-                OUTBOUND_PURPOSE_OPTIONS.find(
-                  (item) => item.value === form.purpose
-                ) || form.purpose
-              }
-              onChange={(_, newValue) => {
-                handleChange(
-                  "purpose",
-                  typeof newValue === "string"
-                    ? newValue
-                    : newValue?.value || ""
-                );
-              }}
-              onInputChange={(_, newInputValue) => {
-                handleChange("purpose", newInputValue);
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  placeholder="Search or select purpose"
-                />
-              )}
-            />
+                  "& .MuiInputBase-input": {
+                    fontSize: "13px",
+                    padding: "0 14px",
+                  },
+                }}
+                options={OUTBOUND_PURPOSE_OPTIONS}
+                getOptionLabel={(option) =>
+                  typeof option === "string"
+                    ? option
+                    : option.label
+                }
+                value={
+                  OUTBOUND_PURPOSE_OPTIONS.find(
+                    (item) => item.value === form.purpose
+                  ) || form.purpose
+                }
+                onChange={(_, newValue) => {
+                  handleChange(
+                    "purpose",
+                    typeof newValue === "string"
+                      ? newValue
+                      : newValue?.value || ""
+                  );
+                }}
+                onInputChange={(_, newInputValue) => {
+                  handleChange("purpose", newInputValue);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    placeholder="Search or select purpose"
+                  />
+                )}
+              />
+            </div>
           </div>
         </div>
+
       </div>
+
 
       {form.formType === "outbound" && form.purpose && (
         <div className="purpose-details" data-section="purpose-details">
@@ -4490,6 +4607,94 @@ function Forms() {
       <div className="form-container">
         {form?.formType === "inbound" ? renderInboundForm() : renderOutboundForm()}
       </div>
+
+      <Dialog
+        open={latestVisitsModalOpen}
+        onClose={() => setLatestVisitsModalOpen(false)}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{
+          sx: {
+            minHeight: "600px",
+            borderRadius: 3,
+            background: "#f7fbff",
+            boxShadow: 8,
+          },
+        }}
+      >
+        <DialogTitle sx={{ bgcolor: '#1976d2', color: 'white', fontWeight: 700 }}>
+          Latest Visit History
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} mt={1}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" justifyContent="space-between">
+              <TextField
+                label="Search by Purpose"
+                value={latestVisitSearch}
+                onChange={(e) => setLatestVisitSearch(e.target.value)}
+                fullWidth
+                size="small"
+              />
+              <Stack direction="row" spacing={1}>
+                {['all', 'inbound', 'outbound'].map((option) => (
+                  <Button
+                    key={option}
+                    variant={latestVisitFilter === option ? 'contained' : 'outlined'}
+                    onClick={() => setLatestVisitFilter(option)}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    {option === 'all' ? 'All' : option.charAt(0).toUpperCase() + option.slice(1)}
+                  </Button>
+                ))}
+              </Stack>
+            </Stack>
+
+            <Box sx={{ overflowX: 'auto' }}>
+              <table className="patient-details-table" style={{ minWidth: 900 }}>
+                <thead>
+                  <tr>
+                    <th>Form Type</th>
+                    <th>Purpose</th>
+                    <th>Doctor</th>
+                    <th>Department</th>
+                    <th>Remarks</th>
+                    <th>Submitted Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredLatestVisits.length > 0 ? (
+                    filteredLatestVisits.map((lv, index) => (
+                      <tr key={lv?._id || index}>
+                        <td>{lv?.formType || "-"}</td>
+                        <td>{lv?.purpose || "-"}</td>
+                        <td>{lv?.doctor?.name || "-"}</td>
+                        <td>{lv?.department?.name || "-"}</td>
+                        <td>{lv?.formData?.remarks || "-"}</td>
+                        <td>
+                          {lv?.createdAt
+                            ? moment(lv.createdAt).format("DD MMM YYYY, hh:mm A")
+                            : "-"}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={6} style={{ textAlign: 'center', padding: '16px' }}>
+                        No matching visit records found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </Box>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLatestVisitsModalOpen(false)} sx={{ fontWeight: 600 }}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={bookedSlotModal.open}

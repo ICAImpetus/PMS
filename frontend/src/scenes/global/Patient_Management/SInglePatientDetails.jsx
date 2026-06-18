@@ -405,6 +405,23 @@ export const SInglePatientDetails = () => {
         navigate(-1);
     };
 
+    useEffect(() => {
+        if (formTypeFilter?.toLowerCase() === "all") {
+            setFilteredVisits(visits);
+            return;
+        }
+
+        setFilteredVisits(
+            visits.filter(
+                (visit) =>
+                    visit?.formType?.toLowerCase() ===
+                    formTypeFilter?.toLowerCase()
+            )
+        );
+        console.log("formTypeFilter", formTypeFilter);
+
+    }, [formTypeFilter, visits]);
+
     const openDateFilter = Boolean(dateFilterAnchorEl);
     return (
         <Box sx={{ p: 3, backgroundColor: "#f5f5f5", minHeight: "100vh" }}>

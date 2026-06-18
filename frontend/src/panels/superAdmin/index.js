@@ -12,7 +12,6 @@ export { default as EditHospitalSuperadmin } from "./hospitalManagement/editHosp
 export { default as EditBranches } from "./hospitalManagement/editHospital/EditBranches";
 export { default as BranchInfo } from "./hospitalManagement/editHospital/BranchInfo";
 export { default as HospitalCreationNew } from "./hospitalManagement/hospitalForm/index3";
-export { default as HospitalCreation } from "../../scenes/hospitalform/HospitalCreation";
 export { default as HospitalList } from "./hospitalManagement/hospitalList";
 
 // User Management

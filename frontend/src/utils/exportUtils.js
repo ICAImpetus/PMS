@@ -39,9 +39,9 @@ export const PATIENT_AVAILABLE_COLUMNS = [
 export const FORMS_AVAILABLE_COLUMNS = [
     { key: "agentName", label: "Agent Name" },
     { key: "formType", label: "Form Type" },
-    { key: "patientName", label: "Patient Name" },
-    { key: "patientMobile", label: "Patient Mobile No" },
-    { key: "patientStatus", label: "Patient Status" },
+    { key: "formData.patientDetails.patientName", label: "Patient Name" },
+    { key: "formData.patientDetails.patientMobile", label: "Patient Mobile No" },
+    { key: "formData.patientDetails.patientStatus", label: "Patient Status" },
     { key: "gender", label: "Patient Gender" },
     { key: "callStatus", label: "Call Status" },
     { key: "purpose", label: "POC / Purpose" },

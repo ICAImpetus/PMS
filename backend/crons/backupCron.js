@@ -178,7 +178,7 @@ const STATUSMAP = {
 //             `Successfully inserted ${results.length} forms`
 //         );
 //     } catch (error) {
-//         console.error("🔥 MIGRATION FAILED:");
+//         console.error(" MIGRATION FAILED:");
 //         console.error(error);
 //     }
 // };
@@ -199,35 +199,46 @@ const STATUSMAP = {
 //             throw new Error("Hospital not found");
 //         }
 
-//         const conn = await getConnection(hospital.trimmedName);
+//         const conn = await getConnection(hospital.trimmedName);        // const PatientModel = getPatientModel(conn);
 
 //         const FilledFormsModel = getFilledFormsModel(conn);
-//         const PatientModel = getPatientModel(conn);
+//         // const PatientModel = getPatientModel(conn);
 
-//         const patients = await PatientModel.find();
-
-//         console.log("statging");
-
-//         for (const patient of patients) {
-//             const lastForm = await FilledFormsModel
-//                 .findOne({
-//                     "formData.patientDetails": patient._id,
-//                 })
-//                 .sort({ createdAt: -1 });
-
-//             if (lastForm) {
-//                 await PatientModel.findByIdAndUpdate(
-//                     patient._id,
-//                     {
-//                         $set: {
-//                             lastVisit: lastForm._id,
-//                         },
-//                     }
-//                 );
+//         await FilledFormsModel.updateMany(
+//             {},
+//             {
+//                 $set: {
+//                     createdAt: new Date("2026-06-08T13:18:08.460+00:00"),
+//                 },
+//             },
+//             {
+//                 timestamps: false,
 //             }
-//             count++;
-//             console.log("process", count);
-//         }
+//         );
+//         // const patients = await PatientModel.find();
+
+//         // console.log("statging");
+
+//         // for (const patient of patients) {
+//         //     const lastForm = await FilledFormsModel
+//         //         .findOne({
+//         //             "formData.patientDetails": patient._id,
+//         //         })
+//         //         .sort({ createdAt: -1 });
+
+//         //     if (lastForm) {
+//         //         await PatientModel.findByIdAndUpdate(
+//         //             patient._id,
+//         //             {
+//         //                 $set: {
+//         //                     lastVisit: lastForm._id,
+//         //                 },
+//         //             }
+//         //         );
+//         //     }
+//         //     count++;
+//         //     console.log("process", count);
+//         // }
 
 //         console.log("Done");
 //     } catch (error) {

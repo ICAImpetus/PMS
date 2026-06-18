@@ -283,6 +283,7 @@ export const commonRoutes = {
     endDate,
     searchName,
     purpose,
+    formsModalOpen,
     formsTypeFilter,
     isExport = false
   ) => {
@@ -294,7 +295,8 @@ export const commonRoutes = {
     if (endDate) params.endDate = endDate;
     if (searchName?.trim()) params.searchName = searchName.trim();
     if (purpose && purpose !== "All") params.purpose = purpose;
-    if (formsTypeFilter && formsTypeFilter !== "all") params.formsTypeFilter = formsTypeFilter;
+    if (formsModalOpen) params.formsModalOpen = formsModalOpen;
+    if (formsTypeFilter) params.formsTypeFilter = formsTypeFilter;
 
     return API.get("/api/filled-forms", { params });
   },

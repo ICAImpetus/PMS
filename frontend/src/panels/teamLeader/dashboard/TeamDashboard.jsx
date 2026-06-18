@@ -76,7 +76,9 @@ const TeamDashboard = () => {
     setPagination,
     dateRange,
     setDateRange,
-    handleFilterChange
+    handleFilterChange,
+    refetchDashboard,
+    refetchUsers
   } = useContext(HospitalContext);
 
   const formsDataMap = {
@@ -184,80 +186,89 @@ const TeamDashboard = () => {
       ) : (
         <div className="tld-dashboard-content-wrapper">
           {/* Date Filter Section */}
+          {loading?.dashboard && (
+            <div className="loading-overlay-simple">
+              <p>Loading DashBoard data...</p>
+            </div>
+          )}
           <div className="tld-date-filter">
-            <select id="global-date-range" onChange={(e) => {
-              handleFilterChange(e.target.value);
-            }}>
-              {filterOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.key}
-                </option>
-              ))}
-            </select>
-            <select
-              id="global-date-range"
-              onChange={(e) => {
-                // console.log("setSelectedBranch", e.target.value)
+            <div className="tld-filter-fields">
+              <div className="tld-filter-item">
+                <label htmlFor="global-date-range">Date Range</label>
+                <select
+                  id="global-date-range"
+                  value={filter?.value || filter || "today"}
+                  onChange={(e) => handleFilterChange(e.target.value)}
+                >
+                  {filterOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.key}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-                setSelectedBranch(e.target.value)
-              }}
-            >
-              {branches?.length === 0 ? (
-                <option disabled>No Branches Assigned</option>
-              ) : (
-                branches?.map((option) => (
-                  <option key={option._id} value={option._id}>
-                    {option.name}
+              <div className="tld-filter-item">
+                <label htmlFor="branch-select">Branch</label>
+                <select
+                  id="branch-select"
+                  value={selectedBranch || ""}
+                  onChange={(e) => setSelectedBranch(e.target.value)}
+                >
+                  <option value="" disabled>
+                    {branches?.length === 0 ? "No Branches Assigned" : "Select Branch"}
                   </option>
-                ))
-              )}
-            </select>
-            {/* <div className="team-forms-button-container">
-          <IconButton
-            color="warning"
-            size="small"
-            onClick={async () => {
-              await Promise.all([
-                refetchDashboard(),
-                refetchForms()
-              ])
+                  {branches?.map((option) => (
+                    <option key={option._id} value={option._id}>
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
-            }}
-            title="Refresh"
-          >
-            <RefreshIcon fontSize="small" />
-          </IconButton>
+            <div className="team-forms-button-container">
 
-          <button
-            className="team-forms-button"
-            onClick={() =>
-              navigate("/executive-forms", {
-                state: {
-                  branch: {
-                    branchId: selectedBranch,
-                  },
-                },
-              })
-            }
-          >
-            <ArticleOutlinedIcon /> Go to Forms
-          </button>
+              <button
+                className="team-forms-button"
 
-          <button
-            className="executive-forms-button"
-            onClick={() => setNotesModalOpen(true)}
-          >
-            <StickyNote2Icon /> Notes
-          </button>
+                onClick={async () => {
+                  await Promise.all([refetchDashboard(), refetchUsers()]);
+                }}
+                title="Refresh"
+              >
+                <RefreshIcon fontSize="small" /> Refresh
+              </button>
 
-          <button
-            className="executiveannoucementbutton"
-            onClick={() => setModalOpen("announcement")}
-          >
-            <CampaignIcon sx={{ fontSize: 25 }} /> Go to Announcements
-          </button>
+              <button
+                className="team-forms-button"
+                onClick={() =>
+                  navigate("/executive-forms", {
+                    state: {
+                      branch: {
+                        branchId: selectedBranch,
+                      },
+                    },
+                  })
+                }
+              >
+                <ArticleOutlinedIcon /> Go to Forms
+              </button>
 
-        </div> */}
+              {/* <button
+                className="executive-forms-button"
+                onClick={() => setNotesModalOpen(true)}
+              >
+                <StickyNote2Icon /> Notes
+              </button>
+
+              <button
+                className="executiveannoucementbutton"
+                onClick={() => setModalOpen("announcement")}
+              >
+                <CampaignIcon sx={{ fontSize: 25 }} /> Go to Announcements
+              </button> */}
+            </div>
           </div>
 
 
@@ -632,11 +643,11 @@ const TeamDashboard = () => {
                             <User size={20} />
                           </div>
                           <div className="tld-member-info">
-                            <div className="tld-member-name">{item?.name || "Sandeep"}</div>
-                            <div className="tld-member-role">Active Executive</div>
+                            <div className="tld-member-name">{item?.agentName || "Sandeep"}</div>
+                            <div className="tld-member-role">Active Agent</div>
                           </div>
                           <div className={`tld-member-stats-badge ${status}`}>
-                            {item?.count || 0} Forms
+                            {item?.totalCalls || 0} Forms
                           </div>
                         </div>
                       );

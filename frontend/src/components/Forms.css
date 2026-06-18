@@ -78,7 +78,7 @@ body {
 .header-top {
   display: flex;
   flex-direction: column;
-  /* 🔥 stack title + badge */
+  /*  stack title + badge */
   gap: 4px;
 }
 
@@ -691,7 +691,7 @@ body {
 
 .patient-details-table th {
   font-weight: 700;
-  font-size: 0.92rem;
+  font-size: 0.52rem;
 }
 
 .patient-details-table tbody tr:hover {
