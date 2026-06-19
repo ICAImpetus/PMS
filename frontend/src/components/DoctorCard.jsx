@@ -69,13 +69,13 @@ const DoctorProfileCard = ({ doctor, hosId }) => {
         <Card
             variant="outlined"
             sx={{
-                margin: "10px 0 10px 0",
+                margin: "4px 0",
                 borderRadius: 2,
-                "& .MuiChip-root": { height: 20, fontSize: "11px" }
+                "& .MuiChip-root": { height: 18, fontSize: "10px" }
             }}
         >
 
-            <CardContent sx={{ p: 1.5 }}>
+            <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
 
                 {/* TOP SECTION */}
                 <Grid container spacing={1} alignItems="center">
@@ -85,7 +85,7 @@ const DoctorProfileCard = ({ doctor, hosId }) => {
                         <Avatar
                             src={data?.profilePicture?.imagePath}
                             alt={data?.name}
-                            sx={{ width: 60, height: 60 }}
+                            sx={{ width: 40, height: 40 }}
                         />
 
                         <Typography fontSize={10} textAlign="center">
@@ -155,7 +155,7 @@ const DoctorProfileCard = ({ doctor, hosId }) => {
 
                 </Grid>
 
-                <Divider sx={{ my: 1 }} />
+                <Divider sx={{ my: 0.5 }} />
 
                 {/* OPD DAYS */}
 
@@ -204,7 +204,7 @@ const DoctorProfileCard = ({ doctor, hosId }) => {
 
                 </Box>
 
-                <Divider sx={{ my: 1 }} />
+                <Divider sx={{ my: 0.5 }} />
 
                 <Grid container spacing={1}>
 

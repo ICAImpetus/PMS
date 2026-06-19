@@ -94,14 +94,14 @@ const getSlotStyles = ({
   isBooked,
   isSelected,
 }) => ({
-  padding: "10px 12px",
+  padding: "4px 8px",
 
   cursor:
     isPast ? "not-allowed" : "pointer",
 
   border: "1px solid #ddd",
 
-  borderRadius: "6px",
+  borderRadius: "4px",
 
   backgroundColor: isPast
     ? "#ececec"
@@ -119,7 +119,7 @@ const getSlotStyles = ({
         ? "#888"
         : "#333",
 
-  fontSize: "13px",
+  fontSize: "11px",
 
   fontWeight: isSelected
     ? "bold"
@@ -218,6 +218,7 @@ function Forms() {
   const [selectedDay, setSelectedDay] = useState(null);
   const [bookedSlotIds, setBookedSlotIds] = useState([]);
   const [latestVisits, setLatestVisits] = useState([]);
+  const [showLatestVisitsPanel, setShowLatestVisitsPanel] = useState(true);
   const [latestVisitsModalOpen, setLatestVisitsModalOpen] = useState(false);
   const [latestVisitSearch, setLatestVisitSearch] = useState("");
   const [latestVisitFilter, setLatestVisitFilter] = useState("all");
@@ -710,20 +711,60 @@ function Forms() {
   }, [latestVisits, latestVisitSearch, latestVisitFilter]);
 
   const LatestPatientComponents = () => {
+    const canShowLatestVisits =
+      form?.formData?.patientDetails?.patientMobile !== "" &&
+      !getSinglePatientLoading &&
+      latestVisits?.length > 0;
+
+    if (!canShowLatestVisits) {
+      return null;
+    }
+
+    if (!showLatestVisitsPanel) {
+      return (
+        <div className="collapsed-view">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setShowLatestVisitsPanel(true)}
+          >
+            Show Latest Visits
+          </button>
+        </div>
+      );
+    }
+
     return (
-      form?.formData?.patientDetails?.patientMobile !== "" && !getSinglePatientLoading &&
-      latestVisits?.length > 0 && (
-        <div className="section" data-section="patient-latest-details">
-          <div className="patient-latest-visit-heading">
-            <h4>Latest Visit</h4>
+      <div className="latest-patient-container">
+        <div className="patient-latest-visit-heading">
+          <h4>Latest Visit</h4>
+          <div className="latest-visit-actions">
             <button
               type="button"
+              className="btn btn-secondary"
               onClick={() => setLatestVisitsModalOpen(true)}
             >
               View More
             </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setShowLatestVisitsPanel(false)}
+            >
+              ×
+            </button>
           </div>
+        </div>
 
+        <div
+          className="latest-patient-panel"
+          style={{
+            maxHeight: showLatestVisitsPanel ? "900px" : "0px",
+            overflow: "hidden",
+            opacity: showLatestVisitsPanel ? 1 : 0,
+            transition: "max-height 0.35s ease, opacity 0.25s ease",
+          }}
+        >
           <table className="patient-details-table">
             <thead>
               <tr>
@@ -731,8 +772,8 @@ function Forms() {
                 <th>Purpose</th>
                 <th>Doctor</th>
                 <th>Department</th>
-                <th>Remarks</th>
-                <th>Submitted Date</th>
+                {/* <th>Remarks</th>
+                <th>Submitted Date</th> */}
               </tr>
             </thead>
 
@@ -743,18 +784,18 @@ function Forms() {
                   <td>{lv?.purpose || "-"}</td>
                   <td>{lv?.doctor?.name || "-"}</td>
                   <td>{lv?.department?.name || "-"}</td>
-                  <td>{lv?.formData?.remarks || "-"}</td>
+                  {/* <td>{lv?.formData?.remarks || "-"}</td>
                   <td>
                     {lv?.createdAt
                       ? moment(lv.createdAt).format("DD MMM YYYY, hh:mm A")
                       : "-"}
-                  </td>
+                  </td> */}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      )
+      </div>
     );
   };
 
@@ -774,7 +815,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -851,6 +893,21 @@ function Forms() {
                         fullWidth: true,
                         size: "small",
                         className: "input-field",
+                        sx: {
+                          "& .MuiOutlinedInput-root": {
+                            height: 28,
+                            minHeight: 28,
+                            border: "1px solid var(--border-color)",
+                            borderRadius: "var(--radius)",
+                            backgroundColor: "#fff",
+                            fontSize: "12px",
+                          },
+
+                          "& .MuiInputBase-input": {
+                            fontSize: "12px",
+                            padding: "0 14px",
+                          },
+                        }
                       },
                     }}
                   />
@@ -889,21 +946,18 @@ function Forms() {
               selectedDoctor &&
               selectedDoctor?.slots?.length > 0 && (
                 <div>
-
                   <div className="input-group">
-
                     <label className="required">
                       Select Appointment Slot
                     </label>
-
                     <div
                       style={{
                         width: "100%",
                         display: "grid",
                         gridTemplateColumns:
-                          "repeat(auto-fill, minmax(140px, 1fr))",
-                        gap: "8px",
-                        padding: "10px 0",
+                          "repeat(auto-fill, minmax(110px, 1fr))",
+                        gap: "4px",
+                        padding: "4px 0",
                       }}
                     >
 
@@ -1058,9 +1112,13 @@ function Forms() {
               </div>
             )}
 
-            <div className="input-group textarea-field-container">
+            <div className="input-group textarea-field-container"
+
+            >
               <label className="required">Patient Status</label>
-              <div className="followup-container">
+              <div className="followup-container"
+
+              >
                 {/* Follow-up Checkbox */}
                 <div className="followup-card">
                   <label className="checkbox-label">
@@ -1084,6 +1142,7 @@ function Forms() {
                   </label>
 
                   <input
+
                     type="time"
 
                     disabled={form.formData.appointmentSlot?.start ? true : false}
@@ -1112,6 +1171,7 @@ function Forms() {
 
                     required
                     className="time-input"
+
                   />
 
                   {
@@ -1179,7 +1239,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -1310,7 +1371,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -1425,7 +1487,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -1556,7 +1619,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -1825,7 +1889,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -1936,7 +2001,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -2049,7 +2115,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -2233,7 +2300,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -2360,7 +2428,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -2619,7 +2688,8 @@ function Forms() {
                     width: "100%",
 
                     "& .MuiOutlinedInput-root": {
-                      minHeight: 38,
+                      minHeight: 28,
+                      height: 28,
                       border: "1px solid var(--border-color)",
                       borderRadius: "var(--radius)",
                       backgroundColor: "#fff",
@@ -4008,7 +4078,8 @@ function Forms() {
                         width: 300,
                         // fontSize: '12px',
                         "& .MuiOutlinedInput-root": {
-                          height: 33,
+                          height: 28,
+                          minHeight: 28,
                           border: "1px solid var(--border-color)",
                           borderRadius: "var(--radius)",
                           backgroundColor: "#fff",
@@ -4111,8 +4182,6 @@ function Forms() {
                       </button>
                     </div>
                   </div>
-                </div>
-                <div className="input-row">
                   <div className="input-group">
                     <label className={isRequired ? "required" : ""}>Category</label>
                     <Autocomplete
@@ -4120,7 +4189,8 @@ function Forms() {
                         width: 300,
 
                         "& .MuiOutlinedInput-root": {
-                          height: 33,
+                          height: 28,
+                          minHeight: 28,
                           border: "1px solid var(--border-color)",
                           borderRadius: "var(--radius)",
                           backgroundColor: "#fff",
@@ -4182,6 +4252,9 @@ function Forms() {
                       </button>
                     </div>
                   </div>
+                </div>
+                <div className="input-row">
+
                 </div>
               </div>
             )}
@@ -4252,7 +4325,7 @@ function Forms() {
                   sx={{
                     width: "100%", "& .MuiOutlinedInput-root":
                     {
-                      minHeight: 38, border: "1px solid var(--border-color)",
+                      minHeight: 28, height: 28, border: "1px solid var(--border-color)",
                       borderRadius:
                         "var(--radius)",
                       backgroundColor: "#fff", fontSize: "13px", "& fieldset": { border: "none", },

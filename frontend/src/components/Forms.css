@@ -22,10 +22,10 @@
   --text-muted: #94a3b8;
 
   /* Dimensions */
-  --header-height: 50px;
-  --footer-height: 60px;
-  --input-height: 32px;
-  --radius: 8px;
+  --header-height: 44px;
+  --footer-height: 48px;
+  --input-height: 28px;
+  --radius: 6px;
 }
 
 
@@ -58,7 +58,7 @@ body {
    ========================================= */
 
 .form-header {
-  min-height: 60px;
+  min-height: 44px;
   background: var(--bg-card);
   border-bottom: 1px solid var(--border-color);
 
@@ -66,12 +66,12 @@ body {
   justify-content: space-between;
   align-items: center;
 
-  padding: 10px 20px;
+  padding: 6px 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
 
   flex-wrap: wrap;
-  /*  important for responsiveness */
-  gap: 10px;
+  /* 🔥 important for responsiveness */
+  gap: 6px;
 }
 
 /* LEFT SIDE */
@@ -83,7 +83,7 @@ body {
 }
 
 .header-top h1 {
-  font-size: 1.2rem;
+  font-size: 1rem;
   margin: 0;
 }
 
@@ -188,7 +188,7 @@ body {
 }
 
 .form-header h1 {
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #1e293b !important;
   margin: 0;
@@ -202,21 +202,21 @@ body {
   visibility: visible !important;
   background: #ffffff !important;
   border: 1px solid #e2e8f0 !important;
-  padding: 5px;
+  padding: 3px;
   border-radius: var(--radius);
-  gap: 7px;
-  min-width: 200px;
+  gap: 4px;
+  min-width: 170px;
   justify-content: center;
 }
 
 .toggle-btn {
-  padding: 8px 24px;
+  padding: 5px 16px;
   border: none;
   background: transparent;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--secondary);
-  border-radius: 6px;
+  border-radius: 5px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -238,7 +238,7 @@ body {
 .form-container {
   flex: 1;
   overflow-y: auto;
-  padding: 10px 15px;
+  padding: 6px 12px;
   width: 100%;
   max-width: 100%;
   /* Ensures full width usage */
@@ -248,7 +248,7 @@ body {
 .all-sections-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
   max-width: 100%;
   /* Allow sections to stretch */
 }
@@ -260,25 +260,25 @@ body {
 .section {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  margin-bottom: 12px;
-  flex: 1
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  margin-bottom: 6px;
+  flex: 1;
 }
 
 .section:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .section h3 {
-  font-size: 0.9rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--primary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin: 0 0 16px 0;
-  padding-bottom: 8px;
+  margin: 0 0 8px 0;
+  padding-bottom: 5px;
   border-bottom: 1px solid #eeeeee;
 }
 
@@ -287,8 +287,8 @@ body {
   background: #ffffff;
   border: 1px solid #eeeeee;
   border-radius: var(--radius);
-  padding: 8px;
-  margin-top: 8px;
+  padding: 6px 8px;
+  margin-top: 4px;
   border-left: 3px solid var(--primary);
 }
 
@@ -300,8 +300,8 @@ body {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   /* Back to 3 columns for better spacing */
-  gap: 16px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 6px;
   align-items: end;
 }
 
@@ -316,8 +316,8 @@ body {
 .input-row-4-col {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 6px;
   align-items: end;
 }
 
@@ -328,15 +328,15 @@ body {
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   width: 100%;
 }
 
 .input-group label {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: #475569;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .required::after {
@@ -351,11 +351,11 @@ body {
 .textarea-field {
   width: 100%;
   height: var(--input-height);
-  padding: 0 12px;
+  padding: 0 8px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius);
   background-color: #fff;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   color: var(--text-main);
   transition: all 0.2s ease;
 }
@@ -372,10 +372,10 @@ body {
 /* Textarea Specifics */
 .textarea-field {
   height: auto;
-  min-height: 80px;
-  padding: 12px;
+  min-height: 52px;
+  padding: 6px 8px;
   resize: vertical;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 /* Span Logic: Make textarea take 2 columns or full width for better UX */
@@ -407,12 +407,12 @@ body {
 .connected-btn,
 .ambulance-btn,
 .rating-btn {
-  height: 28px;
-  padding: 0 12px;
+  height: 24px;
+  padding: 0 8px;
   background: transparent;
   border: none;
-  border-radius: 6px;
-  font-size: 0.8rem;
+  border-radius: 5px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: #64748b;
   cursor: pointer;
@@ -541,8 +541,8 @@ body {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding: 0 25px;
-  gap: 12px;
+  padding: 0 16px;
+  gap: 8px;
   box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.02);
   z-index: 50;
   margin-top: auto;
@@ -550,10 +550,10 @@ body {
 }
 
 .btn {
-  height: 38px;
-  padding: 0 24px;
+  height: 32px;
+  padding: 0 18px;
   border-radius: var(--radius);
-  font-size: 0.95rem;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -634,8 +634,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  gap: 12px;
+  margin-bottom: 8px;
+  gap: 8px;
 }
 
 .patient-latest-visit-heading h3 {
@@ -647,11 +647,11 @@ body {
 
 .patient-latest-visit-heading button {
   border: none;
-  border-radius: 8px;
-  padding: 10px 16px;
+  border-radius: 6px;
+  padding: 6px 12px;
   color: #ffffff;
   background-color: #2563eb;
-  font-size: 0.9rem;
+  font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease, transform 0.2s ease;
@@ -666,9 +666,9 @@ body {
   overflow-x: auto;
   background-color: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 16px;
-  margin-top: 8px;
+  border-radius: 8px;
+  padding: 8px;
+  margin-top: 4px;
 }
 
 .patient-details-table {
@@ -684,10 +684,10 @@ body {
 .patient-details-table th,
 .patient-details-table td {
   text-align: left;
-  padding: 14px 16px;
-  font-size: 14px;
+  padding: 7px 10px;
   border-bottom: 1px solid #e5e7eb;
   color: #475569;
+  font-size: 0.8rem;
 }
 
 .patient-details-table th {
@@ -787,20 +787,18 @@ body {
   width: 100%;
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  padding: 16px;
+  gap: 6px;
+  padding: 4px;
   background: #ffffff;
-  border-radius: 12px;
+  border-radius: 6px;
   border: 1px solid #e5e7eb;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  align-items: center;
-  /* justify-content: center; */
+  box-shadow: none;
 }
 
 .followup-card {
   background: #f9fafb;
-  padding: 14px 16px;
-  border-radius: 10px;
+  padding: 4px 8px;
+  border-radius: 4px;
   border: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
@@ -829,16 +827,16 @@ body {
 .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   cursor: pointer;
   font-weight: 500;
   color: #111827;
-  font-size: 15px;
+  font-size: 13px;
 }
 
 .checkbox-input {
-  width: 18px;
-  height: 18px;
+  width: 15px;
+  height: 15px;
   cursor: pointer;
   accent-color: #7c3aed;
 }
@@ -846,15 +844,15 @@ body {
 .input-label {
   font-weight: 500;
   color: #111827;
-  font-size: 15px;
+  font-size: 13px;
 }
 
 .time-input {
-  width: 100%;
-  padding: 10px 12px;
+  width: 320px;
+  padding: 4px 6px;
   border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: 4px;
+  font-size: 12px;
   outline: none;
   transition: all 0.2s ease;
   background: #ffffff;
@@ -866,26 +864,39 @@ body {
 }
 
 .live-arrival-time {
-  margin-top: 10px;
-  padding: 10px 12px;
+  margin-top: 5px;
+  padding: 5px 8px;
   background: #f3f0ff;
   border: 1px solid #d8b4fe;
-  border-radius: 8px;
+  border-radius: 6px;
 
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
 }
 
 .live-time-label {
-  font-size: 12px;
+  font-size: 11px;
   color: #6b7280;
 }
 
 .live-time-value {
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 600;
   color: #7c3aed;
+}
+
+.latest-visit-actions {
+  display: flex;
+  justify-content: end;
+  gap: 10px;
+}
+
+
+.latest-patient-container {
+  background-color: white;
+  padding: 7px
 }
 
 /* Responsive */

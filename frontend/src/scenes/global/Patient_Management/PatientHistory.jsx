@@ -313,7 +313,8 @@ export const PatientHistory = () => {
         handleCloseDateFilter();
     };
 
-    const onExport = async () => {
+
+    const handleApplyDatefilter = async () => {
         if (!startDate || !endDate) {
             toast.warn("Please Enter Start And End Date");
             return;
@@ -335,8 +336,6 @@ export const PatientHistory = () => {
                 true
             );
 
-            console.log("patient fetch", res);
-
             if (res?.success) {
                 const data = res?.data || [];
 
@@ -348,28 +347,36 @@ export const PatientHistory = () => {
                     return;
                 }
 
-                handleExport({
-                    format: exportFormat,
-                    data,
-                    columns: PATIENT_AVAILABLE_COLUMNS,
-                    fileName: `patients_${startDate}_${endDate}`,
-                    title: "Patients Report",
-                });
-
                 setPagination((prev) => ({
                     ...prev,
                     patients: {
                         ...res.pagination,
                     },
                 }));
-
-                setStartDate("");
-                setEndDate("");
-                setExportDialogOpen(false);
-                toast.success("Export successful");
             } else {
                 toast.error("Failed to fetch patients");
             }
+        } catch (error) {
+            console.error(error);
+            toast.error("Error fetching patient");
+        }
+    }
+
+
+
+    const onExport = async () => {
+        try {
+            handleExport({
+                format: exportFormat,
+                data: filteredPatients,
+                columns: PATIENT_AVAILABLE_COLUMNS,
+                fileName: `patients_${startDate}_${endDate}`,
+                title: "Patients Report",
+            });
+            setStartDate("");
+            setEndDate("");
+            setExportDialogOpen(false);
+            toast.success("Export successful");
         } catch (error) {
             console.error(error);
             toast.error("Error fetching patient");
@@ -475,35 +482,30 @@ export const PatientHistory = () => {
                     },
                 }}
             />
-            <Box sx={{ p: 3, backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
-                {/* Header */}
-                <Typography
-                    variant="h4"
-                    sx={{ mb: 3, fontWeight: 600, color: "#212f3d" }}
-                >
-                    Patient Management
-                </Typography>
+            <Box sx={{ backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
+                {/* Header with Title and Tabs */}
+                <Box sx={{ p: 2, pb: 0, display: "flex", alignItems: "center", justifyContent: "space-between", backgroundColor: "#fff", borderBottom: "1px solid #e0e0e0" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                        <Typography variant="h5" sx={{ fontWeight: 600, color: "#212f3d" }}>
+                            Patient History
+                        </Typography>
+                    </Box>
+                </Box>
 
-                {/* Filter Card */}
-                <Card sx={{ mb: 3, boxShadow: 2 }}>
-                    <CardContent>
-                        <Grid container spacing={2} alignItems="flex-end">
-                            {isAdmin ? (<FormControl sx={{ width: "220px" }} size="small">
-                                <InputLabel id="demo-multiple-checkbox-label">Select Hospital</InputLabel>
+                {/* Filter and Search Bar */}
+                <Box sx={{ p: 2, backgroundColor: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+                    {/* Left Side: Hospital/Branch Select */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        {isAdmin ? (
+                            <FormControl sx={{ width: "200px" }} size="small">
+                                <InputLabel id="hospital-select-label">Select Hospital</InputLabel>
                                 <Select
-                                    labelId="hospital-label"
+                                    labelId="hospital-select-label"
                                     label="Select Hospital"
                                     value={selectedHostpital || ""}
                                     onChange={(e) => setSelectedHostpital(e.target.value)}
                                     disabled={loading?.hospitalsLoading}
-                                    sx={{
-                                        borderRadius: 2,
-                                        backgroundColor: "black",
-                                        color: "black",
-                                        ".MuiSvgIcon-root": {
-                                            color: "black",
-                                        },
-                                    }}
+                                    sx={{ borderRadius: 1 }}
                                 >
                                     {loading?.hospitalsLoading ? (
                                         <MenuItem value="">
@@ -512,368 +514,288 @@ export const PatientHistory = () => {
                                         </MenuItem>
                                     ) : hospitals.length > 0 ? (
                                         hospitals.map((hospital) => (
-                                            <MenuItem
-                                                key={hospital._id}
-                                                value={hospital._id}
-                                            >
+                                            <MenuItem key={hospital._id} value={hospital._id}>
                                                 {hospital.name}
                                             </MenuItem>
                                         ))
                                     ) : (
-                                        <MenuItem value="">
-                                            No hospitals Assigned
-                                        </MenuItem>
+                                        <MenuItem value="">No hospitals Assigned</MenuItem>
                                     )}
                                 </Select>
-                            </FormControl>) : (
-                                <FormControl sx={{ width: "220px" }} size="small">
-                                    <InputLabel
-                                        id="hospital-label"
-                                    >
-                                        Select Branch
-                                    </InputLabel>
-
-                                    <Select
-                                        labelId="hospital-label"
-                                        label="Select Branch"
-                                        value={selectedBranch}
-                                        onChange={(e) => setSelectedBranch(e.target.value)}
-                                        disabled={loading?.branchesLoading}
-                                        displayEmpty
-                                        sx={{
-                                            borderRadius: 2,
-                                            backgroundColor: "black",
-                                            color: "black",
-
-                                        }}
-                                    >
-                                        {/* <MenuItem value="">
-                                                                <em>Select Hospital</em>
-                                                            </MenuItem> */}
-
-                                        {loading?.branchesLoading ? (
-                                            <MenuItem value="">
-                                                <CircularProgress size={20} sx={{ mr: 1 }} />
-                                                Loading...
+                            </FormControl>
+                        ) : (
+                            <FormControl sx={{ width: "200px" }} size="small">
+                                <InputLabel id="branch-select-label">Select Branch</InputLabel>
+                                <Select
+                                    labelId="branch-select-label"
+                                    label="Select Branch"
+                                    value={selectedBranch}
+                                    onChange={(e) => setSelectedBranch(e.target.value)}
+                                    disabled={loading?.branchesLoading}
+                                    sx={{ borderRadius: 1 }}
+                                >
+                                    {loading?.branchesLoading ? (
+                                        <MenuItem value="">
+                                            <CircularProgress size={20} sx={{ mr: 1 }} />
+                                            Loading...
+                                        </MenuItem>
+                                    ) : branches.length > 0 ? (
+                                        branches.map((branch) => (
+                                            <MenuItem key={branch._id} value={branch._id}>
+                                                {branch.name}
                                             </MenuItem>
-                                        ) : branches.length > 0 ? (
-                                            branches.map((branch) => (
-                                                <MenuItem
-                                                    key={branch._id}
-                                                    value={branch._id}
-                                                >
-                                                    {branch.name}
-                                                </MenuItem>
-                                            ))
-                                        ) : (
-                                            <MenuItem value="">
-                                                No Branch Assigned
-                                            </MenuItem>
-                                        )}
-                                    </Select>
-                                </FormControl>
-                            )}
-
-                            {/* Search by Name */}
-                            {console.log("searchin lut", searchInput)
-                            }
-                            <Grid item xs={12} sm={6} md={3}>
-                                <TextField
-                                    fullWidth
-                                    label="Search by Name/Phone No./Purpose"
-                                    variant="outlined"
-                                    size="small"
-                                    value={searchInput}
-                                    onChange={(e) => setSearchInput(e.target.value)}
-                                    onKeyDown={handleSearchKeyDown}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <SearchIcon sx={{ color: "#7c8fa3" }} />
-                                            </InputAdornment>
-                                        ),
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <Button
-                                                    size="small"
-                                                    variant="contained"
-                                                    color="primary"
-
-                                                    onClick={handleSearchApply}
-                                                    disabled={getPatientloading || searchInput?.trim() === ""}
-                                                    sx={{
-                                                        textTransform: "none",
-                                                        minWidth: 72,
-                                                        height: 32,
-                                                        fontSize: "0.8rem",
-                                                    }}
-                                                >
-                                                    {getPatientloading ? <CircularProgress size={22} /> : "Search"}
-                                                </Button>
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                    placeholder="Enter Patient Name,PhoneNo or Purpose"
-                                />
-                            </Grid>
-                            {/* <Grid item xs={12} sm={6} md={3}>
-                                <Button
-                                    fullWidth
-                                    variant="outlined"
-                                    color="primary"
-                                    startIcon={<FilterAltIcon />}
-                                    onClick={handleOpenDateFilter}
-                                    sx={{ justifyContent: 'flex-start' }}
-                                >
-                                    {startDate && endDate
-                                        ? `Date: ${startDate} to ${endDate}`
-                                        : "Date Filter"}
-                                </Button>
-                                <Menu
-                                    id="date-filter-menu"
-                                    anchorEl={dateFilterAnchorEl}
-                                    open={openDateFilter}
-                                    onClose={handleCloseDateFilter}
-                                    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                                    transformOrigin={{ vertical: "top", horizontal: "left" }}
-                                >
-                                    <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2, width: 280 }}>
-                                        <TextField
-                                            label="Start Date"
-                                            type="date"
-                                            variant="outlined"
-                                            size="small"
-                                            value={startDate}
-                                            onChange={(e) => setStartDate(e.target.value)}
-                                            InputLabelProps={{ shrink: true }}
-                                        />
-                                        <TextField
-                                            label="End Date"
-                                            type="date"
-                                            variant="outlined"
-                                            size="small"
-                                            value={endDate}
-                                            onChange={(e) => setEndDate(e.target.value)}
-                                            InputLabelProps={{ shrink: true }}
-                                        />
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
-                                            <Button
-                                                color="secondary"
-                                                onClick={handleResetDateFilter}
-                                                disabled={(!startDate && !endDate) || getPatientloading}
-                                            >
-                                                Reset
-                                            </Button>
-                                            <Button
-                                                variant="contained"
-                                                color="primary"
-                                                onClick={handleApplyDateFilter}
-                                                disabled={(!startDate || !endDate) || getPatientloading}
-                                            >
-                                                {getPatientloading ? <CircularProgress size={22} /> : "Apply"}
-                                            </Button>
-                                        </Box>
-                                    </Box>
-                                </Menu>
-                            </Grid> */}
-                            <Grid
-                                item
-                                xs={12}
-                                sm={6}
-                                md={4}
-                                sx={{
-
-                                    display: 'flex',
-                                    gap: '5px',
-                                    fontSize: "12px",
-                                    textTransform: "none", // keeps "View More" normal
-                                    minWidth: "auto",      // removes default large width
-                                    px: 1.5,               // horizontal padding
-                                    py: 0.5,               // vertical padding
-                                }}
-                            >
-                                <Button
-                                    variant="outlined"
-                                    color="primary"
-                                    disabled={loading?.patients}
-                                    startIcon={<RefreshIcon />}
-                                    onClick={refetchPatients}
-
-                                >
-                                    {loading?.patients ? <CircularProgress size={24} /> : "Refresh"}
-                                </Button>
-
-
-                                {/* <div
-                                    ref={columnFilterButtonRef}
-                                    style={{ position: "relative", display: "inline-block" }}
-                                >
-                                              <Button
-                                    variant="outlined"
-                                    color="secondary"
-                                    ref={columnFilterButtonRef}
-                                    onClick={() => setFormsColumnFilterOpen((prev) => !prev)}
-
-                                >
-                                    <i className="fas fa-columns"></i> Select Fields (
-                                    {selectedFormColumns.length})
-
-
-                                </Button>
-
-                                    {formsColumnFilterOpen && (
-                                        <div
-                                            ref={formsColumnFilterRef}
-                                            className="ff-column-filter-dropdown"
-                                            style={{
-                                                position: "absolute",
-                                                zIndex: 10,
-                                                top: "calc(100% + 8px)",
-                                                right: 0,
-                                                background: "#fff",
-                                                border: "1px solid #ccc",
-                                                borderRadius: 6,
-                                                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                                                padding: 12,
-                                                minWidth: 180,
-                                            }}
-                                        >
-                                            <div className="ff-column-checkboxes">
-                                                {PATIENT_AVAILABLE_COLUMNS.map((col) => (
-                                                    <label
-                                                        key={col.key}
-                                                        className="ff-column-check"
-                                                        style={{
-                                                            display: "block",
-                                                            marginBottom: 6,
-                                                        }}
-                                                    >
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedFormColumns.includes(col.key)}
-                                                            onChange={() => toggleFormColumn(col.key)}
-                                                        />
-
-                                                        <span style={{ marginLeft: 8 }}>
-                                                            {col.label}
-                                                        </span>
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}const searchOptions = [
-  "Search Patient...",
-  "Search Agent...",
-  "Search POC...",
-  "Search Remarks...",
-];
-
-                                </div> */}
-                                <Button
-                                    variant="contained"
-                                    color="warning"
-                                    startIcon={<DownloadIcon />}
-                                    onClick={() => setExportDialogOpen(true)}
-                                >
-                                    Export
-                                </Button>
-
-
-                                <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} fullWidth maxWidth="sm">
-                                    <DialogTitle>Export Data</DialogTitle>
-
-                                    <DialogContent>
-
-                                        {/* Date Range Section */}
-                                        <div style={{ display: "flex", gap: "12px", marginTop: "10px" }}>
-                                            <TextField
-                                                label="Start Date"
-                                                type="date"
-                                                fullWidth
-                                                InputLabelProps={{ shrink: true }}
-                                                value={startDate}
-                                                onChange={(e) => setStartDate(e.target.value)}
-                                            />
-
-                                            <TextField
-                                                label="End Date"
-                                                type="date"
-                                                fullWidth
-                                                InputLabelProps={{ shrink: true }}
-                                                value={endDate}
-                                                onChange={(e) => setEndDate(e.target.value)}
-                                            />
-                                        </div>
-
-                                        {/* Format Selection */}
-                                        <div style={{ marginTop: "20px" }}>
-                                            <RadioGroup
-                                                value={exportFormat}
-                                                onChange={(e) => setExportFormat(e.target.value)}
-                                            >
-                                                <FormControlLabel value="csv" control={<Radio />} label="CSV (.csv)" />
-                                                <FormControlLabel value="excel" control={<Radio />} label="Excel (.xlsx)" />
-                                                <FormControlLabel value="pdf" control={<Radio />} label="PDF (.pdf)" />
-                                            </RadioGroup>
-                                        </div>
-
-                                    </DialogContent>
-
-                                    <DialogActions>
-                                        <Button disabled={getPatientloading} onClick={() => setExportDialogOpen(false)} color="secondary">
-                                            Cancel
-                                        </Button>
-                                        <Button
-                                            onClick={onExport}
-                                            color="primary"
-                                            variant="contained"
-                                            disabled={
-                                                !startDate ||
-                                                !endDate ||
-                                                getPatientloading
-                                            }
-                                        >
-                                            {getPatientloading ? (
-                                                <CircularProgress size={22} color="inherit" />
-                                            ) : (
-                                                "Download"
-                                            )}
-                                        </Button>
-                                    </DialogActions>
-                                </Dialog>
-                            </Grid>
-                        </Grid>
-
-                        {/* Active Filters Display and Clear Button (right) */}
-                        {(searchName || appliedStartDate || appliedEndDate) && (
-                            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography variant="caption" sx={{ color: "#7c8fa3" }}>
-                                    Showing {filteredPatients.length} of {patients.length} patient(s)
-                                    {appliedStartDate && appliedEndDate && (
-                                        <>&nbsp;| Date: {appliedStartDate} to {appliedEndDate}</>
+                                        ))
+                                    ) : (
+                                        <MenuItem value="">No Branch Assigned</MenuItem>
                                     )}
-                                </Typography>
-                                <Button
-                                    variant="outlined"
-                                    color="secondary"
-                                    onClick={handleClearFilters}
-                                    sx={{ ml: 2 }}
-                                >
-                                    Clear
-                                </Button>
-                            </Box>
+                                </Select>
+                            </FormControl>
                         )}
-                    </CardContent>
-                </Card>
+                    </Box>
 
-                {/* Error Alert */}
+                    {/* Right Side: Search, Refresh, Select Fields, Export, Actions */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                        {/* Search Input */}
+                        <TextField
+                            size="small"
+                            variant="outlined"
+                            placeholder="Search by Name/Phone No./Purpose"
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            onKeyDown={handleSearchKeyDown}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <SearchIcon sx={{ color: "#7c8fa3", fontSize: "20px" }} />
+                                    </InputAdornment>
+                                ),
+                            }}
+                            sx={{
+                                width: "250px",
+                                "& .MuiOutlinedInput-root": {
+                                    borderRadius: 1,
+                                    height: "36px",
+                                },
+                            }}
+                        />
+
+                        {/* Search Button */}
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleSearchApply}
+                            disabled={getPatientloading || searchInput?.trim() === ""}
+                            sx={{
+                                textTransform: "none",
+                                fontWeight: 500,
+                                height: "36px",
+                                minWidth: "80px",
+                            }}
+                        >
+                            {getPatientloading ? <CircularProgress size={20} color="inherit" /> : "Search"}
+                        </Button>
+
+                        {/* Date Range Filters */}
+                        <TextField
+                            type="date"
+                            size="small"
+                            variant="outlined"
+                            label="From"
+                            InputLabelProps={{ shrink: true }}
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            sx={{
+                                width: "140px",
+                                "& .MuiOutlinedInput-root": {
+                                    height: "36px",
+                                    borderRadius: 1,
+                                },
+                            }}
+                        />
+
+                        <TextField
+                            type="date"
+                            size="small"
+                            variant="outlined"
+                            label="To"
+                            InputLabelProps={{ shrink: true }}
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            sx={{
+                                width: "140px",
+                                "& .MuiOutlinedInput-root": {
+                                    height: "36px",
+                                    borderRadius: 1,
+                                },
+                            }}
+                        />
+
+                        {/* Apply Date Filter Button */}
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => {
+                                if (startDate && endDate) {
+                                    if (new Date(startDate) > new Date(endDate)) {
+                                        toast.warn("Start date cannot be greater than end date");
+                                        return;
+                                    }
+                                    setAppliedStartDate(startDate);
+                                    setAppliedEndDate(endDate);
+                                    setDateRangeFilter({ startDate, endDate });
+                                    handleApplyDatefilter()
+                                    toast.success("Date filter applied");
+                                } else {
+                                    toast.warn("Please select both start and end dates");
+                                }
+                            }}
+                            disabled={!startDate || !endDate || getPatientloading}
+                            sx={{
+                                textTransform: "none",
+                                fontWeight: 500,
+                                height: "36px",
+                                minWidth: "70px",
+                            }}
+                        >
+                            {getPatientloading ? <CircularProgress size={22} /> : "Apply"}
+                        </Button>
+
+                        {/* Clear Date Filter Button */}
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            onClick={() => {
+                                setStartDate("");
+                                setEndDate("");
+                                setAppliedStartDate("");
+                                setAppliedEndDate("");
+                                setDateRangeFilter({ startDate: "", endDate: "" });
+                                toast.success("Date filter cleared");
+                            }}
+                            disabled={!startDate && !endDate || getPatientloading}
+                            sx={{
+                                textTransform: "none",
+                                fontWeight: 500,
+                                height: "36px",
+                                minWidth: "70px",
+                            }}
+                        >
+                            Clear
+                        </Button>
+
+                        {/* Select Fields Button */}
+                        {/* <Button
+                            variant="outlined"
+                            color="primary"
+                            ref={columnFilterButtonRef}
+                            onClick={() => setFormsColumnFilterOpen((prev) => !prev)}
+                            sx={{
+                                textTransform: "none",
+                                fontWeight: 500,
+                                height: "36px",
+                            }}
+                        >
+                            Select fields ({selectedFormColumns.length})
+                        </Button> */}
+
+
+
+                        {/* Refresh Button */}
+                        <Button
+                            variant="outlined"
+                            color="primary"
+                            disabled={loading?.patients}
+                            startIcon={<RefreshIcon />}
+                            onClick={refetchPatients}
+                            sx={{
+                                textTransform: "none",
+                                fontWeight: 500,
+                                height: "36px",
+                            }}
+                        >
+                            {loading?.patients ? <CircularProgress size={20} /> : "Refresh"}
+                        </Button>
+
+                        {/* Export Button */}
+                        <Button
+                            variant="contained"
+                            color="warning"
+                            startIcon={<DownloadIcon />}
+                            onClick={() => setExportDialogOpen(true)}
+                            sx={{
+                                textTransform: "none",
+                                fontWeight: 500,
+                                height: "36px",
+                            }}
+                        >
+                            Export
+                        </Button>
+                    </Box>
+                </Box>
+
+                {/* Export Dialog */}
+                <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} fullWidth maxWidth="sm">
+                    <DialogTitle>Export Data</DialogTitle>
+                    <DialogContent>
+                        {/* Date Range Section */}
+                        {/* <div style={{ display: "flex", gap: "12px", marginTop: "10px" }}>
+                            <TextField
+                                label="Start Date"
+                                type="date"
+                                fullWidth
+                                InputLabelProps={{ shrink: true }}
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                            />
+                            <TextField
+                                label="End Date"
+                                type="date"
+                                fullWidth
+                                InputLabelProps={{ shrink: true }}
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                            />
+                        </div> */}
+
+                        {/* Format Selection */}
+                        <div style={{ marginTop: "20px" }}>
+                            <RadioGroup
+                                value={exportFormat}
+                                onChange={(e) => setExportFormat(e.target.value)}
+                            >
+                                <FormControlLabel value="csv" control={<Radio />} label="CSV (.csv)" />
+                                <FormControlLabel value="excel" control={<Radio />} label="Excel (.xlsx)" />
+                                <FormControlLabel value="pdf" control={<Radio />} label="PDF (.pdf)" />
+                            </RadioGroup>
+                        </div>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button disabled={getPatientloading} onClick={() => setExportDialogOpen(false)} color="secondary">
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={onExport}
+                            color="primary"
+                            variant="contained"
+                            disabled={
+                                getPatientloading
+                            }
+                        >
+                            {getPatientloading ? (
+                                <CircularProgress size={22} color="inherit" />
+                            ) : (
+                                "Download"
+                            )}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Tabs and Table Section */}
                 {errors?.patientsError && (
                     <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
                         {errors?.patientsError}
                     </Alert>
                 )}
-
-                {/* Loading State */}
 
                 {loading?.patients ? (
                     <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
@@ -883,12 +805,12 @@ export const PatientHistory = () => {
                     <>
                         {/* Table */}
                         <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
-                            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-start", borderBottom: "1px solid #e0e0e0" }}>
                                 <Tabs
                                     value={formTypeFilter}
                                     onChange={handleFormTypeChange}
                                     sx={{
-                                        borderBottom: "2px solid #e0e0e0",
+                                        borderBottom: "none",
                                     }}
                                 >
                                     <Tab
@@ -946,7 +868,6 @@ export const PatientHistory = () => {
                                         value="outbound"
                                     />
                                 </Tabs>
-
                             </Box>
 
                             <Table>

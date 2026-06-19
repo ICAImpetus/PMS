@@ -30,7 +30,13 @@ function Root() {
         <ThemeProvider theme={theme}>
           <CssBaseline />
           {/* Global Toaster mounted here so it's available to providers below */}
-          <Toaster position="top-right" reverseOrder={false} />
+          <Toaster
+            position="top-right"
+            reverseOrder={false}
+            toastOptions={{
+              duration: 4000,
+            }}
+          />
           <BrowserRouter>
             <QueryClientProvider client={queryClient}>
               <GlobalUserContextProvider>
