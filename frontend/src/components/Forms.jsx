@@ -218,6 +218,7 @@ function Forms() {
   const [selectedDay, setSelectedDay] = useState(null);
   const [bookedSlotIds, setBookedSlotIds] = useState([]);
   const [latestVisits, setLatestVisits] = useState([]);
+  const [showLatestVisitsPanel, setShowLatestVisitsPanel] = useState(true);
   const [latestVisitsModalOpen, setLatestVisitsModalOpen] = useState(false);
   const [latestVisitSearch, setLatestVisitSearch] = useState("");
   const [latestVisitFilter, setLatestVisitFilter] = useState("all");
@@ -710,20 +711,60 @@ function Forms() {
   }, [latestVisits, latestVisitSearch, latestVisitFilter]);
 
   const LatestPatientComponents = () => {
+    const canShowLatestVisits =
+      form?.formData?.patientDetails?.patientMobile !== "" &&
+      !getSinglePatientLoading &&
+      latestVisits?.length > 0;
+
+    if (!canShowLatestVisits) {
+      return null;
+    }
+
+    if (!showLatestVisitsPanel) {
+      return (
+        <div className="collapsed-view">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setShowLatestVisitsPanel(true)}
+          >
+            Show Latest Visits
+          </button>
+        </div>
+      );
+    }
+
     return (
-      form?.formData?.patientDetails?.patientMobile !== "" && !getSinglePatientLoading &&
-      latestVisits?.length > 0 && (
-        <div className="section" data-section="patient-latest-details">
-          <div className="patient-latest-visit-heading">
-            <h4>Latest Visit</h4>
+      <div className="latest-patient-container">
+        <div className="patient-latest-visit-heading">
+          <h4>Latest Visit</h4>
+          <div className="latest-visit-actions">
             <button
               type="button"
+              className="btn btn-secondary"
               onClick={() => setLatestVisitsModalOpen(true)}
             >
               View More
             </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setShowLatestVisitsPanel(false)}
+            >
+              ×
+            </button>
           </div>
+        </div>
 
+        <div
+          className="latest-patient-panel"
+          style={{
+            maxHeight: showLatestVisitsPanel ? "900px" : "0px",
+            overflow: "hidden",
+            opacity: showLatestVisitsPanel ? 1 : 0,
+            transition: "max-height 0.35s ease, opacity 0.25s ease",
+          }}
+        >
           <table className="patient-details-table">
             <thead>
               <tr>
@@ -731,8 +772,8 @@ function Forms() {
                 <th>Purpose</th>
                 <th>Doctor</th>
                 <th>Department</th>
-                <th>Remarks</th>
-                <th>Submitted Date</th>
+                {/* <th>Remarks</th>
+                <th>Submitted Date</th> */}
               </tr>
             </thead>
 
@@ -743,18 +784,18 @@ function Forms() {
                   <td>{lv?.purpose || "-"}</td>
                   <td>{lv?.doctor?.name || "-"}</td>
                   <td>{lv?.department?.name || "-"}</td>
-                  <td>{lv?.formData?.remarks || "-"}</td>
+                  {/* <td>{lv?.formData?.remarks || "-"}</td>
                   <td>
                     {lv?.createdAt
                       ? moment(lv.createdAt).format("DD MMM YYYY, hh:mm A")
                       : "-"}
-                  </td>
+                  </td> */}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      )
+      </div>
     );
   };
 
@@ -852,7 +893,7 @@ function Forms() {
                         fullWidth: true,
                         size: "small",
                         className: "input-field",
-                        sx:{
+                        sx: {
                           "& .MuiOutlinedInput-root": {
                             height: 28,
                             minHeight: 28,
@@ -1076,7 +1117,7 @@ function Forms() {
             >
               <label className="required">Patient Status</label>
               <div className="followup-container"
-              
+
               >
                 {/* Follow-up Checkbox */}
                 <div className="followup-card">
@@ -1101,7 +1142,7 @@ function Forms() {
                   </label>
 
                   <input
-                    
+
                     type="time"
 
                     disabled={form.formData.appointmentSlot?.start ? true : false}
@@ -1130,7 +1171,7 @@ function Forms() {
 
                     required
                     className="time-input"
-                    
+
                   />
 
                   {
@@ -4277,30 +4318,30 @@ function Forms() {
           <div className="section" data-section="call-purpose">
             <h3>Call Purpose</h3>
 
-          <div className="input-row">
-            <div className="input-group">
-              <label className="required">Purpose Of Call</label>
-              <Autocomplete freeSolo
-                sx={{
-                  width: "100%", "& .MuiOutlinedInput-root":
-                  {
-                    minHeight: 28, height: 28, border: "1px solid var(--border-color)",
-                    borderRadius:
-                      "var(--radius)",
-                    backgroundColor: "#fff", fontSize: "13px", "& fieldset": { border: "none", },
-                  },
-                  "& .MuiInputBase-input": { fontSize: "13px", padding: "0 14px", },
-                }}
-                options={INBOUND_PURPOSE_OPTIONS}
-                getOptionLabel={(option) => typeof option === "string" ?
-                  option : option.label}
-                value={INBOUND_PURPOSE_OPTIONS.find((item) => item.value === form.purpose) || form.purpose}
-                onChange={(_, newValue) => { handleChange("purpose", typeof newValue === "string" ? newValue : newValue?.value || ""); }}
-                onInputChange={(_, newInputValue) => { handleChange("purpose", newInputValue); }}
-                renderInput={(params) =>
-                  (<TextField {...params} placeholder="Search or type purpose" />)} />
+            <div className="input-row">
+              <div className="input-group">
+                <label className="required">Purpose Of Call</label>
+                <Autocomplete freeSolo
+                  sx={{
+                    width: "100%", "& .MuiOutlinedInput-root":
+                    {
+                      minHeight: 28, height: 28, border: "1px solid var(--border-color)",
+                      borderRadius:
+                        "var(--radius)",
+                      backgroundColor: "#fff", fontSize: "13px", "& fieldset": { border: "none", },
+                    },
+                    "& .MuiInputBase-input": { fontSize: "13px", padding: "0 14px", },
+                  }}
+                  options={INBOUND_PURPOSE_OPTIONS}
+                  getOptionLabel={(option) => typeof option === "string" ?
+                    option : option.label}
+                  value={INBOUND_PURPOSE_OPTIONS.find((item) => item.value === form.purpose) || form.purpose}
+                  onChange={(_, newValue) => { handleChange("purpose", typeof newValue === "string" ? newValue : newValue?.value || ""); }}
+                  onInputChange={(_, newInputValue) => { handleChange("purpose", newInputValue); }}
+                  renderInput={(params) =>
+                    (<TextField {...params} placeholder="Search or type purpose" />)} />
+              </div>
             </div>
-          </div>
 
             {form.formType === "inbound" && form.purpose && (
               <div className="purpose-details" data-section="purpose-details">
