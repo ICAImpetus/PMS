@@ -41,6 +41,7 @@ const UserForm = ({
   hospitalId,
   allUsers = [],
   refetchAdmins,
+  isInline = false,
 }) => {
   const { currentUser } = UserContextHook();
 
@@ -263,15 +264,16 @@ const UserForm = ({
             <Form>
               <Box
                 sx={{
-                  maxWidth: 700,
-                  margin: "auto",
-                  bgcolor: colors.primary[800],
-                  p: 4,
-                  borderRadius: 2,
-                  boxShadow: 3,
+                  width: "100%",
+                  maxWidth: isInline ? "100%" : 700,
+                  margin: isInline ? "0" : "auto",
+                  bgcolor: isInline ? "transparent" : colors.primary[800],
+                  p: isInline ? "0" : 4,
+                  borderRadius: isInline ? "0" : 2,
+                  boxShadow: isInline ? "none" : 3,
                   minHeight: "auto",
-                  maxHeight: "90vh",
-                  overflowY: "auto",
+                  maxHeight: isInline ? "none" : "90vh",
+                  overflowY: isInline ? "visible" : "auto",
                 }}
               >
                 <Box

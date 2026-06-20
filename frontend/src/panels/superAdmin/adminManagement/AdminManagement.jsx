@@ -36,6 +36,7 @@ import { useApi } from "../../../api/useApi";
 import { superAdminRoutes } from "../../../api/apiService";
 import UpdatePasswordForm from "../userManagement/UpdatePassword";
 import HospitalContext from "../../../contexts/HospitalContexts";
+import BreadcrumbNav from "../../../components/BroadcrumNav.jsx";
 
 const ScrollableForm = styled(Box)({
     width: "100%",
@@ -251,6 +252,47 @@ function AdminManagement() {
 
 
 
+    if (open || updateOpen) {
+        return (
+            <Box sx={{ p: "2px 20px 10px 20px" }}>
+                {/* Navigation Breadcrumb and Back Button */}
+                <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                    <BreadcrumbNav />
+                    <Button
+                        variant="outlined"
+                        onClick={() => setOpen(false) || setUpdateOpen(false)}
+                        sx={{
+                            color: colors.grey[100],
+                            borderColor: colors.grey[400],
+                            "&:hover": {
+                                borderColor: colors.grey[100],
+                            },
+                        }}
+                    >
+                        Back
+                    </Button>
+                </Box>
+                {open ? (
+                    <UserForm
+                        initialState={null}
+                        onClose={() => setOpen(false)}
+                        allUsers={admins}
+                        refetchAdmins={refetchAdmins}
+                        isInline={true}
+                    />
+                ) : (
+                    <UserForm
+                        initialState={userUpdateData}
+                        onClose={() => setUpdateOpen(false)}
+                        allUsers={admins}
+                        refetchAdmins={refetchAdmins}
+                        isInline={true}
+                    />
+                )}
+            </Box>
+        );
+    }
+
     return (
         <ScrollableForm>
             <Toaster
@@ -342,46 +384,7 @@ function AdminManagement() {
                             components={{ Toolbar: GridToolbar }}
                         />
                     </Box>
-                    <Modal
-                        open={open || updateOpen}
-                        onClose={() => setOpen(false) || setUpdateOpen(false)}
-                        aria-labelledby="modal-title"
-                        aria-describedby="modal-description"
-                    >
-                        <Box
-                            sx={{
-                                position: "absolute",
-                                top: "50%",
-                                left: "50%",
-                                transform: "translate(-50%, -50%)",
-                                // width: 4 ? 400 : isSmallScreen ? 300 : 600,
-                                backgroundColor: colors.primary[800],
-                                // p: 0.5,
-                                borderRadius: 2,
-                                boxShadow: 3,
-                            }}
-                        >
-                            {open ? (
-                                // ---
-                                // 2. PASSING 'allUsers' PROP TO THE FORM
-                                // ---
-                                <UserForm
-                                    initialState={null}
-                                    onClose={() => setOpen(false)}
-                                    allUsers={admins}
-                                    refetchAdmins={refetchAdmins}
-                                // Pass the full user list
-                                />
-                            ) : updateOpen && userUpdateData ? (
-                                <UserForm
-                                    initialState={userUpdateData}
-                                    onClose={() => setUpdateOpen(false)}
-                                    allUsers={admins} // Also pass it for updates
-                                    refetchAdmins={refetchAdmins}
-                                />
-                            ) : null}
-                        </Box>
-                    </Modal>
+
                     {/* Update Password Modal */}
                     <Modal
                         open={openUpdatePasswordModal}

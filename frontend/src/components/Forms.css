@@ -298,7 +298,7 @@ body {
 
 .input-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   /* Back to 3 columns for better spacing */
   gap: 10px;
   margin-bottom: 6px;
@@ -315,7 +315,7 @@ body {
 
 .input-row-4-col {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 6px;
   align-items: end;
@@ -392,11 +392,12 @@ body {
 .ambulance-buttons,
 .rating-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   background: #ffffff;
   padding: 2px;
   border-radius: var(--radius);
-  width: fit-content;
+  max-width: 100%;
   border: 1px solid #eeeeee;
 }
 
@@ -472,11 +473,15 @@ body {
 
 /* Special styling for gender buttons */
 .gender-buttons {
-  gap: 4px;
+  gap: 2px;
+  width: 100%;
 }
 
 .gender-btn {
-  min-width: 100px;
+  min-width: unset;
+  flex: 1;
+  padding: 0 4px;
+  font-size: 0.7rem;
 }
 
 /* Special styling for call status buttons */

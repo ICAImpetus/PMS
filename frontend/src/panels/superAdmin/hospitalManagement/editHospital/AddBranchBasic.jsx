@@ -499,7 +499,7 @@ const AddBranchBasic = ({
           borderRadius: 3,
           boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
           width: "100%",
-          maxWidth: "620px",
+          // maxWidth: "620px",
           display: "flex",
           flexDirection: "column",
           gap: { xs: 1.5, md: 2.5 },
@@ -510,12 +510,31 @@ const AddBranchBasic = ({
           overflowY: "auto",
         }}
       >
+
         <Typography
           variant="h5"
           component="h2"
           gutterBottom
-          sx={{ textAlign: "center" }}
+          justifyContent="space-between"
+          // sx={{ textAlign: "center" }}
         >
+          <Button
+            variant="outlined"
+            onClick={handleClose}
+            size="small"
+            sx={{
+              color: "#212f3d",
+              borderColor: "#212f3d",
+              height: 32,
+              textTransform: "none",
+              "&:hover": {
+                backgroundColor: "#f0f0f0",
+                borderColor: "#212f3d",
+              },
+            }}
+          >
+            Back
+          </Button>
           {isEdit ? "Edit Branch" : "Add New Hospital Branch"}
         </Typography>
 

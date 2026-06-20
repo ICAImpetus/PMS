@@ -128,50 +128,50 @@ const FilledFormsComponent = ({
   };
 
   const { request: getFilledForms, loading: getFilledFormsLoading, error: getFilledformError } = useApi(commonRoutes.getFilledForms)
-
-  useEffect(() => {
-    const fetchForms = async () => {
-      try {
-        const purpose =
-          formsModalOpen === "Appointments"
-            ? "Appointments"
-            : formsModalOpen === "Followup"
-              ? "Followup"
-              : "All";
+  const fetchForms = async (search = null) => {
+    try {
+      const purpose =
+        formsModalOpen === "Appointments"
+          ? "Appointments"
+          : formsModalOpen === "Followup"
+            ? "Followup"
+            : "All";
 
 
-        // console.log("Call", purpose);
+      // console.log("Call", purpose);
 
-        const res = await getFilledForms(
-          pagination.page,
-          selectedHostpital,
-          selectedBranch,
-          dateRange?.startDate || null,
-          dateRange?.endDate || null,
-          searchInput || "",
-          purpose,
-          formsModalOpen,
-          formsTypeFilter,
-          false
-        );
+      console.log("searchInput ", searchInput);
 
-        if (res?.success) {
-          setFilterForm(res.data || []);
-          setForm(res?.data || [])
 
-          setPagination((prev) => ({
-            ...prev,
-            page: Number(res.pagination?.page ?? res.pagination?.forms?.page ?? res.pagination?.currentPage ?? prev.page ?? 1),
-            totalPages: Number(res.pagination?.totalPages ?? res.pagination?.forms?.totalPages ?? 1),
-            totalDocument: Number(res.pagination?.total ?? res.pagination?.forms?.total ?? 0),
-          }));
-        }
-      } catch (err) {
-        console.error("fetchForms error:", err);
+      const res = await getFilledForms(
+        pagination.page,
+        selectedHostpital,
+        selectedBranch,
+        dateRange?.startDate || null,
+        dateRange?.endDate || null,
+        search ? search : searchInput || "",
+        purpose,
+        formsModalOpen,
+        formsTypeFilter,
+        false
+      );
+
+      if (res?.success) {
+        setFilterForm(res.data || []);
+        setForm(res?.data || [])
+
+        setPagination((prev) => ({
+          ...prev,
+          page: Number(res.pagination?.page ?? res.pagination?.forms?.page ?? res.pagination?.currentPage ?? prev.page ?? 1),
+          totalPages: Number(res.pagination?.totalPages ?? res.pagination?.forms?.totalPages ?? 1),
+          totalDocument: Number(res.pagination?.total ?? res.pagination?.forms?.total ?? 0),
+        }));
       }
-    };
-
-
+    } catch (err) {
+      console.error("fetchForms error:", err);
+    }
+  };
+  useEffect(() => {
     fetchForms();
   }, [
     selectedBranch,
@@ -395,19 +395,12 @@ const FilledFormsComponent = ({
         purpose,
         formsModalOpen,
         formsTypeFilter,
-        false
+        true
       );
 
       if (res?.success) {
         setFilterForm(res.data || []);
         setForm(res.data || []);
-
-        setPagination((prev) => ({
-          ...prev,
-          page: 1,
-          totalPages: Number(res.pagination?.totalPages ?? res.pagination?.forms?.totalPages ?? 1),
-          totalDocument: Number(res.pagination?.total ?? res.pagination?.forms?.total ?? 0),
-        }));
         toast.success("Filters applied");
       }
     } catch (err) {
@@ -513,50 +506,19 @@ const FilledFormsComponent = ({
   };
 
 
-  const handleClearDateFilter = () => {
+  const handleClearDateFilter = async () => {
     setDateFilterFrom("");
     setDateFilterTo("");
     setDateFilterOpen(true);
     setMoreMenuAnchor(null);
+    setSearchInput("")
+    console.log("formty", searchInput);
 
-    // Refresh list without date filters
-    (async () => {
-      try {
-        const purpose =
-          formsModalOpen === "Appointments"
-            ? "Appointments"
-            : formsModalOpen === "Followup"
-              ? "Followup"
-              : "All";
+    setFormsTypeFilter("all")
+    await fetchForms("")
 
-        const res = await getFilledForms(
-          1,
-          selectedHostpital,
-          selectedBranch,
-          null,
-          null,
-          searchInput || "",
-          purpose,
-          formsModalOpen,
-          formsTypeFilter,
-          false
-        );
 
-        if (res?.success) {
-          setFilterForm(res.data || []);
-          setForm(res.data || []);
 
-          setPagination((prev) => ({
-            ...prev,
-            page: Number(res.pagination?.page ?? res.pagination?.forms?.page ?? res.pagination?.currentPage ?? prev.page ?? 1),
-            totalPages: Number(res.pagination?.totalPages ?? res.pagination?.forms?.totalPages ?? 1),
-            totalDocument: Number(res.pagination?.total ?? res.pagination?.forms?.total ?? 0),
-          }));
-        }
-      } catch (err) {
-        console.error("clear date filter fetch error:", err);
-      }
-    })();
   };
 
   const handleCSVDialogClose = (event, reason) => {

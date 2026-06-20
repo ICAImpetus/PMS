@@ -34,6 +34,7 @@ import DeleteConfirmationModal from "../../../components/DeleteConfirmationModal
 import UpdatePasswordForm from "../../superAdmin/userManagement/UpdatePassword";
 import { UserContextHook } from "../../../contexts/UserContexts";
 import HospitalContext from "../../../contexts/HospitalContexts";
+import BreadcrumbNav from "../../../components/BroadcrumNav.jsx";
 
 const ScrollableForm = styled(Box)({
   width: "100%",
@@ -247,6 +248,51 @@ function UserManagentAdmin() {
     };
   });
 
+  if (open || updateOpen) {
+    return (
+      <Box sx={{ p: "2px 20px 10px 20px" }}>
+        {/* Navigation Breadcrumb and Back Button */}
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+          <BreadcrumbNav />
+          <Button
+            variant="outlined"
+            onClick={() => setOpen(false) || setUpdateOpen(false)}
+            sx={{
+              color: colors.grey[100],
+              borderColor: colors.grey[400],
+              "&:hover": {
+                borderColor: colors.grey[100],
+              },
+            }}
+          >
+            Back
+          </Button>
+        </Box>
+        {open ? (
+          <UserFormAdmin
+            initialState={null}
+            onClose={() => setOpen(false)}
+            allUsers={userData}
+            refetchUsers={refetchUsers}
+            hospitalId={selectedHostpital}
+            anyFieldDisabled={isSuperManager === null ? false : true}
+            isInline={true}
+          />
+        ) : (
+          <UserFormAdmin
+            initialState={userUpdateData}
+            onClose={() => setUpdateOpen(false)}
+            allUsers={userData}
+            refetchUsers={refetchUsers}
+            hospitalId={selectedHostpital}
+            anyFieldDisabled={isSuperManager === null ? false : true}
+            isInline={true}
+          />
+        )}
+      </Box>
+    );
+  }
+
   return (
     <ScrollableForm>
       <Toaster
@@ -373,44 +419,7 @@ function UserManagentAdmin() {
               components={{ Toolbar: GridToolbar }}
             />
           </Box>
-          <Modal
-            open={open || updateOpen}
-            onClose={() => setOpen(false) || setUpdateOpen(false)}
-            aria-labelledby="modal-title"
-            aria-describedby="modal-description"
-          >
-            <Box
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                backgroundColor: colors.primary[800],
-                borderRadius: 2,
-              }}
-            >
-              {/* Pass the allUsers list to the form */}
-              {open ? (
-                <UserFormAdmin
-                  initialState={null}
-                  onClose={() => setOpen(false)}
-                  allUsers={userData}
-                  refetchUsers={refetchUsers}
-                  hospitalId={selectedHostpital}
-                  anyFieldDisabled={isSuperManager === null ? false : true}
-                />
-              ) : updateOpen && userUpdateData ? (
-                <UserFormAdmin
-                  initialState={userUpdateData}
-                  onClose={() => setUpdateOpen(false)}
-                  allUsers={userData}
-                  refetchUsers={refetchUsers}
-                  hospitalId={selectedHostpital}
-                  anyFieldDisabled={isSuperManager === null ? false : true}
-                />
-              ) : null}
-            </Box>
-          </Modal>
+
 
           {/* Delete Confirmation Modal */}
           <DeleteConfirmationModal

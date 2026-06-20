@@ -2,7 +2,7 @@ import React, { useContext, useEffect } from "react";
 import { toast, Toaster } from "react-hot-toast";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { styled } from "@mui/system";
-import { Box, useMediaQuery, MenuItem, useTheme, FormControl, InputLabel, Select, Modal, CircularProgress, Typography } from "@mui/material";
+import { Box, useMediaQuery, MenuItem, useTheme, FormControl, InputLabel, Select, Modal, CircularProgress, Typography, Button } from "@mui/material";
 import { tokens } from "../../../theme";
 import Header from "../../../components/Header";
 import { DataGridStyles } from "../../../utils/DataGridStyles";
@@ -12,6 +12,7 @@ import { AddIcon } from "../../../scenes/svgIcons/icons";
 import UserFormSupermanager from "./userForms";
 import UpdatePasswordForm from "../../superAdmin/userManagement/UpdatePassword";
 import HospitalContext from "../../../contexts/HospitalContexts";
+import BreadcrumbNav from "../../../components/BroadcrumNav.jsx";
 
 const ScrollableForm = styled(Box)({
   width: "100%",
@@ -125,6 +126,49 @@ function UserManagementSupermanager() {
     }
   }, [errors?.usersError])
 
+  if (open || updateOpen) {
+    return (
+      <Box sx={{ p: "2px 20px 10px 20px" }}>
+        {/* Navigation Breadcrumb and Back Button */}
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+          <BreadcrumbNav />
+          <Button
+            variant="outlined"
+            onClick={() => setOpen(false) || setUpdateOpen(false)}
+            sx={{
+              color: colors.grey[100],
+              borderColor: colors.grey[400],
+              "&:hover": {
+                borderColor: colors.grey[100],
+              },
+            }}
+          >
+            Back
+          </Button>
+        </Box>
+        {open ? (
+          <UserFormSupermanager
+            initialState={null}
+            onClose={() => setOpen(false)}
+            allUsers={userData}
+            refetchUsers={refetchUsers}
+            hospitalId={selectedHostpital}
+            isInline={true}
+          />
+        ) : (
+          <UserFormSupermanager
+            initialState={userUpdateData}
+            onClose={() => setUpdateOpen(false)}
+            allUsers={userData}
+            refetchUsers={refetchUsers}
+            hospitalId={selectedHostpital}
+            isInline={true}
+          />
+        )}
+      </Box>
+    );
+  }
+
   return (
     <ScrollableForm>
       <Toaster
@@ -231,41 +275,7 @@ function UserManagementSupermanager() {
               components={{ Toolbar: GridToolbar }}
             />
           </Box>
-          <Modal
-            open={open || updateOpen}
-            onClose={() => setOpen(false) || setUpdateOpen(false)}
-            aria-labelledby="modal-title"
-            aria-describedby="modal-description"
-          >
-            <Box
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                backgroundColor: colors.primary[800],
-                borderRadius: 2,
-              }}
-            >
-              {open ? (
-                <UserFormSupermanager
-                  initialState={null}
-                  onClose={() => setOpen(false)}
-                  allUsers={userData}
-                  refetchUsers={refetchUsers}
-                  hospitalId={selectedHostpital}
-                />
-              ) : updateOpen && userUpdateData ? (
-                <UserFormSupermanager
-                  initialState={userUpdateData}
-                  onClose={() => setUpdateOpen(false)}
-                  allUsers={userData}
-                  refetchUsers={refetchUsers}
-                  hospitalId={selectedHostpital}
-                />
-              ) : null}
-            </Box>
-          </Modal>
+
 
           {/* Delete Confirmation Modal */}
           {/* <DeleteConfirmationModal

@@ -215,6 +215,39 @@ const EditHopsitalSuperadmin = () => {
     ...item, // Spread the rest of the item properties
   }));
 
+  if (open) {
+    return (
+      <Box sx={{ p: "2px 20px 10px 20px" }}>
+        {/* Navigation Breadcrumb and Back Button */}
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+          <BreadcrumbNav />
+          <Button
+            variant="outlined"
+            onClick={handleClose}
+            sx={{
+              color: colors.grey[100],
+              borderColor: colors.grey[400],
+              "&:hover": {
+                borderColor: colors.grey[100],
+              },
+            }}
+          >
+            Back
+          </Button>
+        </Box>
+        <Header
+          title="Edit Hospital"
+          subtitle="Update hospital basic details"
+        />
+        <AddHospitalData1
+          initialState={selectedHospital}
+          handleClose={handleClose}
+          isInline={true}
+        />
+      </Box>
+    );
+  }
+
   return (
     <ScrollableForm>
       <Box
@@ -241,17 +274,6 @@ const EditHopsitalSuperadmin = () => {
           components={{ Toolbar: GridToolbar }}
         />
       </Box>
-      <Modal open={open} onClose={handleClose}>
-        <Box sx={modalStyle}>
-          {/* <Typography variant="h6" component="h2">
-            Edit Hospital Basic Detail
-          </Typography> */}
-          <AddHospitalData1
-            initialState={selectedHospital}
-            handleClose={handleClose}
-          />
-        </Box>
-      </Modal>
       {/* <BreadcrumbNav/> */}
       {/* <h3>EDIT HOSPITAL</h3> */}
       <DeleteConfirmationModal

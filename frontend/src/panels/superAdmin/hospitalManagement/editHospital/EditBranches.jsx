@@ -227,242 +227,273 @@ const EditBranches = () => {
         {/* <BreadcrumbNav />
       <Divider sx={{ borderBottomWidth: 2, my: 2 }} /> */}
 
-        {/* Hospital Info Banner */}
-        <Box
-          sx={{
-            p: { xs: 2, sm: 3 },
-            mb: 3,
-            borderRadius: 3,
-            backgroundColor:
-              theme.palette.mode === "dark" ? colors.primary[800] : "#fff",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            alignItems: { xs: "stretch", sm: "center" },
-            justifyContent: "space-between",
-            gap: 2
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <IconButton onClick={() => navigate("/hospital-management")}>
-              <ArrowBackIcon />
-            </IconButton>
-            <Avatar
-              src={hospital?.hospitallogo || hospitalIcon}
-              sx={{
-                width: 64, height: 64, border: '1px solid lightgrey', bgcolor: "white", "& img": {
-                  objectFit: "contain",
-                  padding: "8px"
-                }
-              }}
-            >
-              <LocalHospitalIcon />
-            </Avatar>
-            <Box sx={{ overflow: "hidden" }}>
-              <Typography variant="h5" fontWeight="bold" color={colors.grey[100]} >
-                {hospital?.name}
-              </Typography>
-              <Typography variant="subtitle2" color={colors.greenAccent[500]}>
-                ID: {hospital?.hospitalCode}
-              </Typography>
-            </Box>
-          </Box>
+        {
+          openModal ? (
+            <>
+              {/* <Box sx={modalStyle}> */}
+                <AddBranchBasic
+                  setHospitalBranches={setHospitalBranches}
+                  handleClose={handleClose}
+                  hospitalId={id}
+                />
+              {/* </Box> */}
+            </>
+          )
+            :
+            openEditModal ?
+              (
+                <AddBranchBasic
 
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 1,
-              bgcolor:
-                theme.palette.mode === "dark" ? colors.primary[900] : "#f0f0f0",
-              p: 1,
-              px: 2,
-              borderRadius: 2,
-            }}
-          >
-            <CallIcon color="secondary" fontSize="small" />
-            <Typography variant="body1" fontWeight={600}>
-              {hospital?.contact}
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Branches List Grid */}
-        <Grid container spacing={3}>
-          {hospitalData?.length > 0 ? (
-            hospitalData?.map((branch, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
-                <Card
-                  sx={{
-                    borderRadius: 3,
-                    boxShadow: 3,
-                    transition: "transform 0.2s",
-                    "&:hover": { transform: "translateY(-5px)", boxShadow: 6 },
-                    bgcolor:
-                      theme.palette.mode === "dark"
-                        ? colors.primary[600]
-                        : "#f8f9fa",
-                  }}
-                >
-                  <CardContent>
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="start"
-                      mb={2}
-                    >
-                      <Box>
-                        <Typography variant="h6" fontWeight="bold" gutterBottom>
-                          {branch?.name || "Unnamed Branch"}
-                        </Typography>
-                        <Chip
-                          label={branch?.code || "No Code"}
-                          size="small"
-                          color="secondary"
-                          variant="outlined"
-                        />
-                      </Box>
-                      <Stack direction="row" alignItems="center" gap={1}>
-                        <Tooltip
-                          title={
-                            branch?.isActive !== false ? "Active" : "Inactive"
-                          }
-                        >
-                          {(isSuperAdmin || isAdmin) && (
-                            <Switch
-                              checked={branch?.isActive !== false}
-                              onChange={() => handleToggleStatus(index)}
-                              size="small"
-                              sx={{
-                                "& .MuiSwitch-switchBase.Mui-checked": {
-                                  color: colors.greenAccent[500],
-                                },
-                                "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                {
-                                  backgroundColor: colors.greenAccent[500],
-                                },
-                              }}
-                            />
-                          )}
-
-                        </Tooltip>
-                        <Avatar
-                          sx={{
-                            bgcolor: colors.blueAccent[600],
-                            width: 40,
-                            height: 40,
-                          }}
-                        >
-                          <LocalHospitalIcon fontSize="small" />
-                        </Avatar>
-                      </Stack>
-                    </Stack>
-
+                  setHospitalBranches={setHospitalBranches}
+                  handleClose={handleCloseEditModal}
+                  hospitalId={id}
+                  initialData={selectedBranch}
+                  isEdit={true}
+                />
+              )
+              :
+                (
+                  <>
+                    {/* Hospital Info Banner */}
                     <Box
-                      display="flex"
-                      alignItems="center"
-                      gap={1}
-                      mb={3}
-                      color={colors.grey[300]}
+                      sx={{
+                        p: { xs: 2, sm: 3 },
+                        mb: 3,
+                        borderRadius: 3,
+                        backgroundColor:
+                          theme.palette.mode === "dark" ? colors.primary[800] : "#fff",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                        display: "flex",
+                        flexDirection: { xs: "column", sm: "row" },
+                        alignItems: { xs: "stretch", sm: "center" },
+                        justifyContent: "space-between",
+                        gap: 2
+                      }}
                     >
-                      <LocationOnIcon fontSize="small" color="error" />
-                      <Typography variant="body2" color="textSecondary" noWrap>
-                        {`${branch?.city}, ${branch?.state}` ||
-                          "Location not specified"}
-                      </Typography>
-                    </Box>
-
-                    <Divider sx={{ my: 2 }} />
-
-                    <Stack direction="row" gap={1}>
-                      {(isSuperAdmin || isAdmin) && (
-                        <Button
-                          variant="contained"
-                          data-testid={`edit-branch-button`}
-                          startIcon={<EditIcon />}
-                          onClick={() => handleOpenEditModal(branch)}
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                        <IconButton onClick={() => navigate("/hospital-management")}>
+                          <ArrowBackIcon />
+                        </IconButton>
+                        <Avatar
+                          src={hospital?.hospitallogo || hospitalIcon}
                           sx={{
-                            borderRadius: 2,
-                            textTransform: "none",
-                            fontWeight: "bold",
-                            background: `linear-gradient(45deg, ${colors.blueAccent[700]}, ${colors.blueAccent[500]})`,
-                            flex: 1,
-                          }}
-                        >
-                          Edit
-                        </Button>
-                      )}
-
-                      <Button
-                        variant="outlined"
-                        onClick={() => {
-                          // console.log("branch", branch?._id);
-                          navigate(
-                            `/hospital-management/edit-branches/${branch._id}/edit`,
-                            { state: { hospitalId: id } }
-                          );
-                        }}
-                        sx={{
-                          borderRadius: 2,
-                          textTransform: "none",
-                          fontWeight: "bold",
-                          borderColor: colors.grey[600],
-                          color: colors.grey[100],
-                          flex: 1,
-                          "&:hover": {
-                            borderColor: colors.blueAccent[500],
-                            backgroundColor: colors.blueAccent[900],
-                          },
-                        }}
-                      >
-                        View Info
-                      </Button>
-                      {canDelete && (
-                        <IconButton
-                          onClick={() => handleOpenDeleteDialog(branch)}
-                          sx={{
-                            color: theme.palette.error.main,
-                            bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,0,0,0.1)' : 'rgba(255,0,0,0.05)',
-                            '&:hover': {
-                              bgcolor: 'rgba(255,0,0,0.2)',
+                            width: 64, height: 64, border: '1px solid lightgrey', bgcolor: "white", "& img": {
+                              objectFit: "contain",
+                              padding: "8px"
                             }
                           }}
                         >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
+                          <LocalHospitalIcon />
+                        </Avatar>
+                        <Box sx={{ overflow: "hidden" }}>
+                          <Typography variant="h5" fontWeight="bold" color={colors.grey[100]} >
+                            {hospital?.name}
+                          </Typography>
+                          <Typography variant="subtitle2" color={colors.greenAccent[500]}>
+                            ID: {hospital?.hospitalCode}
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 1,
+                          bgcolor:
+                            theme.palette.mode === "dark" ? colors.primary[900] : "#f0f0f0",
+                          p: 1,
+                          px: 2,
+                          borderRadius: 2,
+                        }}
+                      >
+                        <CallIcon color="secondary" fontSize="small" />
+                        <Typography variant="body1" fontWeight={600}>
+                          {hospital?.contact}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {/* Branches List Grid */}
+                    <Grid container spacing={3}>
+                      {hospitalData?.length > 0 ? (
+                        hospitalData?.map((branch, index) => (
+                          <Grid item xs={12} sm={6} md={4} key={index}>
+                            <Card
+                              sx={{
+                                borderRadius: 3,
+                                boxShadow: 3,
+                                transition: "transform 0.2s",
+                                "&:hover": { transform: "translateY(-5px)", boxShadow: 6 },
+                                bgcolor:
+                                  theme.palette.mode === "dark"
+                                    ? colors.primary[600]
+                                    : "#f8f9fa",
+                              }}
+                            >
+                              <CardContent>
+                                <Stack
+                                  direction="row"
+                                  justifyContent="space-between"
+                                  alignItems="start"
+                                  mb={2}
+                                >
+                                  <Box>
+                                    <Typography variant="h6" fontWeight="bold" gutterBottom>
+                                      {branch?.name || "Unnamed Branch"}
+                                    </Typography>
+                                    <Chip
+                                      label={branch?.code || "No Code"}
+                                      size="small"
+                                      color="secondary"
+                                      variant="outlined"
+                                    />
+                                  </Box>
+                                  <Stack direction="row" alignItems="center" gap={1}>
+                                    <Tooltip
+                                      title={
+                                        branch?.isActive !== false ? "Active" : "Inactive"
+                                      }
+                                    >
+                                      {(isSuperAdmin || isAdmin) && (
+                                        <Switch
+                                          checked={branch?.isActive !== false}
+                                          onChange={() => handleToggleStatus(index)}
+                                          size="small"
+                                          sx={{
+                                            "& .MuiSwitch-switchBase.Mui-checked": {
+                                              color: colors.greenAccent[500],
+                                            },
+                                            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                                            {
+                                              backgroundColor: colors.greenAccent[500],
+                                            },
+                                          }}
+                                        />
+                                      )}
+
+                                    </Tooltip>
+                                    <Avatar
+                                      sx={{
+                                        bgcolor: colors.blueAccent[600],
+                                        width: 40,
+                                        height: 40,
+                                      }}
+                                    >
+                                      <LocalHospitalIcon fontSize="small" />
+                                    </Avatar>
+                                  </Stack>
+                                </Stack>
+
+                                <Box
+                                  display="flex"
+                                  alignItems="center"
+                                  gap={1}
+                                  mb={3}
+                                  color={colors.grey[300]}
+                                >
+                                  <LocationOnIcon fontSize="small" color="error" />
+                                  <Typography variant="body2" color="textSecondary" noWrap>
+                                    {`${branch?.city}, ${branch?.state}` ||
+                                      "Location not specified"}
+                                  </Typography>
+                                </Box>
+
+                                <Divider sx={{ my: 2 }} />
+
+                                <Stack direction="row" gap={1}>
+                                  {(isSuperAdmin || isAdmin) && (
+                                    <Button
+                                      variant="contained"
+                                      data-testid={`edit-branch-button`}
+                                      startIcon={<EditIcon />}
+                                      onClick={() => handleOpenEditModal(branch)}
+                                      sx={{
+                                        borderRadius: 2,
+                                        textTransform: "none",
+                                        fontWeight: "bold",
+                                        background: `linear-gradient(45deg, ${colors.blueAccent[700]}, ${colors.blueAccent[500]})`,
+                                        flex: 1,
+                                      }}
+                                    >
+                                      Edit
+                                    </Button>
+                                  )}
+
+                                  <Button
+                                    variant="outlined"
+                                    onClick={() => {
+                                      // console.log("branch", branch?._id);
+                                      navigate(
+                                        `/hospital-management/edit-branches/${branch._id}/edit`,
+                                        { state: { hospitalId: id } }
+                                      );
+                                    }}
+                                    sx={{
+                                      borderRadius: 2,
+                                      textTransform: "none",
+                                      fontWeight: "bold",
+                                      borderColor: colors.grey[600],
+                                      color: colors.grey[100],
+                                      flex: 1,
+                                      "&:hover": {
+                                        borderColor: colors.blueAccent[500],
+                                        backgroundColor: colors.blueAccent[900],
+                                      },
+                                    }}
+                                  >
+                                    View Info
+                                  </Button>
+                                  {canDelete && (
+                                    <IconButton
+                                      onClick={() => handleOpenDeleteDialog(branch)}
+                                      sx={{
+                                        color: theme.palette.error.main,
+                                        bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,0,0,0.1)' : 'rgba(255,0,0,0.05)',
+                                        '&:hover': {
+                                          bgcolor: 'rgba(255,0,0,0.2)',
+                                        }
+                                      }}
+                                    >
+                                      <DeleteIcon fontSize="small" />
+                                    </IconButton>
+                                  )}
+                                </Stack>
+                              </CardContent>
+                            </Card>
+                          </Grid>
+                        ))
+                      ) : (
+                        <Grid item xs={12}>
+                          <Box
+                            textAlign="center"
+                            py={10}
+                            bgcolor={
+                              theme.palette.mode === "dark" ? colors.primary[900] : "#f5f5f5"
+                            }
+                            borderRadius={2}
+                          >
+                            <LocalHospitalIcon
+                              sx={{ fontSize: 60, color: colors.grey[500], mb: 2 }}
+                            />
+                            <Typography variant="h6" color="textSecondary">
+                              No branches found for this hospital.
+                            </Typography>
+                            <Button variant="text" color="secondary" onClick={handleOpen}>
+                              Create First Branch
+                            </Button>
+                          </Box>
+                        </Grid>
                       )}
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))
-          ) : (
-            <Grid item xs={12}>
-              <Box
-                textAlign="center"
-                py={10}
-                bgcolor={
-                  theme.palette.mode === "dark" ? colors.primary[900] : "#f5f5f5"
-                }
-                borderRadius={2}
-              >
-                <LocalHospitalIcon
-                  sx={{ fontSize: 60, color: colors.grey[500], mb: 2 }}
-                />
-                <Typography variant="h6" color="textSecondary">
-                  No branches found for this hospital.
-                </Typography>
-                <Button variant="text" color="secondary" onClick={handleOpen}>
-                  Create First Branch
-                </Button>
-              </Box>
-            </Grid>
-          )}
-        </Grid>
+                    </Grid>
+                  </>
+                )
+        }
+
 
         {/* Add Branch Modal */}
-        <Modal open={openModal} onClose={handleClose}>
+        {/* <Modal open={openModal} onClose={handleClose}>
           <Box sx={modalStyle}>
             <AddBranchBasic
               setHospitalBranches={setHospitalBranches}
@@ -470,10 +501,10 @@ const EditBranches = () => {
               hospitalId={id}
             />
           </Box>
-        </Modal>
+        </Modal> */}
 
         {/* Edit Branch Modal */}
-        <Modal open={openEditModal} onClose={handleCloseEditModal}>
+        {/* <Modal open={openEditModal} onClose={handleCloseEditModal}>
           <AddBranchBasic
 
             setHospitalBranches={setHospitalBranches}
@@ -482,7 +513,7 @@ const EditBranches = () => {
             initialData={selectedBranch}
             isEdit={true}
           />
-        </Modal>
+        </Modal> */}
 
         {/* Delete Confirmation Dialog */}
         <Modal open={deleteDialogOpen} onClose={handleCloseDeleteDialog}>

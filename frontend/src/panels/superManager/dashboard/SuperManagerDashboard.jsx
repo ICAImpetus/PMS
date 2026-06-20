@@ -673,7 +673,7 @@ const Dashboard = () => {
 
       <div className="executive-dashboard-section" style={{ marginBottom: "8px" }}>
         <div className="executive-outbound-grid">
-          <div className="executive-outbound-card" style={{ height: "auto", minHeight: "120px", padding: "14px" }}>
+          <div className="executive-outbound-card" style={{ height: "auto", minHeight: "content-fit", padding: "14px" }}>
             <div className="executive-chart-title">
               <i className="fas fa-chart-pie"></i>Top Inbound Purpose
             </div>
@@ -693,7 +693,7 @@ const Dashboard = () => {
             </div>
 
           </div>
-          <div className="executive-outbound-card" style={{ height: "auto", minHeight: "120px", padding: "14px" }}>
+          <div className="executive-outbound-card" style={{ height: "auto", minHeight: "content-fit", padding: "14px" }}>
             <div className="executive-chart-title">
               <i className="fas fa-chart-bar"></i>Top Outbound Purpose
             </div>
@@ -793,7 +793,7 @@ const Dashboard = () => {
             </div>
 
             <div className="chart-wrapper" style={{ height: "180px" }}>
-              <Line data={patientStatusData} options={{...lineOptions, maintainAspectRatio: false}} />
+              <Line data={patientStatusData} options={{ ...lineOptions, maintainAspectRatio: false }} />
             </div>
           </div>
 
@@ -804,7 +804,7 @@ const Dashboard = () => {
             </div>
 
             <div className="chart-wrapper" style={{ height: "180px" }}>
-              <Bar data={patientCategoryData} options={{...barOptions, maintainAspectRatio: false}} />
+              <Bar data={patientCategoryData} options={{ ...barOptions, maintainAspectRatio: false }} />
             </div>
           </div>
 

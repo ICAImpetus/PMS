@@ -51,7 +51,8 @@ const AddEmpanelmentListModal = ({
   availableDoctors = [],
   availableDepartments = [], // New prop for dynamic departments
   loading = false,
-  globalSuggestion
+  globalSuggestion,
+  isInline = false
 }) => {
 
   const theme = useTheme();
@@ -329,24 +330,56 @@ const AddEmpanelmentListModal = ({
   ) || [];
 
 
+  const FormContainer = ({ children }) => {
+    if (isInline) {
+      if (!open) return null;
+      return (
+        <Box
+          sx={{
+            width: "100%",
+            borderRadius: 3,
+            border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+            background:
+              theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+            overflow: "hidden",
+            mb: 3,
+          }}
+        >
+          {children}
+        </Box>
+      );
+    }
+    return (
+      <Dialog
+        open={open}
+        onClose={!loading ? onClose : undefined}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            background:
+              theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+          },
+        }}
+      >
+        {children}
+      </Dialog>
+    );
+  };
+
+  const FormHeader = isInline ? Box : DialogTitle;
+  const FormContent = isInline ? Box : DialogContent;
+  const FormActions = isInline ? Box : DialogActions;
+
   return (
-    <Dialog
-      open={open}
-      onClose={!loading ? onClose : undefined}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          background:
-            theme.palette.mode === "dark"
-              ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
-              : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
-        },
-      }}
-    >
+    <FormContainer>
       {/* Header */}
-      <DialogTitle
+      <FormHeader
         sx={{
           background:
             theme.palette.mode === "dark"
@@ -382,10 +415,10 @@ const AddEmpanelmentListModal = ({
         >
           <CloseIcon />
         </IconButton>
-      </DialogTitle>
+      </FormHeader>
 
       {/* Content */}
-      <DialogContent
+      <FormContent
         sx={{
           p: 0,
           backgroundColor:
@@ -425,6 +458,7 @@ const AddEmpanelmentListModal = ({
                   <Grid item xs={12} sm={8}>
                     <TextField
                       fullWidth
+                      size="small"
                       label="Policy Name"
                       name="policyName"
                       value={currentEmpanelment.policyName}
@@ -439,6 +473,7 @@ const AddEmpanelmentListModal = ({
                   <Grid item xs={12} sm={4}>
                     <FormControl
                       fullWidth
+                      size="small"
                       required
                       error={!!errors.typeOfCoverage}
                       sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
@@ -462,7 +497,7 @@ const AddEmpanelmentListModal = ({
                           color="error"
                           sx={{ mt: 0.5, ml: 1.5 }}
                         >
-                          {errors.typeOfCoverage}
+                          {errors.typeOfCoverage} 
                         </Typography>
                       )}
                     </FormControl>
@@ -874,10 +909,10 @@ const AddEmpanelmentListModal = ({
             </Card>
           </Stack>
         </Box>
-      </DialogContent>
+      </FormContent>
 
       {/* Actions */}
-      <DialogActions
+      <FormActions
         sx={{
           p: 3,
           background:
@@ -938,8 +973,8 @@ const AddEmpanelmentListModal = ({
               ? "Update Policy"
               : "Add Policy"}
         </Button>
-      </DialogActions>
-    </Dialog>
+      </FormActions>
+    </FormContainer>
   );
 };
 

@@ -339,29 +339,33 @@ export const PatientHistory = () => {
     };
     // Handle form type tab change
     const handleFormTypeChange = (event, newValue) => {
-        console.log("nwewvalue ", newValue);
-        console.log("event ", event);
-
         setFormTypeFilter(newValue);
+
+        if (newValue?.toLowerCase() === "all") {
+            setFilteredPatients(patients);
+            return;
+        }
+
+        const filter = (patients || []).filter(
+            (pat) =>
+                pat?.lastVisit?.formType?.toLowerCase() ===
+                newValue?.toLowerCase()
+        );
+
+        setFilteredPatients(filter);
     };
 
-    // Calculate counts for each form type
-    const calculateCounts = () => {
-        const allCount = filteredPatients.length;
-        const inboundCount = filteredPatients.filter(
-            (p) => p?.lastVisit?.formType?.toLowerCase() === "inbound"
-        ).length;
-        const outboundCount = filteredPatients.filter(
-            (p) => p?.lastVisit?.formType?.toLowerCase() === "outbound"
-        ).length;
-
-        return { allCount, inboundCount, outboundCount };
-    };
-
-
-
-    const counts = calculateCounts();
-
+    const counts = useMemo(() => {
+        return {
+            allCount: patients.length,
+            inboundCount: patients.filter(
+                (p) => p?.lastVisit?.formType?.toLowerCase() === "inbound"
+            ).length,
+            outboundCount: patients.filter(
+                (p) => p?.lastVisit?.formType?.toLowerCase() === "outbound"
+            ).length,
+        };
+    }, [patients]);
     // Handle pagination
     const handleChangePage = (event, newPage) => {
         setPagination(prev => ({
@@ -396,28 +400,6 @@ export const PatientHistory = () => {
             toast.error(error)
         }
     }, [errors?.patientsError])
-
-
-    useEffect(() => {
-
-        console.log("patuetn ", formTypeFilter);
-        console.log("patients ", patients);
-
-        if (formTypeFilter?.toLowerCase() === "all") {
-            setFilteredPatients(patients);
-            return;
-        }
-
-        const filter = (patients || []).filter((pat) =>
-            pat?.lastVisit?.formType?.toLowerCase() ===
-            formTypeFilter?.toLowerCase()
-        );
-
-        console.log("patuetn ", patients);
-
-
-        setFilteredPatients(filter);
-    }, [formTypeFilter]);
 
     return (
         <>
@@ -618,9 +600,11 @@ export const PatientHistory = () => {
                                 setAppliedStartDate("");
                                 setAppliedEndDate("");
                                 setDateRangeFilter({ startDate: "", endDate: "" });
+                                setSearchInput("")
+                                setFilteredPatients(patients)
                                 toast.success("Date filter cleared");
                             }}
-                            disabled={!startDate && !endDate || getPatientloading}
+                            disabled={getPatientloading}
                             sx={{
                                 textTransform: "none",
                                 fontWeight: 500,

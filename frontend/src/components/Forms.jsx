@@ -798,6 +798,26 @@ function Forms() {
       </div>
     );
   };
+  const RemarksComponents = () => {
+    return (
+      <div className="input-row">
+        <div className="input-group textarea-field-container">
+          <label className="required">Remarks</label>
+
+          <textarea
+            className="textarea-field"
+            value={form.formData.remarks}
+            onChange={(e) =>
+              handleChange("formData.remarks", e.target.value)
+            }
+            required
+            rows="3"
+          />
+        </div>
+      </div>
+    )
+
+  }
 
   const renderInboundPurposeDetails = () => {
     switch (form.formType === "inbound" && form.purpose) {
@@ -1136,7 +1156,7 @@ function Forms() {
                 </div>
 
                 {/* Patient Arrival Time */}
-                <div className="followup-card time-card">
+                <div className="followup-card time-car">
                   <label className="input-label">
                     Patient Arrival Time
                   </label>
@@ -3392,130 +3412,23 @@ function Forms() {
             )}
           </div>
         );
-
-      case "Justdial": return (
-        <div className="sub-section">
-          <h3>Missed Calls</h3>
-
-          <div className="input-row">
-            <div className="input-group">
-              <label className="required">Connection Status</label>
-
-              <select
-                className="select-field"
-                value={form.formData.missedConnectionStatus}
-                onChange={(e) =>
-                  handleChange(
-                    "formData.missedConnectionStatus",
-                    e.target.value
-
-                  )
-                }
-                required
-              >
-                <option value="">Select</option>
-
-                <option value="Connected">Connected</option>
-
-                <option value="Not Connected">Not Connected</option>
-              </select>
-            </div>
-          </div>
-
-          {form.formData.missedConnectionStatus === "Connected" && (
-            <>
-              <div className="input-row" data-section="missed-call-details">
-                <div className="input-group">
-                  <label className="required">Patient Name</label>
-
-                  <input
-                    type="text"
-                    className="input-field"
-                    value={form.formData.patientDetails.patientName}
-                    onChange={(e) =>
-                      handleChange(
-                        "formData.patientDetails.patientName",
-                        e.target.value
-                      )
-                    }
-                    required
-                  />
-                </div>
-
-                <div className="input-group">
-                  <label className="required">Mobile Number</label>
-
-                  <input
-                    type="text"
-                    className="input-field"
-                    value={form.formData.patientDetails.mobileNumber}
-                    onChange={(e) =>
-                      handleChange(
-                        "formData.patientDetails.mobileNumber",
-                        e.target.value
-                      )
-                    }
-                    required
-                  />
-                </div>
-
-                <div className="input-group">
-                  <label>Alt Mobile</label>
-
-                  <input
-                    type="text"
-                    className="input-field"
-                    value={form.formData.patientDetails.alternateMobile}
-                    onChange={(e) =>
-                      handleChange(
-                        "formData.patientDetails.alternateMobile",
-                        e.target.value
-                      )
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="input-row">
-                <div className="input-group textarea-field-container">
-                  <label className="required">Remarks</label>
-
-                  <textarea
-                    className="textarea-field"
-                    value={form.formData.remarks}
-                    onChange={(e) =>
-                      handleChange(
-                        "formData.remarks",
-                        e.target.value,
-                      )
-                    }
-                    required
-                    rows="3"
-                  />
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      );
+      case "Justdial":
+        return <RemarksComponents />;
 
       case "Practo":
+        return <RemarksComponents />;
 
       case "Whatsapp":
+        return <RemarksComponents />;
+
 
       case "Facebook":
-
+        return <RemarksComponents />;
 
       default:
         return null;
     }
   };
-
-  // =============================================
-
-  // 5. MAIN RENDER STRUCTURES
-
-  // =============================================
 
   const renderInboundForm = () => (
     <form onSubmit={submitForm} className="all-sections-container">

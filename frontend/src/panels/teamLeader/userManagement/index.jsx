@@ -3,7 +3,7 @@ import { getDataFunc, sendDataApiFunc } from "../../../utils/services";
 import { toast, Toaster } from "react-hot-toast";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { styled } from "@mui/system";
-import { Box, useMediaQuery, useTheme, IconButton, Modal, CircularProgress, Typography } from "@mui/material";
+import { Box, useMediaQuery, useTheme, IconButton, Modal, CircularProgress, Typography, Button } from "@mui/material";
 import { tokens } from "../../../theme";
 import Header from "../../../components/Header";
 import { DataGridStyles } from "../../../utils/DataGridStyles";
@@ -13,6 +13,7 @@ import CustomButton from "../../../components/customComponents/Button";
 import UserFormTeamLeader from "./UserFormTeamLeader"; // <-- This is the new form
 import UpdatePasswordForm from "../../superAdmin/userManagement/UpdatePassword";
 import HospitalContext from "../../../contexts/HospitalContexts";
+import BreadcrumbNav from "../../../components/BroadcrumNav.jsx";
 
 const ScrollableForm = styled(Box)({
   width: "100%",
@@ -144,6 +145,47 @@ function UserManagementTeamLeader() {
     }
   }, [errors?.usersError])
 
+  if (open || updateOpen) {
+    return (
+      <Box sx={{ p: "2px 20px 10px 20px" }}>
+        {/* Navigation Breadcrumb and Back Button */}
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+          <BreadcrumbNav />
+          <Button
+            variant="outlined"
+            onClick={() => setOpen(false) || setUpdateOpen(false)}
+            sx={{
+              color: colors.grey[100],
+              borderColor: colors.grey[400],
+              "&:hover": {
+                borderColor: colors.grey[100],
+              },
+            }}
+          >
+            Back
+          </Button>
+        </Box>
+        {open ? (
+          <UserFormTeamLeader
+            initialState={null}
+            onClose={() => setOpen(false)}
+            refetchUsers={refetchUsers}
+            hospitalId={selectedHostpital}
+            isInline={true}
+          />
+        ) : (
+          <UserFormTeamLeader
+            initialState={userUpdateData}
+            onClose={() => setUpdateOpen(false)}
+            refetchUsers={refetchUsers}
+            hospitalId={selectedHostpital}
+            isInline={true}
+          />
+        )}
+      </Box>
+    );
+  }
+
   return (
     <ScrollableForm>
       <Toaster
@@ -200,39 +242,7 @@ function UserManagementTeamLeader() {
               components={{ Toolbar: GridToolbar }}
             />
           </Box>
-          <Modal
-            open={open || updateOpen}
-            onClose={() => setOpen(false) || setUpdateOpen(false)}
-            aria-labelledby="modal-title"
-            aria-describedby="modal-description"
-          >
-            <Box
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                backgroundColor: colors.primary[800],
-                borderRadius: 2,
-              }}
-            >
-              {open ? (
-                <UserFormTeamLeader
-                  initialState={null}
-                  onClose={() => setOpen(false)}
-                  refetchUsers={refetchUsers}
-                  hospitalId={selectedHostpital}
-                />
-              ) : updateOpen && userUpdateData ? (
-                <UserFormTeamLeader
-                  initialState={userUpdateData}
-                  onClose={() => setUpdateOpen(false)}
-                  refetchUsers={refetchUsers}
-                  hospitalId={selectedHostpital}
-                />
-              ) : null}
-            </Box>
-          </Modal>
+
           {/* 
       <DeleteConfirmationModal
         open={openDeleteModal}
