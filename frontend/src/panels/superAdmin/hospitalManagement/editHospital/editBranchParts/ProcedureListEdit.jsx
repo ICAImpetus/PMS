@@ -53,7 +53,8 @@ const AddProcedureModal = ({
   availableEmpanelmentTypes = [],
   availableCoordinators = [],
   loading = false,
-  globalSuggestion
+  globalSuggestion,
+  isInline = false
 }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -293,22 +294,54 @@ const AddProcedureModal = ({
   const empanelmentType = globalSuggestion?.filter(
     (item) => item?.type === "empanelmentType"
   ) || [];
+  const FormContainer = ({ children }) => {
+    if (isInline) {
+      if (!open) return null;
+      return (
+        <Box
+          sx={{
+            width: "100%",
+            borderRadius: 3,
+            border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+            background:
+              theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+            overflow: "hidden",
+            mb: 3,
+          }}
+        >
+          {children}
+        </Box>
+      );
+    }
+    return (
+      <Dialog
+        open={open}
+        onClose={!loading ? onClose : undefined}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            background: theme.palette.mode === "dark"
+              ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+              : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+          }
+        }}
+      >
+        {children}
+      </Dialog>
+    );
+  };
+
+  const FormHeader = isInline ? Box : DialogTitle;
+  const FormContent = isInline ? Box : DialogContent;
+  const FormActions = isInline ? Box : DialogActions;
+
   return (
-    <Dialog
-      open={open}
-      onClose={!loading ? onClose : undefined}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          background: theme.palette.mode === "dark"
-            ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
-            : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
-        }
-      }}
-    >
-      <DialogTitle
+    <FormContainer>
+      <FormHeader
         sx={{
           background: theme.palette.mode === "dark"
             ? `linear-gradient(135deg, ${colors.blueAccent[700]} 0%, ${colors.blueAccent[800]} 100%)`
@@ -341,9 +374,9 @@ const AddProcedureModal = ({
         >
           <CloseIcon />
         </IconButton>
-      </DialogTitle>
+      </FormHeader>
 
-      <DialogContent
+      <FormContent
         sx={{
           p: 0,
           backgroundColor: theme.palette.mode === "dark" ? colors.primary[900] : colors.grey[50],
@@ -394,6 +427,7 @@ const AddProcedureModal = ({
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
+                          height: "56px"
                         }
                       }}
                     />
@@ -470,6 +504,12 @@ const AddProcedureModal = ({
                           {...params}
                           label="Category"
                           placeholder="Select or type"
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: 2,
+                              height: "56px"
+                            }
+                          }}
                         />
                       )}
                     />
@@ -714,6 +754,7 @@ const AddProcedureModal = ({
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
+                          height: "56px"
                         }
                       }}
                     />
@@ -789,7 +830,6 @@ const AddProcedureModal = ({
                     <Autocomplete
                       multiple
                       fullWidth
-                      size="small"
                       options={
                         empanelmentType?.map((item) => ({
                           label: item.value,
@@ -831,6 +871,12 @@ const AddProcedureModal = ({
                           {...params}
                           label="Empanelment Type"
                           placeholder="Select or type and press Enter"
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: 2,
+                              minHeight: "56px"
+                            }
+                          }}
                         />
                       )}
                     />
@@ -940,9 +986,9 @@ const AddProcedureModal = ({
 
           </Stack>
         </Box>
-      </DialogContent>
+      </FormContent>
 
-      <DialogActions
+      <FormActions
         sx={{
           p: 3,
           background: theme.palette.mode === "dark"
@@ -999,8 +1045,8 @@ const AddProcedureModal = ({
         >
           {loading ? "Saving..." : (procedureData ? "Update Procedure/Surgery" : "Add Procedure/Surgery")}
         </Button>
-      </DialogActions>
-    </Dialog>
+      </FormActions>
+    </FormContainer>
   );
 };
 

@@ -33,7 +33,8 @@ const UserFormAdmin = ({
   allUsers = [],
   refetchUsers,
   hospitalId,
-  anyFieldDisabled = false
+  anyFieldDisabled = false,
+  isInline = false
 }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -334,14 +335,16 @@ const UserFormAdmin = ({
           <Form>
             <Box
               sx={{
-                maxWidth: 600,
-                bgcolor: colors.primary[800],
-                p: 4,
-                borderRadius: 2,
-                boxShadow: 3,
+                width: "100%",
+                maxWidth: isInline ? "100%" : 600,
+                margin: isInline ? "0" : "auto",
+                bgcolor: isInline ? "transparent" : colors.primary[800],
+                p: isInline ? "0" : 4,
+                borderRadius: isInline ? "0" : 2,
+                boxShadow: isInline ? "none" : 3,
                 minHeight: "auto",
-                maxHeight: "90vh",
-                overflowY: "auto",
+                maxHeight: isInline ? "none" : "90vh",
+                overflowY: isInline ? "visible" : "auto",
               }}
             >
               <Header

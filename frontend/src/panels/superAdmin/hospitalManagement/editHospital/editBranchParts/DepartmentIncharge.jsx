@@ -61,7 +61,8 @@ const AddDepartmentInchargeModal = ({
   inchargeData = null,
   availableDepartments = [],
   loading = false,
-  globalSuggestion
+  globalSuggestion,
+  isInline = false
 }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -279,61 +280,93 @@ const AddDepartmentInchargeModal = ({
   const serviceType = globalSuggestion?.filter(
     (item) => item?.type === "serviceType"
   ) || [];
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          background:
-            theme.palette.mode === "dark"
-              ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
-              : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
-        },
-      }}
-    >
-      <DialogTitle
-        sx={{
-          background:
-            theme.palette.mode === "dark"
-              ? `linear-gradient(135deg, ${colors.blueAccent[700]} 0%, ${colors.blueAccent[800]} 100%)`
-              : `linear-gradient(135deg, ${colors.blueAccent[500]} 0%, ${colors.blueAccent[600]} 100%)`,
-          color: "white",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          py: 2,
-          px: 3,
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <BusinessIcon sx={{ fontSize: 28 }} />
-          <Typography variant="h5" component="div" sx={{ fontWeight: 600 }}>
-            {inchargeData
-              ? "Edit Department Incharge"
-              : "Add New Department Incharge"}
-          </Typography>
-        </Box>
-        <IconButton
-          onClick={onClose}
+  const FormContainer = ({ children }) => {
+    if (isInline) {
+      if (!open) return null;
+      return (
+        <Box
           sx={{
-            color: "white",
-            "&:hover": {
-              backgroundColor: "rgba(255, 255, 255, 0.1)",
-              transform: "scale(1.1)",
-            },
-            transition: "all 0.2s ease-in-out",
+            width: "100%",
+            borderRadius: 3,
+            border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+            background:
+              theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+            overflow: "hidden",
+            mb: 3,
           }}
         >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
+          {children}
+        </Box>
+      );
+    }
+    return (
+      <Dialog
+        open={open}
+        onClose={onClose}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            background:
+              theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+          },
+        }}
+      >
+        {children}
+      </Dialog>
+    );
+  };
 
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <DialogContent
+  const FormHeader = isInline ? Box : DialogTitle;
+  const FormContent = isInline ? Box : DialogContent;
+  const FormActions = isInline ? Box : DialogActions;
+
+  return (
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <FormContainer>
+        <FormHeader
+          sx={{
+            background:
+              theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${colors.blueAccent[700]} 0%, ${colors.blueAccent[800]} 100%)`
+                : `linear-gradient(135deg, ${colors.blueAccent[500]} 0%, ${colors.blueAccent[600]} 100%)`,
+            color: "white",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            py: 2,
+            px: 3,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <BusinessIcon sx={{ fontSize: 28 }} />
+            <Typography variant="h5" component="div" sx={{ fontWeight: 600 }}>
+              {inchargeData
+                ? "Edit Department Incharge"
+                : "Add New Department Incharge"}
+            </Typography>
+          </Box>
+          <IconButton
+            onClick={onClose}
+            sx={{
+              color: "white",
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+                transform: "scale(1.1)",
+              },
+              transition: "all 0.2s ease-in-out",
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </FormHeader>
+
+        <FormContent
           sx={{
             p: 0,
             backgroundColor:
@@ -655,10 +688,9 @@ const AddDepartmentInchargeModal = ({
               </Card>
             </Stack>
           </Box>
-        </DialogContent>
-      </LocalizationProvider>
+      </FormContent>
 
-      <DialogActions
+      <FormActions
         sx={{
           p: 3,
           background:
@@ -719,8 +751,9 @@ const AddDepartmentInchargeModal = ({
         >
           {loading ? "Saving..." : inchargeData ? "Update Incharge" : "Add Incharge"}
         </Button>
-      </DialogActions>
-    </Dialog>
+      </FormActions>
+    </FormContainer>
+  </LocalizationProvider>
   );
 };
 

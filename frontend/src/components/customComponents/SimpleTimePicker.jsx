@@ -85,6 +85,7 @@ const SimpleTimePicker = ({
           height: "auto",
         },
       }}
+      InputLabelProps={{ shrink: true }}
       InputProps={{
         inputComponent: () => (
           <Box

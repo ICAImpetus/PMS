@@ -51,6 +51,7 @@ const AddCodeAnnouncementModal = ({
   onSave,
   announcementData = null,
   loading = false,
+  isInline = false
 }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -236,23 +237,55 @@ const AddCodeAnnouncementModal = ({
     }
   };
 
+  const FormContainer = ({ children }) => {
+    if (isInline) {
+      if (!open) return null;
+      return (
+        <Box
+          sx={{
+            width: "100%",
+            borderRadius: 3,
+            border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+            background:
+              theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+            overflow: "hidden",
+            mb: 3,
+          }}
+        >
+          {children}
+        </Box>
+      );
+    }
+    return (
+      <Dialog
+        open={open}
+        onClose={!loading ? onClose : undefined}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            background:
+              theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+          },
+        }}
+      >
+        {children}
+      </Dialog>
+    );
+  };
+
+  const FormHeader = isInline ? Box : DialogTitle;
+  const FormContent = isInline ? Box : DialogContent;
+  const FormActions = isInline ? Box : DialogActions;
+
   return (
-    <Dialog
-      open={open}
-      onClose={!loading ? onClose : undefined}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          background:
-            theme.palette.mode === "dark"
-              ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
-              : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
-        },
-      }}
-    >
-      <DialogTitle
+    <FormContainer>
+      <FormHeader
         sx={{
           background:
             theme.palette.mode === "dark"
@@ -288,9 +321,9 @@ const AddCodeAnnouncementModal = ({
         >
           <CloseIcon />
         </IconButton>
-      </DialogTitle>
+      </FormHeader>
 
-      <DialogContent
+      <FormContent
         sx={{
           p: 0,
           backgroundColor:
@@ -388,31 +421,25 @@ const AddCodeAnnouncementModal = ({
                       sx={{
                         "& .MuiOutlinedInput-root": {
                           borderRadius: 2,
+                          height: "56px"
                         },
                       }}
                     />
                   </Grid>
                   {/* Time Availability */}
                   <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth error={!!errors.timeAvailability}>
-                      <FormLabel sx={{ mb: 1, fontWeight: 500 }}>
-                        Time Availability *
-                      </FormLabel>
-
-                      <SimpleTimePicker
-                        value={currentAnnouncement.timeAvailability}
-                        onChange={(newValue) =>
-                          setCurrentAnnouncement((prev) => ({
-                            ...prev,
-                            timeAvailability: newValue,
-                          }))
-                        }
-                      />
-
-                      <FormHelperText>
-                        {errors.timeAvailability || "Select time in AM/PM format"}
-                      </FormHelperText>
-                    </FormControl>
+                    <SimpleTimePicker
+                      label="Time Availability *"
+                      value={currentAnnouncement.timeAvailability}
+                      onChange={(newValue) =>
+                        setCurrentAnnouncement((prev) => ({
+                          ...prev,
+                          timeAvailability: newValue,
+                        }))
+                      }
+                      error={!!errors.timeAvailability}
+                      helperText={errors.timeAvailability}
+                    />
                   </Grid>
                   {/* Concerned Person */}
                   <Grid item xs={12}>
@@ -757,9 +784,9 @@ const AddCodeAnnouncementModal = ({
             </Card>
           </Stack>
         </Box>
-      </DialogContent>
+      </FormContent>
 
-      <DialogActions
+      <FormActions
         sx={{
           p: 3,
           background:
@@ -824,8 +851,8 @@ const AddCodeAnnouncementModal = ({
               ? "Update Announcement"
               : "Add Announcement"}
         </Button>
-      </DialogActions>
-    </Dialog>
+      </FormActions>
+    </FormContainer>
   );
 };
 

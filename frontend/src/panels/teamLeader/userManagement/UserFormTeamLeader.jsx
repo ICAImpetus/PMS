@@ -27,7 +27,7 @@ import { useApi } from "../../../api/useApi";
 import MultiSelectDropdown from "../../superAdmin/userManagement/components/MultiSelectDropdown";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { getValidationSchema } from "../.././Schemas/validation";
-const UserFormTeamLeader = ({ initialState = null, hospitalId, onClose, refetchUsers }) => {
+const UserFormTeamLeader = ({ initialState = null, hospitalId, onClose, refetchUsers, isInline = false }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const { currentUser } = UserContextHook();
@@ -214,14 +214,16 @@ const UserFormTeamLeader = ({ initialState = null, hospitalId, onClose, refetchU
           <Form>
             <Box
               sx={{
-                maxWidth: 600,
-                bgcolor: colors.primary[800],
-                p: 4,
-                borderRadius: 2,
-                boxShadow: 3,
+                width: "100%",
+                maxWidth: isInline ? "100%" : 600,
+                margin: isInline ? "0" : "auto",
+                bgcolor: isInline ? "transparent" : colors.primary[800],
+                p: isInline ? "0" : 4,
+                borderRadius: isInline ? "0" : 2,
+                boxShadow: isInline ? "none" : 3,
                 minHeight: "auto",
-                maxHeight: "90vh",
-                overflowY: "auto",
+                maxHeight: isInline ? "none" : "90vh",
+                overflowY: isInline ? "visible" : "auto",
               }}
             >
               <Header

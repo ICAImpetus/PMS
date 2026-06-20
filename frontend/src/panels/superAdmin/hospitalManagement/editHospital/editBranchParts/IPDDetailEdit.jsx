@@ -44,7 +44,7 @@ import { tokens } from '../../../../../theme';
  * with this IPD data for editing. If null, it will
  * present an empty form for adding new IPD details.
  */
-const AddIpdDetailsModal = ({ open, onClose, onSave, ipdData = null, departments, loading = false, globalSuggestion }) => {
+const AddIpdDetailsModal = ({ open, onClose, onSave, ipdData = null, departments, loading = false, globalSuggestion, isInline = false }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
@@ -189,22 +189,54 @@ const AddIpdDetailsModal = ({ open, onClose, onSave, ipdData = null, departments
     (item) => item?.type === "bedCategory"
   ) || [];
 
+  const FormContainer = ({ children }) => {
+    if (isInline) {
+      if (!open) return null;
+      return (
+        <Box
+          sx={{
+            width: "100%",
+            borderRadius: 3,
+            border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+            background:
+              theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+            overflow: "hidden",
+            mb: 3,
+          }}
+        >
+          {children}
+        </Box>
+      );
+    }
+    return (
+      <Dialog
+        open={open}
+        onClose={onClose}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            background: theme.palette.mode === "dark"
+              ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+              : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+          }
+        }}
+      >
+        {children}
+      </Dialog>
+    );
+  };
+
+  const FormHeader = isInline ? Box : DialogTitle;
+  const FormContent = isInline ? Box : DialogContent;
+  const FormActions = isInline ? Box : DialogActions;
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          background: theme.palette.mode === "dark"
-            ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
-            : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
-        }
-      }}
-    >
-      <DialogTitle
+    <FormContainer>
+      <FormHeader
         sx={{
           background: theme.palette.mode === "dark"
             ? `linear-gradient(135deg, ${colors.blueAccent[700]} 0%, ${colors.blueAccent[800]} 100%)`
@@ -236,9 +268,9 @@ const AddIpdDetailsModal = ({ open, onClose, onSave, ipdData = null, departments
         >
           <CloseIcon />
         </IconButton>
-      </DialogTitle>
+      </FormHeader>
 
-      <DialogContent
+      <FormContent
         sx={{
           p: 0,
           backgroundColor: theme.palette.mode === "dark" ? colors.primary[900] : colors.grey[50],
@@ -426,6 +458,12 @@ const AddIpdDetailsModal = ({ open, onClose, onSave, ipdData = null, departments
                           {...params}
                           label="Category"
                           placeholder="Select or type"
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: 2,
+                              height: "56px"
+                            },
+                          }}
                         />
                       )}
                     />
@@ -441,6 +479,7 @@ const AddIpdDetailsModal = ({ open, onClose, onSave, ipdData = null, departments
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
+                          height: "56px"
                         }
                       }}
                     >
@@ -512,9 +551,9 @@ const AddIpdDetailsModal = ({ open, onClose, onSave, ipdData = null, departments
 
           </Stack>
         </Box>
-      </DialogContent>
+      </FormContent>
 
-      <DialogActions
+      <FormActions
         sx={{
           p: 3,
           background: theme.palette.mode === "dark"
@@ -575,8 +614,8 @@ const AddIpdDetailsModal = ({ open, onClose, onSave, ipdData = null, departments
               ? "Update IPD Details"
               : "Add IPD Details"}
         </Button>
-      </DialogActions>
-    </Dialog>
+      </FormActions>
+    </FormContainer>
   );
 };
 

@@ -53,7 +53,8 @@ const AddTestLabModal = ({
   testLabData = null,
   departmentOptions,
   loading = false,
-  globalSuggestion
+  globalSuggestion,
+  isInline = false
 }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -352,23 +353,55 @@ const AddTestLabModal = ({
 
 
 
+  const FormContainer = ({ children }) => {
+    if (isInline) {
+      if (!open) return null;
+      return (
+        <Box
+          sx={{
+            width: "100%",
+            borderRadius: 3,
+            border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+            background:
+              theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+            overflow: "hidden",
+            mb: 3,
+          }}
+        >
+          {children}
+        </Box>
+      );
+    }
+    return (
+      <Dialog
+        open={open}
+        onClose={!loading ? onClose : undefined}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            background:
+              theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+          },
+        }}
+      >
+        {children}
+      </Dialog>
+    );
+  };
+
+  const FormHeader = isInline ? Box : DialogTitle;
+  const FormContent = isInline ? Box : DialogContent;
+  const FormActions = isInline ? Box : DialogActions;
+
   return (
-    <Dialog
-      open={open}
-      onClose={!loading ? onClose : undefined}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          background:
-            theme.palette.mode === "dark"
-              ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
-              : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
-        },
-      }}
-    >
-      <DialogTitle
+    <FormContainer>
+      <FormHeader
         sx={{
           background:
             theme.palette.mode === "dark"
@@ -402,9 +435,9 @@ const AddTestLabModal = ({
         >
           <CloseIcon />
         </IconButton>
-      </DialogTitle>
+      </FormHeader>
 
-      <DialogContent
+      <FormContent
         sx={{
           p: 0,
           backgroundColor:
@@ -556,6 +589,7 @@ const AddTestLabModal = ({
                       sx={{
                         "& .MuiOutlinedInput-root": {
                           borderRadius: 2,
+                          height: "56px"
                         },
                       }}
                     />
@@ -639,6 +673,12 @@ const AddTestLabModal = ({
                           {...params}
                           label="Service Group"
                           placeholder="Select or type"
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: 2,
+                              height: "56px"
+                            },
+                          }}
                         />
                       )}
                     />
@@ -1093,9 +1133,9 @@ const AddTestLabModal = ({
             </Card>
           </Stack>
         </Box>
-      </DialogContent>
+      </FormContent>
 
-      <DialogActions
+      <FormActions
         sx={{
           p: 3,
           background:
@@ -1160,8 +1200,8 @@ const AddTestLabModal = ({
               ? "Update Test Lab"
               : "Add Test Lab"}
         </Button>
-      </DialogActions>
-    </Dialog>
+      </FormActions>
+    </FormContainer>
   );
 };
 

@@ -1331,11 +1331,13 @@ const BranchInfo = () => {
   if (branchLoading)
     return <SectionLoader height="80vh" message="Loading branch details..." />;
 
+  const isAnyFormOpen = Object.values(modalOpen).some(Boolean);
+
   return (
     <Box
       sx={{
         width: "100%",
-        padding: { xs: "10px", sm: "20px" },
+        padding: isAnyFormOpen ? 0 : { xs: "10px", sm: "20px" },
         height: "calc(100vh - 100px)",
         overflowY: "auto",
         bgcolor: "#FAFAFA",
@@ -1343,108 +1345,110 @@ const BranchInfo = () => {
     >
       <Toaster position="top-right" />
 
-      <Box
-        display="flex"
-        flexDirection={{ xs: "column", sm: "row" }}
-        alignItems={{ xs: "flex-start", sm: "center" }}
-        justifyContent="space-between"
-        gap={2}
-        mb={2}
-      >
-        <Header title="Manage" subtitle="Branch Details" />
-      </Box>
-      <Divider sx={{ borderBottomWidth: 2, mb: 2 }} />
-      {/* <BreadcrumbNav /> */}
-      {/* <Divider sx={{ borderBottomWidth: 2, my: 2 }} /> */}
+      {!isAnyFormOpen && (
+        <>
+          <Box
+            display="flex"
+            flexDirection={{ xs: "column", sm: "row" }}
+            alignItems={{ xs: "flex-start", sm: "center" }}
+            justifyContent="space-between"
+            gap={2}
+            mb={2}
+          >
+            <Header title="Manage" subtitle="Branch Details" />
+          </Box>
+          <Divider sx={{ borderBottomWidth: 2, mb: 2 }} />
 
-      <Box
-        display="flex"
-        flexDirection={{ xs: "column", sm: "row" }}
-        alignItems={{ xs: "stretch", sm: "center" }}
-        mb={3}
-        p={{ xs: 1.5, sm: 3 }}
-        gap={{ xs: 2, sm: 0 }}
-        sx={{
-          borderRadius: 3,
-          background: "linear-gradient(90deg, #FFAB40 0%, #FF9100 100%)",
-          color: "white",
-          boxShadow: "0 4px 12px rgba(255, 145, 0, 0.3)",
-        }}
-      >
-        <Box display="flex" flexDirection={{ xs: "column", sm: "row" }} alignItems="center" gap={{ xs: 2, sm: 0 }} sx={{ width: "100%" }}>
-          <Box display="flex" alignItems="center">
-            {/* BACK BUTTON: GOES TO BRANCH LIST */}
-            <IconButton
-              onClick={() => navigate(-1)}
-              sx={{ mr: 2, bgcolor: "rgba(255,255,255,0.2)", color: "white" }}
-            >
-              <ArrowBackIcon />
-            </IconButton>
-            <Avatar
+          <Box
+            display="flex"
+            flexDirection={{ xs: "column", sm: "row" }}
+            alignItems={{ xs: "stretch", sm: "center" }}
+            mb={3}
+            p={{ xs: 1.5, sm: 3 }}
+            gap={{ xs: 2, sm: 0 }}
+            sx={{
+              borderRadius: 3,
+              background: "linear-gradient(90deg, #FFAB40 0%, #FF9100 100%)",
+              color: "white",
+              boxShadow: "0 4px 12px rgba(255, 145, 0, 0.3)",
+            }}
+          >
+            <Box display="flex" flexDirection={{ xs: "column", sm: "row" }} alignItems="center" gap={{ xs: 2, sm: 0 }} sx={{ width: "100%" }}>
+              <Box display="flex" alignItems="center">
+                {/* BACK BUTTON: GOES TO BRANCH LIST */}
+                <IconButton
+                  onClick={() => navigate(-1)}
+                  sx={{ mr: 2, bgcolor: "rgba(255,255,255,0.2)", color: "white" }}
+                >
+                  <ArrowBackIcon />
+                </IconButton>
+                <Avatar
+                  sx={{
+                    bgcolor: "white",
+                    color: "#FF9100",
+                    mr: 2,
+                    width: 48,
+                    height: 48,
+                  }}
+                >
+                  <AddBusinessIcon fontSize="medium" />
+                </Avatar>
+              </Box>
+              <Box sx={{ overflow: "hidden", textAlign: { xs: "center", sm: "left" } }}>
+                <Typography variant="h4" fontWeight="bold" >
+                  {currentBranch?.name || hospitalData?.name}
+                </Typography>
+                <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                  Branch Management (ID: {currentBranch?.code})
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Tabs */}
+          <Paper
+            elevation={0}
+            sx={{
+              borderRadius: 2,
+              mb: 3,
+              overflow: "hidden",
+              bgcolor: "transparent",
+            }}
+          >
+            <Tabs
+              value={tabValue}
+              onChange={(e, v) => setTabValue(v)}
+              variant="scrollable"
+              scrollButtons="auto"
+              allowScrollButtonsMobile
               sx={{
-                bgcolor: "white",
-                color: "#FF9100",
-                mr: 2,
-                width: 48,
-                height: 48,
+                minHeight: 48,
+                "& .MuiTabs-indicator": { backgroundColor: "#FF6D00", height: 3 },
+                "& .MuiTab-root": {
+                  textTransform: "none",
+                  fontWeight: 600,
+                  color: "#666",
+                  "&.Mui-selected": { color: "#FF9100" },
+                  bgcolor: "#fff",
+                  mr: 0.5,
+                  borderRadius: "8px 8px 0 0",
+                },
               }}
             >
-              <AddBusinessIcon fontSize="medium" />
-            </Avatar>
-          </Box>
-          <Box sx={{ overflow: "hidden", textAlign: { xs: "center", sm: "left" } }}>
-            <Typography variant="h4" fontWeight="bold" >
-              {currentBranch?.name || hospitalData?.name}
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              Branch Management (ID: {currentBranch?.code})
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
-
-      {/* Tabs */}
-      <Paper
-        elevation={0}
-        sx={{
-          borderRadius: 2,
-          mb: 3,
-          overflow: "hidden",
-          bgcolor: "transparent",
-        }}
-      >
-        <Tabs
-          value={tabValue}
-          onChange={(e, v) => setTabValue(v)}
-          variant="scrollable"
-          scrollButtons="auto"
-          allowScrollButtonsMobile
-          sx={{
-            minHeight: 48,
-            "& .MuiTabs-indicator": { backgroundColor: "#FF6D00", height: 3 },
-            "& .MuiTab-root": {
-              textTransform: "none",
-              fontWeight: 600,
-              color: "#666",
-              "&.Mui-selected": { color: "#FF9100" },
-              bgcolor: "#fff",
-              mr: 0.5,
-              borderRadius: "8px 8px 0 0",
-            },
-          }}
-        >
-          <Tab label="OVERVIEW" />
-          <Tab label="DEPARTMENTS" />
-          <Tab label="DOCTORS" />
-          <Tab label="EMPANELMENT" />
-          <Tab label="TEST LABS" />
-          <Tab label="IPD" />
-          <Tab label="DAY CARE" />
-          <Tab label="PROCEDURES/SURGERIES" />
-          <Tab label="IN-CHARGE" />
-          <Tab label="CODE ALERTS" />
-        </Tabs>
-      </Paper>
+              <Tab label="OVERVIEW" />
+              <Tab label="DEPARTMENTS" />
+              <Tab label="DOCTORS" />
+              <Tab label="EMPANELMENT" />
+              <Tab label="TEST LABS" />
+              <Tab label="IPD" />
+              <Tab label="DAY CARE" />
+              <Tab label="PROCEDURES/SURGERIES" />
+              <Tab label="IN-CHARGE" />
+              <Tab label="CODE ALERTS" />
+            </Tabs>
+          </Paper>
+        </>
+      )}
 
       {/* Content Area */}
       <Paper elevation={0} sx={{ bgcolor: "transparent", minHeight: 400 }}>
@@ -1597,1019 +1601,1009 @@ const BranchInfo = () => {
         </CustomTabPanel>
         {/* 2. Doctors */}
         <CustomTabPanel value={tabValue} index={2}>
-          {isShowAction && (
-            <TabHeader
-              key={tabValue}
-              uploadCSV={handleUploadCSV}
-              downloadTemplate={handleDownloadTemplate}
-              title="Doctors List"
-              btnText="Add Doctor"
-              type="doctor"
-              handleSearchChange={handleSearchChange}
-              searchTerm={searchTerms}
-              isShowAction={isShowAction}
-              handleOpenModal={handleOpenModal}
+          {modalOpen.doctor ? (
+            <AddDoctorModal
+              globalSuggestion={globalSuggestion}
+              open={modalOpen.doctor || false}
+              onClose={() => handleCloseModal("doctor")}
+              onSave={(d) => handleSave("doctor", d)}
+              doctorData={selectedItem}
+              loading={addDoctorLoading || updateDoctorLoading}
+              availableDepartments={departmentsList}
+              branchId={id}
+              hospitalId={hosId}
+              onDepartmentsUpdate={setDepartmentsList}
+              isInline={true}
             />
+          ) : (
+            <>
+              {isShowAction && (
+                <TabHeader
+                  key={tabValue}
+                  uploadCSV={handleUploadCSV}
+                  downloadTemplate={handleDownloadTemplate}
+                  title="Doctors List"
+                  btnText="Add Doctor"
+                  type="doctor"
+                  handleSearchChange={handleSearchChange}
+                  searchTerm={searchTerms}
+                  isShowAction={isShowAction}
+                  handleOpenModal={handleOpenModal}
+                />
+              )}
 
-          )}
-
-          <TableContainer
-            component={Paper}
-            sx={{
-              borderRadius: 2,
-              boxShadow: "none",
-              border: "1px solid #eee",
-              overflowX: "auto"
-            }}
-          >
-            <Table sx={{ tableLayout: "auto", minWidth: 800 }}>
-              <TableHead sx={{ bgcolor: "#EEF2FF" }}>
-                <TableRow>
-                  <TableCell sx={{ width: "20%", color: "#5C6BC0", fontWeight: "bold" }}>
-                    Doctor Name
-                  </TableCell>
-                  <TableCell sx={{ color: "#5C6BC0", fontWeight: "bold" }}>
-                    Treatable List
-                  </TableCell>
-                  <TableCell sx={{ color: "#5C6BC0", fontWeight: "bold" }}>
-                    Surgeries
-                  </TableCell>
-                  <TableCell sx={{ color: "#5C6BC0", fontWeight: "bold" }}>
-                    Contact
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      color: "#5C6BC0",
-                      fontWeight: "bold",
-                      textAlign: "center",
-
-                    }}
-                  >
-                    Status
-                  </TableCell>
-
-                  {isShowAction && (
-                    <TableCell
-                      sx={{
-                        color: "#EF6C00",
-                        fontWeight: "bold",
-                        textAlign: "center",
-                      }}
-                    >
-                      Actions
-                    </TableCell>
-                  )}
-                  {/* {isShowAction && (
-                    <TableCell
-                      sx={{
-                        color: "#5C6BC0",
-                        fontWeight: "bold",
-                        mt: '20px'
-
-                      }}
-                    >
-                      Actions
-                    </TableCell>
-                  )} */}
-
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredDoctors.length > 0 ? (
-                  filteredDoctors.map((row, i) => (
-                    <TableRow key={i} hover>
-                      <TableCell sx={{ fontWeight: 500 }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <Avatar src={
-                            row.profilePreview ||
-                            (typeof row.profilePicture?.imagePath === "string"
-                              ? row.profilePicture?.imagePath
-                              : "")
-                          } />
-                          <span>
-                            {toTitleCase(`${row?.title || ""} ${row?.name || ""}`)}
-                          </span>
-                        </Box>
+              <TableContainer
+                component={Paper}
+                sx={{
+                  borderRadius: 2,
+                  boxShadow: "none",
+                  border: "1px solid #eee",
+                  overflowX: "auto"
+                }}
+              >
+                <Table sx={{ tableLayout: "auto", minWidth: 800 }}>
+                  <TableHead sx={{ bgcolor: "#EEF2FF" }}>
+                    <TableRow>
+                      <TableCell sx={{ width: "20%", color: "#5C6BC0", fontWeight: "bold" }}>
+                        Doctor Name
                       </TableCell>
-                      <TableCell>
-                        <SpecialtiesCell specialties={row?.specialties || []} />
+                      <TableCell sx={{ color: "#5C6BC0", fontWeight: "bold" }}>
+                        Treatable List
                       </TableCell>
-                      <TableCell>
-                        <SpecialtiesCell specialties={row?.surgeries || []} />
+                      <TableCell sx={{ color: "#5C6BC0", fontWeight: "bold" }}>
+                        Surgeries
                       </TableCell>
-
-                      <TableCell>{row.contactNumber}</TableCell>
-                      <TableCell align="center">
-                        <Switch
-                          checked={row.isEnabled !== false}
-                          onChange={(e) =>
-                            handleDoctorStatusToggle(
-                              row._id || row.id,
-                              !row?.isEnabled
-                            )
-                          }
-                          color="success"
-                          size="small"
-                          disabled={saving}
-                        />
+                      <TableCell sx={{ color: "#5C6BC0", fontWeight: "bold" }}>
+                        Contact
                       </TableCell>
-                      {/* <TableCell
+                      <TableCell
                         sx={{
-                          display: "flex",
+                          color: "#5C6BC0",
+                          fontWeight: "bold",
+                          textAlign: "center",
                         }}
                       >
-                        <IconButton
-                          color="primary"
-                          onClick={() => openAttendanceModal("doctor", row)}
-                          size="small"
-                          title="Edit Doctor"
-                        >
-                          <CalendarMonthIcon color="primary" />
-                        </IconButton>
-
-                 
-                        {canEdit && (
-                          <IconButton
-                            color="primary"
-                            onClick={() => handleOpenModal("doctor", row)}
-                            size="small"
-                            title="Edit Doctor"
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        )}
-
-                        {canDelete && (
-                          <IconButton
-                            color="error"
-                            size="small"
-                            onClick={() => {
-                              setSelectedItem({
-                                type: "doctor",
-                                id: row?._id,
-                              });
-
-                              setDeleteOpen(true);
-                            }}
-                            title="Delete Doctor"
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        )}
-                      </TableCell> */}
-
-                      <TableCell align="center">
-                        <Box sx={{ display: "flex" }}>
-                          <IconButton
-                            color="primary"
-                            onClick={() => openAttendanceModal("doctor", row)}
-                            size="small"
-                            title="Doctor Attendance"
-                          >
-                            <CalendarMonthIcon color="primary" />
-                          </IconButton>
-
-
-                          {canEdit && (
-                            <IconButton
-                              color="primary"
-                              onClick={() => handleOpenModal("doctor", row)}
-                              size="small"
-                              title="Edit Doctor"
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          )}
-
-                          {canDelete && (
-                            <IconButton
-                              color="error"
-                              size="small"
-                              onClick={() => {
-                                setSelectedItem({
-                                  type: "doctor",
-                                  id: row?._id,
-                                });
-
-                                setDeleteOpen(true);
-                              }}
-                              title="Delete Doctor"
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>)}
-                        </Box>
-
+                        Status
                       </TableCell>
 
+                      {isShowAction && (
+                        <TableCell
+                          sx={{
+                            color: "#EF6C00",
+                            fontWeight: "bold",
+                            textAlign: "center",
+                          }}
+                        >
+                          Actions
+                        </TableCell>
+                      )}
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      align="center"
-                      sx={{ py: 3, color: "#888" }}
-                    >
-                      No doctors found.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <AddDoctorModal
-            globalSuggestion={globalSuggestion}
-            open={modalOpen.doctor || false}
-            onClose={() => handleCloseModal("doctor")}
-            onSave={(d) => handleSave("doctor", d)}
-            doctorData={selectedItem}
-            loading={addDoctorLoading || updateDoctorLoading}
-            availableDepartments={departmentsList}
-            branchId={id}
-            hospitalId={hosId}
-            onDepartmentsUpdate={setDepartmentsList}
-          />
+                  </TableHead>
+                  <TableBody>
+                    {filteredDoctors.length > 0 ? (
+                      filteredDoctors.map((row, i) => (
+                        <TableRow key={i} hover>
+                          <TableCell sx={{ fontWeight: 500 }}>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <Avatar src={
+                                row.profilePreview ||
+                                (typeof row.profilePicture?.imagePath === "string"
+                                  ? row.profilePicture?.imagePath
+                                  : "")
+                              } />
+                              <span>
+                                {toTitleCase(`${row?.title || ""} ${row?.name || ""}`)}
+                              </span>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <SpecialtiesCell specialties={row?.specialties || []} />
+                          </TableCell>
+                          <TableCell>
+                            <SpecialtiesCell specialties={row?.surgeries || []} />
+                          </TableCell>
+
+                          <TableCell>{row.contactNumber}</TableCell>
+                          <TableCell align="center">
+                            <Switch
+                              checked={row.isEnabled !== false}
+                              onChange={(e) =>
+                                handleDoctorStatusToggle(
+                                  row._id || row.id,
+                                  !row?.isEnabled
+                                )
+                              }
+                              color="success"
+                              size="small"
+                              disabled={saving}
+                            />
+                          </TableCell>
+
+                          <TableCell align="center">
+                            <Box sx={{ display: "flex" }}>
+                              <IconButton
+                                color="primary"
+                                onClick={() => openAttendanceModal("doctor", row)}
+                                size="small"
+                                title="Doctor Attendance"
+                              >
+                                <CalendarMonthIcon color="primary" />
+                              </IconButton>
+
+                              {canEdit && (
+                                <IconButton
+                                  color="primary"
+                                  onClick={() => handleOpenModal("doctor", row)}
+                                  size="small"
+                                  title="Edit Doctor"
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              )}
+
+                              {canDelete && (
+                                <IconButton
+                                  color="error"
+                                  size="small"
+                                  onClick={() => {
+                                    setSelectedItem({
+                                      type: "doctor",
+                                      id: row?._id,
+                                    });
+
+                                    setDeleteOpen(true);
+                                  }}
+                                  title="Delete Doctor"
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              )}
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={5}
+                          align="center"
+                          sx={{ py: 3, color: "#888" }}
+                        >
+                          No doctors found.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          )}
         </CustomTabPanel>
         {/* 3. Empanelment */}
         <CustomTabPanel value={tabValue} index={3}>
-          {isShowAction && (
-            <TabHeader
-              key={tabValue}
-              // uploadCSV={handleUploadCSV}
-              // downloadTemplate={handleDownloadTemplate}
-              title="Empanelment"
-              btnText="Add Policy"
-              type="empanelment"
-              handleSearchChange={handleSearchChange}
-              searchTerm={searchTerms}
-              isShowAction={isShowAction}
-              handleOpenModal={handleOpenModal}
+          {modalOpen.empanelment ? (
+            <AddEmpanelmentListModal
+              globalSuggestion={globalSuggestion}
+              open={modalOpen.empanelment || false}
+              onClose={() => handleCloseModal("empanelment")}
+              onSave={(d) => handleSave("empanelment", d)}
+              empanelmentData={selectedItem}
+              availableDoctors={doctorsList}
+              availableDepartments={departmentsList}
+              loading={addempanelmentLoading || updateempanelmentLoading}
+              isInline={true}
             />
-          )}
+          ) : (
+            <>
+              {isShowAction && (
+                <TabHeader
+                  key={tabValue}
+                  // uploadCSV={handleUploadCSV}
+                  // downloadTemplate={handleDownloadTemplate}
+                  title="Empanelment"
+                  btnText="Add Policy"
+                  type="empanelment"
+                  handleSearchChange={handleSearchChange}
+                  searchTerm={searchTerms}
+                  isShowAction={isShowAction}
+                  handleOpenModal={handleOpenModal}
+                />
+              )}
 
-          <TableContainer
-            component={Paper}
-            sx={{
-              borderRadius: 2,
-              boxShadow: "none",
-              border: "1px solid #eee", overflowX: "auto",
-            }}
-          >
-            <Table sx={{ tableLayout: "auto", minWidth: 600 }}>
-              <TableHead sx={{ bgcolor: "#E0F2F1" }}>
-                <TableRow>
-                  <TableCell sx={{ color: "#00897B", fontWeight: "bold" }}>
-                    Policy Name
-                  </TableCell>
-                  <TableCell sx={{ color: "#00897B", fontWeight: "bold" }}>
-                    Type
-                  </TableCell>
-                  <TableCell sx={{ color: "#00897B", fontWeight: "bold" }}>
-                    Assigned Doctors
-                  </TableCell>
-                  {isShowAction && (
-                    <TableCell
-                      sx={{
-                        color: "#00897B",
-                        fontWeight: "bold",
-                        textAlign: "center",
-                      }}
-                    >
-                      Actions
-                    </TableCell>
-                  )}
-
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredEmpanelment.length > 0 ? (
-                  filteredEmpanelment.map((row, i) => (
-                    <TableRow key={i} hover>
-                      <TableCell sx={{ fontWeight: 500 }}>
-                        {row.policyName}
+              <TableContainer
+                component={Paper}
+                sx={{
+                  borderRadius: 2,
+                  boxShadow: "none",
+                  border: "1px solid #eee", overflowX: "auto",
+                }}
+              >
+                <Table sx={{ tableLayout: "auto", minWidth: 600 }}>
+                  <TableHead sx={{ bgcolor: "#E0F2F1" }}>
+                    <TableRow>
+                      <TableCell sx={{ color: "#00897B", fontWeight: "bold" }}>
+                        Policy Name
                       </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={row.typeOfCoverage}
-                          size="small"
-                          variant="outlined"
-                          color="primary"
-                        />
+                      <TableCell sx={{ color: "#00897B", fontWeight: "bold" }}>
+                        Type
                       </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={row.coverageOptions?.length || 0}
-                          size="small"
+                      <TableCell sx={{ color: "#00897B", fontWeight: "bold" }}>
+                        Assigned Doctors
+                      </TableCell>
+                      {isShowAction && (
+                        <TableCell
                           sx={{
-                            bgcolor: "#FFF3E0",
                             color: "#00897B",
                             fontWeight: "bold",
+                            textAlign: "center",
                           }}
-                        />
-                      </TableCell>
-                      {
-                        <TableCell align="center">
-                          {canEdit && (
-                            <IconButton
-                              color="primary"
-                              onClick={() => handleOpenModal("empanelment", row)}
-                              size="small"
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          )}
-                          {canDelete && (
-                            <IconButton
-                              onClick={() => {
-                                setSelectedItem({ type: "empanelment", id: row?._id });
-                                setDeleteOpen(true);
-                              }}
-                              color="error"
-                              size="small"
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          )}
+                        >
+                          Actions
                         </TableCell>
-                      }
+                      )}
+
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={3}
-                      align="center"
-                      sx={{ py: 3, color: "#888" }}
-                    >
-                      No policies found.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <AddEmpanelmentListModal
-            globalSuggestion={globalSuggestion}
-            open={modalOpen.empanelment || false}
-            onClose={() => handleCloseModal("empanelment")}
-            onSave={(d) => handleSave("empanelment", d)}
-            empanelmentData={selectedItem}
-            availableDoctors={doctorsList}
-            availableDepartments={departmentsList}
-            loading={addempanelmentLoading || updateempanelmentLoading}
-          />
+                  </TableHead>
+                  <TableBody>
+                    {filteredEmpanelment.length > 0 ? (
+                      filteredEmpanelment.map((row, i) => (
+                        <TableRow key={i} hover>
+                          <TableCell sx={{ fontWeight: 500 }}>
+                            {row.policyName}
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={row.typeOfCoverage}
+                              size="small"
+                              variant="outlined"
+                              color="primary"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={row.coverageOptions?.length || 0}
+                              size="small"
+                              sx={{
+                                bgcolor: "#FFF3E0",
+                                color: "#00897B",
+                                fontWeight: "bold",
+                              }}
+                            />
+                          </TableCell>
+                          {
+                            <TableCell align="center">
+                              {canEdit && (
+                                <IconButton
+                                  color="primary"
+                                  onClick={() => handleOpenModal("empanelment", row)}
+                                  size="small"
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              )}
+                              {canDelete && (
+                                <IconButton
+                                  onClick={() => {
+                                    setSelectedItem({ type: "empanelment", id: row?._id });
+                                    setDeleteOpen(true);
+                                  }}
+                                  color="error"
+                                  size="small"
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              )}
+                            </TableCell>
+                          }
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={3}
+                          align="center"
+                          sx={{ py: 3, color: "#888" }}
+                        >
+                          No policies found.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          )}
         </CustomTabPanel>
 
         {/* 4. Test Labs */}
         <CustomTabPanel value={tabValue} index={4}>
-          {isShowAction && (<TabHeader
-            key={tabValue}
-            // uploadCSV={handleUploadCSV}
-            // downloadTemplate={handleDownloadTemplate}
-            title="Test Labs"
-            btnText="Add Lab"
-            type="testLab"
-            handleSearchChange={handleSearchChange}
-            searchTerm={searchTerms}
-            isShowAction={isShowAction}
-            handleOpenModal={handleOpenModal}
-          />)}
-          <TableContainer
-            component={Paper}
-            sx={{
-              borderRadius: 2,
-              boxShadow: "none",
-              border: "1px solid #eee", overflowX: "auto",
-            }}
-          >
-            <Table sx={{ tableLayout: "auto", minWidth: 600 }}>
-              <TableHead sx={{ bgcolor: "#F3E5F5" }}>
-                <TableRow>
-                  <TableCell sx={{ color: "#7B1FA2", fontWeight: "bold" }}>
-                    Name
-                  </TableCell>
-                  <TableCell sx={{ color: "#7B1FA2", fontWeight: "bold" }}>
-                    Code
-                  </TableCell>
-                  <TableCell sx={{ color: "#7B1FA2", fontWeight: "bold" }}>
-                    Charge
-                  </TableCell>
-                  {isShowAction && (
-                    <TableCell
-                      sx={{
-                        color: "#7B1FA2",
-                        fontWeight: "bold",
-                        textAlign: "center",
-                      }}
-                    >
-                      Actions
-                    </TableCell>
-                  )}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredTestLabs.length > 0 ? (
-                  filteredTestLabs.map((row, i) => (
-                    <TableRow key={i} hover>
-                      <TableCell sx={{ fontWeight: 500 }}>
-                        {row.testName}
+          {modalOpen.testLab ? (
+            <AddTestLabModal
+              globalSuggestion={globalSuggestion}
+              open={modalOpen.testLab || false}
+              onClose={() => handleCloseModal("testLab")}
+              onSave={(d) => handleSave("testLab", d)}
+              testLabData={selectedItem}
+              departmentOptions={departmentsList}
+              loading={addLabtestLoading || updateLabtestLoading}
+              isInline={true}
+            />
+          ) : (
+            <>
+              {isShowAction && (
+                <TabHeader
+                  key={tabValue}
+                  // uploadCSV={handleUploadCSV}
+                  // downloadTemplate={handleDownloadTemplate}
+                  title="Test Labs"
+                  btnText="Add Lab"
+                  type="testLab"
+                  handleSearchChange={handleSearchChange}
+                  searchTerm={searchTerms}
+                  isShowAction={isShowAction}
+                  handleOpenModal={handleOpenModal}
+                />
+              )}
+              <TableContainer
+                component={Paper}
+                sx={{
+                  borderRadius: 2,
+                  boxShadow: "none",
+                  border: "1px solid #eee", overflowX: "auto",
+                }}
+              >
+                <Table sx={{ tableLayout: "auto", minWidth: 600 }}>
+                  <TableHead sx={{ bgcolor: "#F3E5F5" }}>
+                    <TableRow>
+                      <TableCell sx={{ color: "#7B1FA2", fontWeight: "bold" }}>
+                        Name
                       </TableCell>
-                      <TableCell>{row?.testCode}</TableCell>
-                      <TableCell sx={{ fontWeight: "bold", color: "#2E7D32" }}>
-                        ₹{row.serviceCharge}
+                      <TableCell sx={{ color: "#7B1FA2", fontWeight: "bold" }}>
+                        Code
                       </TableCell>
-                      <TableCell align="center">
-                        {canEdit && (
-                          <IconButton
-                            color="primary"
-                            onClick={() => handleOpenModal("testLab", row)}
-                            size="small"
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        )}
-                        {canDelete && (
-                          <IconButton
-                            onClick={() => {
-                              setSelectedItem({ type: "testLab", id: row?._id });
-                              setDeleteOpen(true);
-                            }}
-                            color="error"
-                            size="small"
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        )}
+                      <TableCell sx={{ color: "#7B1FA2", fontWeight: "bold" }}>
+                        Charge
                       </TableCell>
+                      {isShowAction && (
+                        <TableCell
+                          sx={{
+                            color: "#7B1FA2",
+                            fontWeight: "bold",
+                            textAlign: "center",
+                          }}
+                        >
+                          Actions
+                        </TableCell>
+                      )}
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      align="center"
-                      sx={{ py: 3, color: "#888" }}
-                    >
-                      No test labs.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <AddTestLabModal
-            globalSuggestion={globalSuggestion}
-            open={modalOpen.testLab || false}
-            onClose={() => handleCloseModal("testLab")}
-            onSave={(d) => handleSave("testLab", d)}
-            testLabData={selectedItem}
-            departmentOptions={departmentsList}
-            loading={addLabtestLoading || updateLabtestLoading}
-          />
+                  </TableHead>
+                  <TableBody>
+                    {filteredTestLabs.length > 0 ? (
+                      filteredTestLabs.map((row, i) => (
+                        <TableRow key={i} hover>
+                          <TableCell sx={{ fontWeight: 500 }}>
+                            {row.testName}
+                          </TableCell>
+                          <TableCell>{row?.testCode}</TableCell>
+                          <TableCell sx={{ fontWeight: "bold", color: "#2E7D32" }}>
+                            ₹{row.serviceCharge}
+                          </TableCell>
+                          <TableCell align="center">
+                            {canEdit && (
+                              <IconButton
+                                color="primary"
+                                onClick={() => handleOpenModal("testLab", row)}
+                                size="small"
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            )}
+                            {canDelete && (
+                              <IconButton
+                                onClick={() => {
+                                  setSelectedItem({ type: "testLab", id: row?._id });
+                                  setDeleteOpen(true);
+                                }}
+                                color="error"
+                                size="small"
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={4}
+                          align="center"
+                          sx={{ py: 3, color: "#888" }}
+                        >
+                          No test labs.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          )}
         </CustomTabPanel>
 
         {/* 5. IPD */}
         <CustomTabPanel value={tabValue} index={5}>
-          {isShowAction && (
-            <TabHeader
-              title="IPD Details"
-              btnText="Add IPD"
-              downloadTemplate={handleDownloadTemplate}
-              type="ipd"
-              handleSearchChange={handleSearchChange}
-              searchTerm={searchTerms}
-              isShowAction={isShowAction}
-              handleOpenModal={handleOpenModal}
-            />)}
-          <TableContainer
-            component={Paper}
-            sx={{
-              borderRadius: 2,
-              boxShadow: "none",
-              border: "1px solid #eee", overflowX: "auto",
-            }}
-          >
-            <Table sx={{ tableLayout: "auto", minWidth: 600 }}>
-              <TableHead sx={{ bgcolor: "#E1F5FE" }}>
-                <TableRow>
-                  <TableCell sx={{ color: "#0288D1", fontWeight: "bold" }}>
-                    Category
-                  </TableCell>
-                  <TableCell sx={{ color: "#0288D1", fontWeight: "bold" }}>
-                    Beds
-                  </TableCell>
-                  <TableCell sx={{ color: "#0288D1", fontWeight: "bold" }}>
-                    Charges
-                  </TableCell>
-                  {isShowAction && (
-                    <TableCell
-                      sx={{
-                        color: "#0288D1",
-                        fontWeight: "bold",
-                        textAlign: "center",
-                      }}
-                    >
-                      Actions
-                    </TableCell>
-                  )}
+          {modalOpen.ipd ? (
+            <AddIpdDetailsModal
+              globalSuggestion={globalSuggestion}
+              open={modalOpen.ipd || false}
+              onClose={() => handleCloseModal("ipd")}
+              onSave={(d) => handleSave("ipd", d)}
+              ipdData={selectedItem}
+              departments={departmentsList}
+              loading={addIPDandDayCareLoading || updateIPDandDayCareLoading}
+              isInline={true}
+            />
+          ) : (
+            <>
+              {isShowAction && (
+                <TabHeader
+                  title="IPD Details"
+                  btnText="Add IPD"
+                  downloadTemplate={handleDownloadTemplate}
+                  type="ipd"
+                  handleSearchChange={handleSearchChange}
+                  searchTerm={searchTerms}
+                  isShowAction={isShowAction}
+                  handleOpenModal={handleOpenModal}
+                />
+              )}
+              <TableContainer
+                component={Paper}
+                sx={{
+                  borderRadius: 2,
+                  boxShadow: "none",
+                  border: "1px solid #eee", overflowX: "auto",
+                }}
+              >
+                <Table sx={{ tableLayout: "auto", minWidth: 600 }}>
+                  <TableHead sx={{ bgcolor: "#E1F5FE" }}>
+                    <TableRow>
+                      <TableCell sx={{ color: "#0288D1", fontWeight: "bold" }}>
+                        Category
+                      </TableCell>
+                      <TableCell sx={{ color: "#0288D1", fontWeight: "bold" }}>
+                        Beds
+                      </TableCell>
+                      <TableCell sx={{ color: "#0288D1", fontWeight: "bold" }}>
+                        Charges
+                      </TableCell>
+                      {isShowAction && (
+                        <TableCell
+                          sx={{
+                            color: "#0288D1",
+                            fontWeight: "bold",
+                            textAlign: "center",
+                          }}
+                        >
+                          Actions
+                        </TableCell>
+                      )}
 
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredIpd.length > 0 ? (
-                  filteredIpd.map((row, i) => (
-                    <TableRow key={i} hover>
-                      <TableCell sx={{ fontWeight: 500 }}>
-                        {row.category?.value}
-                      </TableCell>
-                      <TableCell>{row.noOfBeds}</TableCell>
-                      <TableCell sx={{ fontWeight: "bold", color: "#2E7D32" }}>
-                        ₹{row.charges}
-                      </TableCell>
-                      <TableCell align="center">
-                        {canEdit && (
-                          <IconButton
-                            color="primary"
-                            onClick={() => handleOpenModal("ipd", row)}
-                            size="small"
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        )}
-                        {canDelete && (
-                          <IconButton
-                            onClick={() => {
-                              setSelectedItem({ type: "ipd", id: row?._id });
-                              setDeleteOpen(true);
-                            }}
-                            color="error"
-                            size="small"
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        )}
-                      </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      align="center"
-                      sx={{ py: 3, color: "#888" }}
-                    >
-                      No IPD details.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <AddIpdDetailsModal
-            globalSuggestion={globalSuggestion}
-            open={modalOpen.ipd || false}
-            onClose={() => handleCloseModal("ipd")}
-            onSave={(d) => handleSave("ipd", d)}
-            ipdData={selectedItem}
-            departments={departmentsList}
-            loading={addIPDandDayCareLoading || updateIPDandDayCareLoading}
-
-          />
+                  </TableHead>
+                  <TableBody>
+                    {filteredIpd.length > 0 ? (
+                      filteredIpd.map((row, i) => (
+                        <TableRow key={i} hover>
+                          <TableCell sx={{ fontWeight: 500 }}>
+                            {row.category?.value}
+                          </TableCell>
+                          <TableCell>{row.noOfBeds}</TableCell>
+                          <TableCell sx={{ fontWeight: "bold", color: "#2E7D32" }}>
+                            ₹{row.charges}
+                          </TableCell>
+                          <TableCell align="center">
+                            {canEdit && (
+                              <IconButton
+                                color="primary"
+                                onClick={() => handleOpenModal("ipd", row)}
+                                size="small"
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            )}
+                            {canDelete && (
+                              <IconButton
+                                onClick={() => {
+                                  setSelectedItem({ type: "ipd", id: row?._id });
+                                  setDeleteOpen(true);
+                                }}
+                                color="error"
+                                size="small"
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={4}
+                          align="center"
+                          sx={{ py: 3, color: "#888" }}
+                        >
+                          No IPD details.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          )}
         </CustomTabPanel>
 
         {/* 6. Day Care */}
         <CustomTabPanel value={tabValue} index={6}>
-          {isShowAction && (
-            <TabHeader
-              title="Day Care"
-              btnText="Add Day Care"
-              downloadTemplate={handleDownloadTemplate}
-              type="dayCare"
-              handleSearchChange={handleSearchChange}
-              searchTerm={searchTerms}
-              isShowAction={isShowAction}
-              handleOpenModal={handleOpenModal}
-            />)}
-          <TableContainer
-            component={Paper}
-            sx={{
-              borderRadius: 2,
-              boxShadow: "none",
-              border: "1px solid #eee", overflowX: "auto",
-            }}
-          >
-            <Table sx={{ tableLayout: "auto", minWidth: 600 }}>
-              <TableHead sx={{ bgcolor: "#FFFDE7" }}>
-                <TableRow>
-                  <TableCell sx={{ color: "#FBC02D", fontWeight: "bold" }}>
-                    Category
-                  </TableCell>
-                  <TableCell sx={{ color: "#FBC02D", fontWeight: "bold" }}>
-                    Beds
-                  </TableCell>
-                  <TableCell sx={{ color: "#FBC02D", fontWeight: "bold" }}>
-                    Charges
-                  </TableCell>
-                  {isShowAction && (
-                    <TableCell
-                      sx={{
-                        color: "#FBC02D",
-                        fontWeight: "bold",
-                        textAlign: "center",
-                      }}
-                    >
-                      Actions
-                    </TableCell>
-                  )}
+          {modalOpen.dayCare ? (
+            <AddDayCareDetailsModal
+              globalSuggestion={globalSuggestion}
+              open={modalOpen.dayCare || false}
+              onClose={() => handleCloseModal("dayCare")}
+              onSave={(type, d) => handleSave(type, d)}
+              dayCareData={selectedItem}
+              departments={departmentsList}
+              loading={addIPDandDayCareLoading || updateIPDandDayCareLoading}
+              isInline={true}
+            />
+          ) : (
+            <>
+              {isShowAction && (
+                <TabHeader
+                  title="Day Care"
+                  btnText="Add Day Care"
+                  downloadTemplate={handleDownloadTemplate}
+                  type="dayCare"
+                  handleSearchChange={handleSearchChange}
+                  searchTerm={searchTerms}
+                  isShowAction={isShowAction}
+                  handleOpenModal={handleOpenModal}
+                />
+              )}
+              <TableContainer
+                component={Paper}
+                sx={{
+                  borderRadius: 2,
+                  boxShadow: "none",
+                  border: "1px solid #eee", overflowX: "auto",
+                }}
+              >
+                <Table sx={{ tableLayout: "auto", minWidth: 600 }}>
+                  <TableHead sx={{ bgcolor: "#FFFDE7" }}>
+                    <TableRow>
+                      <TableCell sx={{ color: "#FBC02D", fontWeight: "bold" }}>
+                        Category
+                      </TableCell>
+                      <TableCell sx={{ color: "#FBC02D", fontWeight: "bold" }}>
+                        Beds
+                      </TableCell>
+                      <TableCell sx={{ color: "#FBC02D", fontWeight: "bold" }}>
+                        Charges
+                      </TableCell>
+                      {isShowAction && (
+                        <TableCell
+                          sx={{
+                            color: "#FBC02D",
+                            fontWeight: "bold",
+                            textAlign: "center",
+                          }}
+                        >
+                          Actions
+                        </TableCell>
+                      )}
 
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredDayCare.length > 0 ? (
-                  filteredDayCare.map((row, i) => (
-                    <TableRow key={i} hover>
-                      <TableCell sx={{ fontWeight: 500 }}>
-                        {row.category?.value}
-                      </TableCell>
-                      <TableCell>{row.noOfBeds}</TableCell>
-                      <TableCell sx={{ fontWeight: "bold", color: "#2E7D32" }}>
-                        ₹{row.charges}
-                      </TableCell>
-                      <TableCell align="center">
-                        {canEdit && (
-                          <IconButton
-                            color="primary"
-                            onClick={() => handleOpenModal("dayCare", row)}
-                            size="small"
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        )}
-                        {canDelete && (
-                          <IconButton
-                            onClick={() => {
-                              setSelectedItem({ type: "dayCare", id: row?._id });
-                              setDeleteOpen(true);
-                            }}
-                            color="error"
-                            size="small"
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        )}
-                      </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      align="center"
-                      sx={{ py: 3, color: "#888" }}
-                    >
-                      No Day Care details.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <AddDayCareDetailsModal
-            globalSuggestion={globalSuggestion}
-            open={modalOpen.dayCare || false}
-            onClose={() => handleCloseModal("dayCare")}
-            onSave={(type, d) => handleSave(type, d)}
-            dayCareData={selectedItem}
-            departments={departmentsList}
-            loading={addIPDandDayCareLoading || updateIPDandDayCareLoading}
-
-          />
+                  </TableHead>
+                  <TableBody>
+                    {filteredDayCare.length > 0 ? (
+                      filteredDayCare.map((row, i) => (
+                        <TableRow key={i} hover>
+                          <TableCell sx={{ fontWeight: 500 }}>
+                            {row.category?.value}
+                          </TableCell>
+                          <TableCell>{row.noOfBeds}</TableCell>
+                          <TableCell sx={{ fontWeight: "bold", color: "#2E7D32" }}>
+                            ₹{row.charges}
+                          </TableCell>
+                          <TableCell align="center">
+                            {canEdit && (
+                              <IconButton
+                                color="primary"
+                                onClick={() => handleOpenModal("dayCare", row)}
+                                size="small"
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            )}
+                            {canDelete && (
+                              <IconButton
+                                onClick={() => {
+                                  setSelectedItem({ type: "dayCare", id: row?._id });
+                                  setDeleteOpen(true);
+                                }}
+                                color="error"
+                                size="small"
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={4}
+                          align="center"
+                          sx={{ py: 3, color: "#888" }}
+                        >
+                          No Day Care details.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          )}
         </CustomTabPanel>
-
         {/* 7. Procedures */}
         <CustomTabPanel value={tabValue} index={7}>
-          {isShowAction && (
-            <TabHeader
-              title="Procedures/Surgeries"
-              btnText="Add Procedure/Surgery"
-              downloadTemplate={handleDownloadTemplate}
-              type="procedure"
-              handleSearchChange={handleSearchChange}
-              searchTerm={searchTerms}
-              isShowAction={isShowAction}
-              handleOpenModal={handleOpenModal}
-            />)}
-          <TableContainer
-            component={Paper}
-            sx={{
-              borderRadius: 2,
-              boxShadow: "none",
-              border: "1px solid #eee", overflowX: "auto",
-            }}
-          >
-            <Table sx={{ tableLayout: "auto", minWidth: 600 }}>
-              <TableHead sx={{ bgcolor: "#FBE9E7" }}>
-                <TableRow>
-                  <TableCell sx={{ color: "#D84315", fontWeight: "bold" }}>
-                    Name
-                  </TableCell>
-                  <TableCell sx={{ color: "#D84315", fontWeight: "bold" }}>
-                    Category
-                  </TableCell>
-                  <TableCell sx={{ color: "#D84315", fontWeight: "bold" }}>
-                    Charges
-                  </TableCell>
+          {modalOpen.procedure ? (
+            <AddProcedureModal
+              globalSuggestion={globalSuggestion}
+              open={modalOpen.procedure || false}
+              onClose={() => handleCloseModal("procedure")}
+              onSave={(d) => handleSave("procedure", d)}
+              procedureData={selectedItem}
+              departments={departmentsList}
+              availableDoctors={doctorsList.map((d) => d.name)}
+              loading={addProcedureLoading || updateProcedureLoading}
+              isInline={true}
+            />
+          ) : (
+            <>
+              {isShowAction && (
+                <TabHeader
+                  title="Procedures/Surgeries"
+                  btnText="Add Procedure/Surgery"
+                  downloadTemplate={handleDownloadTemplate}
+                  type="procedure"
+                  handleSearchChange={handleSearchChange}
+                  searchTerm={searchTerms}
+                  isShowAction={isShowAction}
+                  handleOpenModal={handleOpenModal}
+                />
+              )}
+              <TableContainer
+                component={Paper}
+                sx={{
+                  borderRadius: 2,
+                  boxShadow: "none",
+                  border: "1px solid #eee", overflowX: "auto",
+                }}
+              >
+                <Table sx={{ tableLayout: "auto", minWidth: 600 }}>
+                  <TableHead sx={{ bgcolor: "#FBE9E7" }}>
+                    <TableRow>
+                      <TableCell sx={{ color: "#D84315", fontWeight: "bold" }}>
+                        Name
+                      </TableCell>
+                      <TableCell sx={{ color: "#D84315", fontWeight: "bold" }}>
+                        Category
+                      </TableCell>
+                      <TableCell sx={{ color: "#D84315", fontWeight: "bold" }}>
+                        Charges
+                      </TableCell>
 
-                  {isShowAction && (
-                    <TableCell
-                      sx={{
-                        color: "#D84315",
-                        fontWeight: "bold",
-                        textAlign: "center",
-                      }}
-                    >
-                      Actions
-                    </TableCell>
-                  )}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredProcedures.length > 0 ? (
-                  filteredProcedures.map((row, i) => (
-                    <TableRow key={i} hover>
-                      <TableCell sx={{ fontWeight: 500 }}>{row.name}</TableCell>
-                      <TableCell>{row.category?.value}</TableCell>
-                      <TableCell sx={{ fontWeight: "bold", color: "#2E7D32" }}>
-                        ₹{row.ratesCharges}
-                      </TableCell>
-                      <TableCell align="center">
-                        {canEdit && (
-                          <IconButton
-                            color="primary"
-                            onClick={() => handleOpenModal("procedure", row)}
-                            size="small"
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        )}
-                        {canDelete && (
-                          <IconButton
-                            onClick={() => {
-                              setSelectedItem({ type: "procedure", id: row?._id });
-                              setDeleteOpen(true);
-                            }}
-                            color="error"
-                            size="small"
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        )}
-                      </TableCell>
+                      {isShowAction && (
+                        <TableCell
+                          sx={{
+                            color: "#D84315",
+                            fontWeight: "bold",
+                            textAlign: "center",
+                          }}
+                        >
+                          Actions
+                        </TableCell>
+                      )}
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      align="center"
+                  </TableHead>
+                  <TableBody>
+                    {filteredProcedures.length > 0 ? (
+                      filteredProcedures.map((row, i) => (
+                        <TableRow key={i} hover>
+                          <TableCell sx={{ fontWeight: 500 }}>{row.name}</TableCell>
+                          <TableCell>{row.category?.value}</TableCell>
+                          <TableCell sx={{ fontWeight: "bold", color: "#2E7D32" }}>
+                            ₹{row.ratesCharges}
+                          </TableCell>
+                          <TableCell align="center">
+                            {canEdit && (
+                              <IconButton
+                                color="primary"
+                                onClick={() => handleOpenModal("procedure", row)}
+                                size="small"
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            )}
+                            {canDelete && (
+                              <IconButton
+                                onClick={() => {
+                                  setSelectedItem({ type: "procedure", id: row?._id });
+                                  setDeleteOpen(true);
+                                }}
+                                color="error"
+                                size="small"
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={4}
+                          align="center"
 
-                      sx={{ py: 3, color: "#888" }}
-                    >
-                      No procedures/surgeries.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <AddProcedureModal
-            globalSuggestion={globalSuggestion}
-            open={modalOpen.procedure || false}
-            onClose={() => handleCloseModal("procedure")}
-            onSave={(d) => handleSave("procedure", d)}
-            procedureData={selectedItem}
-            departments={departmentsList}
-            availableDoctors={doctorsList.map((d) => d.name)}
-            loading={addProcedureLoading || updateProcedureLoading}
-          />
+                          sx={{ py: 3, color: "#888" }}
+                        >
+                          No procedures/surgeries.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          )}
         </CustomTabPanel>
 
         {/* 8. In-Charge */}
         <CustomTabPanel value={tabValue} index={8}>
-          {isShowAction && (
-            <TabHeader
-              title="In-Charge"
-              btnText="Add In-Charge"
-              downloadTemplate={handleDownloadTemplate}
-              type="incharge"
-              handleSearchChange={handleSearchChange}
-              searchTerm={searchTerms}
-              isShowAction={isShowAction}
-              handleOpenModal={handleOpenModal}
-            />)}
-          <TableContainer
-            component={Paper}
-            sx={{
-              borderRadius: 2,
-              boxShadow: "none",
-              border: "1px solid #eee", overflowX: "auto",
-            }}
-          >
-            <Table sx={{ tableLayout: "auto", minWidth: 600 }}>
-              <TableHead sx={{ bgcolor: "#E0F7FA" }}>
-                <TableRow>
-                  <TableCell sx={{ color: "#006064", fontWeight: "bold" }}>
-                    Name
-                  </TableCell>
-                  <TableCell sx={{ color: "#006064", fontWeight: "bold" }}>
-                    Department
-                  </TableCell>
-                  <TableCell sx={{ color: "#006064", fontWeight: "bold" }}>
-                    Contact
-                  </TableCell>
-                  {isShowAction && (
-                    <TableCell
-                      sx={{
-                        color: "#006064",
-                        fontWeight: "bold",
-                        textAlign: "center",
-                      }}
-                    >
-                      Actions
-                    </TableCell>
-                  )}
+          {modalOpen.incharge ? (
+            <AddDepartmentInchargeModal
+              globalSuggestion={globalSuggestion}
+              open={modalOpen.incharge || false}
+              onClose={() => handleCloseModal("incharge")}
+              onSave={(d) => handleSave("incharge", d)}
+              inchargeData={selectedItem}
+              availableDepartments={departmentsList}
+              loading={addInchargeLoading || updateInchargeLoading}
+              isInline={true}
+            />
+          ) : (
+            <>
+              {isShowAction && (
+                <TabHeader
+                  title="In-Charge"
+                  btnText="Add In-Charge"
+                  downloadTemplate={handleDownloadTemplate}
+                  type="incharge"
+                  handleSearchChange={handleSearchChange}
+                  searchTerm={searchTerms}
+                  isShowAction={isShowAction}
+                  handleOpenModal={handleOpenModal}
+                />
+              )}
+              <TableContainer
+                component={Paper}
+                sx={{
+                  borderRadius: 2,
+                  boxShadow: "none",
+                  border: "1px solid #eee", overflowX: "auto",
+                }}
+              >
+                <Table sx={{ tableLayout: "auto", minWidth: 600 }}>
+                  <TableHead sx={{ bgcolor: "#E0F7FA" }}>
+                    <TableRow>
+                      <TableCell sx={{ color: "#006064", fontWeight: "bold" }}>
+                        Name
+                      </TableCell>
+                      <TableCell sx={{ color: "#006064", fontWeight: "bold" }}>
+                        Department
+                      </TableCell>
+                      <TableCell sx={{ color: "#006064", fontWeight: "bold" }}>
+                        Contact
+                      </TableCell>
+                      {isShowAction && (
+                        <TableCell
+                          sx={{
+                            color: "#006064",
+                            fontWeight: "bold",
+                            textAlign: "center",
+                          }}
+                        >
+                          Actions
+                        </TableCell>
+                      )}
 
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredIncharge.length > 0 ? (
-                  filteredIncharge.map((row, i) => (
-                    <TableRow key={i} hover>
-                      <TableCell sx={{ fontWeight: 500 }}>{row.name}</TableCell>
-                      <TableCell>
-                        {/* {departmentsList?.find((d) => d._id === row.department)?.name || "-"} */}
-                        {row.department?.value}
-                      </TableCell>
-                      <TableCell>{row.contactNo}</TableCell>
-                      <TableCell align="center">
-                        {canEdit && (
-                          <IconButton
-                            color="primary"
-                            onClick={() => handleOpenModal("incharge", row)}
-                            size="small"
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        )}
-                        {canDelete && (
-                          <IconButton
-                            onClick={() => {
-                              setSelectedItem({ type: "incharge", id: row?._id });
-                              setDeleteOpen(true);
-                            }}
-                            color="error"
-                            size="small"
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        )}
-                      </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      align="center"
-                      sx={{ py: 3, color: "#888" }}
-                    >
-                      No in-charges.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <AddDepartmentInchargeModal
-            globalSuggestion={globalSuggestion}
-            open={modalOpen.incharge || false}
-            onClose={() => handleCloseModal("incharge")}
-            onSave={(d) => handleSave("incharge", d)}
-            inchargeData={selectedItem}
-            availableDepartments={departmentsList}
-            loading={addInchargeLoading || updateInchargeLoading}
-
-          />
+                  </TableHead>
+                  <TableBody>
+                    {filteredIncharge.length > 0 ? (
+                      filteredIncharge.map((row, i) => (
+                        <TableRow key={i} hover>
+                          <TableCell sx={{ fontWeight: 500 }}>{row.name}</TableCell>
+                          <TableCell>
+                            {/* {departmentsList?.find((d) => d._id === row.department)?.name || "-"} */}
+                            {row.department?.value}
+                          </TableCell>
+                          <TableCell>{row.contactNo}</TableCell>
+                          <TableCell align="center">
+                            {canEdit && (
+                              <IconButton
+                                color="primary"
+                                onClick={() => handleOpenModal("incharge", row)}
+                                size="small"
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            )}
+                            {canDelete && (
+                              <IconButton
+                                onClick={() => {
+                                  setSelectedItem({ type: "incharge", id: row?._id });
+                                  setDeleteOpen(true);
+                                }}
+                                color="error"
+                                size="small"
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={4}
+                          align="center"
+                          sx={{ py: 3, color: "#888" }}
+                        >
+                          No in-charges.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          )}
         </CustomTabPanel>
 
         {/* 9. Code Alerts */}
         <CustomTabPanel value={tabValue} index={9}>
-          {isShowAction && (
-            <TabHeader
-              title="Code Alerts"
-              btnText="Add Alert"
-              downloadTemplate={handleDownloadTemplate}
-              type="codeAlert"
-              handleSearchChange={handleSearchChange}
-              searchTerm={searchTerms}
-              isShowAction={isShowAction}
-              handleOpenModal={handleOpenModal}
-            />)}
-          <TableContainer
-            component={Paper}
-            sx={{
-              borderRadius: 2,
-              boxShadow: "none",
-              border: "1px solid #eee", overflowX: "auto",
-            }}
-          >
-            <Table sx={{ tableLayout: "auto", minWidth: 600 }}>
-              <TableHead sx={{ bgcolor: "#FFEBEE" }}>
-                <TableRow>
-                  <TableCell sx={{ color: "#B71C1C", fontWeight: "bold" }}>
-                    Name
-                  </TableCell>
-                  <TableCell sx={{ color: "#B71C1C", fontWeight: "bold" }}>
-                    Code
-                  </TableCell>
-                  <TableCell sx={{ color: "#B71C1C", fontWeight: "bold" }}>
-                    Status
-                  </TableCell>
-                  {isShowAction && (
-                    <TableCell
-                      sx={{
-                        color: "#B71C1C",
-                        fontWeight: "bold",
-                        textAlign: "center",
-                      }}
-                    >
-                      Actions
-                    </TableCell>
-                  )}
+          {modalOpen.codeAlert ? (
+            <AddCodeAnnouncementModal
+              open={modalOpen.codeAlert || false}
+              onClose={() => handleCloseModal("codeAlert")}
+              onSave={(d) => handleSave("codeAlert", d)}
+              announcementData={selectedItem}
+              loading={addcodeAlertsLoading || updateCodeAlertsLoading}
+              isInline={true}
+            />
+          ) : (
+            <>
+              {isShowAction && (
+                <TabHeader
+                  title="Code Alerts"
+                  btnText="Add Alert"
+                  downloadTemplate={handleDownloadTemplate}
+                  type="codeAlert"
+                  handleSearchChange={handleSearchChange}
+                  searchTerm={searchTerms}
+                  isShowAction={isShowAction}
+                  handleOpenModal={handleOpenModal}
+                />
+              )}
+              <TableContainer
+                component={Paper}
+                sx={{
+                  borderRadius: 2,
+                  boxShadow: "none",
+                  border: "1px solid #eee", overflowX: "auto",
+                }}
+              >
+                <Table sx={{ tableLayout: "auto", minWidth: 600 }}>
+                  <TableHead sx={{ bgcolor: "#FFEBEE" }}>
+                    <TableRow>
+                      <TableCell sx={{ color: "#B71C1C", fontWeight: "bold" }}>
+                        Name
+                      </TableCell>
+                      <TableCell sx={{ color: "#B71C1C", fontWeight: "bold" }}>
+                        Code
+                      </TableCell>
+                      <TableCell sx={{ color: "#B71C1C", fontWeight: "bold" }}>
+                        Status
+                      </TableCell>
+                      {isShowAction && (
+                        <TableCell
+                          sx={{
+                            color: "#B71C1C",
+                            fontWeight: "bold",
+                            textAlign: "center",
+                          }}
+                        >
+                          Actions
+                        </TableCell>
+                      )}
 
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredCodeAlerts.length > 0 ? (
-                  filteredCodeAlerts.map((row, i) => (
-                    <TableRow key={i} hover>
-                      <TableCell sx={{ fontWeight: 500 }}>{row.name}</TableCell>
-                      <TableCell>
-                        <Chip label={row.shortCode} size="small" />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={row.enabled ? "Active" : "Inactive"}
-                          color={row.enabled ? "success" : "default"}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        {canEdit && (
-                          <IconButton
-                            color="primary"
-                            onClick={() => handleOpenModal("codeAlert", row)}
-                            size="small"
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        )}
-                        {canDelete && (
-                          <IconButton
-                            onClick={() => {
-                              setSelectedItem({ type: "codeAlert", id: row?._id });
-                              setDeleteOpen(true);
-                            }}
-                            color="error"
-                            size="small"
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        )}
-                      </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      align="center"
-                      sx={{ py: 3, color: "#888" }}
-                    >
-                      No code alerts.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <AddCodeAnnouncementModal
-            open={modalOpen.codeAlert || false}
-            onClose={() => handleCloseModal("codeAlert")}
-            onSave={(d) => handleSave("codeAlert", d)}
-            announcementData={selectedItem}
-            loading={addcodeAlertsLoading || updateCodeAlertsLoading}
-          />
+                  </TableHead>
+                  <TableBody>
+                    {filteredCodeAlerts.length > 0 ? (
+                      filteredCodeAlerts.map((row, i) => (
+                        <TableRow key={i} hover>
+                          <TableCell sx={{ fontWeight: 500 }}>{row.name}</TableCell>
+                          <TableCell>
+                            <Chip label={row.shortCode} size="small" />
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={row.enabled ? "Active" : "Inactive"}
+                              color={row.enabled ? "success" : "default"}
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell align="center">
+                            {canEdit && (
+                              <IconButton
+                                color="primary"
+                                onClick={() => handleOpenModal("codeAlert", row)}
+                                size="small"
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            )}
+                            {canDelete && (
+                              <IconButton
+                                onClick={() => {
+                                  setSelectedItem({ type: "codeAlert", id: row?._id });
+                                  setDeleteOpen(true);
+                                }}
+                                color="error"
+                                size="small"
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={4}
+                          align="center"
+                          sx={{ py: 3, color: "#888" }}
+                        >
+                          No code alerts.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          )}
         </CustomTabPanel>
       </Paper>
       <DeleteConfirmationModal

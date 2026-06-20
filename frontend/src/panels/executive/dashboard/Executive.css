@@ -615,7 +615,8 @@ body {
     padding: 12px;
     box-shadow: var(--card-shadow);
     border-left: 5px solid var(--primary);
-    height: 200px;
+    min-height: 200px;
+    height: auto;
     display: flex;
     flex-direction: column;
 }

@@ -1136,7 +1136,7 @@ function Forms() {
                 </div>
 
                 {/* Patient Arrival Time */}
-                <div className="followup-card time-card">
+                <div className="followup-card time-car">
                   <label className="input-label">
                     Patient Arrival Time
                   </label>
