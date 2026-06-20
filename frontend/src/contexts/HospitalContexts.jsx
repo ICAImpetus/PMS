@@ -354,7 +354,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         refetch: refetchPatients,
     } = useQuery({
         queryKey: [
-            "patients",
+            "patient",
             pagination.patients.page,
             selectedHostpital,
             selectedBranch,

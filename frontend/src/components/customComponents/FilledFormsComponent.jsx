@@ -44,7 +44,7 @@ import { useApi } from "../../api/useApi";
 import { commonRoutes } from "../../api/apiService";
 import { toast } from "react-toastify";
 import HospitalContext from "../../contexts/HospitalContexts";
-import { FORMS_AVAILABLE_COLUMNS, getNestedValue } from "../../utils/exportUtils";
+import { FORMS_AVAILABLE_COLUMNS, FORMS_TEMPLATE, getNestedValue } from "../../utils/exportUtils";
 
 
 const searchOptions = [
@@ -483,9 +483,7 @@ const FilledFormsComponent = ({
   };
 
   const downloadTemplate = () => {
-    const headers = selectedFormColumns.length
-      ? selectedFormColumns
-      : FORMS_AVAILABLE_COLUMNS.map((col) => col.key);
+    const headers = FORMS_TEMPLATE.map((col) => col.key);
     const csvContent = [headers.join(",")].join("\n");
     const blob = new Blob(["\uFEFF" + csvContent], {
       type: "text/csv;charset=utf-8;",
@@ -971,9 +969,9 @@ const FilledFormsComponent = ({
               <MenuItem onClick={downloadTemplate}>
                 Download Template
               </MenuItem>
-              {/* <MenuItem onClick={handleBrowseCSV}>
+              <MenuItem onClick={handleBrowseCSV}>
                 Upload CSV File
-              </MenuItem> */}
+              </MenuItem>
             </Menu>
             <input
               ref={csvFileInputRef}

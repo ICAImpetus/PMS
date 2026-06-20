@@ -146,6 +146,9 @@ export const SInglePatientDetails = () => {
         // 2. Call API if Search Term OR Dates are present
         const shouldCallAPI = Boolean(searchValue || startDate || endDate);
 
+        console.log("shouldCallAPI", shouldCallAPI)
+
+
         if (shouldCallAPI) {
             console.log("Calling API with dates/search...");
 
@@ -182,10 +185,15 @@ export const SInglePatientDetails = () => {
                         visit?.department?.name?.toLowerCase().includes(searchValue) ||
                         visit?.purpose?.toLowerCase().includes(searchValue)
                 );
+            } else {
+                filtered = visits
             }
         }
 
+        // console.log("filter", filtered);
+
         setVisits(filtered);
+        setFilteredVisits(filtered)
     };
     const handleSearchKeyDown = (e) => {
         if (e.key === "Enter") {
@@ -285,66 +293,17 @@ export const SInglePatientDetails = () => {
 
 
     const onExport = async () => {
-        if (!startDate || !endDate) {
-            toast.warn("Please Enter Start And End Date");
-            return;
-        }
+        handleExport({
+            format: exportFormat,
+            data: filteredVisits,
+            columns: FORMS_AVAILABLE_COLUMNS,
+            fileName: `forms${startDate}_${endDate}`,
+            title: "Form-Submiitted Report",
+        });
 
-        if (new Date(startDate) > new Date(endDate)) {
-            toast.warn("Start date cannot be greater than end date");
-            return;
-        }
+        setExportDialogOpen(false)
 
-        try {
-            const res = await patientHistory(
-                patient?.hospitalId,
-                patient?._id,
-                1,
-                startDate,
-                endDate,
-                searchInput,
-                true
-            );
 
-            console.log("patient fetch", res);
-
-            if (res?.success) {
-                const data = res?.data || [];
-
-                setVisits(data);
-                setFilteredVisits(data)
-
-                if (!data.length) {
-                    toast.info("No data found for export");
-                    return;
-                }
-
-                handleExport({
-                    format: exportFormat,
-                    data,
-                    columns: FORMS_AVAILABLE_COLUMNS,
-                    fileName: `forms${startDate}_${endDate}`,
-                    title: "Form-Submiitted Report",
-                });
-
-                setPagination((prev) => ({
-                    ...prev,
-                    patients: {
-                        ...res.pagination,
-                    },
-                }));
-
-                setStartDate("");
-                setEndDate("");
-                setExportDialogOpen(false);
-                toast.success("Export successful");
-            } else {
-                toast.error("Failed to fetch patients");
-            }
-        } catch (error) {
-            console.error(error);
-            toast.error("Error fetching patient");
-        }
     };
 
     const handleMoreMenuOpen = (event) => {
@@ -568,6 +527,25 @@ export const SInglePatientDetails = () => {
                                             >
                                                 Search
                                             </Button>
+                                            <Button
+                                                variant="outlined"
+                                                color="secondary"
+                                                onClick={() => {
+                                                    setStartDate('')
+                                                    setEndDate('')
+                                                    setSearchInput('')
+                                                    toast.success("Date filter cleared");
+                                                }}
+                                                // disabled={!searchInput}
+                                                sx={{
+                                                    textTransform: "none",
+                                                    fontWeight: 500,
+                                                    height: "36px",
+                                                    minWidth: "70px",
+                                                }}
+                                            >
+                                                Clear
+                                            </Button>
                                         </InputAdornment>
                                     ),
                                 }}
@@ -663,8 +641,6 @@ export const SInglePatientDetails = () => {
                                     color="primary"
                                     variant="contained"
                                     disabled={
-                                        !startDate ||
-                                        !endDate ||
                                         patientHistoryLoading
                                     }
                                 >
@@ -775,7 +751,7 @@ export const SInglePatientDetails = () => {
                                             padding: "6px 16px",
                                             fontWeight: 600,
                                             fontSize: "0.85rem",
-                                            color: "#fff"
+                                            // color: "bal"
                                         },
                                     }}
                                 >

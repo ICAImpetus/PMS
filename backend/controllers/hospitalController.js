@@ -8365,15 +8365,15 @@ export const getPatientByRole = async (req, res) => {
       ];
     }
 
-    // if (startDate || endDate) {
-    //   match.createdAt = {};
-    //   if (startDate) match.createdAt.$gte = new Date(startDate);
-    //   if (endDate) {
-    //     const end = new Date(endDate);
-    //     end.setHours(23, 59, 59, 999);
-    //     match.createdAt.$lte = end;
-    //   }
-    // }
+    if (startDate || endDate) {
+      match.createdAt = {};
+      if (startDate) match.createdAt.$gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        match.createdAt.$lte = end;
+      }
+    }
 
     // Fetch data
     const [patients, totalDocument] = await Promise.all([
