@@ -801,6 +801,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         loading,
         errors,
         dateRange,
+        patients,
         handleFilterChange
     ]);
     return (
