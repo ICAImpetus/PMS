@@ -14,9 +14,9 @@ export default function UsersCard({ label = "total", count = 0, option = {}, onC
             sx={{
                 boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
                 minWidth: 150,
-                minHeight: 120,
+                minHeight: 80,
                 border: "none",
-                borderRadius: "12px",
+                borderRadius: "10px",
                 borderLeft: "6px solid #0f172a",
                 cursor: pointer ? "pointer" : "default"
             }}
@@ -25,7 +25,9 @@ export default function UsersCard({ label = "total", count = 0, option = {}, onC
             <CardContent sx={{
                 display: "flex",
                 flexDirection: "column",
-                height: "100%"
+                height: "100%",
+                p: 1.5,
+                "&:last-child": { pb: 1.5 }
             }}>
                 {/* Header */}
                 <Typography variant="subtitle2" color="text.secondary">
@@ -33,9 +35,9 @@ export default function UsersCard({ label = "total", count = 0, option = {}, onC
                 </Typography>
 
                 <Typography
-                    variant="h3"
+                    variant="h4"
                     fontWeight="bold"
-                    sx={{ mb: Object.keys(option).length > 0 ? 1 : 0 }}
+                    sx={{ mb: Object.keys(option).length > 0 ? 0.5 : 0 }}
                 >
                     {count}
                 </Typography>

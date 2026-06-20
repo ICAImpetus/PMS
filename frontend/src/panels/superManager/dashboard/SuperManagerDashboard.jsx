@@ -531,7 +531,7 @@ const Dashboard = () => {
             </div>
 
             <div style={{
-              height: "400px",
+              maxHeight: "200px",
               overflow: "auto"
             }}>
 
@@ -574,7 +574,7 @@ const Dashboard = () => {
               </table>
             </div>
 
-            <div className="patient-summary" style={{ marginTop: "10px" }}>
+            <div className="patient-summary" style={{ marginTop: "6px", fontSize: "0.82rem" }}>
               <p><strong>New Patients :</strong> {totalNew}</p>
               <p><strong>Old Patients :</strong> {totalOld}</p>
               <p><strong>Total Registered Patients :</strong> {totalNew + totalOld}</p>
@@ -587,8 +587,8 @@ const Dashboard = () => {
               <i className="fas fa-chart-pie"></i> Distribution
             </div>
 
-            <div className="chart-wrapper">
-              <Doughnut data={chartData} options={{ responsive: true }} />
+            <div className="chart-wrapper" style={{ height: "180px" }}>
+              <Doughnut data={chartData} options={{ responsive: true, maintainAspectRatio: false }} />
             </div>
           </div >
 
@@ -671,9 +671,9 @@ const Dashboard = () => {
 
       </div > */}
 
-      <div className="executive-dashboard-section">
+      <div className="executive-dashboard-section" style={{ marginBottom: "8px" }}>
         <div className="executive-outbound-grid">
-          <div className="executive-outbound-card">
+          <div className="executive-outbound-card" style={{ height: "auto", minHeight: "120px", padding: "14px" }}>
             <div className="executive-chart-title">
               <i className="fas fa-chart-pie"></i>Top Inbound Purpose
             </div>
@@ -693,7 +693,7 @@ const Dashboard = () => {
             </div>
 
           </div>
-          <div className="executive-outbound-card">
+          <div className="executive-outbound-card" style={{ height: "auto", minHeight: "120px", padding: "14px" }}>
             <div className="executive-chart-title">
               <i className="fas fa-chart-bar"></i>Top Outbound Purpose
             </div>
@@ -792,8 +792,8 @@ const Dashboard = () => {
               </span>
             </div>
 
-            <div className="chart-wrapper">
-              <Line data={patientStatusData} options={lineOptions} />
+            <div className="chart-wrapper" style={{ height: "180px" }}>
+              <Line data={patientStatusData} options={{...lineOptions, maintainAspectRatio: false}} />
             </div>
           </div>
 
@@ -803,8 +803,8 @@ const Dashboard = () => {
               <i className="fas fa-chart-bar"></i> Patient Category
             </div>
 
-            <div className="chart-wrapper">
-              <Bar data={patientCategoryData} options={barOptions} />
+            <div className="chart-wrapper" style={{ height: "180px" }}>
+              <Bar data={patientCategoryData} options={{...barOptions, maintainAspectRatio: false}} />
             </div>
           </div>
 

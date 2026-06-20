@@ -135,17 +135,7 @@ export const SInglePatientDetails = () => {
 
         let filtered = [...(visits || [])];
 
-        // 1. Frontend filtering
-        if (searchValue) {
-            filtered = filtered.filter(
-                (visit) =>
-                    visit?.doctor?.name?.toLowerCase().includes(searchValue) ||
-                    visit?.department?.name?.toLowerCase().includes(searchValue) ||
-                    visit?.purpose?.toLowerCase().includes(searchValue)
-            );
-        }
-
-        // 2. Form type filter
+        // 1. Form type filter
         if (formTypeFilter !== "all") {
             filtered = filtered.filter(
                 (visit) =>
@@ -153,11 +143,11 @@ export const SInglePatientDetails = () => {
             );
         }
 
-        // 3. API fallback ONLY when needed
-        const shouldCallAPI = searchValue && filtered.length === 0;
+        // 2. Call API if Search Term OR Dates are present
+        const shouldCallAPI = Boolean(searchValue || startDate || endDate);
 
         if (shouldCallAPI) {
-            console.log("Calling API...");
+            console.log("Calling API with dates/search...");
 
             try {
                 const res = await patientHistory(
@@ -169,8 +159,6 @@ export const SInglePatientDetails = () => {
                     searchInput,
                     true
                 );
-
-                console.log("API res", res);
 
                 if (res?.success) {
                     filtered = res.data || [];
@@ -184,6 +172,16 @@ export const SInglePatientDetails = () => {
                 }
             } catch (error) {
                 toast.error("Error To Fetch Patient History");
+            }
+        } else {
+            // Frontend Search Fallback if no API call needed
+            if (searchValue) {
+                filtered = filtered.filter(
+                    (visit) =>
+                        visit?.doctor?.name?.toLowerCase().includes(searchValue) ||
+                        visit?.department?.name?.toLowerCase().includes(searchValue) ||
+                        visit?.purpose?.toLowerCase().includes(searchValue)
+                );
             }
         }
 
@@ -424,79 +422,79 @@ export const SInglePatientDetails = () => {
 
     const openDateFilter = Boolean(dateFilterAnchorEl);
     return (
-        <Box sx={{ p: 3, backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
-            {/* Header with Back Button */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
-                <Button
-                    variant="outlined"
-                    startIcon={<ArrowBackIcon />}
-                    onClick={handleBack}
-                    sx={{
-                        color: "#212f3d",
-                        borderColor: "#212f3d",
-                        "&:hover": {
-                            backgroundColor: "#f0f0f0",
-                            borderColor: "#212f3d",
-                        },
-                    }}
-                >
-                    Back
-                </Button>
-                <Typography
-                    variant="h4"
-                    sx={{ fontWeight: 600, color: "#212f3d" }}
-                >
-                    Patient Details
-                </Typography>
-            </Box>
+        <Box sx={{ p: 1.5, backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
+            {/* Patient Information Card with Header */}
+            <Card sx={{ mb: 1.5, boxShadow: 2 }}>
+                <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>
+                    {/* Header inline */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1.5 }}>
+                        <Button
+                            variant="outlined"
+                            startIcon={<ArrowBackIcon />}
+                            onClick={handleBack}
+                            size="small"
+                            sx={{
+                                color: "#212f3d",
+                                borderColor: "#212f3d",
+                                height: 32,
+                                "&:hover": {
+                                    backgroundColor: "#f0f0f0",
+                                    borderColor: "#212f3d",
+                                },
+                            }}
+                        >
+                            Back
+                        </Button>
+                        <Typography
+                            variant="h6"
+                            sx={{ fontWeight: 600, color: "#212f3d", m: 0, lineHeight: 1 }}
+                        >
+                            Patient Details
+                        </Typography>
+                    </Box>
+                    <Divider sx={{ mb: 1.5 }} />
 
-            {/* Patient Information Card */}
-            <Card sx={{ mb: 3, boxShadow: 2 }}>
-                <CardContent>
-                    <Grid container spacing={2}>
-                        <Grid item xs={12} sm={6} md={3}>
+                    <Grid container spacing={1.5} alignItems="flex-start">
+                        <Grid item xs={12} sm={6} md={2.5}>
                             <Typography variant="caption" sx={{ color: "#7c8fa3" }}>
                                 Patient Name
                             </Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
                                 {patient.patientName}
                             </Typography>
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid item xs={12} sm={6} md={2.5}>
                             <Typography variant="caption" sx={{ color: "#7c8fa3" }}>
                                 Mobile Number
                             </Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
                                 {patient.patientMobile}
                             </Typography>
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid item xs={12} sm={6} md={2}>
                             <Typography variant="caption" sx={{ color: "#7c8fa3" }}>
                                 Age / Gender
                             </Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
                                 {patient?.patientAge} / {patient.gender}
                             </Typography>
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid item xs={12} sm={6} md={2}>
                             <Typography variant="caption" sx={{ color: "#7c8fa3" }}>
                                 Total Visits
                             </Typography>
                             <Typography
-                                variant="h6"
-                                sx={{ fontWeight: 600, color: "#212f3d" }}
+                                variant="subtitle2"
+                                sx={{ fontWeight: 600, color: "#212f3d", lineHeight: 1.2 }}
                             >
                                 {patient?.totalVisit}
                             </Typography>
                         </Grid>
-                        <Grid item xs={12}>
-                            <Divider />
-                        </Grid>
-                        <Grid item xs={12}>
+                        <Grid item xs={12} sm={12} md={3}>
                             <Typography variant="caption" sx={{ color: "#7c8fa3" }}>
                                 Address
                             </Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.5 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.5, lineHeight: 1.2 }}>
                                 {patient?.location}
                             </Typography>
                         </Grid>
@@ -505,9 +503,39 @@ export const SInglePatientDetails = () => {
             </Card>
 
             {/* Filter Card */}
-            <Card sx={{ mb: 3, boxShadow: 2 }}>
-                <CardContent>
-                    <Grid container spacing={2} alignItems="center">
+            <Card sx={{ mb: 1.5, boxShadow: 2 }}>
+                <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>
+                    <Grid container spacing={1.5} alignItems="center">
+
+
+
+                        {/* Start Date */}
+                        <Grid item xs={6} sm={3} md={2}>
+                            <TextField
+                                label="Start Date"
+                                type="date"
+                                fullWidth
+                                size="small"
+                                InputLabelProps={{ shrink: true }}
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                InputProps={{ sx: { height: 32, fontSize: "0.85rem" } }}
+                            />
+                        </Grid>
+
+                        {/* End Date */}
+                        <Grid item xs={6} sm={3} md={2}>
+                            <TextField
+                                label="End Date"
+                                type="date"
+                                fullWidth
+                                size="small"
+                                InputLabelProps={{ shrink: true }}
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                InputProps={{ sx: { height: 32, fontSize: "0.85rem" } }}
+                            />
+                        </Grid>
 
                         {/* Search */}
                         <Grid item xs={12} sm={6} md={3}>
@@ -554,7 +582,7 @@ export const SInglePatientDetails = () => {
                                     variant="outlined"
                                     startIcon={<ViewColumnIcon />}
                                     onClick={handleOpen}
-                                    sx={{ height: 40, justifyContent: "flex-start" }}
+                                    sx={{ height: 32, justifyContent: "flex-start", textTransform: "none" }}
                                 >
                                     Select fields ({selectedFormColumns.length})
                                 </Button>
@@ -596,14 +624,14 @@ export const SInglePatientDetails = () => {
 
 
                         {/* Export */}
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid item xs={12} sm={6} md={2}>
                             <Button
                                 fullWidth
                                 variant="contained"
                                 color="warning"
                                 startIcon={<DownloadIcon />}
                                 onClick={() => setExportDialogOpen(true)}
-                                sx={{ height: 40 }}
+                                sx={{ height: 32, textTransform: "none" }}
                             >
                                 Export
                             </Button>
@@ -612,30 +640,8 @@ export const SInglePatientDetails = () => {
                             <DialogTitle>Export Data</DialogTitle>
 
                             <DialogContent>
-
-                                {/* Date Range Section */}
-                                <div style={{ display: "flex", gap: "12px", marginTop: "10px" }}>
-                                    <TextField
-                                        label="Start Date"
-                                        type="date"
-                                        fullWidth
-                                        InputLabelProps={{ shrink: true }}
-                                        value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
-                                    />
-
-                                    <TextField
-                                        label="End Date"
-                                        type="date"
-                                        fullWidth
-                                        InputLabelProps={{ shrink: true }}
-                                        value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
-                                    />
-                                </div>
-
                                 {/* Format Selection */}
-                                <div style={{ marginTop: "20px" }}>
+                                <div style={{ marginTop: "10px" }}>
                                     <RadioGroup
                                         value={exportFormat}
                                         onChange={(e) => setExportFormat(e.target.value)}
@@ -700,7 +706,9 @@ export const SInglePatientDetails = () => {
                             value={formTypeFilter}
                             onChange={handleFormTypeChange}
                             sx={{
-                                borderBottom: "2px solid #e0e0e0",
+                                borderBottom: "1px solid #e0e0e0",
+                                minHeight: 36,
+                                "& .MuiTab-root": { minHeight: 36, padding: "6px 16px" }
                             }}
                         >
                             <Tab
@@ -764,9 +772,10 @@ export const SInglePatientDetails = () => {
                                     sx={{
                                         backgroundColor: "#212f3d",
                                         "& th": {
-
+                                            padding: "6px 16px",
                                             fontWeight: 600,
-                                            fontSize: "0.95rem",
+                                            fontSize: "0.85rem",
+                                            color: "#fff"
                                         },
                                     }}
                                 >
@@ -787,6 +796,7 @@ export const SInglePatientDetails = () => {
                                             sx={{
                                                 "&:hover": { backgroundColor: "#f0f0f0" },
                                                 "&:nth-of-type(odd)": { backgroundColor: "#fafafa" },
+                                                "& td": { padding: "8px 16px" }
                                             }}
                                         >
                                             <TableCell align="center">

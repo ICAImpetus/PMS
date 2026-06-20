@@ -665,11 +665,11 @@ const TeamDashboard = () => {
 
                   <div
                     style={{
-                      height: "275px",
+                      height: "200px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      padding: "10px",
+                      padding: "6px",
                       width: "100%",
                       maxWidth: "100%"
                     }}
@@ -681,9 +681,9 @@ const TeamDashboard = () => {
             </div>
           </div>
 
-          <div className="executive-dashboard-section">
+          <div className="executive-dashboard-section" style={{ marginBottom: "8px" }}>
             <div className="executive-outbound-grid">
-              <div className="executive-outbound-card">
+              <div className="executive-outbound-card" style={{ height: "auto", minHeight: "100px", padding: "14px" }}>
                 <div className="executive-chart-title">
                   <PieChartIcon />Top Inbound Purpose
                 </div>
@@ -705,7 +705,7 @@ const TeamDashboard = () => {
                 )}
 
               </div>
-              <div className="executive-outbound-card">
+              <div className="executive-outbound-card" style={{ height: "auto", minHeight: "100px", padding: "14px" }}>
                 <div className="executive-chart-title">
                   <BarChartIcon />Top Outbound Purpose
                 </div>

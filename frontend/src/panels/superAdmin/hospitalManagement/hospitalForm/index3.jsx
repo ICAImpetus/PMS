@@ -6,6 +6,7 @@ import {
   CircularProgress,
   TextField,
   InputAdornment,
+  Button,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 // import { tokens } from "../../../../theme";
@@ -112,6 +113,49 @@ const HospitalCreationNew = () => {
     );
   }
 
+  if (open) {
+    return (
+      <ScrollableForm>
+        <Toaster position="top-right" />
+        <Box display="flex" alignItems="center" gap={2} mb={2}>
+          <Button
+            variant="outlined"
+            onClick={handleClose}
+            size="small"
+            sx={{
+              color: "#212f3d",
+              borderColor: "#212f3d",
+              height: 32,
+              textTransform: "none",
+              "&:hover": {
+                backgroundColor: "#f0f0f0",
+                borderColor: "#212f3d",
+              },
+            }}
+          >
+            Back
+          </Button>
+          <Header
+            title={selectedHospital ? "Edit" : "Create"}
+            subtitle="Hospital Details"
+          />
+        </Box>
+        <Divider sx={{ borderBottomWidth: 2, my: 2 }} />
+        <BreadcrumbNav />
+        <Divider sx={{ borderBottomWidth: 2, my: 2 }} />
+        
+        <Box sx={{ mt: 2 }}>
+          <AddHospitalData1
+            initialState={selectedHospital}
+            refetchHospital={refetchHospital}
+            handleClose={handleClose}
+            isInline={true}
+          />
+        </Box>
+      </ScrollableForm>
+    );
+  }
+
   return (
     <ScrollableForm>
       <Toaster position="top-right" />
@@ -196,17 +240,6 @@ const HospitalCreationNew = () => {
       // onAssignUser={handleOpenAssign} // Pass function to open modal
       // onRemoveUser={handleRemoveUser}
       />
-
-      {/* Add/Edit Hospital Modal */}
-      <Modal open={open} onClose={handleClose}>
-        <Box sx={modalStyle(theme)}>
-          <AddHospitalData1
-            initialState={selectedHospital}
-            refetchHospital={refetchHospital}
-            handleClose={handleClose}
-          />
-        </Box>
-      </Modal>
 
       {/*  Assign Admin Popup Modal */}
       {/* <AssignAdminModal

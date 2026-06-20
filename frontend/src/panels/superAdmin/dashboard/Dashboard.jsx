@@ -510,7 +510,7 @@ const SuperAdminDashboard = () => {
           )}
 
           {/* --- CRITICAL KPI STRIP --- */}
-          <section className="critical-strip">
+          <section className="critical-strip" style={{ marginBottom: "12px" }}>
             <UsersCard label="Users" count={analytics?.totalUsers} onClick={() => navigate("/user-management", { replace: true, state: { selectedHostpital } })} />
             <UsersCard label="Branches" count={analytics?.totalBranches || 0} onClick={() => {
               const selectedHospitalData = hospitals.find(
@@ -557,24 +557,25 @@ const SuperAdminDashboard = () => {
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(2, 1fr)",
-              gap: "20px",
+              gap: "8px",
               width: "100%",
+              marginBottom: "8px"
             }}
           >
-            <div className="data-card" style={{ width: "100%", height: "480px", borderLeft: "5px solid #0f172a" }}>
+            <div className="data-card" style={{ width: "100%", height: "310px", borderLeft: "5px solid #0f172a" }}>
               <h4>
                 <Users size={18} className="mr-2" /> Hospital Activity
               </h4>
 
               <div
                 className="chart-container-sm"
-                style={{ width: "100%", height: "350px" }}
+                style={{ width: "100%", height: "240px" }}
               >
                 <Bar data={data} options={options} />
               </div>
             </div>
 
-            <div className="data-card" style={{ width: "100%", height: "480px", borderLeft: "5px solid #0f172a" }}>
+            <div className="data-card" style={{ width: "100%", height: "310px", borderLeft: "5px solid #0f172a" }}>
               <h4>
                 <MedicalServicesIcon sx={{ mr: 1 }} /> Patient Analytics
               </h4>
@@ -622,7 +623,7 @@ const SuperAdminDashboard = () => {
             </div>
           </div>
 
-          <div className="executive-dashboard-section">
+          <div className="executive-dashboard-section" style={{ marginBottom: "8px" }}>
             <div className="executive-outbound-grid">
               <div className="executive-outbound-card">
                 <div className="executive-chart-title">
@@ -726,7 +727,7 @@ const SuperAdminDashboard = () => {
             </div> */}
             </div>
           </div>
-          <div className="data-grid row-3">
+          <div className="data-grid row-3" style={{ marginBottom: "8px", gap: "8px" }}>
             <div className="data-card">
               <h4>Recent Activity</h4>
               <div className="scrollable-content">

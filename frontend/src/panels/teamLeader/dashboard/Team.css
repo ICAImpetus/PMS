@@ -30,18 +30,18 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
     border-bottom: 1px solid #e1e8ed;
 }
 
 .tld-page-header h1 {
-    font-size: 1.8rem;
+    font-size: 1.3rem;
     font-weight: 700;
     color: var(--tld-secondary);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     margin: 0;
 }
 
@@ -76,22 +76,22 @@
 .tld-section-filters select,
 .tld-aca-filters select,
 .tld-table-filters select {
-    padding: 10px 14px;
+    padding: 7px 10px;
     border: 1px solid #e1e8ed;
-    border-radius: 8px;
+    border-radius: 6px;
     background: white;
-    font-size: 0.9rem;
+    font-size: 0.82rem;
 }
 
 /* Top Date Filter Bar */
 .tld-date-filter {
     display: flex;
-    gap: 16px;
-    margin-bottom: 25px;
+    gap: 10px;
+    margin-bottom: 8px;
     background: var(--tld-card-bg);
-    padding: 18px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    padding: 10px 14px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
@@ -99,7 +99,7 @@
 
 .tld-filter-fields {
     display: flex;
-    gap: 16px;
+    gap: 10px;
     align-items: flex-end;
     flex-wrap: wrap;
 }
@@ -107,8 +107,8 @@
 .tld-filter-item {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    min-width: 180px;
+    gap: 4px;
+    min-width: 160px;
 }
 
 .tld-filter-item label {
@@ -134,15 +134,15 @@
     color: white;
     transform: translateY(-2px);
     border: none;
-    padding: 10px 16px;
-    border-radius: 8px;
+    padding: 7px 12px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
     font-weight: 500;
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.9rem;
+    gap: 6px;
+    font-size: 0.82rem;
     background-color: var(--tld-success)
 }
 
@@ -212,12 +212,12 @@
 /* Login Info Stats */
 .tld-login-stats-row {
     display: flex;
-    gap: 22px;
-    margin-bottom: 25px;
+    gap: 10px;
+    margin-bottom: 8px;
     background: var(--tld-card-bg);
-    padding: 18px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    padding: 10px 14px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .tld-login-stat-item {
@@ -225,7 +225,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 12px 18px;
+    padding: 8px 12px;
     border-right: 1px solid #e1e8ed;
     flex: 1;
 }
@@ -235,39 +235,39 @@
 }
 
 .tld-stat-label {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--tld-gray);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
 }
 
 .tld-stat-value-lg {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: var(--tld-dark);
 }
 
 /* Sections Common */
 .tld-section-wrapper {
-    margin-bottom: 35px;
+    margin-bottom: 10px;
 }
 
 .tld-section-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 18px;
+    margin-bottom: 8px;
 }
 
 .tld-section-heading {
-    font-size: 1.4rem;
+    font-size: 1.05rem;
     font-weight: 700;
     color: var(--tld-secondary);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     margin: 0;
 }
 
@@ -280,15 +280,15 @@
 .tld-reporting-grid-wrapper {
     display: grid;
     grid-template-columns: 1fr 2fr;
-    gap: 22px;
-    margin-bottom: 30px;
+    gap: 8px;
+    margin-bottom: 8px;
 }
 
 .tld-total-calls-card {
     background: var(--tld-card-bg);
-    border-radius: 12px;
-    padding: 22px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -297,14 +297,14 @@
 .tld-daily-metrics-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 18px;
+    gap: 8px;
 }
 
 .tld-kpi-card {
     background: var(--tld-card-bg);
-    border-radius: 12px;
-    padding: 18px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     text-align: center;
     transition: all 0.3s;
     border: none !important;
@@ -316,22 +316,22 @@
 }
 
 .tld-kpi-value {
-    font-size: 1.8rem;
+    font-size: 1.3rem;
     font-weight: 700;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     color: var(--tld-primary);
 }
 
 .tld-kpi-label {
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     color: var(--tld-gray);
 }
 
 .tld-kpi-breakdown {
     display: flex;
     justify-content: space-between;
-    margin-top: 10px;
-    font-size: 0.75rem;
+    margin-top: 6px;
+    font-size: 0.7rem;
 }
 
 .tld-text-success {
@@ -353,25 +353,25 @@
 /* ACA Section */
 .tld-aca-wrapper {
     background: var(--tld-card-bg);
-    border-radius: 12px;
-    padding: 22px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    margin-bottom: 30px;
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-bottom: 8px;
 }
 
 .tld-aca-metrics-row {
     display: flex;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 18px;
-    margin-bottom: 22px;
+    gap: 8px;
+    margin-bottom: 10px;
     justify-content: space-between;
 }
 
 .tld-metric-box {
     background: var(--tld-card-bg);
-    border-radius: 12px;
-    padding: 18px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     text-align: center;
     border: none !important;
     border-left: 5px solid #212f3d !important;
@@ -380,18 +380,18 @@
 }
 
 .tld-metric-box-value {
-    font-size: 2rem;
+    font-size: 1.4rem;
     font-weight: 700;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     color: var(--tld-primary);
 }
 
 .tld-trend-indicator {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
+    gap: 4px;
 }
 
 .tld-trend-positive {
@@ -405,24 +405,24 @@
 /* Outbound Section */
 .tld-outbound-wrapper {
     background: var(--tld-card-bg);
-    border-radius: 12px;
-    padding: 22px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    margin-bottom: 30px;
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-bottom: 8px;
 }
 
 .tld-outbound-details-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 22px;
-    margin-bottom: 22px;
+    gap: 8px;
+    margin-bottom: 8px;
 }
 
 .tld-detail-card {
     background: var(--tld-card-bg);
-    border-radius: 12px;
-    padding: 22px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     border: none !important;
     border-left: 5px solid #212f3d !important;
     transition: all 0.3s;
@@ -431,14 +431,14 @@
 }
 
 .tld-detail-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
 }
 
 .tld-card-title {
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: 600;
-    margin-bottom: 18px;
+    margin-bottom: 10px;
     color: var(--tld-secondary);
     display: flex;
     align-items: center;
@@ -449,7 +449,7 @@
 .tld-list-row {
     display: flex;
     justify-content: space-between;
-    padding: 10px 0;
+    padding: 6px 0;
     border-bottom: 1px solid #eee;
 }
 
@@ -569,30 +569,30 @@
 /* Team Analytics */
 .tld-analytics-wrapper {
     background: var(--tld-card-bg);
-    border-radius: 12px;
-    padding: 22px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    margin-bottom: 30px;
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-bottom: 8px;
 }
 
 .tld-team-metrics-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
-    margin-bottom: 22px;
+    gap: 8px;
+    margin-bottom: 10px;
 }
 
 .tld-split-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 22px;
+    gap: 8px;
 }
 
 .tld-plain-card {
     background: var(--tld-card-bg);
-    border-radius: 12px;
-    padding: 22px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .tld-team-list {
@@ -604,33 +604,33 @@
 .tld-team-list-container {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 6px;
 }
 
 .tld-team-member-card {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 16px;
+    gap: 10px;
+    padding: 8px 12px;
     background: #FFFFFF;
-    border-radius: 12px;
+    border-radius: 8px;
     border: none !important;
     border-left: 5px solid #212f3d !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
     transition: all 0.2s ease;
 }
 
 .tld-team-member-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
     border-color: var(--tld-primary);
-    transform: translateX(4px);
+    transform: translateX(3px);
 }
 
 .tld-member-avatar {
-    width: 44px;
-    height: 44px;
+    width: 32px;
+    height: 32px;
     background: #EEF2FF;
-    border-radius: 10px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -644,18 +644,18 @@
 .tld-member-name {
     font-weight: 700;
     color: var(--tld-dark);
-    font-size: 0.95rem;
+    font-size: 0.85rem;
 }
 
 .tld-member-role {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--tld-gray);
 }
 
 .tld-member-stats-badge {
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 0.8rem;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 0.72rem;
     font-weight: 700;
 }
 
@@ -1233,17 +1233,22 @@
 .executive-combined-reporting .bottom-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 22px;
+    gap: 8px;
 }
 
 .executive-combined-total-calls {
     background: var(--tld-card-bg);
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+    padding: 10px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     border: none !important;
     border-left: 5px solid #212f3d !important;
     transition: all 0.3s ease;
+    height: auto !important;
+    min-height: 80px !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .executive-combined-total-calls:hover {
@@ -1252,13 +1257,13 @@
 }
 
 .executive-chart-title {
-    font-size: 0.85rem;
+    font-size: 0.8rem !important;
     font-weight: 600;
-    color: var(--tld-gray);
-    margin-bottom: 12px;
+    color: var(--tld-gray) !important;
+    margin-bottom: 4px !important;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 6px !important;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -1282,18 +1287,18 @@
 }
 
 .executive-metric-value {
-    font-size: 2.8rem;
-    font-weight: 800;
-    color: var(--tld-dark);
-    margin: 8px 0;
+    font-size: 1.4rem !important;
+    font-weight: 800 !important;
+    color: var(--tld-dark) !important;
+    margin: 2px 0 !important;
     line-height: 1;
 }
 
 .executive-metric-breakdown {
     display: flex;
-    gap: 20px;
-    margin-top: 18px;
-    padding-top: 18px;
+    gap: 10px;
+    margin-top: 4px !important;
+    padding-top: 4px !important;
     border-top: 1px solid var(--tld-border);
 }
 

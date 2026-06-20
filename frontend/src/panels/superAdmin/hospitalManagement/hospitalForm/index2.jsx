@@ -137,6 +137,7 @@ const AddHospitalData1 = ({
   initialState = null,
   refetchHospital,
   handleClose = null,
+  isInline = false,
 }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -203,15 +204,15 @@ const AddHospitalData1 = ({
   return (
     <Box
       sx={{
-        maxWidth: "900px",
-        height: "100vh",
-        margin: "auto",
-        backgroundColor: colors.primary[900],
-        borderRadius: "8px",
-        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+        width: "100%",
+        maxWidth: isInline ? "100%" : "900px",
+        margin: isInline ? "0" : "auto",
+        backgroundColor: isInline ? "transparent" : colors.primary[900],
+        borderRadius: isInline ? "0px" : "8px",
+        boxShadow: isInline ? "none" : "0px 4px 10px rgba(0, 0, 0, 0.1)",
         display: "flex",
         flexDirection: "column",
-        overflow: "hidden",
+        height: isInline ? "auto" : "100%",
       }}
     >
       <Formik
@@ -237,23 +238,25 @@ const AddHospitalData1 = ({
           setFieldValue
         }) => (
           <Form
-            style={{ display: "flex", flexDirection: "column", height: "100%" }}
+            style={{ display: "flex", flexDirection: "column", height: isInline ? "auto" : "100%" }}
           >
             {/* Scrollable Content */}
             <Box
               sx={{
-                padding: "20px",
-                overflowY: "auto",
-                flex: 1,
+                padding: isInline ? "0" : "20px",
+                overflowY: isInline ? "visible" : "auto",
+                flex: isInline ? "none" : 1,
                 scrollbarWidth: "none",
                 "&::-webkit-scrollbar": { display: "none" },
               }}
             >
-              <Typography variant="h4" gutterBottom textAlign={"center"}>
-                {initialState?._id || initialState?.ID || initialState?.id
-                  ? `Edit Hospital Basic Details`
-                  : `Hospital Creation Form`}
-              </Typography>
+              {!isInline && (
+                <Typography variant="h4" gutterBottom textAlign={"center"}>
+                  {initialState?._id || initialState?.ID || initialState?.id
+                    ? `Edit Hospital Basic Details`
+                    : `Hospital Creation Form`}
+                </Typography>
+              )}
 
               {/* Components */}
               <HospitalBasicDetailAccrodian
@@ -502,11 +505,12 @@ const AddHospitalData1 = ({
             {/*  Footer with Loading Button */}
             <Box
               sx={{
-                padding: "16px 20px",
-                borderTop: `1px solid ${colors.grey[700]}`,
-                backgroundColor: colors.primary[800],
+                padding: isInline ? "16px 0px" : "16px 20px",
+                borderTop: isInline ? "none" : `1px solid ${colors.grey[700]}`,
+                backgroundColor: isInline ? "transparent" : colors.primary[800],
                 display: "flex",
-                justifyContent: "space-between",
+                justifyContent: isInline ? "flex-start" : "space-between",
+                gap: 2,
                 alignItems: "center",
                 flexShrink: 0,
               }}
