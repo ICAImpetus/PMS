@@ -36,6 +36,31 @@ export const PATIENT_AVAILABLE_COLUMNS = [
     { key: "createdAt", label: "Created At" },
 ];
 
+export const FORMS_TEMPLATE = [
+    { key: "agentName", label: "Agent Name" },
+    { key: "formType", label: "Form Type" },
+    { key: "patientName", label: "Patient Name" },
+    { key: "patientMobile", label: "Patient Mobile No" },
+    { key: "patientStatus", label: "Patient Status" },
+    { key: "gender", label: "Patient Gender" },
+    { key: "age", label: "Patient Age" },
+    { key: "callStatus", label: "Call Status" },
+    { key: "purpose", label: "POC / Purpose" },
+    { key: "referenceFrom", label: "Reference From" },
+    { key: "callerType", label: "Caller Type" },
+    { key: "doctor", label: "Doctor" },
+    { key: "department", label: "Department" },
+    { key: "surgeryName", label: "Surgery Name" },
+    { key: "healthPackageName", label: "Health Package" },
+    { key: "healthSchemeName", label: "Health Scheme Name" },
+    { key: "govertHealthSchemeName", label: "On-Govt Health Scheme Name" },
+    { key: "nonGovtHealthSchemeName", label: "Non-Govt Health Scheme Name" },
+    { key: "reportName", label: "Report Name" },
+    { key: "followupStatus", label: "Follow-up Status" },
+    { key: "remarks", label: "Remarks" },
+    { key: "createdAt", label: "Submitted At" },
+];
+
 export const FORMS_AVAILABLE_COLUMNS = [
     { key: "agentName", label: "Agent Name" },
     { key: "formType", label: "Form Type" },

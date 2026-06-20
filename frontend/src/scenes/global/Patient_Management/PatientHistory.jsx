@@ -150,12 +150,6 @@ export const PatientHistory = () => {
     const { request: getPatients, loading: getPatientloading } = useApi(commonRoutes.getPatients)
 
 
-    const [searchParams] = useSearchParams();
-
-    console.log("searchParams", searchParams);
-
-
-
     const handleSearchApply = async () => {
         const searchValue = searchInput.trim().toLowerCase();
 
@@ -196,14 +190,7 @@ export const PatientHistory = () => {
                 );
 
                 if (res?.success) {
-                    filtered = res.data || [];
-
-                    setPagination((prev) => ({
-                        ...prev,
-                        patients: {
-                            ...res.pagination,
-                        },
-                    }));
+                    filtered = res.data || []
                 }
             } catch (error) {
                 toast.error("Error To Fetch Patient");
@@ -213,31 +200,6 @@ export const PatientHistory = () => {
         setFilteredPatients(filtered);
     };
 
-    useEffect(() => {
-        const page = searchParams.get("page");
-        const startDate = searchParams.get("startDate");
-        const endDate = searchParams.get("endDate");
-        const search = searchParams.get("search");
-
-        if (page) {
-            setPage(Number(page));
-        }
-
-        if (startDate) {
-            setStartDate(startDate);
-        }
-
-        if (endDate) {
-            setEndDate(endDate);
-        }
-
-        if (search) {
-            setSearchInput(search);
-        }
-    }, [searchParams]);
-    useEffect(() => {
-        setFilteredPatients(patients)
-    }, [patients])
 
     // Clear all filters
     const handleClearFilters = () => {
@@ -308,8 +270,6 @@ export const PatientHistory = () => {
     const handleResetDateFilter = () => {
         setStartDate("");
         setEndDate("");
-
-        ;
         handleCloseDateFilter();
     };
 
@@ -341,18 +301,13 @@ export const PatientHistory = () => {
 
                 setPatients(data);
                 setFilteredPatients(data);
+                console.log("data", data.length);
+
 
                 if (!data.length) {
                     toast.info("No data found for export");
                     return;
                 }
-
-                setPagination((prev) => ({
-                    ...prev,
-                    patients: {
-                        ...res.pagination,
-                    },
-                }));
             } else {
                 toast.error("Failed to fetch patients");
             }
@@ -384,21 +339,26 @@ export const PatientHistory = () => {
     };
     // Handle form type tab change
     const handleFormTypeChange = (event, newValue) => {
+        console.log("nwewvalue ", newValue);
+        console.log("event ", event);
+
         setFormTypeFilter(newValue);
     };
 
     // Calculate counts for each form type
     const calculateCounts = () => {
-        const allCount = patients.length;
-        const inboundCount = patients.filter(
+        const allCount = filteredPatients.length;
+        const inboundCount = filteredPatients.filter(
             (p) => p?.lastVisit?.formType?.toLowerCase() === "inbound"
         ).length;
-        const outboundCount = patients.filter(
+        const outboundCount = filteredPatients.filter(
             (p) => p?.lastVisit?.formType?.toLowerCase() === "outbound"
         ).length;
 
         return { allCount, inboundCount, outboundCount };
     };
+
+
 
     const counts = calculateCounts();
 
@@ -428,25 +388,7 @@ export const PatientHistory = () => {
             },
         }));
     };
-    // Handle click outside for dropdown
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (
-                formsColumnFilterRef.current &&
-                !formsColumnFilterRef.current.contains(event.target) &&
-                columnFilterButtonRef.current &&
-                !columnFilterButtonRef.current.contains(event.target)
-            ) {
-                setFormsColumnFilterOpen(false);
-            }
-        };
-        if (formsColumnFilterOpen) {
-            document.addEventListener("mousedown", handleClickOutside);
-        }
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, [formsColumnFilterOpen]);
+
 
     useEffect(() => {
         const error = errors?.patientsError
@@ -457,19 +399,25 @@ export const PatientHistory = () => {
 
 
     useEffect(() => {
+
+        console.log("patuetn ", formTypeFilter);
+        console.log("patients ", patients);
+
         if (formTypeFilter?.toLowerCase() === "all") {
             setFilteredPatients(patients);
             return;
         }
 
-        setFilteredPatients(
-            patients.filter(
-                (pat) =>
-                    pat?.lastVisit?.formType?.toLowerCase() ===
-                    formTypeFilter?.toLowerCase()
-            )
+        const filter = (patients || []).filter((pat) =>
+            pat?.lastVisit?.formType?.toLowerCase() ===
+            formTypeFilter?.toLowerCase()
         );
-    }, [formTypeFilter, patients]);
+
+        console.log("patuetn ", patients);
+
+
+        setFilteredPatients(filter);
+    }, [formTypeFilter]);
 
     return (
         <>

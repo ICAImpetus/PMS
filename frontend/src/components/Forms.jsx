@@ -3393,366 +3393,92 @@ function Forms() {
           </div>
         );
 
-      case "Justdial":
+      case "Justdial": return (
+        <div className="sub-section">
+          <h3>Missed Calls</h3>
 
-      case "Practo":
+          <div className="input-row">
+            <div className="input-group">
+              <label className="required">Connection Status</label>
 
-      case "Whatsapp":
+              <select
+                className="select-field"
+                value={form.formData.missedConnectionStatus}
+                onChange={(e) =>
+                  handleChange(
+                    "formData.missedConnectionStatus",
+                    e.target.value
 
-      case "Facebook":
-        // Generic logic for platforms to save space while keeping functionality
+                  )
+                }
+                required
+              >
+                <option value="">Select</option>
 
-        const platform = form.purpose
+                <option value="Connected">Connected</option>
 
-        return (
-          <div className="sub-section">
-            <h3>
-              {platform.charAt(0).toUpperCase() + platform.slice(1)} Details
-            </h3>
-
-            <div className="input-row">
-              <div className="input-group">
-                <label className="required">Lead?</label>
-
-                <select
-                  className="select-field"
-                  value={form.formData[`${platform}Lead`]}
-                  onChange={(e) =>
-                    handleChange(`${platform}Lead`, e.target.value)
-                  }
-                  required
-                  Caller Details >
-                  <option value="">Select</option>
-                  Caller Details
-                  <option value="Yes">Yes</option>
-
-                  <option value="No">No</option>
-                </select>
-              </div>
+                <option value="Not Connected">Not Connected</option>
+              </select>
             </div>
+          </div>
 
-            {form.formData[`${platform}Lead`] === "Yes" && (
-              // <>
-              //   <div className="input-row">
-              //     <div className="input-group">
-              //       <label className="required">Patient Name</label>
-
-              //       <input
-              //         type="text"
-              //         className="input-field"
-              //         value={form.formData.patientDetails.patientName}
-              //         onChange={(e) =>
-              //           handleChange(
-              //             `formData.patientDetails.patientName`,
-
-              //             e.target.value,
-              //           )
-              //         }
-              //         required
-              //       />
-              //     </div>
-
-              //     <div className="input-group">
-              //       <label className="required">Mobile</label>
-
-              //       <input
-              //         type="text"
-              //         className="input-field"
-              //         value={outboundFormData[`${platform}PatientMobile`]}
-              //         onChange={(e) =>
-              //           handleOutboundInputChange(
-              //             `${platform}PatientMobile`,
-
-              //             e.target.value,
-              //           )
-              //         }
-              //         required
-              //       />
-              //     </div>
-
-              //     <div className="input-group">
-              //       <label>Alt Mobile</label>
-
-              //       <input
-              //         type="text"
-              //         className="input-field"
-              //         value={outboundFormData[`${platform}AltMobile`]}
-              //         onChange={(e) =>
-              //           handleOutboundInputChange(
-              //             `${platform}AltMobile`,
-
-              //             e.target.value,
-              //           )
-              //         }
-              //       />
-              //     </div>
-              //   </div>
-
-              //   <div className="input-row">
-              //     <div className="input-group">
-              //       <label className="required">Age</label>
-
-              //       <input
-              //         type="number"
-              //         className="input-field"
-              //         value={outboundFormData[`${platform}PatientAge`]}
-              //         onChange={(e) =>
-              //           handleOutboundInputChange(
-              //             `${platform}PatientAge`,
-
-              //             e.target.value,
-              //           )
-              //         }
-              //         required
-              //       />
-              //     </div>
-
-              //     <div className="input-group">
-              //       <label className="required">Location</label>
-
-              //       <input
-              //         type="text"
-              //         className="input-field"
-              //         value={outboundFormData[`${platform}Location`]}
-              //         onChange={(e) =>
-              //           handleOutboundInputChange(
-              //             `${platform}Location`,
-
-              //             e.target.value,
-              //           )
-              //         }
-              //         required
-              //       />
-              //     </div>
-
-              //     <div className="input-group">
-              //       <label className="required">Gender</label>
-
-              //       <select
-              //         className="select-field"
-              //         value={outboundFormData[`${platform}Gender`]}
-              //         onChange={(e) =>
-              //           handleOutboundInputChange(
-              //             `${platform}Gender`,
-
-              //             e.target.value,
-              //           )
-              //         }
-              //         required
-              //       >
-              //         <option value="">Select</option>
-
-              //         <option value="Male">Male</option>
-
-              //         <option value="Female">Female</option>
-
-              //         <option value="NA">NA</option>
-              //       </select>
-              //     </div>
-              //   </div>
-
-              //   <div className="input-row">
-              //     <div className="input-group">
-              //       <label className="required">Status</label>
-
-              //       <select
-              //         className="select-field"
-              //         value={outboundFormData[`${platform}Status`]}
-              //         onChange={(e) =>
-              //           handleOutboundInputChange(
-              //             `${platform}Status`,
-
-              //             e.target.value,
-              //           )
-              //         }
-              //         required
-              //       >
-              //         <option value="">Select</option>
-
-              //         <option value="Old">Old</option>
-
-              //         <option value="New">New</option>
-
-              //         <option value="Non-Patient">Non-Patient</option>
-              //       </select>
-              //     </div>
-
-              //     <div className="input-group">
-              //       <label className="required">Category</label>
-
-              //       <select
-              //         className="select-field"
-              //         value={outboundFormData[`${platform}Category`]}
-              //         onChange={(e) =>
-              //           handleOutboundInputChange(
-              //             `${platform}Category`,
-
-              //             e.target.value,
-              //           )
-              //         }
-              //         required
-              //       >
-              //         <option value="">Select</option>
-
-              //         <option value="Cash">Cash</option>
-
-              //         <option value="Govt. Health Scheme">
-              //           Govt. Health Scheme
-              //         </option>
-
-              //         <option value="Non-Govt. Health Scheme">
-              //           Non-Govt. Health Scheme
-              //         </option>
-
-              //         <option value="NA">NA</option>
-              //       </select>
-              //     </div>
-              //   </div>
-
-              //   <div className="input-row">
-              //     <div className="input-group textarea-field-container">
-              //       <label className="required">Remarks</label>
-
-              //       <textarea
-              //         className="textarea-field"
-              //         value={outboundFormData[`${platform}Remarks`]}
-              //         onChange={(e) =>
-              //           handleOutboundInputChange(
-              //             `${platform}Remarks`,
-
-              //             e.target.value,
-              //           )
-              //         }
-              //         required
-              //         rows="3"
-              //       />
-              //     </div>
-              //   </div>
-              // </>
-
-              <>
-                <div className="input-row" data-section="missed-call-details">
-                  <div className="input-group">
-                    <label className="required">Patient Name</label>
-
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={form.formData.patientDetails.patientName}
-                      onChange={(e) =>
-                        handleChange(
-                          "formData.patientDetails.patientName",
-                          e.target.value
-                        )
-                      }
-                      required
-                    />
-                  </div>
-
-                  <div className="input-group">
-                    <label className="required">Mobile Number</label>
-
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={form.formData.patientDetails.mobileNumber}
-                      onChange={(e) =>
-                        handleChange(
-                          "formData.patientDetails.mobileNumber",
-                          e.target.value
-                        )
-                      }
-                      required
-                    />
-                  </div>
-
-                  <div className="input-group">
-                    <label>Alt Mobile</label>
-
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={form.formData.patientDetails.alternateMobile}
-                      onChange={(e) =>
-                        handleChange(
-                          "formData.patientDetails.alternateMobile",
-                          e.target.value
-                        )
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="input-row">
-                  <div className="input-group">
-                    <label className="required">Age</label>
-
-                    <input
-                      type="number"
-                      className="input-field"
-                      value={form.formData.patientDetails.patientAge}
-                      onChange={(e) =>
-                        handleChange(
-                          "formData.patientDetails.patientAge",
-                          e.target.value
-                        )
-                      }
-                      required
-                    />
-                  </div>
-                </div>
-
+          {form.formData.missedConnectionStatus === "Connected" && (
+            <>
+              <div className="input-row" data-section="missed-call-details">
                 <div className="input-group">
-                  <label className="required">Gender</label>
+                  <label className="required">Patient Name</label>
 
-                  <select
-                    className="select-field"
-                    value={form.formData.patientDetails.gender}
+                  <input
+                    type="text"
+                    className="input-field"
+                    value={form.formData.patientDetails.patientName}
                     onChange={(e) =>
                       handleChange(
-                        'formData.patientDetails.gender',
-                        e.target.value,
+                        "formData.patientDetails.patientName",
+                        e.target.value
                       )
                     }
                     required
-                  >
-                    <option value="">Select</option>
-
-                    <option value="Male">Male</option>
-
-                    <option value="Female">Female</option>
-                    <option value="Transgender">Transgender</option>
-
-                    <option value="NA">NA</option>
-                  </select>
+                  />
                 </div>
-                <div className="input-row">
-                  <div className="input-group textarea-field-container">
-                    <label className="required">Remarks</label>
 
-                    <textarea
-                      className="textarea-field"
-                      value={form.formData.remarks}
-                      onChange={(e) =>
-                        handleChange(
-                          "formData.remarks",
-                          e.target.value,
-                        )
-                      }
-                      required
-                      rows="3"
-                    />
-                  </div>
+                <div className="input-group">
+                  <label className="required">Mobile Number</label>
+
+                  <input
+                    type="text"
+                    className="input-field"
+                    value={form.formData.patientDetails.mobileNumber}
+                    onChange={(e) =>
+                      handleChange(
+                        "formData.patientDetails.mobileNumber",
+                        e.target.value
+                      )
+                    }
+                    required
+                  />
                 </div>
-              </>
 
-            )}
+                <div className="input-group">
+                  <label>Alt Mobile</label>
 
-            {form.formData[`${platform}Lead`] === "No" && (
+                  <input
+                    type="text"
+                    className="input-field"
+                    value={form.formData.patientDetails.alternateMobile}
+                    onChange={(e) =>
+                      handleChange(
+                        "formData.patientDetails.alternateMobile",
+                        e.target.value
+                      )
+                    }
+                  />
+                </div>
+              </div>
+
               <div className="input-row">
                 <div className="input-group textarea-field-container">
                   <label className="required">Remarks</label>
-
 
                   <textarea
                     className="textarea-field"
@@ -3768,9 +3494,17 @@ function Forms() {
                   />
                 </div>
               </div>
-            )}
-          </div>
-        );
+            </>
+          )}
+        </div>
+      );
+
+      case "Practo":
+
+      case "Whatsapp":
+
+      case "Facebook":
+
 
       default:
         return null;
