@@ -1,0 +1,11 @@
+agentName,formType,patientName,patientMobile,patientStatus,gender,age,callStatus,purpose,referenceFrom,callerType,doctor,department,surgeryName,healthPackageName,healthSchemeName,govertHealthSchemeName,nonGovtHealthSchemeName,reportName,followupStatus,remarks
+Sandeep,opd,Rahul Sharma,9876543210,Active,Male,35,connected,Appointment,Google,Self,6851a1b2c3d4e5f678901111,6851a1b2c3d4e5f678902222,,,,,,,Pending,First consultation
+Sandeep,surgery,Priya Verma,9876543211,Active,Female,42,connected,Surgery Inquiry,Referral,Relative,6851a1b2c3d4e5f678901112,6851a1b2c3d4e5f678902223,Knee Replacement,,,,,,Follow Up Required,Wants surgery cost details
+Amit,health_package,Mohit Gupta,9876543212,Active,Male,29,connected,Package Information,Facebook,Self,6851a1b2c3d4e5f678901113,6851a1b2c3d4e5f678902224,,Executive Health Checkup,,,,,Completed,Interested in annual package
+Neha,health_scheme,Sunita Devi,9876543213,Active,Female,50,connected,Scheme Enrollment,Walk In,Self,6851a1b2c3d4e5f678901114,6851a1b2c3d4e5f678902225,,,Ayushman Bharat,,,,Pending,Documents to be submitted
+Raj,govt_health_scheme,Ramesh Kumar,9876543214,Active,Male,60,connected,Scheme Query,Hospital Desk,Self,6851a1b2c3d4e5f678901115,6851a1b2c3d4e5f678902226,,,,PM-JAY,,,Follow Up Required,Eligibility verification pending
+Raj,non_govt_health_scheme,Pooja Singh,9876543215,Active,Female,33,connected,Insurance Assistance,Agent,Self,6851a1b2c3d4e5f678901116,6851a1b2c3d4e5f678902227,,,,,Star Health Insurance,,Completed,Insurance approved
+Sandeep,report,Anil Yadav,9876543216,Active,Male,45,connected,Report Collection,SMS Campaign,Self,6851a1b2c3d4e5f678901117,6851a1b2c3d4e5f678902228,,,,,,MRI Report,Pending,Report ready for pickup
+Neha,opd,Kavita Joshi,9876543217,Active,Female,27,connected,Follow-up Visit,Existing Patient,Self,6851a1b2c3d4e5f678901118,6851a1b2c3d4e5f678902229,,,,,,,Completed,Follow-up consultation done
+Amit,surgery,Deepak Meena,9876543218,Active,Male,55,connected,Surgery Booking,Referral,Son,6851a1b2c3d4e5f678901119,6851a1b2c3d4e5f678902230,Cataract Surgery,,,,,,Scheduled,Surgery planned next week
+Raj,report,Meena Patel,9876543219,Active,Female,38,connected,Diagnostic Report,Website,Self,6851a1b2c3d4e5f678901120,6851a1b2c3d4e5f678902231,,,,,,Blood Test Report,Completed,Report shared on WhatsApp

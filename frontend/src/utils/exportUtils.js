@@ -58,7 +58,6 @@ export const FORMS_TEMPLATE = [
     { key: "reportName", label: "Report Name" },
     { key: "followupStatus", label: "Follow-up Status" },
     { key: "remarks", label: "Remarks" },
-    { key: "createdAt", label: "Submitted At" },
 ];
 
 export const FORMS_AVAILABLE_COLUMNS = [
@@ -73,7 +72,6 @@ export const FORMS_AVAILABLE_COLUMNS = [
     { key: "appointmentSlot", label: "App. Slot" },
     { key: "formData.patientArrivalTime", label: "PatientArrivalTime" },
     { key: "formData.remarks", label: "Remarks" },
-    { key: "createdAt", label: "Submitted At" },
     // Additional unique fields from second array
     { key: "doctor.name", label: "Doctor" },
     { key: "department.name", label: "Department" },
@@ -87,6 +85,7 @@ export const FORMS_AVAILABLE_COLUMNS = [
     { key: "formData.referenceFrom", label: "Reference From" },
 
     { key: "formData.callerType", label: "Caller Type" },
+    { key: "createdAt", label: "Submitted At" },
 ];
 export const getNestedValue = (obj, path) => {
     const value = path.split(".").reduce((acc, key) => acc?.[key], obj);

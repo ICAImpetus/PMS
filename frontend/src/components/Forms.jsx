@@ -260,26 +260,26 @@ function Forms() {
     loading,
     selectedBranch,
     setSelectedBranch,
-    selectedHostpital,
+    selectedHospital,
     branches,
     errors,
   } = useContext(HospitalContext);
 
   useEffect(() => {
     const fetchBranchAndDetails = async () => {
-      if (selectedHostpital) {
-        const branchDetails = await getSingleBranch(selectedBranch, selectedHostpital);
+      if (selectedHospital) {
+        const branchDetails = await getSingleBranch(selectedBranch, selectedHospital);
         handleChange("branchId", selectedBranch);
-        handleChange("hospitalId", selectedHostpital);
+        handleChange("hospitalId", selectedHospital);
         setBranchData(branchDetails.data?.branch);
         setDynamicDepartments(branchDetails?.data?.departments || []);
         setDynamicDoctors(branchDetails?.data?.doctors || []);
       }
     };
-    if (selectedHostpital && selectedBranch) {
+    if (selectedHospital && selectedBranch) {
       fetchBranchAndDetails();
     }
-  }, [selectedHostpital, selectedBranch]);
+  }, [selectedHospital, selectedBranch]);
 
 
   useEffect(() => {
@@ -300,7 +300,7 @@ function Forms() {
         }
 
         const res = await getSinglePatientApi(
-          selectedHostpital,
+          selectedHospital,
           selectedBranch,
           number
         );
@@ -401,7 +401,7 @@ function Forms() {
         date: form.formData.dateTime,
       }
       const response =
-        await getBookedSlotsApi(selectedHostpital, selectedBranch, data);
+        await getBookedSlotsApi(selectedHospital, selectedBranch, data);
 
       setBookedSlotIds(
         response?.data || []
@@ -532,7 +532,7 @@ function Forms() {
 
   const submitForm = async (e) => {
     e.preventDefault();
-    if (!selectedHostpital) {
+    if (!selectedHospital) {
       toast.error("No Hospital Is Found");
       return;
     }
@@ -541,7 +541,7 @@ function Forms() {
       return;
     }
     try {
-      const res = await saveFilledForm(selectedHostpital, selectedBranch, form);
+      const res = await saveFilledForm(selectedHospital, selectedBranch, form);
       if (res?.success) {
         resetForm();
         toast.success("Form submitted successfully!");
@@ -950,7 +950,7 @@ function Forms() {
             </div>
 
 
-            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHospital} doctor={selectedDoctor} />}
 
             {/* Slot Duration Selector */}
             {/* <div className="input-row">
@@ -1326,7 +1326,7 @@ function Forms() {
 
             </div>
 
-            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHospital} doctor={selectedDoctor} />}
 
             <div className="input-row">
               <div className="input-group">
@@ -1454,7 +1454,7 @@ function Forms() {
                 />
               </div>
             </div>
-            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHospital} doctor={selectedDoctor} />}
 
             <div className="input-row">
               <div className="input-group">
@@ -1704,7 +1704,7 @@ function Forms() {
               </div>
 
             </div>
-            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHospital} doctor={selectedDoctor} />}
             <div className="input-row">
               <div className="input-group textarea-field-container">
                 <label className="required">Issue</label>
@@ -1972,7 +1972,7 @@ function Forms() {
                 />
               </div>
             </div>
-            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHospital} doctor={selectedDoctor} />}
 
             <div className="input-row">
               <div className="input-group">
@@ -2085,7 +2085,7 @@ function Forms() {
               </div>
 
             </div>
-            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHospital} doctor={selectedDoctor} />}
 
             <div className="input-row">
               <div className="input-group">
@@ -2216,7 +2216,7 @@ function Forms() {
               </div>
 
             </div>
-            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHospital} doctor={selectedDoctor} />}
 
             <div className="input-row">
               <div className="input-group">

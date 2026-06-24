@@ -87,9 +87,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         return [...oldData, ...filteredNew];
     };
 
-
-
-    const [patients, setPatients] = useState([]);
     const [appointments, setAppointments] = useState([]);
     const [pastappointments, setPastAppointments] = useState([]);
     const [users, setUsers] = useState([]);
@@ -346,55 +343,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         onError: () =>
             toast.error("Failed to fetch Hospital Code")
     });
-    const {
-        data: patientsData = null,
-        isLoading: patientsLoading,
-        error: patientsError,
-        isFetching: patientsRefetchLoader,
-        refetch: refetchPatients,
-    } = useQuery({
-        queryKey: [
-            "patient",
-            pagination.patients.page,
-            selectedHostpital,
-            selectedBranch,
-        ],
-
-        queryFn: async ({ queryKey }) => {
-            const [, page, hospitalId, branchId] = queryKey;
-
-            const res = await commonRoutes.getPatients(
-                page,
-                hospitalId,
-                isNonAdmin ? branchId : null
-            );
-
-            return res?.data;
-        },
-
-        enabled:
-            !isDoctor &&
-            !!selectedHostpital &&
-            (!!selectedBranch || !isNonAdmin),
-
-        placeholderData: (previousData) => previousData,
-    });
-    useEffect(() => {
-        if (!patientsData) {
-            return;
-        }
-        if (!patientsData?.data?.length) {
-            setPatients([]);
-            return;
-        }
-
-        setPatients(patientsData.data);
-
-        if (patientsData?.pagination) {
-            updatePagination("patients", patientsData.pagination);
-        }
-    }, [patientsData, updatePagination]);
-
 
     const {
         data: usersData,
@@ -600,22 +548,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
     }, [auditLogsData]);
 
-
-
-    useEffect(() => {
-
-        setPatients([]);
-
-        setPagination((prev) => ({
-            ...prev,
-            patients: {
-                ...prev.patients,
-                page: 1
-            }
-        }));
-
-    }, [selectedHostpital, selectedBranch, filter]);
-
     useEffect(() => {
 
         setForms({
@@ -682,7 +614,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         hospitals: hospitalsLoading,
         branches: branchesLoading,
         dashboard: dashboardLoading,
-        patients: patientsRefetchLoader,
         users: usersLoading,
         admins: adminsLoading,
         auditLogs: auditLogsLoading,
@@ -693,8 +624,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         isAnyLoading:
             hospitalsLoading ||
             branchesLoading ||
-            dashboardLoading ||
-            patientsLoading
+            dashboardLoading
     };
 
 
@@ -703,7 +633,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         hospitals: hospitalsError,
         branches: branchesError,
         dashboard: dashboardError,
-        patients: patientsError,
         users: usersError,
         admins: adminsError,
         auditLogs: auditLogsError,
@@ -716,7 +645,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     const contextValue = useMemo(() => ({
         hospitals,
         branches,
-        patients,
         userData: users,
         admins,
         allLogs,
@@ -751,7 +679,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         setPagination,
         setFilter,
         setForms,
-        setPatients,
         setDateRangeFilter,
         setDateRange,
 
@@ -764,7 +691,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         errors,
 
         refetchDashboard,
-        refetchPatients,
         refetchHospital,
         refetchAdmins,
         refetchUsers,
@@ -789,8 +715,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         selectedBranch,
         pagination,
         appointmentData,
-        patients,
-        patientsData,
         pastAppointmentData,
         filter,
         dateRangeFilter,
@@ -801,7 +725,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         loading,
         errors,
         dateRange,
-        patients,
         handleFilterChange
     ]);
     return (

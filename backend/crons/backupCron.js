@@ -27,15 +27,90 @@ const STATUSMAP = {
 //     "Old Patient": "old",
 // };
 
-// export const uploadDatabaseBackup = async () => {
+// export const uploadDatabaseBackup = async (req, res) => {
 //     try {
 //         console.log("Starting database backup...");
 
-//         const hospital = await HospitalModel.findById(
-//             "6a22705f6f164344a2644a8a"
-//         );
 
-//         if (!hospital) throw new Error("Hospital not found");
+//         const { hosId, branchId } = req.query;
+//         const { type } = req.body;
+
+//         const file = req.files?.csv?.[0];
+
+//         if (!file) {
+//             return res.status(400).json({ message: "CSV file required" });
+//         }
+
+//         if (!type) {
+//             return res.status(400).json({ message: "Type is required" });
+//         }
+
+//         if (
+//             !hosId ||
+//             !branchId ||
+//             !mongoose.Types.ObjectId.isValid(hosId) ||
+//             !mongoose.Types.ObjectId.isValid(branchId)
+//         ) {
+//             return res.status(400).json({ message: "Invalid IDs" });
+//         }
+
+//         const hospital = await HospitalModel.findById(hosId).lean();
+//         if (!hospital) {
+//             return res.status(404).json({ message: "Hospital not found" });
+//         }
+
+//         const conn = await getConnection(hospital.trimmedName);
+
+//         //  Start Transaction
+//         session = await conn.startSession();
+//         session.startTransaction();
+
+//         if (!req.csvFilePath) {
+//             return res.status(400).json({ message: "CSV file path not found" });
+//         }
+
+//         //Read CSV
+//         const rows = [];
+
+//         await new Promise((resolve, reject) => {
+//             fs.createReadStream(req.csvFilePath)
+//                 .pipe(csv())
+//                 .on("data", (data) => {
+//                     //  Clean row
+//                     const cleanedRow = {};
+
+//                     Object.keys(data).forEach((key) => {
+//                         let value = data[key];
+
+//                         // 
+//                         if (value === null || value === undefined) {
+//                             cleanedRow[key] = "";
+//                         } else {
+//                             // trim + remove extra spaces
+//                             cleanedRow[key] = value.toString().trim();
+//                         }
+//                     });
+
+//                     // 
+//                     const isEmpty = Object.values(cleanedRow).every(
+//                         (val) => val === ""
+//                     );
+
+//                     if (!isEmpty) {
+//                         rows.push(cleanedRow);
+//                     }
+//                 })
+//                 .on("end", resolve)
+//                 .on("error", reject);
+//         });
+//         const normalize = (val) => val?.trim();
+
+//         let result; // uploadBranchCSV FIX (let instead of const)
+
+//         console.log("CSV Rows:", rows);
+
+//         console.log("type", type);
+
 
 //         const conn = await getConnection(hospital.trimmedName);
 

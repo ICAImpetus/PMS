@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Papa from "papaparse";
 import {
   Box,
@@ -28,6 +28,8 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
+  LinearProgress,
+  Alert,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -105,6 +107,11 @@ function CustomTabPanel(props) {
 }
 
 const showUploadCSV = ["doctor"];
+const normalizeValue = (value) => {
+  if (value === null || value === undefined) return "";
+  return String(value).trim();
+};
+
 // Move TabHeader outside to prevent re-renders
 const TabHeader = ({
   title,
@@ -119,6 +126,8 @@ const TabHeader = ({
   downloadTemplate = null,
   isShowAction,
   handleOpenModal,
+  handleCSVFileChange = null,
+  csvFileInputRef = null
 }) => (
   <Box
     display="flex"
@@ -215,29 +224,11 @@ const TabHeader = ({
                 }}
               >
                 <input
+                  ref={csvFileInputRef ? csvFileInputRef : null}
                   type="file"
                   hidden
                   accept=".csv"
-                  onChange={(e) => {
-                    const input = e.target;
-                    const file = input.files?.[0];
-                    if (!file) return;
-
-                    if (file.size > 5 * 1024 * 1024) { // 5MB limit  
-                      toast.error("File size exceeds 5MB limit");
-                      input.value = "";
-                      return;
-                    }
-
-                    if (!file.name.toLowerCase().endsWith(".csv")) {
-                      toast.error("Invalid file type. Please upload a CSV file.");
-                      input.value = "";
-                      return;
-                    }
-
-                    if (uploadCSV) uploadCSV(type, file);
-                    input.value = "";
-                  }}
+                  onChange={handleCSVFileChange ? handleCSVFileChange : null}
                 />
 
                 <CloudUploadIcon sx={{ fontSize: "1.1rem", mr: 0.5 }} />
@@ -287,6 +278,7 @@ const TabHeader = ({
   </Box>
 );
 
+
 const BranchInfo = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -328,6 +320,18 @@ const BranchInfo = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [open, setOpen] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadCSVModalOpen, setUploadCSVModalOpen] = useState(false);
+  const [csvStatus, setCSVStatus] = useState("idle");
+  const [csvProgress, setCSVProgress] = useState({ current: 0, total: 0 });
+  const [csvProcessMessage, setCSVProcessMessage] = useState("");
+  const [csvValidationErrors, setCSVValidationErrors] = useState([]);
+  const [csvValidationSummary, setCSVValidationSummary] = useState({ totalRows: 0, successCount: 0, errorCount: 0 });
+  const [csvRows, setCSVRows] = useState([]);
+  const [csvParsedValidRows, setCSVParsedValidRows] = useState([]);
+  const [csvParsedInvalidRows, setCSVParsedInvalidRows] = useState([]);
+  const [csvParseError, setCSVParseError] = useState(null);
+  const [csvActionResult, setCSVActionResult] = useState("");
   const [searchTerms, setSearchTerms] = useState({
     department: "",
     doctor: "",
@@ -340,6 +344,9 @@ const BranchInfo = () => {
     codeAlert: "",
   });
   const [globalSuggestion, setGlobalSuggestion] = useState([]);
+  // const { request } = useApi(commonRoutes.getFilledForms);
+  const formsColumnFilterRef = useRef(null);
+  const csvFileInputRef = useRef(null);
 
   const {
     request: getSingleBranch,
@@ -529,6 +536,370 @@ const BranchInfo = () => {
   useEffect(() => {
     fetchAllData();
   }, [id]);
+
+  const validateUploadCSVRow = (row, rowNumber) => {
+    const errors = [];
+
+    const specialization = normalizeValue(row.specialization);
+    const type = normalizeValue(row.type);
+    const name = normalizeValue(row.name);
+    const department = normalizeValue(row.department);
+    const opdDays = normalizeValue(row.opdDays);
+    const opdNo = normalizeValue(row.opdNo);
+    const specialties = normalizeValue(row.specialties);
+    const surgeries = normalizeValue(row.surgeries);
+    const degrees = normalizeValue(row.degrees);
+    const averagePatientTime = normalizeValue(row.averagePatientTime);
+    const maxPatientsHandled = normalizeValue(row.maxPatientsHandled);
+    const countryCode = normalizeValue(row.countryCode);
+    const contactNumber = normalizeValue(row.contactNumber);
+    const whatsappNumber = normalizeValue(row.whatsappNumber);
+    const morningStart = normalizeValue(row.morningStart);
+    const morningEnd = normalizeValue(row.morningEnd);
+    const eveningStart = normalizeValue(row.eveningStart);
+    const eveningEnd = normalizeValue(row.eveningEnd);
+    const customStart = normalizeValue(row.customStart);
+    const customEnd = normalizeValue(row.customEnd);
+    const paName = normalizeValue(row.paName);
+    const paContactNumber = normalizeValue(row.paContactNumber);
+    const extensionNumber = normalizeValue(row.extensionNumber);
+    const experience = normalizeValue(row.experience);
+    const consultationCharges = normalizeValue(row.consultationCharges);
+    const floor = normalizeValue(row.floor);
+    const customDegrees = normalizeValue(row.customDegrees);
+    const teleConsultation = normalizeValue(row.teleConsultation);
+    const title = normalizeValue(row.title);
+    const designation = normalizeValue(row.designation);
+    const teleMedicine = normalizeValue(row.teleMedicine);
+    const additionalInfo = normalizeValue(row.additionalInfo);
+    const isEnabled = normalizeValue(row.isEnabled);
+    const videoConsultationEnabled = normalizeValue(row.videoConsultationEnabled);
+    const videoConsultationTimeSlot = normalizeValue(row.videoConsultationTimeSlot);
+    const videoConsultationStartTime = normalizeValue(row.videoConsultationStartTime);
+    const videoConsultationEndTime = normalizeValue(row.videoConsultationEndTime);
+    const videoConsultationCharges = normalizeValue(row.videoConsultationCharges);
+    const videoConsultationDays = normalizeValue(row.videoConsultationDays);
+
+    if (!specialization) {
+      errors.push({
+        rowNumber,
+        columnName: "specialization",
+        invalidValue: specialization,
+        message: "Specialization is Required! Please select one of: surgeon, physician",
+      });
+    }
+
+    if (specialization && !["surgeon", "physician"].includes(specialization)) {
+      errors.push({
+        rowNumber,
+        columnName: "specialization",
+        invalidValue: specialization,
+        message: "Invalid specialization! Please select one of: surgeon, physician",
+      });
+    }
+
+    if (
+      type &&
+      !["fulltime", "parttime", "visiting", "oncall"].includes(type)
+    ) {
+      errors.push({
+        rowNumber,
+        columnName: "type",
+        invalidValue: type,
+        message:
+          "Invalid doctor type! Please select one of: fulltime, parttime, visiting, oncall.",
+      });
+    }
+    if (!name) {
+      errors.push({
+        rowNumber,
+        columnName: "name",
+        invalidValue: name,
+        message: "Doctor name is required",
+      });
+    }
+
+
+    if (!department) {
+      errors.push({
+        rowNumber,
+        columnName: "department",
+        invalidValue: department,
+        message: "Department is required",
+      });
+    }
+
+    if (
+      !experience ||
+      isNaN(Number(experience)) ||
+      Number(experience) < 0 ||
+      Number(experience) > 60
+    ) {
+      errors.push({
+        rowNumber,
+        columnName: "experience",
+        invalidValue: experience,
+        message:
+          "Experience is required and must be a number between 0 and 60.",
+      });
+    }
+
+    if (
+      !consultationCharges ||
+      isNaN(Number(consultationCharges)) ||
+      Number(consultationCharges) < 0 ||
+      Number(consultationCharges) > 5000
+    ) {
+      errors.push({
+        rowNumber,
+        columnName: "consultationCharges",
+        invalidValue: consultationCharges,
+        message:
+          "Consultation Charges is required and must be a number between 0 and 5000.",
+      });
+    }
+
+    if (opdDays?.trim() || videoConsultationDays?.trim()) {
+
+      const validDays = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+      ];
+
+      const dayValue = opdDays || videoConsultationDays || "";
+
+      const days = dayValue
+        .split("|")
+        .map((d) => d.trim())
+        .filter(Boolean);
+
+      console.log("dayValue", dayValue);
+      console.log("days", days);
+      console.log(Array.isArray(days)); // true
+
+
+      const invalidDays = days.filter(
+        (day) => !validDays.includes(day)
+      );
+      if (invalidDays.length) {
+        errors.push({
+          rowNumber,
+          columnName: opdDays ? "opdDays" : "videoConsultationDays",
+          invalidValue: opdDays || videoConsultationDays,
+          message: `Invalid day(s): ${invalidDays.join(
+            ", "
+          )}. Please select only from: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday.`,
+        });
+      }
+    }
+
+    if (averagePatientTime) {
+      const time = Number(averagePatientTime);
+
+      if (Number.isNaN(time) || time <= 0) {
+        errors.push({
+          rowNumber,
+          columnName: "averagePatientTime",
+          invalidValue: averagePatientTime,
+          message: "Average patient time must be a positive number",
+        });
+      }
+    }
+
+    if (degrees && degrees.length > 200) {
+      errors.push({
+        rowNumber,
+        columnName: "degrees",
+        invalidValue: degrees,
+        message: "Degrees value is too long",
+      });
+    }
+    const isValidTime = (time) =>
+      /^(0?[1-9]|1[0-2]):([0-5][0-9])\s?(AM|PM)$/i.test(time);
+
+    const checkValidTime = (value, columnName) => {
+      if (value && !isValidTime(value)) {
+        errors.push({
+          rowNumber,
+          columnName,
+          invalidValue: value,
+          message: "Invalid time format. Use hh:mm AM/PM (e.g. 10:00 AM, 1:00 PM)"
+        });
+      }
+    };
+
+    // Morning slot validation
+    if (morningStart && !morningEnd) {
+      errors.push({
+        rowNumber,
+        columnName: "morningEnd",
+        invalidValue: morningEnd,
+        message: "Morning end time is required when morning start time is provided.",
+      });
+    }
+
+    if (morningEnd && !morningStart) {
+      errors.push({
+        rowNumber,
+        columnName: "morningStart",
+        invalidValue: morningStart,
+        message: "Morning start time is required when morning end time is provided.",
+      });
+    }
+
+    // Evening slot validation
+    if (eveningStart && !eveningEnd) {
+      errors.push({
+        rowNumber,
+        columnName: "eveningEnd",
+        invalidValue: eveningEnd,
+        message: "Evening end time is required when evening start time is provided.",
+      });
+    }
+
+    if (eveningEnd && !eveningStart) {
+      errors.push({
+        rowNumber,
+        columnName: "eveningStart",
+        invalidValue: eveningStart,
+        message: "Evening start time is required when evening end time is provided.",
+      });
+    }
+
+    // Custom slot validation
+    if (customStart && !customEnd) {
+      errors.push({
+        rowNumber,
+        columnName: "customEnd",
+        invalidValue: customEnd,
+        message: "Custom end time is required when custom start time is provided.",
+      });
+    }
+
+    if (customEnd && !customStart) {
+      errors.push({
+        rowNumber,
+        columnName: "customStart",
+        invalidValue: customStart,
+        message: "Custom start time is required when custom end time is provided.",
+      });
+    }
+
+    // Format validation
+    checkValidTime(morningStart, "morningStart");
+    checkValidTime(morningEnd, "morningEnd");
+    checkValidTime(eveningStart, "eveningStart");
+    checkValidTime(eveningEnd, "eveningEnd");
+    checkValidTime(customStart, "customStart");
+    checkValidTime(customEnd, "customEnd");
+    return errors;
+  };
+  const processCSVRows = (rows, totalRows) => {
+    return new Promise((resolve) => {
+      const validRows = [];
+      const invalidRows = [];
+      const errorList = [];
+      let processed = 0;
+      const batchSize = 30;
+
+      const processBatch = () => {
+        const chunk = rows.slice(processed, processed + batchSize);
+        chunk.forEach((row, index) => {
+          const rowNumber = processed + index + 2;
+          const rowErrors = validateUploadCSVRow(row, rowNumber);
+          console.log("rowErrors", rowErrors);
+
+          if (rowErrors.length > 0) {
+            invalidRows.push(row);
+            errorList.push(...rowErrors);
+          } else {
+            validRows.push(row);
+          }
+        });
+
+        processed += chunk.length;
+        setCSVProgress({ current: processed, total: totalRows });
+        setCSVProcessMessage(
+          processed < totalRows
+            ? `Processing row ${processed} of ${totalRows}`
+            : `Processing row ${totalRows} of ${totalRows}`
+        );
+
+        if (processed < totalRows) {
+          window.requestAnimationFrame(processBatch);
+        } else {
+          setCSVRows(rows);
+          setCSVParsedValidRows(validRows);
+          setCSVParsedInvalidRows(invalidRows);
+          setCSVValidationErrors(errorList);
+          setCSVValidationSummary({
+            totalRows,
+            successCount: validRows.length,
+            errorCount: invalidRows.length,
+          });
+          setCSVStatus("completed");
+          setCSVProcessMessage("Validation complete");
+          resolve();
+        }
+      };
+
+      processBatch();
+    });
+  };
+
+  const startCSVValidation = async (file) => {
+    resetCSVState();
+    setCSVStatus("processing");
+    setCSVProcessMessage("Processing file...");
+
+    try {
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).filter((line) => line.trim() !== "");
+      const totalRows = Math.max(0, lines.length - 1);
+      setCSVProgress({ current: 0, total: totalRows });
+
+      const parsed = Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (header) => header?.trim() || "",
+        error: (error) => {
+          setCSVParseError(error.message || "CSV parse failed");
+        },
+      });
+
+      if (parsed.errors?.length) {
+        setCSVParseError(parsed.errors[0]?.message || "CSV parse failed");
+        setCSVStatus("completed");
+        return;
+      }
+
+      await processCSVRows(parsed.data, totalRows);
+    } catch (error) {
+      console.log("error ", error);
+
+      setCSVParseError(error?.message || "Unable to read the file");
+      setCSVStatus("completed");
+      setCSVProcessMessage("Processing failed");
+    }
+  };
+
+
+  const handleCSVFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    console.log("file", file);
+
+    setSelectedFile(file);
+    setUploadCSVModalOpen(true);
+
+    await startCSVValidation(file);
+  };
+
 
   const handleOpenModal = useCallback((type, item = null) => {
     setSelectedItem(item);
@@ -1197,8 +1568,6 @@ const BranchInfo = () => {
             await fetchAllData();
           }
 
-          setProgress(100);
-
         } catch (error) {
 
           console.error("CSV Upload Error:", error);
@@ -1212,7 +1581,7 @@ const BranchInfo = () => {
           toast.error(backendMsg);
 
         } finally {
-          setOpen(false);
+          setUploadCSVModalOpen(false);
         }
       },
 
@@ -1221,6 +1590,74 @@ const BranchInfo = () => {
       },
     });
   };
+
+  const resetCSVState = () => {
+    setCSVStatus("idle");
+    setCSVProgress({ current: 0, total: 0 });
+    setCSVProcessMessage("");
+    setCSVValidationErrors([]);
+    setCSVValidationSummary({ totalRows: 0, successCount: 0, errorCount: 0 });
+    setCSVRows([]);
+    setCSVParsedValidRows([]);
+    setCSVParsedInvalidRows([]);
+    setCSVParseError(null);
+    setCSVActionResult("");
+  };
+
+  const handleReupload = () => {
+    setSelectedFile(null);
+    resetCSVState();
+    if (csvFileInputRef.current) {
+      csvFileInputRef.current.value = "";
+      csvFileInputRef.current.click();
+    }
+
+  };
+
+  const handleBrowseCSV = () => {
+    if (csvFileInputRef.current) {
+      csvFileInputRef.current.value = "";
+      csvFileInputRef.current.click();
+    }
+    setMoreMenuAnchor(null);
+  };
+
+
+  const handleImportAction = async () => {
+
+    if (!selectedFile) return
+
+    // Continue upload
+    const formdata = new FormData();
+    formdata.append("csv", selectedFile);
+    formdata.append("type", "doctor");
+
+    try {
+      const res = await uploadCSVApi(
+        hosId,
+        id,
+        formdata
+      );
+
+      if (res?.success) {
+        toast.success(
+          res?.message ||
+          "CSV uploaded successfully!"
+        );
+
+        await fetchAllData();
+      }
+
+    } catch (error) {
+      console.log("error");
+      toast.error("Error To Upload Data! Try After Sometime ")
+
+    }
+
+  };
+
+
+
   React.useEffect(() => {
 
     if (selectedDoctorData) {
@@ -1231,6 +1668,7 @@ const BranchInfo = () => {
     }
 
   }, [selectedDoctorData]);
+
   React.useEffect(() => {
     const errors = [
       branchError,
@@ -1620,6 +2058,8 @@ const BranchInfo = () => {
               {isShowAction && (
                 <TabHeader
                   key={tabValue}
+                  handleCSVFileChange={handleCSVFileChange}
+                  csvFileInputRef={csvFileInputRef}
                   uploadCSV={handleUploadCSV}
                   downloadTemplate={handleDownloadTemplate}
                   title="Doctors List"
@@ -2730,6 +3170,126 @@ const BranchInfo = () => {
                 ? <CircularProgress size={20} />
                 : "Save Attendance"
             }
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={uploadCSVModalOpen}
+        onClose={(event, reason) => {
+          console.log("Dialog close reason:", reason);
+
+          if (reason === "backdropClick") return;
+          if (reason === "backdropClick" || reason === "escapeKeyDown") {
+            return;
+          }
+          handleCSVDialogClose()
+        }}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle sx={{ bgcolor: "#f5f7fa", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span>CSV Validation & Import</span>
+          <Typography variant="caption" sx={{ bgcolor: "#e0e0e0", px: 1.5, py: 0.5, borderRadius: 1 }}>
+            {selectedFile?.name || "No file selected"}
+          </Typography>
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 3, minHeight: 280 }}>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+              {csvStatus === "processing" ? "Processing file..." : "Validation summary"}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {csvProcessMessage || "Uploading and validating the selected CSV file."}
+            </Typography>
+          </Box>
+
+          <Box sx={{ mb: 3 }}>
+            <LinearProgress
+              variant={csvStatus === "processing" ? "determinate" : "determinate"}
+              value={csvProgress.total ? (csvProgress.current / csvProgress.total) * 100 : 0}
+              sx={{ height: 10, borderRadius: 2 }}
+            />
+            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+              {/* <Typography variant="caption" color="text.secondary"> */}
+
+              <Typography variant="h6">{csvValidationSummary.errorCount}</Typography>
+              {/* </Paper> */}
+            </Box>
+
+            {csvValidationErrors.length > 0 ? (
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 700 }}>
+                  Validation issues preview
+                </Typography>
+                <TableContainer component={Paper} sx={{ maxHeight: 320 }}>
+                  <Table stickyHeader size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 700 }}>Row</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Column</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Value</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Error</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {csvValidationErrors.slice(0, 12).map((error, index) => (
+                        <TableRow key={`${error.rowNumber}-${index}`} sx={{ bgcolor: index % 2 === 0 ? "#fff5f5" : "#fff" }}>
+                          <TableCell>{error.rowNumber}</TableCell>
+                          <TableCell>{error.columnName}</TableCell>
+                          <TableCell>{error.invalidValue || "Empty"}</TableCell>
+                          <TableCell>{error.message}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                {csvValidationErrors.length > 12 ? (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                    Showing first 12 errors. Review all issues before importing.
+                  </Typography>
+                ) : null}
+              </Box>
+            ) : (
+              <Alert severity="success" sx={{ mt: 3 }}>
+                No validation issues found. All rows are ready for import.
+              </Alert>
+            )}
+          </Box>
+          {/* ) : null} */}
+        </DialogContent>
+
+        <DialogActions sx={{ p: 2, display: "flex", flexWrap: "wrap", gap: 1 }}>
+          <Button
+            variant="outlined"
+            onClick={handleReupload}
+            disabled={csvStatus === "processing"}
+          >
+            Reupload File
+          </Button>
+          {/* <Button
+            variant="contained"
+            color="primary"
+            onClick={() => handleImportAction("skipErrors")}
+            disabled={csvStatus === "processing" || csvValidationSummary.totalRows === 0}
+          >
+            Skip Errors & Continue Import
+          </Button> */}
+          <Button
+            variant="contained"
+            color="success"
+            onClick={() => handleImportAction()}
+            disabled={csvStatus === "processing" || csvValidationSummary.successCount === 0 || uploadCSVLoading}
+          >
+            {uploadCSVLoading ? <CircularProgress size={22} /> : "Continue"}
+          </Button>
+          <Button
+            variant="text"
+            disabled={uploadCSVLoading}
+            onClick={() => setUploadCSVModalOpen(false)}
+          // disabled={csvStatus === "processing"}
+          >
+            Close
           </Button>
         </DialogActions>
       </Dialog>

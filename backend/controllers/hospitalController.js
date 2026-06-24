@@ -7588,9 +7588,6 @@ const uploadDoctorCSV = async ({
       deptMap
     );
 
-    // =========================
-    // PROCESS DOCTORS
-    // =========================
 
     const doctorsToInsert = [];
 
@@ -7708,9 +7705,7 @@ const uploadDoctorCSV = async ({
             row?.floor?.trim() ||
             "",
 
-          degrees: splitComma(
-            row?.degrees
-          ),
+          degrees: splitPipe(row?.degrees),
 
           specialties,
 
@@ -7774,14 +7769,7 @@ const uploadDoctorCSV = async ({
                 row?.videoCharges
               ) || 0,
 
-            days: row?.videoDays
-              ? row.videoDays
-                .split(",")
-                .map((d) =>
-                  d.trim()
-                )
-                .filter(Boolean)
-              : [],
+            days: splitPipe(row?.videoConsultationDays),
 
             timeSlot:
               row?.videoTimeSlot ||
@@ -7796,14 +7784,8 @@ const uploadDoctorCSV = async ({
               "",
           },
 
-          opdDays: row?.opdDays
-            ? row.opdDays
-              .split(",")
-              .map((d) =>
-                d.trim()
-              )
-              .filter(Boolean)
-            : [],
+          opdDays: splitPipe(row?.opdDays),
+
         }
 
         doc.slots = generateDoctorSlots(doc);
