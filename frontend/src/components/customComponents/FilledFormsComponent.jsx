@@ -222,9 +222,64 @@ const FilledFormsComponent = ({
     const ageValue = normalizeValue(row.age);
     const doctor = normalizeValue(row.doctor);
     const department = normalizeValue(row.department);
+    const branchId = normalizeValue(row.branchId);
+    const followupStatus = normalizeValue(row.followupStatus)?.toLowerCase();
+    const gender = normalizeValue(row.gender)?.toLowerCase();
+    const patientStatus = normalizeValue(row.patientStatus)?.toLowerCase();
+    // const department = normalizeValue(row.department);
     const isValidObjectId = (id) => {
       return /^[0-9a-fA-F]{24}$/.test(id);
     };
+
+    if (!branchId) {
+      errors.push({
+        rowNumber,
+        columnName: "branchId",
+        invalidValue: branchId,
+        message: "BranchId is required",
+      });
+    }
+
+
+
+    if (
+      gender &&
+      !["male", "female", "transgender", "others"].includes(gender)
+    ) {
+      errors.push({
+        rowNumber,
+        columnName: "gender",
+        invalidValue: row.gender,
+        message:
+          "Please select only from: Male, Female, Transgender, Others",
+      });
+    }
+
+
+
+    if (
+      patientStatus &&
+      !["new", "old", "other"].includes(patientStatus)
+    ) {
+      errors.push({
+        rowNumber,
+        columnName: "patientStatus",
+        invalidValue: row.patientStatus,
+        message: "Please select only from: New, Old, Other",
+      });
+    }
+
+    if (
+      followupStatus &&
+      !["pending", "completed"].includes(followupStatus)
+    ) {
+      errors.push({
+        rowNumber,
+        columnName: "followupStatus",
+        invalidValue: followupStatus,
+        message: "Please select only from: pending ,completed",
+      });
+    }
 
     if (!patientName) {
       errors.push({
@@ -240,7 +295,7 @@ const FilledFormsComponent = ({
       if (digits.length < 10 || digits.length > 15) {
         errors.push({
           rowNumber,
-          columnName: row.patientMobile ? "patientMobile" : "contactNumber",
+          columnName: phone ? "patientMobile" : "contactNumber",
           invalidValue: phone,
           message: "Invalid phone number",
         });
@@ -263,8 +318,17 @@ const FilledFormsComponent = ({
       errors.push({
         rowNumber,
         columnName: "formType",
-        invalidValue: normalizeValue(row.formType),
+        invalidValue: formType,
         message: "Form type is required",
+      });
+    }
+
+    if (branchId && !isValidObjectId(branchId)) {
+      errors.push({
+        rowNumber,
+        columnName: "branchId",
+        invalidValue: branchId,
+        message: "BranchId must be a valid ObjectId",
       });
     }
 
@@ -755,9 +819,9 @@ const FilledFormsComponent = ({
 
   return (
     <div
-    // className="ff-modal-overlay"
-    // onClick={() => setFormsModalOpen(null)}
+
     >
+
       <div
         onClick={(e) => e.stopPropagation()}
       >

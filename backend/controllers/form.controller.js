@@ -841,12 +841,20 @@ export const updateFormAppointmentController = async (
   }
 };
 
-export const uploadDatabaseBackup = async (req, res) => {
+export const uploadFormsCsv = async (req, res) => {
+  const { hosId, branchId } = req.query;
+  const { type } = req.body;
+
+  console.log("eeq.query", req.query);
   try {
     console.log("Starting database backup...");
 
     const { hosId, branchId } = req.query;
     const { type } = req.body;
+
+    console.log("eeq.query", req.query);
+    console.log("branchId-1", branchId);
+
 
     const file = req.files?.csv?.[0];
 
@@ -868,6 +876,7 @@ export const uploadDatabaseBackup = async (req, res) => {
     const DepartmentModel = getDepartmentModel(conn);
 
     const rows = [];
+    console.log("branchId-2", branchId);
 
     // ======================
     // READ CSV (BUFFER SAFE)
@@ -905,6 +914,9 @@ export const uploadDatabaseBackup = async (req, res) => {
     // ======================
     // STEP 2: BULK FETCH
     // ======================
+    console.log("doctor,ids 0,", doctorIds);
+    console.log("branchId-2", branchId);
+
     const existingPatients = await PatientModel.find({
       patientMobile: { $in: mobiles }
     }).lean();
@@ -917,6 +929,7 @@ export const uploadDatabaseBackup = async (req, res) => {
     const departments = await DepartmentModel.find({ _id: { $in: deptIds } }).lean();
     const deptMap = new Map(departments.map(d => [String(d._id), d]));
 
+    console.log("doctorMap,", doctorMap);
     // ======================
     // STEP 3: BULK CREATE PATIENTS
     // ======================
@@ -934,7 +947,7 @@ export const uploadDatabaseBackup = async (req, res) => {
         branchId: new mongoose.Types.ObjectId(branchId),
         gender: row.gender || "Other",
         patientName: row.patientName,
-        status: row.status || "",
+        status: row.patientStatus || "",
         patientMobile: mobile,
         patientAge: parseInt(row.patientAge, 10) || 0,
         location: row.location,
@@ -961,13 +974,16 @@ export const uploadDatabaseBackup = async (req, res) => {
 
       const doctor = doctorMap.get(row.doctor) || null;
       const department = deptMap.get(row.department) || doctor?.department || null;
+      console.log("branchId--60", branchId);
+
 
       forms.push({
         formType: row.formType?.toLowerCase() || "inbound",
 
         agentName: row.agentName || "System Import",
-
-        branchId: new mongoose.Types.ObjectId(branchId),
+        branchId: row?.branchId
+          ? new mongoose.Types.ObjectId(row?.branchId)
+          : null,
 
         // agentId: new mongoose.Types.ObjectId("64a1c9e5f0c2b8b1d9e7c456"),
 
@@ -1002,34 +1018,80 @@ export const uploadDatabaseBackup = async (req, res) => {
       });
     }
 
-    // ======================
-    // STEP 5: BULK INSERT FORMS
-    // ======================
+
     const BATCH = 500;
 
-    console.log("forms", forms);
+    // console.log("Forms Count:", forms.length);
 
-    for (let i = 0; i < forms.length; i += BATCH) {
-      const isCheck = await FilledFormsModel.insertMany(forms.slice(i, i + BATCH), {
-        ordered: false,
+    if (!forms.length) {
+      return res.status(400).json({
+        success: false,
+        message: "No forms found to insert",
       });
-      console.log("Upload completed", isCheck);
     }
 
-    console.log("Upload completed");
+    for (let i = 0; i < forms.length; i += BATCH) {
+      const batch = forms.slice(i, i + BATCH);
 
+      console.log(
+        `Processing batch ${i / BATCH + 1}, Records: ${batch.length}`
+      );
+
+      // console.log("Model Name:", FilledFormsModel.modelName);
+      // console.log("Collection Name:", FilledFormsModel.collection.name);
+      // console.log("DB Name:", FilledFormsModel.db.name);
+      const insertedDocs = await FilledFormsModel.insertMany(batch, {
+        // ordered: false,
+      });
+
+      console.log(
+        `Inserted ${insertedDocs?.length || 0} documents successfully`
+      );
+    }
+
+    // const totalCount = await FilledFormsModel.countDocuments();
+
+    console.log("Total Forms In DB:", forms.length);
+
+    const user = req.user;
+    const formsCount = forms?.length || 0;
+
+    setImmediate(() => {
+      auditLog({
+        action: "BULK_UPLOAD_FORMS",
+        event: "ADD",
+        module: "FORM_SUBMISSION",
+        role: user?.type || "Unknown",
+        customMessage: `${user?.type || "User"} "${user?.name}" uploaded ${formsCount} forms successfully.`,
+        name: user?.name,
+        userId: user?.id,
+        ip: req.userIp,
+        userAgent: req.headers["user-agent"],
+      });
+    });
     return res.status(200).json({
       success: true,
       inserted: forms.length,
       message: "CSV uploaded successfully",
     });
-
   } catch (error) {
-    console.error("UPLOAD FAILED:", error);
+    console.error("InsertMany Error:");
+
+    console.error(error);
+
+    if (error.writeErrors?.length) {
+      console.error(
+        "Write Errors:",
+        error.writeErrors.map((e) => ({
+          index: e.index,
+          errmsg: e.errmsg,
+        }))
+      );
+    }
 
     return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
-};
+}

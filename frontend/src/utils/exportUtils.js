@@ -37,6 +37,7 @@ export const PATIENT_AVAILABLE_COLUMNS = [
 ];
 
 export const FORMS_TEMPLATE = [
+    { key: "branchId", label: "BranchId" },
     { key: "agentName", label: "Agent Name" },
     { key: "formType", label: "Form Type" },
     { key: "patientName", label: "Patient Name" },
