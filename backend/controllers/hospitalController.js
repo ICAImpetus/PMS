@@ -950,10 +950,6 @@ export const getSingleBranch = async (req, res) => {
     const Incharge = getInchargeModel(conn);
     const CodeAnnouncement = getCodeAnnoucementModel(conn);
     const Branch = getBranchModel(conn);
-
-    // helper (clean code)
-    const pop = (path, model) => ({ path, model });
-
     const [
       branch,
       departments,
@@ -973,13 +969,13 @@ export const getSingleBranch = async (req, res) => {
 
       // Departments
       Department.find({ branch: id, isDeleted: false })
-        .populate(pop("doctors", Doctor))
+        .populate(pop("doctors", Doctor, "name"))
         .sort({ createdAt: -1 })
         .lean(),
 
       // Doctors (MAIN FIX HERE)
       Doctor.find({ branch: id, isDeleted: false })
-        .populate(pop("department", Department))
+        .populate(pop("department", Department, "name"))
         .populate(pop("specialties", Suggestion))
         .populate(pop("surgeries", Suggestion))
         .select("-slots") // exclude heavy fields
@@ -1036,7 +1032,9 @@ export const getSingleBranch = async (req, res) => {
       CodeAnnouncement.find({ branch: id, isDeleted: false })
         .sort({ createdAt: -1 })
         .lean(),
-      Suggestion.find({ isDeleted: false }).sort({ createdAt: -1 })
+      Suggestion.find({ isDeleted: false })
+        .select("type value")
+        .sort({ createdAt: -1 })
         .lean()
     ]);
 
@@ -6103,21 +6101,21 @@ export const executiveDashboardService = async (conn, branchId, user, bfPage = 1
                 $project: {
                   _id: 1,
 
-                  // ✅ Patient
+                  //  Patient
                   patientName: "$patientInfo.patientName",
                   patientMobile: "$patientInfo.patientMobile",
                   patientStatus: "$patientInfo.status",
                   gender: "$patientInfo.gender",
 
-                  // ✅ Appointment
+                  //  Appointment
                   appointmentSlot: "$formData.appointmentSlot",
                   patientArrivalTime: "$formData.patientArrivalTime",
                   dateTime: "$formData.dateTime",
 
-                  // ✅ Doctor
+                  //  Doctor
                   doctorName: "$doctorInfo.name",
 
-                  // ✅ Department
+                  //  Department
                   departmentName: "$departmentInfo.name"
                 }
               }

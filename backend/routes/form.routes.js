@@ -7,6 +7,6 @@ const router = express.Router();
 router.post("/filled-forms", auth, formController.createFilledForm);
 router.get("/filled-forms", auth, formController.getFilledForms);
 router.post("/booked-slots", formController.getBookedSlotsController);
-router.post("/bulk-upload", auth, uploadDoctorAssets, formController.uploadDatabaseBackup);
+router.post("/bulk-upload", auth, uploadDoctorAssets, formController.uploadFormsCsv);
 
 export default router;

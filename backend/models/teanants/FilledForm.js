@@ -41,7 +41,7 @@ export const FilledFormSchema = new mongoose.Schema(
     agentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "AdminAgentSchema",
-      required: true,
+      // required: true,
     },
 
     doctor: {
@@ -71,6 +71,7 @@ export const FilledFormSchema = new mongoose.Schema(
     },
     followupStatus: {
       type: String,
+      lowercase: true,
       enum: ["pending", "completed"],
       default: null
     },
