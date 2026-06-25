@@ -2,6 +2,10 @@ import mongoose from "mongoose";
 import { getConnection, getDepartmentModel, getDoctorModel, getFilledFormsModel, getHospitalModel, getPatientModel, MasterConn } from "../utils/db.manager.js";
 import { calculateFilterRange } from "./hospitalController.js";
 import { auditLog } from "../middlewares/apiLogger.middleware.js";
+import fs from "fs"
+import path from "path";
+import csv from "csv-parser";
+import { Readable } from "stream";
 
 const HospitalModel = getHospitalModel(MasterConn)
 
@@ -720,7 +724,6 @@ export const getBookedSlotsController =
     }
   };
 
-// Controller
 export const updateFormAppointmentController = async (
   req,
   res
@@ -834,6 +837,199 @@ export const updateFormAppointmentController = async (
       message:
         "Internal server error",
       error: error.message
+    });
+  }
+};
+
+export const uploadDatabaseBackup = async (req, res) => {
+  try {
+    console.log("Starting database backup...");
+
+    const { hosId, branchId } = req.query;
+    const { type } = req.body;
+
+    const file = req.files?.csv?.[0];
+
+    if (!file) return res.status(400).json({ message: "CSV file required" });
+    if (!type) return res.status(400).json({ message: "Type is required" });
+
+    if (!hosId || !mongoose.Types.ObjectId.isValid(hosId)) {
+      return res.status(400).json({ message: "Invalid hospital ID" });
+    }
+
+    const hospital = await HospitalModel.findById(hosId).lean();
+    if (!hospital) return res.status(404).json({ message: "Hospital not found" });
+
+    const conn = await getConnection(hospital.trimmedName);
+
+    const FilledFormsModel = getFilledFormsModel(conn);
+    const PatientModel = getPatientModel(conn);
+    const DoctorModel = getDoctorModel(conn);
+    const DepartmentModel = getDepartmentModel(conn);
+
+    const rows = [];
+
+    // ======================
+    // READ CSV (BUFFER SAFE)
+    // ======================
+    await new Promise((resolve, reject) => {
+      const stream = Readable.from(file.buffer);
+
+      stream
+        .pipe(csv())
+        .on("data", (data) => {
+          const cleaned = {};
+          Object.keys(data).forEach((k) => {
+            cleaned[k] = (data[k] ?? "").toString().trim();
+          });
+
+          if (!Object.values(cleaned).every(v => v === "")) {
+            rows.push(cleaned);
+          }
+        })
+        .on("end", resolve)
+        .on("error", reject);
+    });
+
+    console.log("CSV rows:", rows.length);
+
+    // ======================
+    // STEP 1: EXTRACT UNIQUE VALUES
+    // ======================
+    const mobiles = [...new Set(rows.map(r => r.patientMobile?.trim()).filter(Boolean))];
+
+    const doctorIds = [...new Set(rows.map(r => r.doctor).filter(id => mongoose.Types.ObjectId.isValid(id)))];
+
+    const deptIds = [...new Set(rows.map(r => r.department).filter(id => mongoose.Types.ObjectId.isValid(id)))];
+
+    // ======================
+    // STEP 2: BULK FETCH
+    // ======================
+    const existingPatients = await PatientModel.find({
+      patientMobile: { $in: mobiles }
+    }).lean();
+
+    const patientMap = new Map(existingPatients.map(p => [p.patientMobile, p]));
+
+    const doctors = await DoctorModel.find({ _id: { $in: doctorIds } }).lean();
+    const doctorMap = new Map(doctors.map(d => [String(d._id), d]));
+
+    const departments = await DepartmentModel.find({ _id: { $in: deptIds } }).lean();
+    const deptMap = new Map(departments.map(d => [String(d._id), d]));
+
+    // ======================
+    // STEP 3: BULK CREATE PATIENTS
+    // ======================
+    const newPatients = [];
+
+    for (const row of rows) {
+      const mobile = row.patientMobile?.trim();
+      if (!mobile || patientMap.has(mobile)) continue;
+
+      newPatients.push({
+        hospitalId: {
+          hospitalId: hospital._id,
+          name: hospital.name,
+        },
+        branchId: new mongoose.Types.ObjectId(branchId),
+        gender: row.gender || "Other",
+        patientName: row.patientName,
+        status: row.status || "",
+        patientMobile: mobile,
+        patientAge: parseInt(row.patientAge, 10) || 0,
+        location: row.location,
+        category: row.category,
+      });
+    }
+
+    if (newPatients.length) {
+      const inserted = await PatientModel.insertMany(newPatients, { ordered: false });
+      inserted.forEach(p => patientMap.set(p.patientMobile, p));
+    }
+
+    // ======================
+    // STEP 4: BUILD FORMS
+    // ======================
+    const forms = [];
+
+    for (const row of rows) {
+      const mobile = row.patientMobile?.trim();
+      if (!mobile) continue;
+
+      const patient = patientMap.get(mobile);
+      if (!patient) continue;
+
+      const doctor = doctorMap.get(row.doctor) || null;
+      const department = deptMap.get(row.department) || doctor?.department || null;
+
+      forms.push({
+        formType: row.formType?.toLowerCase() || "inbound",
+
+        agentName: row.agentName || "System Import",
+
+        branchId: new mongoose.Types.ObjectId(branchId),
+
+        // agentId: new mongoose.Types.ObjectId("64a1c9e5f0c2b8b1d9e7c456"),
+
+        doctor: doctor?._id || null,
+
+        department: department?._id || null,
+
+        callStatus: row.callStatus || "connected",
+
+        purpose: row.purpose || "",
+
+        followupStatus: row.followupStatus || null,
+
+        formData: {
+          referenceFrom: row.referenceFrom || "",
+          callerType: row.callerType || "",
+
+          // patient relation (IMPORTANT)
+          patientDetails: patient._id,
+
+          remarks: row.remarks || "",
+
+          surgeryName: row.surgeryName || "",
+          healthPackageName: row.healthPackageName || "",
+          healthSchemeName: row.healthSchemeName || "",
+          govertHealthSchemeName: row.govertHealthSchemeName || "",
+          nonGovtHealthSchemeName: row.nonGovtHealthSchemeName || "",
+          reportName: row.reportName || "",
+
+          status: row.patientStatus || "",
+        },
+      });
+    }
+
+    // ======================
+    // STEP 5: BULK INSERT FORMS
+    // ======================
+    const BATCH = 500;
+
+    console.log("forms", forms);
+
+    for (let i = 0; i < forms.length; i += BATCH) {
+      const isCheck = await FilledFormsModel.insertMany(forms.slice(i, i + BATCH), {
+        ordered: false,
+      });
+      console.log("Upload completed", isCheck);
+    }
+
+    console.log("Upload completed");
+
+    return res.status(200).json({
+      success: true,
+      inserted: forms.length,
+      message: "CSV uploaded successfully",
+    });
+
+  } catch (error) {
+    console.error("UPLOAD FAILED:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };

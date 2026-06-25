@@ -108,7 +108,7 @@ export const PatientHistory = () => {
         pagination,
         setPatients,
         setPagination,
-        selectedHostpital,
+        selectedHospital,
         refetchPatients
     } = useContext(HospitalContext);
 
@@ -177,7 +177,7 @@ export const PatientHistory = () => {
                     null,
                     pagination?.patients?.page,
                     null,
-                    selectedHostpital,
+                    selectedHospital,
                     startDate,
                     endDate,
                     searchInput,
@@ -210,7 +210,7 @@ export const PatientHistory = () => {
 
         try {
 
-            const res = await getPatients(null, pagination?.patient?.page, selectedBranch, selectedHostpital, startDate, endDate, true)
+            const res = await getPatients(null, pagination?.patient?.page, selectedBranch, selectedHospital, startDate, endDate, true)
             console.log("patinat fetch ", res);
             if (res?.success) {
                 setPatients(res?.data)
@@ -929,7 +929,7 @@ export const PatientHistory = () => {
 
                                                                 patient: {
                                                                     ...row,
-                                                                    hospitalId: selectedHostpital
+                                                                    hospitalId: selectedHospital
                                                                 }
                                                             }
                                                         })
@@ -1014,7 +1014,7 @@ export const PatientHistory = () => {
 
                                         //                     patient: {
                                         //                         ...patient,
-                                        //                         hospitalId: selectedHostpital
+                                        //                         hospitalId: selectedHospital
                                         //                     }
                                         //                 }
                                         //             })

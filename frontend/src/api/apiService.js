@@ -57,6 +57,14 @@ export const commonRoutes = {
       }
     })
   },
+  uploadFormsCSV: (hosId, branchId, formdata) => {
+    return API.post(`api/bulk-upload`, formdata, {
+      params: {
+        hosId,
+        branchId
+      }
+    })
+  },
   addDoctor: (hosId, branchId, data) => {
     return API.post(`api/add-doctor`, data, {
       params: {

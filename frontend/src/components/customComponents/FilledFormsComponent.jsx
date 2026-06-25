@@ -57,7 +57,7 @@ const searchOptions = [
 
 const FilledFormsComponent = ({
   selectedBranch = null,
-  selectedHostpital = null,
+  selectedHospital = null,
   formsModalOpen,
   setFormsModalOpen,
   formsTypeFilter,
@@ -92,7 +92,7 @@ const FilledFormsComponent = ({
     totalPages: 1,
     totalDocument: 0,
   })
-  console.log("formsModalOpen", formsModalOpen);
+
 
   const [selectedFormColumns, setSelectedFormColumns] = useState([
     "agentName",
@@ -113,6 +113,13 @@ const FilledFormsComponent = ({
   // const { request } = useApi(commonRoutes.getFilledForms);
   const formsColumnFilterRef = useRef(null);
   const csvFileInputRef = useRef(null);
+  {
+    console.log("selectedHostpital-forms", selectedHospital)
+  }
+
+  const { request: getFilledForms, loading: getFilledFormsLoading, error: getFilledformError } = useApi(commonRoutes.getFilledForms)
+  const { request: uploadFormsCSVApi, loading: uploadFormsCSVApiLoading, error: uploadFormsCSVApiError } = useApi(commonRoutes.uploadFormsCSV)
+
 
   const resetCSVState = () => {
     setCSVStatus("idle");
@@ -127,7 +134,6 @@ const FilledFormsComponent = ({
     setCSVActionResult("");
   };
 
-  const { request: getFilledForms, loading: getFilledFormsLoading, error: getFilledformError } = useApi(commonRoutes.getFilledForms)
   const fetchForms = async (search = null) => {
     try {
       const purpose =
@@ -145,7 +151,7 @@ const FilledFormsComponent = ({
 
       const res = await getFilledForms(
         pagination.page,
-        selectedHostpital,
+        selectedHospital,
         selectedBranch,
         dateRange?.startDate || null,
         dateRange?.endDate || null,
@@ -175,7 +181,7 @@ const FilledFormsComponent = ({
     fetchForms();
   }, [
     selectedBranch,
-    selectedHostpital,
+    selectedHospital,
     formsModalOpen,
     dateRange?.startDate,
     dateRange?.endDate,
@@ -207,13 +213,18 @@ const FilledFormsComponent = ({
     return String(value).trim();
   };
 
+
   const validateCSVRow = (row, rowNumber) => {
     const errors = [];
     const patientName = normalizeValue(row.patientName || row.name || row.patient_name);
     const phone = normalizeValue(row.patientMobile || row.contactNumber || row.phone);
-    const department = normalizeValue(row.departmentName || row.department);
     const formType = normalizeValue(row.formType);
     const ageValue = normalizeValue(row.age);
+    const doctor = normalizeValue(row.doctor);
+    const department = normalizeValue(row.department);
+    const isValidObjectId = (id) => {
+      return /^[0-9a-fA-F]{24}$/.test(id);
+    };
 
     if (!patientName) {
       errors.push({
@@ -248,21 +259,30 @@ const FilledFormsComponent = ({
       }
     }
 
-    if (!department) {
-      errors.push({
-        rowNumber,
-        columnName: "departmentName",
-        invalidValue: normalizeValue(row.departmentName || row.department),
-        message: "Department is required",
-      });
-    }
-
     if (!formType) {
       errors.push({
         rowNumber,
         columnName: "formType",
         invalidValue: normalizeValue(row.formType),
         message: "Form type is required",
+      });
+    }
+
+    if (doctor && !isValidObjectId(doctor)) {
+      errors.push({
+        rowNumber,
+        columnName: "doctor",
+        invalidValue: doctor,
+        message: "Doctor must be a valid ObjectId",
+      });
+    }
+
+    if (department && !isValidObjectId(department)) {
+      errors.push({
+        rowNumber,
+        columnName: "department",
+        invalidValue: department,
+        message: "Department must be a valid ObjectId",
       });
     }
 
@@ -338,6 +358,48 @@ const FilledFormsComponent = ({
     }
   };
 
+  const handleImportAction = async () => {
+
+    if (!selectedFile) return
+
+    // Continue upload
+    const formdata = new FormData();
+    formdata.append("csv", selectedFile);
+    formdata.append("type", "doctor");
+
+
+    console.log("selectedHospital", selectedHospital);
+    console.log("selectedBranch", selectedBranch);
+
+    try {
+      const res = await uploadFormsCSVApi(
+        selectedHospital,
+        selectedBranch,
+        formdata
+      );
+
+      if (res?.success) {
+        toast.success(
+          res?.message ||
+          "CSV uploaded successfully!"
+        );
+
+        // await refre();
+        setUploadCSVModalOpen(false)
+
+      }
+
+
+    } catch (error) {
+      console.log("error");
+      alert("Error")
+      toast.error("Error To Upload Data! Try After Sometime ")
+
+    }
+
+  };
+
+
   const handleSearchApply = async () => {
     try {
       const purpose =
@@ -349,7 +411,7 @@ const FilledFormsComponent = ({
 
       const res = await getFilledForms(
         1,
-        selectedHostpital,
+        selectedHospital,
         selectedBranch,
         dateRange?.startDate || null,
         dateRange?.endDate || null,
@@ -387,7 +449,7 @@ const FilledFormsComponent = ({
 
       const res = await getFilledForms(
         1,
-        selectedHostpital,
+        selectedHospital,
         selectedBranch,
         dateFilterFrom || null,
         dateFilterTo || null,
@@ -452,6 +514,8 @@ const FilledFormsComponent = ({
   const handleCSVFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    console.log("file", file);
+
     setSelectedFile(file);
     setUploadCSVModalOpen(true);
 
@@ -527,19 +591,6 @@ const FilledFormsComponent = ({
     setUploadCSVModalOpen(false);
   };
 
-  const handleImportAction = (mode) => {
-    if (mode === "skipErrors") {
-      setCSVActionResult(
-        `Import started. ${csvParsedValidRows.length + csvParsedInvalidRows.length - csvParsedInvalidRows.length} valid rows will be imported; ${csvParsedInvalidRows.length} rows will be skipped.`
-      );
-    } else if (mode === "importValid") {
-      setCSVActionResult(
-        `Import started. ${csvParsedValidRows.length} valid rows will be imported; ${csvParsedInvalidRows.length} invalid rows will be skipped.`
-      );
-    }
-    setUploadCSVModalOpen(false);
-  };
-
   const toggleFormColumn = (key) => {
     setSelectedFormColumns((prev) =>
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
@@ -558,7 +609,7 @@ const FilledFormsComponent = ({
 
       const res = await getFilledForms(
         1,
-        selectedHostpital,
+        selectedHospital,
         selectedBranch,
         dateFilterFrom || null,
         dateFilterTo || null,
@@ -591,11 +642,13 @@ const FilledFormsComponent = ({
     selectedFormColumns.includes(col.key),
   );
   const exportFormsToSheet = async () => {
-    if (!dateFilterFrom || !dateFilterTo) {
-      toast.info("Please select a start date and end date before exporting.");
-      setDateFilterOpen(true);
-      setMoreMenuAnchor(null);
-      return;
+
+    let exportdateFrom = dateFilterFrom
+    let exportdateTo = dateFilterTo
+    if (!exportdateFrom || !exportdateTo) {
+
+      exportdateFrom = dateRange.startDate;
+      exportdateTo = dateRange.endDate;
     }
 
     try {
@@ -608,10 +661,10 @@ const FilledFormsComponent = ({
 
       const res = await getFilledForms(
         1,
-        selectedHostpital,
+        selectedHospital,
         selectedBranch,
-        dateFilterFrom,
-        dateFilterTo,
+        exportdateFrom,
+        exportdateTo,
         searchInput || "",
         purpose,
         formsModalOpen,
@@ -1072,7 +1125,6 @@ const FilledFormsComponent = ({
 
       </div>
 
-
       <Dialog
         open={uploadCSVModalOpen}
         onClose={(event, reason) => {
@@ -1165,24 +1217,25 @@ const FilledFormsComponent = ({
           >
             Reupload File
           </Button>
-          <Button
+          {/* <Button
             variant="contained"
             color="primary"
             onClick={() => handleImportAction("skipErrors")}
             disabled={csvStatus === "processing" || csvValidationSummary.totalRows === 0}
           >
             Skip Errors & Continue Import
-          </Button>
+          </Button> */}
           <Button
             variant="contained"
             color="success"
-            onClick={() => handleImportAction("importValid")}
-            disabled={csvStatus === "processing" || csvValidationSummary.successCount === 0}
+            onClick={handleImportAction}
+            disabled={csvStatus === "processing" || csvValidationSummary.successCount === 0 || uploadFormsCSVApiLoading}
           >
-            Import Only Valid Rows
+            {uploadFormsCSVApiLoading ? <CircularProgress size={22} /> : "Continue"}
           </Button>
           <Button
             variant="text"
+            disabled={uploadFormsCSVApiLoading}
             onClick={() => setUploadCSVModalOpen(false)}
           // disabled={csvStatus === "processing"}
           >

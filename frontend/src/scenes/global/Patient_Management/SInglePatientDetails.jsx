@@ -86,7 +86,7 @@ export const SInglePatientDetails = () => {
         "department.name",
         "purpose",
         "formType",
-        "followupStatus",
+        // "followupStatus",
         // "formData.referenceFrom",
         "formData.remarks",
         "createdAt",
@@ -903,7 +903,7 @@ export const SInglePatientDetails = () => {
 
                                         //                     patient: {
                                         //                         ...patient,
-                                        //                         hospitalId: selectedHostpital
+                                        //                         hospitalId: selectedHospital
                                         //                     }
                                         //                 }
                                         //             })
