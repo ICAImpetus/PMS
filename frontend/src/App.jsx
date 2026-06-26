@@ -56,6 +56,7 @@ import AdminManagement from "./panels/superAdmin/adminManagement/AdminManagement
 import { PatientHistory } from "./scenes/global/Patient_Management/PatientHistory";
 import { PatientHistory as PatientHistoryForNonAdmins } from "./scenes/global/Patient_Management/PatientHistoryForNonAdmins";
 import { SInglePatientDetails } from "./scenes/global/Patient_Management/SInglePatientDetails";
+import Subscription from "./panels/superManager/subscription_plan/Subscription";
 
 
 const HospitalManagementLayout = () => {
@@ -123,6 +124,7 @@ function App() {
           <Route path="/patient-history" element={<PatientHistory />} />
           <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
           <Route path="/user-management" element={<UserManagementSuperManager />} />
+          <Route path="/Plans" element={<Subscription />} />
         </>
       )}
 
