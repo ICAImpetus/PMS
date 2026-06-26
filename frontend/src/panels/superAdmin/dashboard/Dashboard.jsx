@@ -379,7 +379,7 @@ const SuperAdminDashboard = () => {
       />
       {formsModalOpen ? (
         <FilledFormsComponent
-          selectedHospital={selectedHostpital}
+          selectedHostpital={selectedHostpital}
           formsModalOpen={formsModalOpen}
           setFormsModalOpen={setFormsModalOpen}
           formsTypeFilter={formsTypeFilter}
