@@ -1071,6 +1071,90 @@ export const getSingleBranch = async (req, res) => {
     });
   }
 };
+export const getSingleBranchForForms = async (req, res) => {
+  try {
+    const { id, hosId } = req.params;
+
+    // Validate IDs
+    if (
+      !id ||
+      !hosId ||
+      !mongoose.Types.ObjectId.isValid(id) ||
+      !mongoose.Types.ObjectId.isValid(hosId)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid branchId and hospitalId are required",
+      });
+    }
+
+    // Check hospital (master DB)
+    const hospital = await HospitalModel.findOne({
+      _id: hosId,
+      isDeleted: false,
+    }).lean();
+
+    if (!hospital) {
+      return res.status(404).json({
+        success: false,
+        message: "Hospital not found",
+      });
+    }
+
+    // Get tenant DB connection
+    const conn = await getConnection(hospital.trimmedName);
+
+
+    const Department = getDepartmentModel(conn);
+    const Doctor = getDoctorModel(conn);
+    const Branch = getBranchModel(conn);
+    const [
+      branch,
+      departments,
+      doctors,
+    ] = await Promise.all([
+
+      // Branch
+      Branch.findOne({ _id: id, isDeleted: false }).lean(),
+
+      // Departments
+      Department.find({ branch: id, isDeleted: false })
+        .populate(pop("doctors", Doctor, "name"))
+        .sort({ createdAt: -1 })
+        .lean(),
+
+      // Doctors (MAIN FIX HERE)
+      Doctor.find({ branch: id, isDeleted: false })
+        .select("-slots") // exclude heavy fields
+        .sort({ createdAt: -1 })
+        .lean(),
+    ]);
+
+    // Check branch exists
+    if (!branch) {
+      return res.status(404).json({
+        success: false,
+        message: "Branch not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        branch,
+        departments,
+        doctors
+      },
+    });
+  } catch (error) {
+    console.error("getSingleBranch error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
 export const getBranchesByRole = async (req, res) => {
   try {
     const userId = req.user.id; // auth middleware se aa raha hoga

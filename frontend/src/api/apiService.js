@@ -37,6 +37,7 @@ export const commonRoutes = {
 
   getHospitalBranchById: (id) => API.get(`api/all-hospital-branches/${id}`),
   getBranchById: (id, hosId) => API.get(`api/single-branch/${hosId}/${id}`),
+  getBranchByIdForForms: (id, hosId) => API.get(`api/branch-forms/${hosId}/${id}`),
   branchesByRole: (hosId) => API.get(`api/getBranchesByRole`, {
     params: {
       hosId

@@ -109,7 +109,8 @@ export const PatientHistory = () => {
         page: 1,
         totalPages: 1,
         totalDocument: 0,
-    })
+        limit: 10,
+    });
     const [selectedFormColumns, setSelectedFormColumns] = useState([
         "patientName",
         "status",
@@ -169,9 +170,16 @@ export const PatientHistory = () => {
 
             if (res?.success) {
                 const data = res?.data || [];
+                const apiPagination = res?.pagination || {};
 
                 setPatients(data);
                 setFilteredPatients(data);
+                setPagination((prev) => ({
+                    page: apiPagination.page || 1,
+                    totalPages: apiPagination.totalPages || 1,
+                    totalDocument: apiPagination.totalDocument || 0,
+                    limit: prev.limit, // keep current rows per page
+                }));
 
                 console.log("data", data.length);
 
@@ -192,7 +200,7 @@ export const PatientHistory = () => {
     };
     useEffect(() => {
         fetchPatients();
-    }, [selectedHostpital, selectedBranch]);
+    }, [selectedHostpital, selectedBranch, pagination?.page]);
 
 
     const handleApplyDatefilter = async () => {
@@ -384,12 +392,9 @@ export const PatientHistory = () => {
     }, [patients]);
     // Handle pagination
     const handleChangePage = (event, newPage) => {
-        setPagination(prev => ({
+        setPagination((prev) => ({
             ...prev,
-            patients: {
-                ...prev.patients,
-                page: newPage + 1
-            }
+            page: newPage + 1,
         }));
     };
 
@@ -1039,9 +1044,9 @@ export const PatientHistory = () => {
                             <TablePagination
                                 rowsPerPageOptions={[5, 10, 25, 50]}
                                 component="div"
-                                count={pagination?.patients?.totalDocument || 0}
-                                rowsPerPage={pagination?.patients?.limit || 10}
-                                page={pagination?.patients?.page - 1}   // IMPORTANT FIX
+                                count={pagination?.totalDocument || 0}
+                                rowsPerPage={pagination?.limit || 10}
+                                page={pagination?.page - 1}   // IMPORTANT FIX
                                 onRowsPerPageChange={handleChangeRowsPerPage}
                                 onPageChange={handleChangePage}
                                 sx={{

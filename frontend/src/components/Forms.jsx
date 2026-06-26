@@ -230,7 +230,7 @@ function Forms() {
   const [cancelReason, setCancelReason] = useState("");
   const [form, setForm] = useState(initialFormState);
   const [patientLatest, setPatientLatest] = useState(initialFormState);
-  const { request: getSingleBranch, error: getSingleBranchError, loading: getSingleBranchLoading } = useApi(commonRoutes.getBranchById)
+  const { request: getSingleBranch, error: getSingleBranchError, loading: getSingleBranchLoading } = useApi(commonRoutes.getBranchByIdForForms)
   const { request: saveFilledForm, error: saveFilledFormError, loading: saveFilledFormLoading } = useApi(commonRoutes.saveFilledForm)
   const {
     request: getBookedSlotsApi,
@@ -260,26 +260,29 @@ function Forms() {
     loading,
     selectedBranch,
     setSelectedBranch,
-    selectedHospital,
+    selectedHostpital,
     branches,
     errors,
   } = useContext(HospitalContext);
 
   useEffect(() => {
+    console.log("selectedHostpital", selectedHostpital);
+    console.log("selectedBranch", selectedBranch);
+
     const fetchBranchAndDetails = async () => {
-      if (selectedHospital) {
-        const branchDetails = await getSingleBranch(selectedBranch, selectedHospital);
+      if (selectedHostpital) {
+        const branchDetails = await getSingleBranch(selectedBranch, selectedHostpital);
         handleChange("branchId", selectedBranch);
-        handleChange("hospitalId", selectedHospital);
+        handleChange("hospitalId", selectedHostpital);
         setBranchData(branchDetails.data?.branch);
         setDynamicDepartments(branchDetails?.data?.departments || []);
         setDynamicDoctors(branchDetails?.data?.doctors || []);
       }
     };
-    if (selectedHospital && selectedBranch) {
+    if (selectedHostpital && selectedBranch) {
       fetchBranchAndDetails();
     }
-  }, [selectedHospital, selectedBranch]);
+  }, [selectedHostpital, selectedBranch]);
 
 
   useEffect(() => {
@@ -300,7 +303,7 @@ function Forms() {
         }
 
         const res = await getSinglePatientApi(
-          selectedHospital,
+          selectedHostpital,
           selectedBranch,
           number
         );
@@ -369,6 +372,7 @@ function Forms() {
           //     },
           //   },
           // }));
+          setLatestVisits(res?.latestVisits || [])
           return
         }
 
@@ -401,7 +405,7 @@ function Forms() {
         date: form.formData.dateTime,
       }
       const response =
-        await getBookedSlotsApi(selectedHospital, selectedBranch, data);
+        await getBookedSlotsApi(selectedHostpital, selectedBranch, data);
 
       setBookedSlotIds(
         response?.data || []
@@ -532,7 +536,7 @@ function Forms() {
 
   const submitForm = async (e) => {
     e.preventDefault();
-    if (!selectedHospital) {
+    if (!selectedHostpital) {
       toast.error("No Hospital Is Found");
       return;
     }
@@ -541,7 +545,7 @@ function Forms() {
       return;
     }
     try {
-      const res = await saveFilledForm(selectedHospital, selectedBranch, form);
+      const res = await saveFilledForm(selectedHostpital, selectedBranch, form);
       if (res?.success) {
         resetForm();
         toast.success("Form submitted successfully!");
@@ -950,7 +954,7 @@ function Forms() {
             </div>
 
 
-            {selectedDoctor && <DoctorProfileCard hosId={selectedHospital} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
             {/* Slot Duration Selector */}
             {/* <div className="input-row">
@@ -1326,7 +1330,7 @@ function Forms() {
 
             </div>
 
-            {selectedDoctor && <DoctorProfileCard hosId={selectedHospital} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
             <div className="input-row">
               <div className="input-group">
@@ -1454,7 +1458,7 @@ function Forms() {
                 />
               </div>
             </div>
-            {selectedDoctor && <DoctorProfileCard hosId={selectedHospital} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
             <div className="input-row">
               <div className="input-group">
@@ -1704,7 +1708,7 @@ function Forms() {
               </div>
 
             </div>
-            {selectedDoctor && <DoctorProfileCard hosId={selectedHospital} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
             <div className="input-row">
               <div className="input-group textarea-field-container">
                 <label className="required">Issue</label>
@@ -1972,7 +1976,7 @@ function Forms() {
                 />
               </div>
             </div>
-            {selectedDoctor && <DoctorProfileCard hosId={selectedHospital} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
             <div className="input-row">
               <div className="input-group">
@@ -2085,7 +2089,7 @@ function Forms() {
               </div>
 
             </div>
-            {selectedDoctor && <DoctorProfileCard hosId={selectedHospital} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
             <div className="input-row">
               <div className="input-group">
@@ -2216,7 +2220,7 @@ function Forms() {
               </div>
 
             </div>
-            {selectedDoctor && <DoctorProfileCard hosId={selectedHospital} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
             <div className="input-row">
               <div className="input-group">
@@ -4289,7 +4293,6 @@ function Forms() {
           >
             Outbound
           </button>
-
         </div>
       </div>
       <div className="form-container">
@@ -4541,6 +4544,7 @@ function Forms() {
           >
             {bookedSlotAction === "cancel" ? "Confirm Cancel" : "Continue"}
           </Button>
+
         </DialogActions>
       </Dialog>
     </div>

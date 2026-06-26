@@ -57,7 +57,7 @@ const searchOptions = [
 
 const FilledFormsComponent = ({
   selectedBranch = null,
-  selectedHospital = null,
+  selectedHostpital = null,
   formsModalOpen,
   setFormsModalOpen,
   formsTypeFilter,
@@ -113,9 +113,9 @@ const FilledFormsComponent = ({
   // const { request } = useApi(commonRoutes.getFilledForms);
   const formsColumnFilterRef = useRef(null);
   const csvFileInputRef = useRef(null);
-  {
-    console.log("selectedHostpital-forms", selectedHospital)
-  }
+
+  console.log("selectedHostpital-forms", selectedHostpital)
+
 
   const { request: getFilledForms, loading: getFilledFormsLoading, error: getFilledformError } = useApi(commonRoutes.getFilledForms)
   const { request: uploadFormsCSVApi, loading: uploadFormsCSVApiLoading, error: uploadFormsCSVApiError } = useApi(commonRoutes.uploadFormsCSV)
@@ -151,7 +151,7 @@ const FilledFormsComponent = ({
 
       const res = await getFilledForms(
         pagination.page,
-        selectedHospital,
+        selectedHostpital,
         selectedBranch,
         dateRange?.startDate || null,
         dateRange?.endDate || null,
@@ -181,7 +181,7 @@ const FilledFormsComponent = ({
     fetchForms();
   }, [
     selectedBranch,
-    selectedHospital,
+    selectedHostpital,
     formsModalOpen,
     dateRange?.startDate,
     dateRange?.endDate,
@@ -432,12 +432,12 @@ const FilledFormsComponent = ({
     formdata.append("type", "doctor");
 
 
-    console.log("selectedHospital", selectedHospital);
+    console.log("selectedHostpital", selectedHostpital);
     console.log("selectedBranch", selectedBranch);
 
     try {
       const res = await uploadFormsCSVApi(
-        selectedHospital,
+        selectedHostpital,
         selectedBranch,
         formdata
       );
@@ -475,7 +475,7 @@ const FilledFormsComponent = ({
 
       const res = await getFilledForms(
         1,
-        selectedHospital,
+        selectedHostpital,
         selectedBranch,
         dateRange?.startDate || null,
         dateRange?.endDate || null,
@@ -513,7 +513,7 @@ const FilledFormsComponent = ({
 
       const res = await getFilledForms(
         1,
-        selectedHospital,
+        selectedHostpital,
         selectedBranch,
         dateFilterFrom || null,
         dateFilterTo || null,
@@ -673,7 +673,7 @@ const FilledFormsComponent = ({
 
       const res = await getFilledForms(
         1,
-        selectedHospital,
+        selectedHostpital,
         selectedBranch,
         dateFilterFrom || null,
         dateFilterTo || null,
@@ -725,7 +725,7 @@ const FilledFormsComponent = ({
 
       const res = await getFilledForms(
         1,
-        selectedHospital,
+        selectedHostpital,
         selectedBranch,
         exportdateFrom,
         exportdateTo,
