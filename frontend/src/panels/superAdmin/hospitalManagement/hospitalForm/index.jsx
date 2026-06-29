@@ -15,7 +15,7 @@ import { initialValues } from "../../../../scenes/hospitalform/formData";
 import CancelIcon from "@mui/icons-material/Cancel";
 import AddBox from "@mui/icons-material/AddBox";
 import { sendDataApiFunc } from "../../../../utils/services";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-toastify";
 import { tokens } from "../../../../theme";
 
 const AddHospitalData = () => {
@@ -53,7 +53,7 @@ const AddHospitalData = () => {
         {({ values, handleChange, submitForm }) => (
           <Form>
             <Box>
-              <Toaster position="top-right" reverseOrder={false} />
+              {/* <Toaster position="top-right" reverseOrder={false} /> */}
               <Typography variant="h4" gutterBottom>
                 {/* Hospital Creation Formsss */}
               </Typography>

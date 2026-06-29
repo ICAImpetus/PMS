@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 import { ProfilePopup, CodeAnnousementPopup } from "../../../scenes/global/ProfileAndCodeAnnousementPopup";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import FilledFormsComponent from "../../../components/customComponents/FilledFormsComponent";
 import HospitalContext from "../../../contexts/HospitalContexts";
 import { IconButton, Grid, FormControl, Typography, Select } from "@mui/material";

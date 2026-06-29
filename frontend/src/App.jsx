@@ -124,7 +124,7 @@ function App() {
           <Route path="/patient-history" element={<PatientHistory />} />
           <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
           <Route path="/user-management" element={<UserManagementSuperManager />} />
-          <Route path="/Plans" element={<Subscription />} />
+          {/* <Route path="/Plans" element={<Subscription />} /> */}
         </>
       )}
 

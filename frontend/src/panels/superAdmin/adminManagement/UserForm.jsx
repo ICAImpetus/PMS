@@ -25,7 +25,7 @@ import { Visibility, VisibilityOff, Delete } from "@mui/icons-material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Header from "../../../components/Header";
 import { getDataFunc, sendDataApiFunc } from "../../../utils/services";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-toastify";
 import { tokens } from "../../../theme";
 // Assuming this component is in this location
 import { UserContextHook } from "../../../contexts/UserContexts";

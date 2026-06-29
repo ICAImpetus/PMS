@@ -55,7 +55,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import { tokens } from "../../../theme";
 import { UserContextHook } from "../../../contexts/UserContexts";
 import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import HospitalContext from "../../../contexts/HospitalContexts";
 
 

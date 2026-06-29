@@ -71,7 +71,12 @@ const FilledFormsComponent = ({
   const [csvStatus, setCSVStatus] = useState("idle");
   const [csvProgress, setCSVProgress] = useState({ current: 0, total: 0 });
   const [csvProcessMessage, setCSVProcessMessage] = useState("");
-  const [csvValidationErrors, setCSVValidationErrors] = useState([]);
+  const [csvValidationErrors, setCSVValidationErrors] = useState({
+    errors: [],
+    totalRows: 0,
+    successCount: 0,
+    errorCount: 0,
+  });
   const [csvValidationSummary, setCSVValidationSummary] = useState({ totalRows: 0, successCount: 0, errorCount: 0 });
   const [csvRows, setCSVRows] = useState([]);
   const [csvParsedValidRows, setCSVParsedValidRows] = useState([]);
@@ -118,14 +123,19 @@ const FilledFormsComponent = ({
 
 
   const { request: getFilledForms, loading: getFilledFormsLoading, error: getFilledformError } = useApi(commonRoutes.getFilledForms)
-  const { request: uploadFormsCSVApi, loading: uploadFormsCSVApiLoading, error: uploadFormsCSVApiError } = useApi(commonRoutes.uploadFormsCSV)
+  const { request: uploadFormsCSVApi, loading: uploadFormsCSVApiLoading, error: uploadFormsCSVApiError } = useApi(commonRoutes.uploadFormsCSV, { onError: setCSVValidationErrors });
 
 
   const resetCSVState = () => {
     setCSVStatus("idle");
     setCSVProgress({ current: 0, total: 0 });
     setCSVProcessMessage("");
-    setCSVValidationErrors([]);
+    setCSVValidationErrors({
+      errors: [],
+      totalRows: 0,
+      successCount: 0,
+      errorCount: 0,
+    });
     setCSVValidationSummary({ totalRows: 0, successCount: 0, errorCount: 0 });
     setCSVRows([]);
     setCSVParsedValidRows([]);
@@ -323,32 +333,32 @@ const FilledFormsComponent = ({
       });
     }
 
-    if (branchId && !isValidObjectId(branchId)) {
-      errors.push({
-        rowNumber,
-        columnName: "branchId",
-        invalidValue: branchId,
-        message: "BranchId must be a valid ObjectId",
-      });
-    }
+    // if (branchId && !isValidObjectId(branchId)) {
+    //   errors.push({
+    //     rowNumber,
+    //     columnName: "branchId",
+    //     invalidValue: branchId,
+    //     message: "BranchId must be a valid ObjectId",
+    //   });
+    // }
 
-    if (doctor && !isValidObjectId(doctor)) {
-      errors.push({
-        rowNumber,
-        columnName: "doctor",
-        invalidValue: doctor,
-        message: "Doctor must be a valid ObjectId",
-      });
-    }
+    // if (doctor) {
+    //   errors.push({
+    //     rowNumber,
+    //     columnName: "doctor",
+    //     invalidValue: doctor,
+    //     message: "Doctor must be a valid ObjectId",
+    //   });
+    // }
 
-    if (department && !isValidObjectId(department)) {
-      errors.push({
-        rowNumber,
-        columnName: "department",
-        invalidValue: department,
-        message: "Department must be a valid ObjectId",
-      });
-    }
+    // if (department && !isValidObjectId(department)) {
+    //   errors.push({
+    //     rowNumber,
+    //     columnName: "department",
+    //     invalidValue: department,
+    //     message: "Department must be a valid ObjectId",
+    //   });
+    // }
 
     return errors;
   };
@@ -388,12 +398,17 @@ const FilledFormsComponent = ({
           setCSVRows(rows);
           setCSVParsedValidRows(validRows);
           setCSVParsedInvalidRows(invalidRows);
-          setCSVValidationErrors(errorList);
-          setCSVValidationSummary({
+          setCSVValidationErrors({
+            errors: errorList,
             totalRows,
             successCount: validRows.length,
             errorCount: invalidRows.length,
           });
+          // setCSVValidationSummary({
+          //   totalRows,
+          //   successCount: validRows.length,
+          //   errorCount: invalidRows.length,
+          // });
           setCSVStatus("completed");
           setCSVProcessMessage("Validation complete");
           resolve();
@@ -421,19 +436,20 @@ const FilledFormsComponent = ({
       setSelectedFormColumns(FORMS_AVAILABLE_COLUMNS.map((c) => c.key));
     }
   };
-
   const handleImportAction = async () => {
+    if (!selectedFile) return;
 
-    if (!selectedFile) return
+    // Clear previous errors before a new attempt
+    setCSVValidationErrors({
+      errors: [],
+      totalRows: 0,
+      successCount: 0,
+      errorCount: 0,
+    });
 
-    // Continue upload
     const formdata = new FormData();
     formdata.append("csv", selectedFile);
     formdata.append("type", "doctor");
-
-
-    console.log("selectedHostpital", selectedHostpital);
-    console.log("selectedBranch", selectedBranch);
 
     try {
       const res = await uploadFormsCSVApi(
@@ -443,26 +459,13 @@ const FilledFormsComponent = ({
       );
 
       if (res?.success) {
-        toast.success(
-          res?.message ||
-          "CSV uploaded successfully!"
-        );
-
-        // await refre();
-        setUploadCSVModalOpen(false)
-
+        toast.success(res?.message || "CSV uploaded successfully!");
+        setUploadCSVModalOpen(false);
       }
-
-
     } catch (error) {
-      console.log("error");
-      alert("Error")
-      toast.error("Error To Upload Data! Try After Sometime ")
-
+      console.error("Upload error details:", error);
     }
-
   };
-
 
   const handleSearchApply = async () => {
     try {
@@ -1228,11 +1231,13 @@ const FilledFormsComponent = ({
             <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
               {/* <Typography variant="caption" color="text.secondary"> */}
 
-              <Typography variant="h6">{csvValidationSummary.errorCount}</Typography>
+              <Typography variant="h6">{csvValidationErrors?.errorCount}</Typography>
               {/* </Paper> */}
             </Box>
 
-            {csvValidationErrors.length > 0 ? (
+            {console.log("uploadFormsCSVApiError", uploadFormsCSVApiError)}
+
+            {csvValidationErrors?.errors?.length > 0 && (
               <Box sx={{ mt: 3 }}>
                 <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 700 }}>
                   Validation issues preview
@@ -1248,7 +1253,7 @@ const FilledFormsComponent = ({
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {csvValidationErrors.slice(0, 12).map((error, index) => (
+                      {csvValidationErrors?.errors?.slice(0, 12).map((error, index) => (
                         <TableRow key={`${error.rowNumber}-${index}`} sx={{ bgcolor: index % 2 === 0 ? "#fff5f5" : "#fff" }}>
                           <TableCell>{error.rowNumber}</TableCell>
                           <TableCell>{error.columnName}</TableCell>
@@ -1259,17 +1264,22 @@ const FilledFormsComponent = ({
                     </TableBody>
                   </Table>
                 </TableContainer>
-                {csvValidationErrors.length > 12 ? (
+                {csvValidationErrors?.errors?.length > 12 ? (
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
                     Showing first 12 errors. Review all issues before importing.
                   </Typography>
                 ) : null}
               </Box>
-            ) : (
-              <Alert severity="success" sx={{ mt: 3 }}>
-                No validation issues found. All rows are ready for import.
-              </Alert>
-            )}
+            )
+              // : (
+
+              //   <Alert severity={uploadFormsCSVApiError ? "error" : "success"} sx={{ mt: 3 }}>
+              //     {uploadFormsCSVApiError ? `Error:${uploadFormsCSVApiError}` : "You Can Continue"}
+
+              //   </Alert>
+
+              // )
+            }
           </Box>
           {/* ) : null} */}
         </DialogContent>
@@ -1293,7 +1303,7 @@ const FilledFormsComponent = ({
             variant="contained"
             color="success"
             onClick={handleImportAction}
-            disabled={csvStatus === "processing" || csvValidationSummary.successCount === 0 || uploadFormsCSVApiLoading}
+            disabled={csvStatus === "processing" || uploadFormsCSVApiLoading || csvValidationErrors?.errors?.length > 0}
           >
             {uploadFormsCSVApiLoading ? <CircularProgress size={22} /> : "Continue"}
           </Button>

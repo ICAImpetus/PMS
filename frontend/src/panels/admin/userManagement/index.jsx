@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { getDataFunc, sendDataApiFunc } from "../../../utils/services";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-toastify";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { gridClasses, styled } from "@mui/system";
 
@@ -295,7 +295,7 @@ function UserManagentAdmin() {
 
   return (
     <ScrollableForm>
-      <Toaster
+      {/* <Toaster
         position="top-right"
         toastOptions={{
           duration: 5000,
@@ -303,7 +303,7 @@ function UserManagentAdmin() {
             zIndex: 999999,
           },
         }}
-      />
+      /> */}
       {loading?.users && (
         <Box
           display="flex"

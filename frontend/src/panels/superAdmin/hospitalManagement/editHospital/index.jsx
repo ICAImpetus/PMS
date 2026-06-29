@@ -2,7 +2,7 @@ import React from "react";
 import { useEffect, useState } from "react";
 import { tokens } from "../../../../theme";
 import Header from "../../../../components/Header.jsx";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-toastify";
 import BreadcrumbNav from "../../../../components/BroadcrumNav.jsx";
 import { getDataFunc, sendDataApiFunc } from "../../../../utils/services";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";

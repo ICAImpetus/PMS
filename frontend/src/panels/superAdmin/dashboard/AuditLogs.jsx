@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import Chart from 'chart.js/auto';
 import { useApi } from '../../../api/useApi';
 import { commonRoutes } from '../../../api/apiService';
-import toast from 'react-hot-toast';
+import { toast } from "react-toastify";
 import moment from 'moment'
 
 const AuditLogs = () => {

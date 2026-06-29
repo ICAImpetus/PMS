@@ -52,7 +52,6 @@ import moment from "moment";
 import { useApi } from "../../../api/useApi.js"
 import { commonRoutes } from "../../../api/apiService";
 import { handleExport, getNestedValue, PATIENT_AVAILABLE_COLUMNS, statusStyles } from "../../../utils/exportUtils.js";
-import { Toaster } from "react-hot-toast";
 
 export const generateExportData = (data, columns) => {
     const headers = columns.map((col) => col.label);
@@ -417,7 +416,7 @@ export const PatientHistory = () => {
 
     return (
         <>
-            <Toaster
+            {/* <Toaster
                 position="top-right"
                 toastOptions={{
                     duration: 5000,
@@ -425,7 +424,7 @@ export const PatientHistory = () => {
                         zIndex: 999999,
                     },
                 }}
-            />
+            /> */}
             <Box sx={{ backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
                 {/* Header with Title and Tabs */}
                 <Box sx={{ p: 2, pb: 0, display: "flex", alignItems: "center", justifyContent: "space-between", backgroundColor: "#fff", borderBottom: "1px solid #e0e0e0" }}>

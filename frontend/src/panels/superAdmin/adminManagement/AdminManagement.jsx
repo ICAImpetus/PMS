@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-toastify";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { gridClasses, styled } from "@mui/system";
 
@@ -295,7 +295,7 @@ function AdminManagement() {
 
     return (
         <ScrollableForm>
-            <Toaster
+            {/* <Toaster
                 position="top-right"
                 toastOptions={{
                     duration: 5000,
@@ -303,7 +303,7 @@ function AdminManagement() {
                         zIndex: 999999,
                     },
                 }}
-            />
+            /> */}
             {/* Loader */}
             {loading?.userLoading && (
                 <Box

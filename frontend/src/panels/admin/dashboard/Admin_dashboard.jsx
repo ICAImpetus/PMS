@@ -43,7 +43,7 @@ import { useApi } from "../../../api/useApi";
 import UsersCard from "../../../components/UserCard";
 import moment from "moment";
 import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import SectionLoader from "../../../components/SectionLoader";
 import { UserContextHook } from "../../../contexts/UserContexts";
 import HospitalContext from "../../../contexts/HospitalContexts";

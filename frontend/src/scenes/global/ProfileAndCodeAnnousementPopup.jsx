@@ -6,7 +6,7 @@ import CampaignIcon from "@mui/icons-material/Campaign";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { commonRoutes } from "../../api/apiService";
 import { useApi } from "../../api/useApi";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import { UserContextHook } from "../../contexts/UserContexts";
 import LogoutModal from "../../components/LogoutModal";
 

@@ -4,7 +4,7 @@ import { UserContextHook } from "../contexts/UserContexts";
 let isLoggingOut = false;
 
 export const useApi = (apiFn, options = {}) => {
-  const { isPublic = false } = options;
+  const { isPublic = false, onError = null, setCSVValidationSummary = null } = options;
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -54,6 +54,23 @@ export const useApi = (apiFn, options = {}) => {
       }
 
       setError(message);
+
+      if (onError) {
+        const backendErrors = err.response?.data?.errors;
+        const errorCount = err.response?.data?.errorCount;
+        const successCount = err.response?.data?.successCount;
+        const totalRows = err.response?.data?.totalRows;
+
+        if (backendErrors) {
+          onError({
+            errors: backendErrors,
+            totalRows,
+            successCount,
+            errorCount,
+          });
+        }
+      }
+
 
 
       return {

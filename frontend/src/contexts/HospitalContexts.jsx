@@ -8,7 +8,7 @@ import React, {
 import { commonRoutes } from "../api/apiService";
 import { UserContextHook } from "./UserContexts";
 import { useQuery } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 
 export const HospitalContext = createContext();
 

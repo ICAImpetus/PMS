@@ -15,7 +15,7 @@ import Header from "../../../../components/HeaderNew";
 import AddHeader from "../../../../components/AddHeader";
 import BreadcrumbNav from "../../../../components/BroadcrumNav";
 // import { nanoid } from "@reduxjs/toolkit";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-toastify";
 import AddHospitalData1 from "./index2";
 import HospitalCards from "../../../../components/CardsUICom"; //  Ensure this path points to your CardsUICom
 // import AssignAdminModal from "./AssignAdminModel"; //  Import the Modal
@@ -116,7 +116,7 @@ const HospitalCreationNew = () => {
   if (open) {
     return (
       <ScrollableForm>
-        <Toaster position="top-right" />
+
         <Box display="flex" alignItems="center" gap={2} mb={2}>
           <Button
             variant="outlined"
@@ -143,7 +143,7 @@ const HospitalCreationNew = () => {
         <Divider sx={{ borderBottomWidth: 2, my: 2 }} />
         <BreadcrumbNav />
         <Divider sx={{ borderBottomWidth: 2, my: 2 }} />
-        
+
         <Box sx={{ mt: 2 }}>
           <AddHospitalData1
             initialState={selectedHospital}
@@ -158,7 +158,7 @@ const HospitalCreationNew = () => {
 
   return (
     <ScrollableForm>
-      <Toaster position="top-right" />
+
       <Box
         display="flex"
         alignItems={{ xs: "flex-start", sm: "center" }}

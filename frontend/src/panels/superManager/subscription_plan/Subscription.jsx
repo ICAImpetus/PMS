@@ -1,9 +1,9 @@
 import { Box } from '@mui/material'
 import React from 'react'
 import './style.css'
-import toast from 'react-hot-toast'
+import { toast } from "react-toastify";
 import axios from 'axios'
-import Razorpay from 'razorpay';
+// import Razorpay from 'razorpay';
 import { UserContextHook } from '../../../contexts/UserContexts'
 
 const Subscription = () => {
@@ -165,7 +165,7 @@ const Subscription = () => {
                     </div>
                     <button className="btn-action btn-primary"
                         onClick={() => handlePay(9999)}
-                    
+
                     >Provision Care Pro</button>
                 </section>
 
@@ -201,7 +201,7 @@ const Subscription = () => {
                     </div>
                     <button className="btn-action btn-dark"
                         onClick={() => handlePay(36999)}
-                    
+
                     >Request Enterprise Access</button>
                 </section>
 

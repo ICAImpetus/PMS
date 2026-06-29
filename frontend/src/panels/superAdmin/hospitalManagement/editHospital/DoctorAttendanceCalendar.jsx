@@ -9,7 +9,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import dayjs from "dayjs";
 import { useApi } from "../../../../api/useApi";
 import { commonRoutes } from "../../../../api/apiService";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 
 // Generate default attendance
 const getDefaultAttendance = (opdDays = []) => {

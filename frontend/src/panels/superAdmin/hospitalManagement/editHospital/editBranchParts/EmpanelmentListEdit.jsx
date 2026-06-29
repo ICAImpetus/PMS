@@ -32,7 +32,7 @@ import GroupIcon from "@mui/icons-material/Group";
 import DescriptionIcon from "@mui/icons-material/Description";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import { tokens } from "../../../../../theme";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import MultiSelectDropdown from "../../../userManagement/components/MultiSelectDropdown";
 import { normalizeSuggestionArray } from "../BranchInfo";
 
@@ -497,7 +497,7 @@ const AddEmpanelmentListModal = ({
                           color="error"
                           sx={{ mt: 0.5, ml: 1.5 }}
                         >
-                          {errors.typeOfCoverage} 
+                          {errors.typeOfCoverage}
                         </Typography>
                       )}
                     </FormControl>

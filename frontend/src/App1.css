@@ -1,8 +1,3 @@
-/* ===== GLOBAL LAYOUT ===== */
-.react-hot-toast {
-  z-index: 99999 !important;
-}
-
 .app-container {
   display: flex;
   flex-direction: column;

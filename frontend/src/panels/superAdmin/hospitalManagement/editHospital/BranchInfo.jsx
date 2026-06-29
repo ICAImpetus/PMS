@@ -34,7 +34,7 @@ import {
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DownloadIcon from "@mui/icons-material/Download";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-toastify";
 import { tokens } from "../../../../theme";
 import { UserContextHook } from "../../../../contexts/UserContexts";
 import SectionLoader from "../../../../components/SectionLoader";
@@ -1781,7 +1781,7 @@ const BranchInfo = () => {
         bgcolor: "#FAFAFA",
       }}
     >
-      <Toaster position="top-right" />
+
 
       {!isAnyFormOpen && (
         <>
@@ -3279,7 +3279,7 @@ const BranchInfo = () => {
             variant="contained"
             color="success"
             onClick={() => handleImportAction()}
-            disabled={csvStatus === "processing" || csvValidationSummary.successCount === 0 || uploadCSVLoading}
+            disabled={csvStatus === "processing" || uploadCSVLoading}
           >
             {uploadCSVLoading ? <CircularProgress size={22} /> : "Continue"}
           </Button>

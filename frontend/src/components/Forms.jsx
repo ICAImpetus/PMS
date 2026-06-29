@@ -7,7 +7,7 @@ import "./Forms.css";
 import DoctorDropdown from "./DoctorDropdown";
 import { useApi } from "../api/useApi";
 import { commonRoutes } from "../api/apiService";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import moment from "moment";
 import {
   CircularProgress, Box,

@@ -17,7 +17,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { initialBranchState } from "../../../../scenes/hospitalform/formData";
 import { IndianStatesWithDistricts } from "../hospitalForm/components/State";
 import { sendDataApiFuncNew } from "../../../../utils/services";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-toastify";
 import dayjs from "dayjs";
 import { commonRoutes } from "../../../../api/apiService";
 import { useApi } from "../../../../api/useApi";
@@ -516,7 +516,7 @@ const AddBranchBasic = ({
           component="h2"
           gutterBottom
           justifyContent="space-between"
-          // sx={{ textAlign: "center" }}
+        // sx={{ textAlign: "center" }}
         >
           <Button
             variant="outlined"

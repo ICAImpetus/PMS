@@ -1,0 +1,3 @@
+branchId,agentName,formType,patientName,patientMobile,patientStatus,gender,age,callStatus,purpose,referenceFrom,callerType,doctor,department,surgeryName,healthPackageName,healthSchemeName,govertHealthSchemeName,nonGovtHealthSchemeName,reportName,followupStatus,remarks
+Shekhawati Hospital,Sandeep,inbound,Rahul Sharma,9876543210,new ,Male,35,connected,Appointment,Google,Self,Dr Alok Jain,Cardiology,,,,,,,Pending,First consultation
+Shekhawati Hospital,Sandeep,outbound,Priya Verma,9876543211,old,Female,42,connected,Surgery Inquiry,Referral,Relative,Dr Alok Jain,Cardiology,Knee Replacement,,,,,,pending,Wants surgery cost details
