@@ -6,6 +6,7 @@ import apiAuthRoutes from "./routes/auth.routes.js";
 import apiFormRoutes from "./routes/form.routes.js";
 import apiHospitalRoutes from "./routes/hospital.routes.js";
 import apiUserRoutes from "./routes/user.routes.js";
+import apiPaymentRoutes from './routes/paymentRoutes.js'
 import errorHandler from "./middlewares/errorHandler.js";
 import "./crons/backupCron.js";
 
@@ -71,6 +72,7 @@ app.use("/api", apiAuthRoutes);
 app.use("/api", apiFormRoutes);
 app.use("/api", apiHospitalRoutes);
 app.use("/api", apiUserRoutes);
+app.use("/api", apiPaymentRoutes);
 
 // Health check and future REST-style routes (optional)
 // app.use("/api", apiRoutes);

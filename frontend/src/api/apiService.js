@@ -37,6 +37,7 @@ export const commonRoutes = {
 
   getHospitalBranchById: (id) => API.get(`api/all-hospital-branches/${id}`),
   getBranchById: (id, hosId) => API.get(`api/single-branch/${hosId}/${id}`),
+  getBranchByIdForForms: (id, hosId) => API.get(`api/branch-forms/${hosId}/${id}`),
   branchesByRole: (hosId) => API.get(`api/getBranchesByRole`, {
     params: {
       hosId
@@ -51,6 +52,14 @@ export const commonRoutes = {
 
   uploadBranchCSV: (hosId, branchId, formdata) => {
     return API.post(`api/upload-branch-csv`, formdata, {
+      params: {
+        hosId,
+        branchId
+      }
+    })
+  },
+  uploadFormsCSV: (hosId, branchId, formdata) => {
+    return API.post(`api/bulk-upload`, formdata, {
       params: {
         hosId,
         branchId

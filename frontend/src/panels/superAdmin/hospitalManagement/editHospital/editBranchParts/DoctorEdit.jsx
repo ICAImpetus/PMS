@@ -49,7 +49,7 @@ import { tokens } from "../../../../../theme";
 import { useApi } from "../../../../../api/useApi";
 import { commonRoutes } from "../../../../../api/apiService";
 // import { getDataFunc } from "../../../../../utils/services";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-toastify";
 import countryCodes from "./code.js";
 import { normalizeSuggestionArray } from "../BranchInfo.jsx";
 
@@ -1306,30 +1306,7 @@ const AddDoctorModal = ({
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: "#363636",
-            color: "#fff",
-          },
-          success: {
-            duration: 3000,
-            iconTheme: {
-              primary: "#4aed88",
-              secondary: "#fff",
-            },
-          },
-          error: {
-            duration: 5000,
-            iconTheme: {
-              primary: "#ff6b6b",
-              secondary: "#fff",
-            },
-          },
-        }}
-      />
+
       <FormContainer>
         <FormHeader
           sx={{

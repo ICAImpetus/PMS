@@ -18,7 +18,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import { IndianStatesWithDistricts } from "./State";
 import { useFormikContext } from "formik"
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 
 const HospitalBasicDetailAccrodian = ({
   values,

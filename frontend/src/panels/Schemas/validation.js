@@ -1,6 +1,6 @@
 import * as Yup from "yup";
 import { getRequiredHeaders, getDummyData } from "./doctor";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 
 
 export const handleDownloadTemplate = (type, format = "csv") => {

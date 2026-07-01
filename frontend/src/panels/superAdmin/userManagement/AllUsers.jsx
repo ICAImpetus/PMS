@@ -17,7 +17,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import { tokens } from '../../../theme';
 import Header from '../../../components/Header';
 import { getDataFunc } from '../../../utils/services';
-import { toast } from 'react-hot-toast';
+import { toast } from "react-toastify";
 import { DataGridStyles } from '../../../utils/DataGridStyles';
 import { UserContextHook } from '../../../contexts/UserContexts';
 import { ScrollableForm } from '../hospitalManagement/editHospital';

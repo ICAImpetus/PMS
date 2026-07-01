@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from "react";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-toastify";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { styled } from "@mui/system";
 import { Box, useMediaQuery, MenuItem, useTheme, FormControl, InputLabel, Select, Modal, CircularProgress, Typography, Button } from "@mui/material";
@@ -171,7 +171,7 @@ function UserManagementSupermanager() {
 
   return (
     <ScrollableForm>
-      <Toaster
+      {/* <Toaster
         position="top-right"
         toastOptions={{
           duration: 5000,
@@ -179,7 +179,7 @@ function UserManagementSupermanager() {
             zIndex: 999999,
           },
         }}
-      />
+      /> */}
       {loading?.userLoading && (
         <Box
           display="flex"

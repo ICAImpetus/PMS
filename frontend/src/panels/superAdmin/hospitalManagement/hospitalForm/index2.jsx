@@ -31,7 +31,7 @@ import {
 import CancelIcon from "@mui/icons-material/Cancel";
 import AddBox from "@mui/icons-material/AddBox";
 import { sendDataApiFunc } from "../../../../utils/services";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-toastify";
 import { tokens } from "../../../../theme";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import * as Yup from "yup";

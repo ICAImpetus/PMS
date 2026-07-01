@@ -52,7 +52,6 @@ import moment from "moment";
 import { useApi } from "../../../api/useApi.js"
 import { commonRoutes } from "../../../api/apiService";
 import { handleExport, getNestedValue, PATIENT_AVAILABLE_COLUMNS, statusStyles } from "../../../utils/exportUtils.js";
-import { Toaster } from "react-hot-toast";
 
 export const generateExportData = (data, columns) => {
     const headers = columns.map((col) => col.label);
@@ -103,7 +102,14 @@ export const PatientHistory = () => {
     const formsColumnFilterRef = useRef(null);
     const columnFilterButtonRef = useRef(null);
     const [filteredPatients, setFilteredPatients] = useState([])
+    const [patients, setPatients] = useState([])
     const [formTypeFilter, setFormTypeFilter] = useState("all");
+    const [pagination, setPagination] = useState({
+        page: 1,
+        totalPages: 1,
+        totalDocument: 0,
+        limit: 10,
+    });
     const [selectedFormColumns, setSelectedFormColumns] = useState([
         "patientName",
         "status",
@@ -114,6 +120,7 @@ export const PatientHistory = () => {
         "lastVisit.formType",
         "createdAt",
     ]);
+
     const openDateFilter = Boolean(dateFilterAnchorEl);
     const navigate = useNavigate()
 
@@ -134,21 +141,92 @@ export const PatientHistory = () => {
         isNonAdmin,
         loading,
         hospitals,
-        errors,
         selectedHostpital,
-
         setSelectedHostpital,
-        patients,
-        pagination,
-        setPagination,
-        refetchPatients,
-        dateRangeFilter,
-        setDateRangeFilter,
-        setPatients
     } = useContext(HospitalContext);
 
-    const { request: getPatients, loading: getPatientloading } = useApi(commonRoutes.getPatients)
+    const { request: getPatients, loading: getPatientloading, error: patientApiError } = useApi(commonRoutes.getPatients)
+    const fetchPatients = async (
+        startDate = null,
+        endDate = null,
+        searchInput = "",
+        isExport = false
+    ) => {
+        if (!selectedHostpital) return;
 
+        if (isNonAdmin && !selectedBranch) return;
+
+        try {
+            const res = await getPatients(
+                pagination?.page,
+                selectedHostpital,
+                isAdmin ? null : selectedBranch,
+                startDate,
+                endDate,
+                searchInput || "",
+                isExport
+            );
+
+            if (res?.success) {
+                const data = res?.data || [];
+                const apiPagination = res?.pagination || {};
+
+                setPatients(data);
+                setFilteredPatients(data);
+                setPagination((prev) => ({
+                    page: apiPagination.page || 1,
+                    totalPages: apiPagination.totalPages || 1,
+                    totalDocument: apiPagination.totalDocument || 0,
+                    limit: prev.limit, // keep current rows per page
+                }));
+
+                console.log("data", data.length);
+
+                if (!data.length) {
+                    toast.info("No data found for export");
+                }
+
+                return data; // IMPORTANT
+            } else {
+                toast.error("Failed to fetch patients");
+                return [];
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Error fetching patient");
+            return [];
+        }
+    };
+    useEffect(() => {
+        fetchPatients();
+    }, [selectedHostpital, selectedBranch, pagination?.page]);
+
+
+    const handleApplyDatefilter = async () => {
+        if (!startDate || !endDate) {
+            toast.warn("Please Enter Start And End Date");
+            return;
+        }
+
+        if (new Date(startDate) > new Date(endDate)) {
+            toast.warn("Start date cannot be greater than end date");
+            return;
+        }
+
+        try {
+            const data = await fetchPatients(
+                startDate,
+                endDate,
+                searchInput || "",
+                true
+            );
+
+            setFilteredPatients(data || []);
+        } catch (error) {
+            console.error(error);
+            toast.error("Error fetching patient");
+        }
+    };
 
     const handleSearchApply = async () => {
         const searchValue = searchInput.trim().toLowerCase();
@@ -159,15 +237,15 @@ export const PatientHistory = () => {
 
         let filtered = [...patients];
 
-        // Search in existing frontend data
+        // frontend search
         filtered = filtered.filter(
             (patient) =>
-                patient.patientName?.toLowerCase().includes(searchValue) ||
-                patient.lastVisit?.purpose?.toLowerCase().includes(searchValue) ||
-                patient.patientMobile?.toString().includes(searchValue)
+                patient?.patientName?.toLowerCase().includes(searchValue) ||
+                patient?.lastVisit?.purpose?.toLowerCase().includes(searchValue) ||
+                patient?.patientMobile?.toString().includes(searchValue)
         );
 
-        // Form type filter
+        // form filter
         if (formTypeFilter !== "all") {
             filtered = filtered.filter(
                 (patient) =>
@@ -176,11 +254,11 @@ export const PatientHistory = () => {
             );
         }
 
-        // If no data found locally, call API
+        // backend fallback
         if (filtered.length === 0) {
             try {
                 const res = await getPatients(
-                    pagination?.patient?.page,
+                    pagination?.patients?.page,
                     selectedHostpital,
                     isAdmin ? null : selectedBranch,
                     startDate,
@@ -190,34 +268,29 @@ export const PatientHistory = () => {
                 );
 
                 if (res?.success) {
-                    filtered = res.data || []
+                    filtered = res.data || [];
                 }
             } catch (error) {
                 toast.error("Error To Fetch Patient");
+                return;
             }
         }
 
         setFilteredPatients(filtered);
+        setPatients(filtered);
     };
 
 
     // Clear all filters
-    const handleClearFilters = () => {
+    const handleClearFilters = async () => {
         setSearchName("");
         setSearchInput("");
         setStartDate("");
         setEndDate("");
         setAppliedStartDate("");
         setAppliedEndDate("");
-        setDateRangeFilter({ startDate: "", endDate: "" });
         setFormTypeFilter("all");
-        setPagination((prev) => ({
-            ...prev,
-            patients: {
-                ...prev.patients,
-                page: 1,
-            },
-        }));
+        await fetchPatients()
     };
 
 
@@ -227,10 +300,6 @@ export const PatientHistory = () => {
             handleSearchApply();
         }
     };
-    useEffect(() => {
-        setAppliedStartDate(dateRangeFilter.startDate || "");
-        setAppliedEndDate(dateRangeFilter.endDate || "");
-    }, [dateRangeFilter]);
 
     const visibleFormColumns = PATIENT_AVAILABLE_COLUMNS.filter((col) =>
         selectedFormColumns.includes(col.key),
@@ -272,52 +341,6 @@ export const PatientHistory = () => {
         setEndDate("");
         handleCloseDateFilter();
     };
-
-
-    const handleApplyDatefilter = async () => {
-        if (!startDate || !endDate) {
-            toast.warn("Please Enter Start And End Date");
-            return;
-        }
-
-        if (new Date(startDate) > new Date(endDate)) {
-            toast.warn("Start date cannot be greater than end date");
-            return;
-        }
-
-        try {
-            const res = await getPatients(
-                pagination?.patient?.page,
-                selectedHostpital,
-                isAdmin ? null : selectedBranch,
-                startDate,
-                endDate,
-                searchInput || "",
-                true
-            );
-
-            if (res?.success) {
-                const data = res?.data || [];
-
-                setPatients(data);
-                setFilteredPatients(data);
-                console.log("data", data.length);
-
-
-                if (!data.length) {
-                    toast.info("No data found for export");
-                    return;
-                }
-            } else {
-                toast.error("Failed to fetch patients");
-            }
-        } catch (error) {
-            console.error(error);
-            toast.error("Error fetching patient");
-        }
-    }
-
-
 
     const onExport = async () => {
         try {
@@ -368,12 +391,9 @@ export const PatientHistory = () => {
     }, [patients]);
     // Handle pagination
     const handleChangePage = (event, newPage) => {
-        setPagination(prev => ({
+        setPagination((prev) => ({
             ...prev,
-            patients: {
-                ...prev.patients,
-                page: newPage + 1
-            }
+            page: newPage + 1,
         }));
     };
 
@@ -394,16 +414,9 @@ export const PatientHistory = () => {
     };
 
 
-    useEffect(() => {
-        const error = errors?.patientsError
-        if (error) {
-            toast.error(error)
-        }
-    }, [errors?.patientsError])
-
     return (
         <>
-            <Toaster
+            {/* <Toaster
                 position="top-right"
                 toastOptions={{
                     duration: 5000,
@@ -411,7 +424,7 @@ export const PatientHistory = () => {
                         zIndex: 999999,
                     },
                 }}
-            />
+            /> */}
             <Box sx={{ backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
                 {/* Header with Title and Tabs */}
                 <Box sx={{ p: 2, pb: 0, display: "flex", alignItems: "center", justifyContent: "space-between", backgroundColor: "#fff", borderBottom: "1px solid #e0e0e0" }}>
@@ -572,7 +585,6 @@ export const PatientHistory = () => {
                                     }
                                     setAppliedStartDate(startDate);
                                     setAppliedEndDate(endDate);
-                                    setDateRangeFilter({ startDate, endDate });
                                     handleApplyDatefilter()
                                     toast.success("Date filter applied");
                                 } else {
@@ -594,16 +606,7 @@ export const PatientHistory = () => {
                         <Button
                             variant="outlined"
                             color="secondary"
-                            onClick={() => {
-                                setStartDate("");
-                                setEndDate("");
-                                setAppliedStartDate("");
-                                setAppliedEndDate("");
-                                setDateRangeFilter({ startDate: "", endDate: "" });
-                                setSearchInput("")
-                                setFilteredPatients(patients)
-                                toast.success("Date filter cleared");
-                            }}
+                            onClick={handleClearFilters}
                             disabled={getPatientloading}
                             sx={{
                                 textTransform: "none",
@@ -636,16 +639,16 @@ export const PatientHistory = () => {
                         <Button
                             variant="outlined"
                             color="primary"
-                            disabled={loading?.patients}
+                            disabled={getPatientloading}
                             startIcon={<RefreshIcon />}
-                            onClick={refetchPatients}
+                            onClick={fetchPatients}
                             sx={{
                                 textTransform: "none",
                                 fontWeight: 500,
                                 height: "36px",
                             }}
                         >
-                            {loading?.patients ? <CircularProgress size={20} /> : "Refresh"}
+                            {getPatientloading ? <CircularProgress size={20} /> : "Refresh"}
                         </Button>
 
                         {/* Export Button */}
@@ -723,13 +726,13 @@ export const PatientHistory = () => {
                 </Dialog>
 
                 {/* Tabs and Table Section */}
-                {errors?.patientsError && (
+                {patientApiError && (
                     <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
-                        {errors?.patientsError}
+                        {patientApiError}
                     </Alert>
                 )}
 
-                {loading?.patients ? (
+                {getPatientloading ? (
                     <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
                         <CircularProgress />
                     </Box>
@@ -1040,9 +1043,9 @@ export const PatientHistory = () => {
                             <TablePagination
                                 rowsPerPageOptions={[5, 10, 25, 50]}
                                 component="div"
-                                count={pagination?.patients?.totalDocument || 0}
-                                rowsPerPage={pagination?.patients?.limit || 10}
-                                page={pagination?.patients?.page - 1}   // IMPORTANT FIX
+                                count={pagination?.totalDocument || 0}
+                                rowsPerPage={pagination?.limit || 10}
+                                page={pagination?.page - 1}   // IMPORTANT FIX
                                 onRowsPerPageChange={handleChangeRowsPerPage}
                                 onPageChange={handleChangePage}
                                 sx={{

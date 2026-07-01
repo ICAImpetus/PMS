@@ -13,7 +13,7 @@ import { postDatatoServer } from '../../utils/services';
 import { ThemeProvider } from '@mui/material/styles';
 import adminImage from '../../../ICA.webp';
 import { UserContextHook } from '../../contexts/UserContexts';
-import { toast } from 'react-hot-toast';
+import { toast } from "react-toastify";
 import { sendDataApiFunc } from '../../utils/services';
 import { normalizeUserType } from '../../utils/normalizeUserType';
 import { commonRoutes } from '../../api/apiService';

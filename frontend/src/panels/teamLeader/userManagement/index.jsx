@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { getDataFunc, sendDataApiFunc } from "../../../utils/services";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-toastify";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { styled } from "@mui/system";
 import { Box, useMediaQuery, useTheme, IconButton, Modal, CircularProgress, Typography, Button } from "@mui/material";
@@ -188,7 +188,7 @@ function UserManagementTeamLeader() {
 
   return (
     <ScrollableForm>
-      <Toaster
+      {/* <Toaster
         position="top-right"
         toastOptions={{
           duration: 5000,
@@ -196,7 +196,7 @@ function UserManagementTeamLeader() {
             zIndex: 999999,
           },
         }}
-      />
+      /> */}
       {loading?.userLoading && (
         <Box
           display="flex"

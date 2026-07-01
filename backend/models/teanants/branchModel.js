@@ -51,7 +51,7 @@ export const BranchSchema = new mongoose.Schema(
     name: {
       type: String,
       required: [true, "Branch name is required"],
-      trim: true,
+      // trim: true,
     },
 
     code: {

@@ -32,7 +32,7 @@ import PhoneCallbackIcon from "@mui/icons-material/PhoneCallback";
 import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate } from "react-router-dom";
 import { ProfilePopup, CodeAnnousementPopup } from "../../../scenes/global/ProfileAndCodeAnnousementPopup";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import FilledFormsComponent from "../../../components/customComponents/FilledFormsComponent";
 import HospitalContext from "../../../contexts/HospitalContexts";
 import { IconButton } from "@mui/material";

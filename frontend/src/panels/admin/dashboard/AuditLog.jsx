@@ -4,7 +4,7 @@ import './AdminPages.css';
 import { useApi } from '../../../api/useApi';
 import { commonRoutes } from '../../../api/apiService';
 import { UserContextHook } from '../../../contexts/UserContexts';
-import toast from 'react-hot-toast';
+import { toast } from "react-toastify";
 import moment from 'moment';
 import { Box, CircularProgress, Typography, useTheme } from '@mui/material';
 import { tokens } from '../../../theme';

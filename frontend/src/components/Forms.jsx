@@ -7,7 +7,7 @@ import "./Forms.css";
 import DoctorDropdown from "./DoctorDropdown";
 import { useApi } from "../api/useApi";
 import { commonRoutes } from "../api/apiService";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import moment from "moment";
 import {
   CircularProgress, Box,
@@ -230,7 +230,7 @@ function Forms() {
   const [cancelReason, setCancelReason] = useState("");
   const [form, setForm] = useState(initialFormState);
   const [patientLatest, setPatientLatest] = useState(initialFormState);
-  const { request: getSingleBranch, error: getSingleBranchError, loading: getSingleBranchLoading } = useApi(commonRoutes.getBranchById)
+  const { request: getSingleBranch, error: getSingleBranchError, loading: getSingleBranchLoading } = useApi(commonRoutes.getBranchByIdForForms)
   const { request: saveFilledForm, error: saveFilledFormError, loading: saveFilledFormLoading } = useApi(commonRoutes.saveFilledForm)
   const {
     request: getBookedSlotsApi,
@@ -266,6 +266,9 @@ function Forms() {
   } = useContext(HospitalContext);
 
   useEffect(() => {
+    console.log("selectedHostpital", selectedHostpital);
+    console.log("selectedBranch", selectedBranch);
+
     const fetchBranchAndDetails = async () => {
       if (selectedHostpital) {
         const branchDetails = await getSingleBranch(selectedBranch, selectedHostpital);
@@ -369,6 +372,7 @@ function Forms() {
           //     },
           //   },
           // }));
+          setLatestVisits(res?.latestVisits || [])
           return
         }
 
@@ -4289,7 +4293,6 @@ function Forms() {
           >
             Outbound
           </button>
-
         </div>
       </div>
       <div className="form-container">
@@ -4541,6 +4544,7 @@ function Forms() {
           >
             {bookedSlotAction === "cancel" ? "Confirm Cancel" : "Continue"}
           </Button>
+
         </DialogActions>
       </Dialog>
     </div>

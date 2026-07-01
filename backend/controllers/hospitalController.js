@@ -950,10 +950,6 @@ export const getSingleBranch = async (req, res) => {
     const Incharge = getInchargeModel(conn);
     const CodeAnnouncement = getCodeAnnoucementModel(conn);
     const Branch = getBranchModel(conn);
-
-    // helper (clean code)
-    const pop = (path, model) => ({ path, model });
-
     const [
       branch,
       departments,
@@ -973,13 +969,13 @@ export const getSingleBranch = async (req, res) => {
 
       // Departments
       Department.find({ branch: id, isDeleted: false })
-        .populate(pop("doctors", Doctor))
+        .populate(pop("doctors", Doctor, "name"))
         .sort({ createdAt: -1 })
         .lean(),
 
       // Doctors (MAIN FIX HERE)
       Doctor.find({ branch: id, isDeleted: false })
-        .populate(pop("department", Department))
+        .populate(pop("department", Department, "name"))
         .populate(pop("specialties", Suggestion))
         .populate(pop("surgeries", Suggestion))
         .select("-slots") // exclude heavy fields
@@ -1036,7 +1032,9 @@ export const getSingleBranch = async (req, res) => {
       CodeAnnouncement.find({ branch: id, isDeleted: false })
         .sort({ createdAt: -1 })
         .lean(),
-      Suggestion.find({ isDeleted: false }).sort({ createdAt: -1 })
+      Suggestion.find({ isDeleted: false })
+        .select("type value")
+        .sort({ createdAt: -1 })
         .lean()
     ]);
 
@@ -1062,6 +1060,90 @@ export const getSingleBranch = async (req, res) => {
         inchargeList,
         codeAlertsList,
         suggestion
+      },
+    });
+  } catch (error) {
+    console.error("getSingleBranch error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
+export const getSingleBranchForForms = async (req, res) => {
+  try {
+    const { id, hosId } = req.params;
+
+    // Validate IDs
+    if (
+      !id ||
+      !hosId ||
+      !mongoose.Types.ObjectId.isValid(id) ||
+      !mongoose.Types.ObjectId.isValid(hosId)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid branchId and hospitalId are required",
+      });
+    }
+
+    // Check hospital (master DB)
+    const hospital = await HospitalModel.findOne({
+      _id: hosId,
+      isDeleted: false,
+    }).lean();
+
+    if (!hospital) {
+      return res.status(404).json({
+        success: false,
+        message: "Hospital not found",
+      });
+    }
+
+    // Get tenant DB connection
+    const conn = await getConnection(hospital.trimmedName);
+
+
+    const Department = getDepartmentModel(conn);
+    const Doctor = getDoctorModel(conn);
+    const Branch = getBranchModel(conn);
+    const [
+      branch,
+      departments,
+      doctors,
+    ] = await Promise.all([
+
+      // Branch
+      Branch.findOne({ _id: id, isDeleted: false }).lean(),
+
+      // Departments
+      Department.find({ branch: id, isDeleted: false })
+        .populate(pop("doctors", Doctor, "name"))
+        .sort({ createdAt: -1 })
+        .lean(),
+
+      // Doctors (MAIN FIX HERE)
+      Doctor.find({ branch: id, isDeleted: false })
+        .select("-slots") // exclude heavy fields
+        .sort({ createdAt: -1 })
+        .lean(),
+    ]);
+
+    // Check branch exists
+    if (!branch) {
+      return res.status(404).json({
+        success: false,
+        message: "Branch not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        branch,
+        departments,
+        doctors
       },
     });
   } catch (error) {
@@ -6103,21 +6185,21 @@ export const executiveDashboardService = async (conn, branchId, user, bfPage = 1
                 $project: {
                   _id: 1,
 
-                  // ✅ Patient
+                  //  Patient
                   patientName: "$patientInfo.patientName",
                   patientMobile: "$patientInfo.patientMobile",
                   patientStatus: "$patientInfo.status",
                   gender: "$patientInfo.gender",
 
-                  // ✅ Appointment
+                  //  Appointment
                   appointmentSlot: "$formData.appointmentSlot",
                   patientArrivalTime: "$formData.patientArrivalTime",
                   dateTime: "$formData.dateTime",
 
-                  // ✅ Doctor
+                  //  Doctor
                   doctorName: "$doctorInfo.name",
 
-                  // ✅ Department
+                  //  Department
                   departmentName: "$departmentInfo.name"
                 }
               }
@@ -7588,9 +7670,6 @@ const uploadDoctorCSV = async ({
       deptMap
     );
 
-    // =========================
-    // PROCESS DOCTORS
-    // =========================
 
     const doctorsToInsert = [];
 
@@ -7708,9 +7787,7 @@ const uploadDoctorCSV = async ({
             row?.floor?.trim() ||
             "",
 
-          degrees: splitComma(
-            row?.degrees
-          ),
+          degrees: splitPipe(row?.degrees),
 
           specialties,
 
@@ -7774,14 +7851,7 @@ const uploadDoctorCSV = async ({
                 row?.videoCharges
               ) || 0,
 
-            days: row?.videoDays
-              ? row.videoDays
-                .split(",")
-                .map((d) =>
-                  d.trim()
-                )
-                .filter(Boolean)
-              : [],
+            days: splitPipe(row?.videoConsultationDays),
 
             timeSlot:
               row?.videoTimeSlot ||
@@ -7796,14 +7866,8 @@ const uploadDoctorCSV = async ({
               "",
           },
 
-          opdDays: row?.opdDays
-            ? row.opdDays
-              .split(",")
-              .map((d) =>
-                d.trim()
-              )
-              .filter(Boolean)
-            : [],
+          opdDays: splitPipe(row?.opdDays),
+
         }
 
         doc.slots = generateDoctorSlots(doc);

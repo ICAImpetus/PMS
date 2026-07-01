@@ -28,7 +28,7 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import { AlertTriangle, Users } from "lucide-react";
 import { useApi } from "../../../api/useApi";
 import { commonRoutes } from "../../../api/apiService";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import HospitalContext from "../../../contexts/HospitalContexts";
 
 ChartJS.register(

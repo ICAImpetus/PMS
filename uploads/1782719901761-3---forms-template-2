@@ -1,0 +1,3 @@
+branchId,agentName,formType,patientName,patientMobile,patientStatus,gender,age,callStatus,purpose,referenceFrom,callerType,doctor,department,surgeryName,healthPackageName,healthSchemeName,govertHealthSchemeName,nonGovtHealthSchemeName,reportName,followupStatus,remarks
+Main Branch,Sandeep,inbound,Rahul Sharma,9876543210,new ,Male,35,connected,Appointment,Google,Self,Dr .Praffula,Cardio,,,,,,,Pending,First consultation
+6a06f7805208fdb88b82ed16,Sandeep,outbound,Priya Verma,9876543211,old,Female,42,connected,Surgery Inquiry,Referral,Relative,6a0be5bfbe6a3a46fa5466f1,6a0be46dbe6a3a46fa546682,Knee Replacement,,,,,,pending,Wants surgery cost details

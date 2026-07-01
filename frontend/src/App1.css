@@ -1,30 +1,26 @@
-/* ===== GLOBAL LAYOUT ===== */
-.react-hot-toast {
-  z-index: 99999 !important;
-}
-
 .app-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow: hidden;
+  /* overflow: hidden; */
 }
 
 .topbar-wrapper {
   flex-shrink: 0;
   width: 100%;
-  z-index: 1010; /* Above sidebar z-index (1009) */
+  z-index: 1010;
+  /* Above sidebar z-index (1009) */
 }
 
 .main-layout {
   display: flex;
   flex: 1;
-  overflow: hidden;
+  /* overflow: hidden; */
 }
 
 /* FIX: Sidebar.jsx sets height:"100vh" via inline sx on its wrapper Box.
    Inside flex layout (below topbar), it must fill parent height, NOT full viewport. */
-.main-layout > .MuiBox-root:first-child {
+.main-layout>.MuiBox-root:first-child {
   height: 100% !important;
   flex-shrink: 0;
 }
@@ -34,7 +30,8 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 16px;
-  min-width: 0; /* Allows flex child to shrink below its content width */
+  min-width: 0;
+  /* Allows flex child to shrink below its content width */
 }
 
 /* ===== RESPONSIVE: Tablet (≤ 900px) ===== */
@@ -54,10 +51,11 @@
   }
 
   /* The sidebar wrapper should not take any space when sidebar is hidden */
-  .main-layout > .MuiBox-root:first-child {
+  .main-layout>.MuiBox-root:first-child {
     width: 0 !important;
     min-width: 0 !important;
-    overflow: visible; /* Allow the fixed ProSidebar to show when toggled */
+    overflow: visible;
+    /* Allow the fixed ProSidebar to show when toggled */
   }
 }
 

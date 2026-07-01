@@ -23,6 +23,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import WarningIcon from "@mui/icons-material/Warning";
 import DescriptionIcon from "@mui/icons-material/Description";
 import ScheduleIcon from "@mui/icons-material/Schedule";
+import PaymentIcon from '@mui/icons-material/Payment';
 // Assets
 import adminImage from "../../assets/adminNew.jpg";
 import adminImage3 from "../../assets/adminFemaleNew.jpeg";
@@ -381,7 +382,15 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
               {/* --- SUPER MANAGER SPECIFIC --- */}
               {
                 isSuperManager && (
+
                   <>
+                    <Item
+                      title="Subscription Plans"
+                      to="/Plans"
+                      icon={<PaymentIcon />}
+                      selected={selected}
+                      setSelected={setSelected}
+                    />
                     {/* <Item
                     title="Team Performance"
                     to="/supermanager-team-performance"

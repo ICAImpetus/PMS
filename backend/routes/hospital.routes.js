@@ -43,6 +43,7 @@ router.post(
 
 router.get("/all-hospital-branches/:id", auth, hospitalController.getAllHospitalBranches);
 router.get("/single-branch/:hosId/:id", hospitalController.getSingleBranch);
+router.get("/branch-forms/:hosId/:id", hospitalController.getSingleBranchForForms);
 router.get("/getBranchesByRole", auth, hospitalController.getBranchesByRole)
 
 
@@ -196,6 +197,6 @@ router.get("/single-patient-history", auth, hospitalController.singlePatientHist
 // doctor routes 
 
 router.get("/doctor-appointments", hospitalController.getDoctorAppointment);
-router.get("/doctor-past-appointments",hospitalController.getPastDoctorAppointments);
+router.get("/doctor-past-appointments", hospitalController.getPastDoctorAppointments);
 
 export default router;

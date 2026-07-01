@@ -24,7 +24,7 @@ import { tokens } from "../../../theme";
 import MultiSelectDropdown from "../../superAdmin/userManagement/components/MultiSelectDropdown";
 import { useApi } from "../../../api/useApi";
 import { commonRoutes } from "../../../api/apiService";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import { getValidationSchema } from "../.././Schemas/validation";
 
 const UserFormAdmin = ({

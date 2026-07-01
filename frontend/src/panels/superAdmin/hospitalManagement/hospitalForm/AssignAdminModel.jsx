@@ -21,7 +21,7 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
-import { toast } from "react-hot-toast";
+import { toast } from "react-toastify";
 import { tokens } from "../../../../theme";
 import { getDataFunc } from "../../../../utils/services";
 

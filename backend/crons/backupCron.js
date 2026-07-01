@@ -4,22 +4,48 @@ import { getConnection, getDepartmentModel, getDoctorModel, getFilledFormsModel,
 import csv from "csv-parser"
 import fs from "fs";
 import mongoose from "mongoose";
+import axios from "axios";
 
 const HospitalModel = getHospitalModel(MasterConn)
 
 // Every Sunday 2 AM
-cron.schedule("0 2 * * 0", async () => {
-    console.log("Starting weekly backup...");
-    await runBackup();
-});
+cron.schedule(
+    "0 2 * * 0",
+    async () => {
+        console.log("Starting weekly backup...");
+        await runBackup();
+    },
+    {
+        timezone: "Asia/Kolkata",
+    }
+);
+
+cron.schedule(
+    "0 2 * * 0",
+    async () => {
+        console.log("Starting Weekly Medical Director Report...");
+
+        try {
+            await sendWeeklyMedicalDirectorReports();
+            console.log("Weekly reports sent successfully.");
+        } catch (err) {
+            console.error(err);
+        }
+    },
+    {
+        timezone: "Asia/Kolkata",
+    }
+);
+
+
 // await runBackup();
 
-const STATUSMAP = {
-    "": "other",
-    "New Patient": "new",
-    "Old Patient": "old",
-    "Non-Patient": "other"
-};
+// const STATUSMAP = {
+//     "": "other",
+//     "New Patient": "new",
+//     "Old Patient": "old",
+//     "Non-Patient": "other"
+// };
 
 // const STATUSMAP = {
 //     "Prefer not to say": "Other",
@@ -27,15 +53,90 @@ const STATUSMAP = {
 //     "Old Patient": "old",
 // };
 
-// export const uploadDatabaseBackup = async () => {
+// export const uploadDatabaseBackup = async (req, res) => {
 //     try {
 //         console.log("Starting database backup...");
 
-//         const hospital = await HospitalModel.findById(
-//             "6a22705f6f164344a2644a8a"
-//         );
 
-//         if (!hospital) throw new Error("Hospital not found");
+//         const { hosId, branchId } = req.query;
+//         const { type } = req.body;
+
+//         const file = req.files?.csv?.[0];
+
+//         if (!file) {
+//             return res.status(400).json({ message: "CSV file required" });
+//         }
+
+//         if (!type) {
+//             return res.status(400).json({ message: "Type is required" });
+//         }
+
+//         if (
+//             !hosId ||
+//             !branchId ||
+//             !mongoose.Types.ObjectId.isValid(hosId) ||
+//             !mongoose.Types.ObjectId.isValid(branchId)
+//         ) {
+//             return res.status(400).json({ message: "Invalid IDs" });
+//         }
+
+//         const hospital = await HospitalModel.findById(hosId).lean();
+//         if (!hospital) {
+//             return res.status(404).json({ message: "Hospital not found" });
+//         }
+
+//         const conn = await getConnection(hospital.trimmedName);
+
+//         //  Start Transaction
+//         session = await conn.startSession();
+//         session.startTransaction();
+
+//         if (!req.csvFilePath) {
+//             return res.status(400).json({ message: "CSV file path not found" });
+//         }
+
+//         //Read CSV
+//         const rows = [];
+
+//         await new Promise((resolve, reject) => {
+//             fs.createReadStream(req.csvFilePath)
+//                 .pipe(csv())
+//                 .on("data", (data) => {
+//                     //  Clean row
+//                     const cleanedRow = {};
+
+//                     Object.keys(data).forEach((key) => {
+//                         let value = data[key];
+
+//                         // 
+//                         if (value === null || value === undefined) {
+//                             cleanedRow[key] = "";
+//                         } else {
+//                             // trim + remove extra spaces
+//                             cleanedRow[key] = value.toString().trim();
+//                         }
+//                     });
+
+//                     // 
+//                     const isEmpty = Object.values(cleanedRow).every(
+//                         (val) => val === ""
+//                     );
+
+//                     if (!isEmpty) {
+//                         rows.push(cleanedRow);
+//                     }
+//                 })
+//                 .on("end", resolve)
+//                 .on("error", reject);
+//         });
+//         const normalize = (val) => val?.trim();
+
+//         let result; // uploadBranchCSV FIX (let instead of const)
+
+//         console.log("CSV Rows:", rows);
+
+//         console.log("type", type);
+
 
 //         const conn = await getConnection(hospital.trimmedName);
 
@@ -249,3 +350,166 @@ const STATUSMAP = {
 // changePatienStatus()
 // uploadDatabaseBackup();
 
+
+
+
+export const sendWeeklyMedicalDirectorReports = async () => {
+    try {
+        const hospitals = await HospitalModel.find({
+            isDeleted: false,
+            isActive: true,
+        }).lean();
+
+        for (const hospital of hospitals) {
+            try {
+                await processHospitalReport(hospital);
+            } catch (err) {
+                console.error(
+                    `Failed for hospital ${hospital.name}`,
+                    err.message
+                );
+            }
+        }
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+const processHospitalReport = async (hospital) => {
+
+    const conn = await getConnection(hospital.trimmedName);
+
+    // Calculate last week's report
+    const report = await generateWeeklyReport(conn);
+
+    // Find Medical Director
+    const medicalDirector = hospital.managementDetails.find(
+        (member) =>
+            member.memberType?.toLowerCase() === "medical director"
+    );
+
+    if (!medicalDirector) {
+        console.log(`${hospital.name} has no Medical Director`);
+        return;
+    }
+
+    const payload = {
+        type: "1",
+
+        reportDate: report.reportDate,
+
+        hospitalName: hospital.name,
+
+        branchName: hospital.name,
+
+        summary: report.summary,
+
+        receiver: {
+            name: medicalDirector.name,
+            phone: medicalDirector.phoneNumber
+        }
+    };
+
+    await axios.post(
+        process.env.WHATSAPP_AUTOMATION_URL,
+        payload
+    );
+
+    console.log(`Report sent to ${medicalDirector.name}`);
+};
+
+export const generateWeeklyReport = async (conn) => {
+    try {
+        const FilledFormsModel = getFilledFormsModel(conn);
+
+        // Previous week (Monday - Sunday)
+        const startDate = moment()
+            .subtract(1, "week")
+            .startOf("isoWeek")
+            .startOf("day")
+            .toDate();
+
+        const endDate = moment()
+            .subtract(1, "week")
+            .endOf("isoWeek")
+            .endOf("day")
+            .toDate();
+
+        // Total Leads
+        const totalNewLeadsReceived = await FilledFormsModel.countDocuments({
+            createdAt: {
+                $gte: startDate,
+                $lte: endDate,
+            },
+        });
+
+        // Contacted Leads
+        const contactedLeads = await FilledFormsModel.countDocuments({
+            createdAt: {
+                $gte: startDate,
+                $lte: endDate,
+            },
+            status: {
+                $in: [
+                    "Contacted",
+                    "Converted",
+                    "Follow Up",
+                    "Not Interested",
+                ],
+            },
+        });
+
+        // Converted Patients
+        const convertedToPatients = await FilledFormsModel.countDocuments({
+            createdAt: {
+                $gte: startDate,
+                $lte: endDate,
+            },
+            status: "Converted",
+        });
+
+        // Pending Follow Ups
+        const pendingFollowUps = await FilledFormsModel.countDocuments({
+            createdAt: {
+                $gte: startDate,
+                $lte: endDate,
+            },
+            status: "Follow Up",
+        });
+
+        // Not Interested
+        const notInterested = await FilledFormsModel.countDocuments({
+            createdAt: {
+                $gte: startDate,
+                $lte: endDate,
+            },
+            status: "Not Interested",
+        });
+
+        const conversionRate =
+            totalNewLeadsReceived === 0
+                ? 0
+                : Number(
+                    (
+                        (convertedToPatients / totalNewLeadsReceived) *
+                        100
+                    ).toFixed(2)
+                );
+
+        return {
+            reportDate: moment(endDate).format("DD/MM/YYYY"),
+
+            summary: {
+                totalNewLeadsReceived,
+                contactedLeads,
+                convertedToPatients,
+                pendingFollowUps,
+                notInterested,
+                conversionRate,
+            },
+        };
+    } catch (error) {
+        console.error("Weekly Report Error:", error);
+        throw error;
+    }
+};

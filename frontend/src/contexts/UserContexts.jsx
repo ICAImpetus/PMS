@@ -5,7 +5,7 @@ import React, {
   createContext,
   useContext,
 } from "react";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axiosInstance";
 

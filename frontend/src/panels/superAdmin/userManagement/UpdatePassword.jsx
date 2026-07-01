@@ -20,7 +20,7 @@ import {
   VisibilityOff,
   Security as SecurityIcon,
 } from "@mui/icons-material"; // Icons for close and password
-import toast, { Toaster } from "react-hot-toast"; // For toast notifications
+import { toast } from "react-toastify"; // For toast notifications
 import { tokens } from "../../../theme";
 import { useApi } from "../../../api/useApi";
 import { commonRoutes } from "../../../api/apiService";

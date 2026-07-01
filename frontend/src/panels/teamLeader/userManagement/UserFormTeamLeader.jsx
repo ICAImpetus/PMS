@@ -19,7 +19,7 @@ import {
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import Header from "../../../components/Header";
 import { getDataFunc, sendDataApiFunc } from "../../../utils/services";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-toastify";
 import { tokens } from "../../../theme";
 import { UserContextHook } from "../../../contexts/UserContexts";
 import { commonRoutes } from "../../../api/apiService";

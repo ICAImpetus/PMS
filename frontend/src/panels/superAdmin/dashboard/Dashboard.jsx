@@ -41,7 +41,7 @@ import { ProfilePopup } from "../../../scenes/global/ProfileAndCodeAnnousementPo
 import UsersCard from "../../../components/UserCard";
 import moment from "moment";
 import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import SectionLoader from "../../../components/SectionLoader";
 import { UserContextHook } from "../../../contexts/UserContexts";
 import HospitalContext from "../../../contexts/HospitalContexts";
@@ -370,6 +370,13 @@ const SuperAdminDashboard = () => {
 
   return (
     <>
+      {/* <Toaster
+        position="top-right"
+        reverseOrder={false}
+        toastOptions={{
+          duration: 4000,
+        }}
+      /> */}
       {formsModalOpen ? (
         <FilledFormsComponent
           selectedHostpital={selectedHostpital}
@@ -381,6 +388,7 @@ const SuperAdminDashboard = () => {
         />
       ) : (
         <div className="dashboard-container">
+
 
           {/* --- FILTER BAR --- */}
           <div className="hospital-info-card" style={{ borderLeft: "5px solid #0f172a" }}>

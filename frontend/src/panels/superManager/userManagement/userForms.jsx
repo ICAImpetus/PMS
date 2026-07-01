@@ -16,7 +16,7 @@ import {
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Header from "../../../components/Header";
-import { toast } from "react-hot-toast";
+import { toast } from "react-toastify";
 import { tokens } from "../../../theme";
 import MultiSelectDropdown from "../../superAdmin/userManagement/components/MultiSelectDropdown";
 import { HospitalContext } from "../../../contexts/HospitalContexts";

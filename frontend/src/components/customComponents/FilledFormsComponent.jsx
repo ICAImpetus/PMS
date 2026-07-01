@@ -71,7 +71,12 @@ const FilledFormsComponent = ({
   const [csvStatus, setCSVStatus] = useState("idle");
   const [csvProgress, setCSVProgress] = useState({ current: 0, total: 0 });
   const [csvProcessMessage, setCSVProcessMessage] = useState("");
-  const [csvValidationErrors, setCSVValidationErrors] = useState([]);
+  const [csvValidationErrors, setCSVValidationErrors] = useState({
+    errors: [],
+    totalRows: 0,
+    successCount: 0,
+    errorCount: 0,
+  });
   const [csvValidationSummary, setCSVValidationSummary] = useState({ totalRows: 0, successCount: 0, errorCount: 0 });
   const [csvRows, setCSVRows] = useState([]);
   const [csvParsedValidRows, setCSVParsedValidRows] = useState([]);
@@ -92,7 +97,7 @@ const FilledFormsComponent = ({
     totalPages: 1,
     totalDocument: 0,
   })
-  console.log("formsModalOpen", formsModalOpen);
+
 
   const [selectedFormColumns, setSelectedFormColumns] = useState([
     "agentName",
@@ -114,11 +119,23 @@ const FilledFormsComponent = ({
   const formsColumnFilterRef = useRef(null);
   const csvFileInputRef = useRef(null);
 
+  console.log("selectedHostpital-forms", selectedHostpital)
+
+
+  const { request: getFilledForms, loading: getFilledFormsLoading, error: getFilledformError } = useApi(commonRoutes.getFilledForms)
+  const { request: uploadFormsCSVApi, loading: uploadFormsCSVApiLoading, error: uploadFormsCSVApiError } = useApi(commonRoutes.uploadFormsCSV, { onError: setCSVValidationErrors });
+
+
   const resetCSVState = () => {
     setCSVStatus("idle");
     setCSVProgress({ current: 0, total: 0 });
     setCSVProcessMessage("");
-    setCSVValidationErrors([]);
+    setCSVValidationErrors({
+      errors: [],
+      totalRows: 0,
+      successCount: 0,
+      errorCount: 0,
+    });
     setCSVValidationSummary({ totalRows: 0, successCount: 0, errorCount: 0 });
     setCSVRows([]);
     setCSVParsedValidRows([]);
@@ -127,7 +144,6 @@ const FilledFormsComponent = ({
     setCSVActionResult("");
   };
 
-  const { request: getFilledForms, loading: getFilledFormsLoading, error: getFilledformError } = useApi(commonRoutes.getFilledForms)
   const fetchForms = async (search = null) => {
     try {
       const purpose =
@@ -207,13 +223,73 @@ const FilledFormsComponent = ({
     return String(value).trim();
   };
 
+
   const validateCSVRow = (row, rowNumber) => {
     const errors = [];
     const patientName = normalizeValue(row.patientName || row.name || row.patient_name);
     const phone = normalizeValue(row.patientMobile || row.contactNumber || row.phone);
-    const department = normalizeValue(row.departmentName || row.department);
     const formType = normalizeValue(row.formType);
     const ageValue = normalizeValue(row.age);
+    const doctor = normalizeValue(row.doctor);
+    const department = normalizeValue(row.department);
+    const branchId = normalizeValue(row.branchId);
+    const followupStatus = normalizeValue(row.followupStatus)?.toLowerCase();
+    const gender = normalizeValue(row.gender)?.toLowerCase();
+    const patientStatus = normalizeValue(row.patientStatus)?.toLowerCase();
+    // const department = normalizeValue(row.department);
+    const isValidObjectId = (id) => {
+      return /^[0-9a-fA-F]{24}$/.test(id);
+    };
+
+    if (!branchId) {
+      errors.push({
+        rowNumber,
+        columnName: "branchId",
+        invalidValue: branchId,
+        message: "BranchId is required",
+      });
+    }
+
+
+
+    if (
+      gender &&
+      !["male", "female", "transgender", "others"].includes(gender)
+    ) {
+      errors.push({
+        rowNumber,
+        columnName: "gender",
+        invalidValue: row.gender,
+        message:
+          "Please select only from: Male, Female, Transgender, Others",
+      });
+    }
+
+
+
+    if (
+      patientStatus &&
+      !["new", "old", "other"].includes(patientStatus)
+    ) {
+      errors.push({
+        rowNumber,
+        columnName: "patientStatus",
+        invalidValue: row.patientStatus,
+        message: "Please select only from: New, Old, Other",
+      });
+    }
+
+    if (
+      followupStatus &&
+      !["pending", "completed"].includes(followupStatus)
+    ) {
+      errors.push({
+        rowNumber,
+        columnName: "followupStatus",
+        invalidValue: followupStatus,
+        message: "Please select only from: pending ,completed",
+      });
+    }
 
     if (!patientName) {
       errors.push({
@@ -229,7 +305,7 @@ const FilledFormsComponent = ({
       if (digits.length < 10 || digits.length > 15) {
         errors.push({
           rowNumber,
-          columnName: row.patientMobile ? "patientMobile" : "contactNumber",
+          columnName: phone ? "patientMobile" : "contactNumber",
           invalidValue: phone,
           message: "Invalid phone number",
         });
@@ -248,23 +324,41 @@ const FilledFormsComponent = ({
       }
     }
 
-    if (!department) {
-      errors.push({
-        rowNumber,
-        columnName: "departmentName",
-        invalidValue: normalizeValue(row.departmentName || row.department),
-        message: "Department is required",
-      });
-    }
-
     if (!formType) {
       errors.push({
         rowNumber,
         columnName: "formType",
-        invalidValue: normalizeValue(row.formType),
+        invalidValue: formType,
         message: "Form type is required",
       });
     }
+
+    // if (branchId && !isValidObjectId(branchId)) {
+    //   errors.push({
+    //     rowNumber,
+    //     columnName: "branchId",
+    //     invalidValue: branchId,
+    //     message: "BranchId must be a valid ObjectId",
+    //   });
+    // }
+
+    // if (doctor) {
+    //   errors.push({
+    //     rowNumber,
+    //     columnName: "doctor",
+    //     invalidValue: doctor,
+    //     message: "Doctor must be a valid ObjectId",
+    //   });
+    // }
+
+    // if (department && !isValidObjectId(department)) {
+    //   errors.push({
+    //     rowNumber,
+    //     columnName: "department",
+    //     invalidValue: department,
+    //     message: "Department must be a valid ObjectId",
+    //   });
+    // }
 
     return errors;
   };
@@ -304,12 +398,17 @@ const FilledFormsComponent = ({
           setCSVRows(rows);
           setCSVParsedValidRows(validRows);
           setCSVParsedInvalidRows(invalidRows);
-          setCSVValidationErrors(errorList);
-          setCSVValidationSummary({
+          setCSVValidationErrors({
+            errors: errorList,
             totalRows,
             successCount: validRows.length,
             errorCount: invalidRows.length,
           });
+          // setCSVValidationSummary({
+          //   totalRows,
+          //   successCount: validRows.length,
+          //   errorCount: invalidRows.length,
+          // });
           setCSVStatus("completed");
           setCSVProcessMessage("Validation complete");
           resolve();
@@ -335,6 +434,36 @@ const FilledFormsComponent = ({
       setSelectedFormColumns([]);
     } else {
       setSelectedFormColumns(FORMS_AVAILABLE_COLUMNS.map((c) => c.key));
+    }
+  };
+  const handleImportAction = async () => {
+    if (!selectedFile) return;
+
+    // Clear previous errors before a new attempt
+    setCSVValidationErrors({
+      errors: [],
+      totalRows: 0,
+      successCount: 0,
+      errorCount: 0,
+    });
+
+    const formdata = new FormData();
+    formdata.append("csv", selectedFile);
+    formdata.append("type", "doctor");
+
+    try {
+      const res = await uploadFormsCSVApi(
+        selectedHostpital,
+        selectedBranch,
+        formdata
+      );
+
+      if (res?.success) {
+        toast.success(res?.message || "CSV uploaded successfully!");
+        setUploadCSVModalOpen(false);
+      }
+    } catch (error) {
+      console.error("Upload error details:", error);
     }
   };
 
@@ -452,6 +581,8 @@ const FilledFormsComponent = ({
   const handleCSVFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    console.log("file", file);
+
     setSelectedFile(file);
     setUploadCSVModalOpen(true);
 
@@ -527,19 +658,6 @@ const FilledFormsComponent = ({
     setUploadCSVModalOpen(false);
   };
 
-  const handleImportAction = (mode) => {
-    if (mode === "skipErrors") {
-      setCSVActionResult(
-        `Import started. ${csvParsedValidRows.length + csvParsedInvalidRows.length - csvParsedInvalidRows.length} valid rows will be imported; ${csvParsedInvalidRows.length} rows will be skipped.`
-      );
-    } else if (mode === "importValid") {
-      setCSVActionResult(
-        `Import started. ${csvParsedValidRows.length} valid rows will be imported; ${csvParsedInvalidRows.length} invalid rows will be skipped.`
-      );
-    }
-    setUploadCSVModalOpen(false);
-  };
-
   const toggleFormColumn = (key) => {
     setSelectedFormColumns((prev) =>
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
@@ -591,11 +709,13 @@ const FilledFormsComponent = ({
     selectedFormColumns.includes(col.key),
   );
   const exportFormsToSheet = async () => {
-    if (!dateFilterFrom || !dateFilterTo) {
-      toast.info("Please select a start date and end date before exporting.");
-      setDateFilterOpen(true);
-      setMoreMenuAnchor(null);
-      return;
+
+    let exportdateFrom = dateFilterFrom
+    let exportdateTo = dateFilterTo
+    if (!exportdateFrom || !exportdateTo) {
+
+      exportdateFrom = dateRange.startDate;
+      exportdateTo = dateRange.endDate;
     }
 
     try {
@@ -610,8 +730,8 @@ const FilledFormsComponent = ({
         1,
         selectedHostpital,
         selectedBranch,
-        dateFilterFrom,
-        dateFilterTo,
+        exportdateFrom,
+        exportdateTo,
         searchInput || "",
         purpose,
         formsModalOpen,
@@ -702,9 +822,9 @@ const FilledFormsComponent = ({
 
   return (
     <div
-    // className="ff-modal-overlay"
-    // onClick={() => setFormsModalOpen(null)}
+
     >
+
       <div
         onClick={(e) => e.stopPropagation()}
       >
@@ -1072,7 +1192,6 @@ const FilledFormsComponent = ({
 
       </div>
 
-
       <Dialog
         open={uploadCSVModalOpen}
         onClose={(event, reason) => {
@@ -1112,11 +1231,13 @@ const FilledFormsComponent = ({
             <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
               {/* <Typography variant="caption" color="text.secondary"> */}
 
-              <Typography variant="h6">{csvValidationSummary.errorCount}</Typography>
+              <Typography variant="h6">{csvValidationErrors?.errorCount}</Typography>
               {/* </Paper> */}
             </Box>
 
-            {csvValidationErrors.length > 0 ? (
+            {console.log("uploadFormsCSVApiError", uploadFormsCSVApiError)}
+
+            {csvValidationErrors?.errors?.length > 0 && (
               <Box sx={{ mt: 3 }}>
                 <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 700 }}>
                   Validation issues preview
@@ -1132,7 +1253,7 @@ const FilledFormsComponent = ({
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {csvValidationErrors.slice(0, 12).map((error, index) => (
+                      {csvValidationErrors?.errors?.slice(0, 12).map((error, index) => (
                         <TableRow key={`${error.rowNumber}-${index}`} sx={{ bgcolor: index % 2 === 0 ? "#fff5f5" : "#fff" }}>
                           <TableCell>{error.rowNumber}</TableCell>
                           <TableCell>{error.columnName}</TableCell>
@@ -1143,17 +1264,22 @@ const FilledFormsComponent = ({
                     </TableBody>
                   </Table>
                 </TableContainer>
-                {csvValidationErrors.length > 12 ? (
+                {csvValidationErrors?.errors?.length > 12 ? (
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
                     Showing first 12 errors. Review all issues before importing.
                   </Typography>
                 ) : null}
               </Box>
-            ) : (
-              <Alert severity="success" sx={{ mt: 3 }}>
-                No validation issues found. All rows are ready for import.
-              </Alert>
-            )}
+            )
+              // : (
+
+              //   <Alert severity={uploadFormsCSVApiError ? "error" : "success"} sx={{ mt: 3 }}>
+              //     {uploadFormsCSVApiError ? `Error:${uploadFormsCSVApiError}` : "You Can Continue"}
+
+              //   </Alert>
+
+              // )
+            }
           </Box>
           {/* ) : null} */}
         </DialogContent>
@@ -1165,24 +1291,25 @@ const FilledFormsComponent = ({
           >
             Reupload File
           </Button>
-          <Button
+          {/* <Button
             variant="contained"
             color="primary"
             onClick={() => handleImportAction("skipErrors")}
             disabled={csvStatus === "processing" || csvValidationSummary.totalRows === 0}
           >
             Skip Errors & Continue Import
-          </Button>
+          </Button> */}
           <Button
             variant="contained"
             color="success"
-            onClick={() => handleImportAction("importValid")}
-            disabled={csvStatus === "processing" || csvValidationSummary.successCount === 0}
+            onClick={handleImportAction}
+            disabled={csvStatus === "processing" || uploadFormsCSVApiLoading || csvValidationErrors?.errors?.length > 0}
           >
-            Import Only Valid Rows
+            {uploadFormsCSVApiLoading ? <CircularProgress size={22} /> : "Continue"}
           </Button>
           <Button
             variant="text"
+            disabled={uploadFormsCSVApiLoading}
             onClick={() => setUploadCSVModalOpen(false)}
           // disabled={csvStatus === "processing"}
           >
