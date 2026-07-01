@@ -599,6 +599,19 @@ const BranchInfo = () => {
     }
 
     if (
+      title &&
+      !["dr", "profdr", "assocprofdr", "asstprofdr"].includes(title)
+    ) {
+      errors.push({
+        rowNumber,
+        columnName: "title",
+        invalidValue: title,
+        message:
+          "Invalid doctor type! Please select one of: dr, profdr, assocprofdr, asstprofdr.",
+      });
+    }
+
+    if (
       type &&
       !["fulltime", "parttime", "visiting", "oncall"].includes(type)
     ) {
@@ -608,6 +621,19 @@ const BranchInfo = () => {
         invalidValue: type,
         message:
           "Invalid doctor type! Please select one of: fulltime, parttime, visiting, oncall.",
+      });
+    }
+
+    if (
+      designation &&
+      !["consultant", "seniorconsultant", "junioresident", "senioresident", "hod"].includes(designation)
+    ) {
+      errors.push({
+        rowNumber,
+        columnName: "designation",
+        invalidValue: designation,
+        message:
+          "Invalid doctor designation! Please select one of: consultant, seniorconsultant, junioresident, senioresident,hod",
       });
     }
     if (!name) {
@@ -1265,6 +1291,9 @@ const BranchInfo = () => {
   const handleRemove = async () => {
     try {
       const { type, id } = selectedItem || {};
+      console.log("type", type);
+      console.log("id", id);
+
 
       if (!type || !id) {
         toast.error("Invalid delete request");
@@ -1566,8 +1595,9 @@ const BranchInfo = () => {
             );
 
             await fetchAllData();
-          }
 
+          }
+          setUploadCSVModalOpen(false)
         } catch (error) {
 
           console.error("CSV Upload Error:", error);
@@ -1645,7 +1675,9 @@ const BranchInfo = () => {
           "CSV uploaded successfully!"
         );
 
+
         await fetchAllData();
+        setUploadCSVModalOpen(false)
       }
 
     } catch (error) {
