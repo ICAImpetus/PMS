@@ -6,6 +6,8 @@ import fs from "fs"
 import path from "path";
 import csv from "csv-parser";
 import { Readable } from "stream";
+import { sendWhatsAppInBackground } from "../utils/notification.js";
+import moment from "moment";
 
 const HospitalModel = getHospitalModel(MasterConn)
 
@@ -68,12 +70,12 @@ export const createFilledForm = async (req, res) => {
       hospital.trimmedName
     );
 
-    const FilledFormsModel =
-      getFilledFormsModel(conn);
-
+    const FilledFormsModel = getFilledFormsModel(conn);
     const PatientModel = getPatientModel(conn);
-
     const DoctorModel = getDoctorModel(conn);
+    const DepartmentModel = getDepartmentModel(conn)
+    const BranchModel = getBranchModel(conn)
+
 
     session = await conn.startSession();
 
@@ -264,46 +266,86 @@ export const createFilledForm = async (req, res) => {
     // Book appointment slot
     // =========================
 
+    // console.log("filledForm", filledForm);
+
     if (
-      filledForm?.formType === "inbound" &&
-      filledForm?.purpose ===
-      "appointment" &&
-      data?.formData?.appointmentSlot?._id
+      filledForm?.formType?.toLowerCase() === "inbound" &&
+      filledForm?.purpose?.toLowerCase() ===
+      "appointment"
+
     ) {
-      const updatedDoctor =
-        await DoctorModel.findOneAndUpdate(
-          {
-            _id: filledForm?.doctor,
+      // console.log("call");
 
-            "slots._id":
-              data.formData
-                .appointmentSlot._id,
+      if (data?.formData?.appointmentSlot?._id) {
+        const updatedDoctor =
+          await DoctorModel.findOneAndUpdate(
+            {
+              _id: filledForm?.doctor,
 
-            "slots.isBooked": false,
-          },
+              "slots._id":
+                data.formData
+                  .appointmentSlot._id,
 
-          {
-            $inc: {
-              totalBookedPatients: 1,
+              "slots.isBooked": false,
             },
 
-            $set: {
-              "slots.$.isBooked": true,
+            {
+              $inc: {
+                totalBookedPatients: 1,
+              },
+
+              $set: {
+                "slots.$.isBooked": true,
+              },
             },
-          },
 
-          {
-            new: true,
+            {
+              new: true,
 
-            session,
-          }
-        );
+              session,
+            }
+          ).lean()
 
-      if (!updatedDoctor) {
-        throw new Error(
-          "Slot already booked or doctor not found"
-        );
+        if (!updatedDoctor) {
+          throw new Error(
+            "Slot already booked or doctor not found"
+          );
+        }
       }
+
+      else {
+        const updatedDoctor =
+          await DoctorModel.findById
+            (
+              filledForm?.doctor,
+            ).populate({
+              model: DepartmentModel,
+              path: "department",
+              select: "name"
+            }).
+            populate({
+              model: BranchModel,
+              path: "branch",
+              select: "name location"
+            }).lean()
+        sendWhatsAppInBackground({
+          Patient_Name: patient?.patientName || "UnKnown Patient",
+          Patient_Age: patient?.patientAge || 0,
+          Gender: patient?.gender || "",
+          Mobile_Number: patient?.patientMobile,
+          Appointment_Date: data?.formData?.dateTime,
+          Appointment_Time:
+            data?.formData?.appointmentSlot?.start ||
+            moment().format("hh:mm A"),
+          Doctor: updatedDoctor?.name,
+          Department: updatedDoctor?.department?.name,
+          Branch_Name: updatedDoctor?.branch?.name,
+          Branch_Location: updatedDoctor?.branch?.location,
+          Message_type: 1,
+        });
+      }
+
+
     }
 
     // =========================
