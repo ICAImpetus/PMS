@@ -2215,24 +2215,20 @@ export const removeDoctor = async (req, res) => {
     const { id } = req.params;
     const { hosId } = req.query;
 
-    if (!id) {
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
-        message: "Doctor ID is required",
+        message: "Valid Doctor ID is required",
       });
     }
 
-    if (
-      !hosId ||
-      !mongoose.Types.ObjectId.isValid(hosId)
-    ) {
+    if (!hosId || !mongoose.Types.ObjectId.isValid(hosId)) {
       return res.status(400).json({
         success: false,
-        message: "Valid hospitalId are required",
+        message: "Valid Hospital ID is required",
       });
     }
 
-    // Validate hospital (master DB)
     const hospital = await HospitalModel.findOne({
       _id: hosId,
       isDeleted: false,
@@ -2247,59 +2243,68 @@ export const removeDoctor = async (req, res) => {
 
     const conn = await getConnection(hospital.trimmedName);
 
-    const DepartmentModel = getDepartmentModel(conn);
     const DoctorModel = getDoctorModel(conn);
+    const DepartmentModel = getDepartmentModel(conn);
 
-    const doctor = await DoctorModel.findByIdAndUpdate(
-      id,
-      { $set: { isDeleted: true } },
-      { new: true },
-    );
+    // Check doctor first
+    const doctor = await DoctorModel.findOne({
+      _id: id,
+      isDeleted: false,
+    });
 
-
-    await DepartmentModel.updateMany(
-      { doctors: id },
-      { $pull: { doctors: id } },
-    );
-
-    //  Actor Info
-    const actorRole = req.user?.type || "Unknown";
-    const actorName = req.user?.name || "Unknown User";
-
-    const isDeleted = await AdminAndAgentModel.findOneAndUpdate(
-      {
-        refId: doctor._id,
-        type: "doctor",
-      },
-      {
-        $set: { isDeleted: true },
-      }, {
-      new: true
-    }
-    )
-    if (!doctor || !isDeleted) {
+    if (!doctor) {
       return res.status(404).json({
         success: false,
         message: "Doctor not found",
       });
     }
-    //  Audit Log
+
+    // Soft delete doctor
+    doctor.isDeleted = true;
+    await doctor.save();
+
+    // Remove doctor from departments
+    await DepartmentModel.updateMany(
+      { doctors: doctor._id },
+      {
+        $pull: {
+          doctors: doctor._id,
+        },
+      }
+    );
+
+    // Soft delete login account if exists
+    if (doctor.username) {
+      await AdminAndAgentModel.findOneAndUpdate(
+        {
+          refId: doctor._id,
+          type: "doctor",
+        },
+        {
+          $set: {
+            isDeleted: true,
+          },
+        }
+      );
+    }
+
+    // Audit Log
     auditLog({
       action: "DELETE_DOCTOR",
       module: "DoctorManagement",
       event: "DELETE",
-      role: actorRole,
-      customMessage: `${actorRole} "${actorName}" deleted doctor "${doctor.name}".`,
-      name: actorName,
+      role: req.user?.type || "Unknown",
+      customMessage: `${req.user?.type || "Unknown"} "${req.user?.name || "Unknown User"}" deleted doctor "${doctor.name}".`,
+      name: req.user?.name,
       userId: req.user?.id,
       ip: req.userIp,
       userAgent: req.headers["user-agent"],
     });
+
     return res.status(200).json({
       success: true,
       message: "Doctor deleted successfully",
     });
-
   } catch (error) {
     console.error("Remove Doctor Error:", error);
 
@@ -2310,7 +2315,6 @@ export const removeDoctor = async (req, res) => {
     });
   }
 };
-
 export const addDepartment = async (req, res) => {
   try {
 
@@ -6203,7 +6207,42 @@ export const executiveDashboardService = async (conn, branchId, user, bfPage = 1
                   departmentName: "$departmentInfo.name"
                 }
               }
-            ]
+            ],
+            hourlyStats: [
+              {
+                $group: {
+                  _id: {
+                    hour: { $hour: "$createdAt" },
+                    formType: "$formType"
+                  },
+                  count: { $sum: 1 }
+                }
+              },
+              {
+                $group: {
+                  _id: "$_id.hour",
+                  inbound: {
+                    $sum: {
+                      $cond: [{ $eq: ["$_id.formType", "inbound"] }, "$count", 0]
+                    }
+                  },
+                  outbound: {
+                    $sum: {
+                      $cond: [{ $eq: ["$_id.formType", "outbound"] }, "$count", 0]
+                    }
+                  }
+                }
+              },
+              {
+                $project: {
+                  _id: 0,
+                  hour: "$_id",
+                  inbound: 1,
+                  outbound: 1
+                }
+              },
+              { $sort: { hour: 1 } }
+            ],
 
           }
         }
@@ -6212,6 +6251,7 @@ export const executiveDashboardService = async (conn, branchId, user, bfPage = 1
     ]);
 
     const data = result[0] || {};
+
     const totalInbound = data?.inboundCount?.[0]?.count || 0;
     const totalOutbound = data?.outboundCount?.[0]?.count || 0;
 
@@ -6234,8 +6274,9 @@ export const executiveDashboardService = async (conn, branchId, user, bfPage = 1
         followups: followup,
         topInboundPurpose: data.topInboundPurpose || [],
         topOutboundPurpose: data.topOutboundPurpose || [],
-        topReference: data.topReference || [],
-        latestAppointment: data.latestAppointment || []
+        topReference: data?.topReference || [],
+        latestAppointment: data.latestAppointment || [],
+        hourlyStats: data.hourlyStats || [],
       },
       // branchFollowups: {
       //   data: branchFollowups || [],
@@ -7704,14 +7745,14 @@ const uploadDoctorCSV = async ({
           await updateSuggestions(
             conn,
             "surgery",
-            row?.surgeries || []
+            splitPipe(row?.surgeries || [])
           );
 
         const specialties =
           await updateSuggestions(
             conn,
             "speciality",
-            row?.specialties || []
+            splitPipe(row?.specialties || [])
           );
 
         // =========================
@@ -7752,7 +7793,7 @@ const uploadDoctorCSV = async ({
             "",
 
           title:
-            row?.title?.trim() ||
+            row?.title?.trim()?.toLowerCase() ||
             "",
 
           opdNo:

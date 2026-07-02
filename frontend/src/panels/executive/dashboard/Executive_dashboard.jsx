@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import {
   TextField, Button, CircularProgress, MenuItem,
@@ -75,8 +75,6 @@ const ExecutiveDashboard = () => {
     codeAlertsData,
     filterOptions,
     refetchDashboard,
-    refetchForms,
-    refetchPatients,
     branchFollowups,
     dateRange,
     setDateRange,
@@ -84,91 +82,94 @@ const ExecutiveDashboard = () => {
   } = useContext(HospitalContext);
 
   const { request: toggleAlertStatus } = useApi(commonRoutes.toggleCodeAlertStatus)
+  const hourlyChartData = useMemo(() => {
+    const data = analytics?.hourlyStats || [];
+
+    const defaultHours = Array.from({ length: 24 }, (_, i) => i);
+
+    const map = new Map();
+    data.forEach((item) => {
+      map.set(item.hour, item);
+    });
+
+    const labels = defaultHours.map(
+      (h) => `${String(h).padStart(2, "0")}:00`
+    );
+
+    const inboundData = defaultHours.map(
+      (h) => map.get(h)?.inbound || 0
+    );
+
+    const outboundData = defaultHours.map(
+      (h) => map.get(h)?.outbound || 0
+    );
+
+    return { labels, inboundData, outboundData };
+  }, [analytics?.hourlyStats]);
+
 
   useEffect(() => {
-    if (hourlyChartRef.current) {
-      if (hourlyChartInstance.current) {
-        hourlyChartInstance.current.destroy();
-      }
-      const hourlyCtx = hourlyChartRef.current.getContext("2d");
+    if (!hourlyChartRef.current) return;
 
-      // Build hourly data from forms.today
-      const hourlyMap = {};
-      const allForms = forms?.today || [];
-      allForms.forEach(form => {
-        if (form.createdAt) {
-          const hour = new Date(form.createdAt).getHours();
-          const hourKey = `${String(hour).padStart(2, '0')}:00`;
-          if (!hourlyMap[hourKey]) hourlyMap[hourKey] = { inbound: 0, outbound: 0 };
-          if (form.formType === 'inbound') hourlyMap[hourKey].inbound++;
-          else if (form.formType === 'outbound') hourlyMap[hourKey].outbound++;
-        }
-      });
-
-      // Generate labels for working hours
-      const defaultLabels = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"];
-      const labels = Object.keys(hourlyMap).length > 0
-        ? [...new Set([...defaultLabels, ...Object.keys(hourlyMap)])].sort()
-        : defaultLabels;
-      const inboundData = labels.map(h => hourlyMap[h]?.inbound || 0);
-      const outboundData = labels.map(h => hourlyMap[h]?.outbound || 0);
-
-      hourlyChartInstance.current = new Chart(hourlyCtx, {
-        type: "line",
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: "Inbound",
-              data: inboundData,
-              borderColor: "#3498db",
-              backgroundColor: "rgba(52, 152, 219, 0.1)",
-              tension: 0.4,
-              fill: true,
-            },
-            {
-              label: "Outbound",
-              data: outboundData,
-              borderColor: "#2ecc71",
-              backgroundColor: "rgba(46, 204, 113, 0.1)",
-              tension: 0.4,
-              fill: true,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: "top",
-              labels: {
-                usePointStyle: true,
-                padding: 15
-              }
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              grid: { color: "rgba(0,0,0,0.05)" },
-              title: { display: true, text: "Calls", font: { size: 12 } },
-            },
-            x: {
-              grid: { display: false },
-              title: { display: true, text: "Time (Hours)", font: { size: 12 } }
-            },
-          },
-        },
-      });
+    if (hourlyChartInstance.current) {
+      hourlyChartInstance.current.destroy();
     }
 
+    const ctx = hourlyChartRef.current.getContext("2d");
+
+    hourlyChartInstance.current = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: hourlyChartData.labels,
+        datasets: [
+          {
+            label: "Inbound",
+            data: hourlyChartData.inboundData,
+            borderColor: "#3498db",
+            backgroundColor: "rgba(52, 152, 219, 0.1)",
+            tension: 0.4,
+            fill: true,
+          },
+          {
+            label: "Outbound",
+            data: hourlyChartData.outboundData,
+            borderColor: "#2ecc71",
+            backgroundColor: "rgba(46, 204, 113, 0.1)",
+            tension: 0.4,
+            fill: true,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "top",
+            labels: {
+              usePointStyle: true,
+              padding: 15,
+            },
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: "rgba(0,0,0,0.05)" },
+            title: { display: true, text: "Calls", font: { size: 12 } },
+          },
+          x: {
+            grid: { display: false },
+            title: { display: true, text: "Time (Hours)", font: { size: 12 } },
+          },
+        },
+      },
+    });
+
     return () => {
-      if (hourlyChartInstance.current) {
-        hourlyChartInstance.current.destroy();
-      }
+      hourlyChartInstance.current?.destroy();
     };
-  }, [forms]);
+  }, [hourlyChartData]);
 
   const handleToggleStatus = async (id) => {
     if (!id) return;
@@ -380,9 +381,7 @@ const ExecutiveDashboard = () => {
                   onClick={async () => {
 
                     await Promise.all([
-                      refetchDashboard(),
-                      refetchForms(),
-                      refetchPatients()
+                      refetchDashboard()
                     ])
 
                   }}

@@ -179,13 +179,6 @@ export const PatientHistory = () => {
                     totalDocument: apiPagination.totalDocument || 0,
                     limit: prev.limit, // keep current rows per page
                 }));
-
-                console.log("data", data.length);
-
-                if (!data.length) {
-                    toast.info("No data found for export");
-                }
-
                 return data; // IMPORTANT
             } else {
                 toast.error("Failed to fetch patients");
