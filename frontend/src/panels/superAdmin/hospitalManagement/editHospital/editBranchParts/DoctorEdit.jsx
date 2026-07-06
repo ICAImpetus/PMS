@@ -227,6 +227,7 @@ const AddDoctorModal = ({
     surgeries: [],
   });
 
+  console.log("doctodata", doctorData);
 
   useEffect(() => {
     if (availableDepartments) {

@@ -371,15 +371,13 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
     useEffect(() => {
 
+        // console.log("userDtata", usersData);
+
         if (!usersData) return;
 
-        setUsers((prev) =>
-            mergePaginatedData(
-                prev,
-                usersData?.data || [],
-                pagination.users.page
-            )
-        );
+        setUsers(usersData?.data || []);
+        // console.log("user", users);
+
 
         updatePagination(
             "users",
@@ -566,19 +564,19 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
     }, [selectedHostpital, selectedBranch, filter]);
 
-    useEffect(() => {
+    // useEffect(() => {
 
-        setUsers([]);
+    //     setUsers([]);
 
-        setPagination((prev) => ({
-            ...prev,
-            users: {
-                ...prev.users,
-                page: 1
-            }
-        }));
+    //     setPagination((prev) => ({
+    //         ...prev,
+    //         users: {
+    //             ...prev.users,
+    //             page: 1
+    //         }
+    //     }));
 
-    }, [selectedHostpital]);
+    // }, [selectedHostpital]);
 
     useEffect(() => {
 
@@ -639,6 +637,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         appointmentError,
         pastAppointmentError
     };
+
+
 
 
 

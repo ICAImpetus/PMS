@@ -130,7 +130,7 @@ export const getDummyData = (type) => {
             // specialization
             "surgeon",
 
-            "fulltime|parttime|visiting|oncall",
+            "fulltime",
 
             // name
             "Dr Raj Sharma",
@@ -211,10 +211,10 @@ export const getDummyData = (type) => {
             "Yes",
 
             // title
-            "Dr",
+            "dr",
 
             // designation
-            "Senior Consultant",
+            "consultant",
 
             // teleMedicine
             "Yes",

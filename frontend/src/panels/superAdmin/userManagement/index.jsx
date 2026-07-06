@@ -94,6 +94,10 @@ function UserManageMent() {
   } = useContext(HospitalContext);
 
 
+  const context = useContext(HospitalContext);
+
+  // console.log("Context Value", context);
+  // console.log("UserData", context.userData);
   useEffect(() => {
     if (location?.state?.selectedHostpital) {
       setSelectedHostpital(location?.state?.selectedHostpital)
@@ -252,17 +256,21 @@ function UserManageMent() {
     },
   ];
 
-  // Filter users based on search term (search by name only)
-  const filteredUserData = userData.filter((user) =>
-    user?.name?.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
 
-  const userDataInTable = filteredUserData.map((user) => {
-    return {
-      id: user._id || nanoid(),
-      ...user,
-    };
-  });
+  // console.log("userData ", userData);
+  const userDataInTable = React.useMemo(() => {
+    // console.log("dependency changed");
+
+
+    return userData
+      .filter((user) =>
+        user?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .map((user) => ({
+        id: user._id || nanoid(),
+        ...user,
+      }));
+  }, [userData, searchTerm]);
   // };
 
 
