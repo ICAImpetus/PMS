@@ -22,20 +22,19 @@ export const doctorValidation = {
     experience: {
         // required: true,
         type: "number",
+        default: null
     },
 
     consultationCharges: {
         // required: true,
         type: "number",
-        min: 100,
-        max: 5000,
+        default: null
     },
 
     age: {
         // required: true,
         type: "number",
-        min: 18,
-        max: 60,
+
     },
 
     isActive: {

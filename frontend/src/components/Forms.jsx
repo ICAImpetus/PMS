@@ -223,6 +223,7 @@ function Forms() {
   const [latestVisitSearch, setLatestVisitSearch] = useState("");
   const [latestVisitFilter, setLatestVisitFilter] = useState("all");
   const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [doctorSlots, setDoctorSlots] = useState([])
   const [liveTime, setLiveTime] = useState("");
   const [bookedSlotModal, setBookedSlotModal] = useState({ open: false, slot: null, });
   const doctorDepartmentChangeFromSelect = useRef(false);
@@ -521,6 +522,8 @@ function Forms() {
     // doctor set - save ID for form submission
     handleChange("doctor", doctor?._id);
     // set full object for UI card - immediate reflection
+    console.log("doctor", doctor);
+
     setSelectedDoctor(doctor);
 
     const depId = doctor?.department?._id || doctor?.department;
@@ -954,7 +957,7 @@ function Forms() {
             </div>
 
 
-            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} setDoctorSlots={setDoctorSlots} />}
 
             {/* Slot Duration Selector */}
             {/* <div className="input-row">
@@ -966,9 +969,13 @@ function Forms() {
             </div> */}
 
             {/* Available Slots Display - Button Style for Easy Selection */}
+            {console.log("selectedDoctor", selectedDoctor)}
+
             {
+
+
               selectedDoctor &&
-              selectedDoctor?.slots?.length > 0 && (
+              doctorSlots?.length > 0 && (
                 <div>
                   <div className="input-group">
                     <label className="required">
@@ -986,7 +993,7 @@ function Forms() {
                     >
 
                       {
-                        selectedDoctor.slots.map((slot) => {
+                        doctorSlots?.map((slot) => {
 
                           const session = getSession(
                             slot.start
@@ -3696,11 +3703,24 @@ function Forms() {
                       inputMode="numeric"
                       placeholder="Enter Age"
                       onChange={(e) => {
-                        let value = e.target.value.replace(/\D/g, "");
+                        let value = e.target.value;
 
-                        // only 3 digits
-                        value = value.slice(0, 3);
+                        // Allow digits and one decimal point
+                        value = value.replace(/[^0-9.]/g, "");
 
+                        // Allow only one decimal point
+                        const parts = value.split(".");
+                        if (parts.length > 2) {
+                          value = parts[0] + "." + parts.slice(1).join("");
+                        }
+
+                        // Limit total length if needed
+                        value = value.slice(0, 5); // e.g. 99.99
+
+                        // Validation
+                        if (value !== "" && parseFloat(value) <= 0) {
+                          value = "";
+                        }
                         // max age 110
                         if (value && Number(value) > 110) {
                           value = "110";
