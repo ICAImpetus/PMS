@@ -24,7 +24,7 @@ const chipStyles = {
     specialties: { bgcolor: "#FFF3E0", color: "#F57C00" },
     surgeries: { bgcolor: "#F3E5F5", color: "#7B1FA2" },
 };
-const DoctorProfileCard = ({ doctor, hosId }) => {
+const DoctorProfileCard = ({ doctor, hosId, setDoctorSlots = null }) => {
 
 
 
@@ -41,6 +41,7 @@ const DoctorProfileCard = ({ doctor, hosId }) => {
             try {
                 const res = await getSingledoctor(hosId, doctor._id)
                 setProfile(res?.data)
+                if (setDoctorSlots) setDoctorSlots(res?.data?.slots || [])
             } catch (err) {
                 console.error("Doctor fetch error", err)
             }
@@ -106,8 +107,13 @@ const DoctorProfileCard = ({ doctor, hosId }) => {
                         </Typography>
                         <Stack direction="row" spacing={0.5} mt={0.5} flexWrap="wrap">
 
+                            {console.log("data?.experience", data?.experience)}
                             <Chip
-                                label={`${data?.experience || 0}y exp`}
+                                label={
+                                    data?.experience !== null
+                                        ? `${data.experience}y exp`
+                                        : "N/A"
+                                }
                                 size="small"
                                 color="primary"
                             />
@@ -117,7 +123,12 @@ const DoctorProfileCard = ({ doctor, hosId }) => {
                             ))}
 
                             <Chip
-                                label={`₹${data?.consultationCharges}`}
+                                label={
+                                    (data?.consultationCharges !== null || data?.consultationCharges != 0)
+                                        ? `₹${data.consultationCharges}`
+                                        : "N/A"
+                                }
+                                // label={`₹${data?.consultationCharges}`}
                                 size="small"
                                 color="success"
                             />

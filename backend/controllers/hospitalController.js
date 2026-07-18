@@ -30,74 +30,81 @@ const pop = (path, model, select = null) => ({
 });
 
 
-function generateSlots(
-  start,
-  end,
-  slotMinutes,
-  sessionName = "General"
-) {
-  if (
-    !start ||
-    !end ||
-    !slotMinutes
-  ) {
+const normalizeTime = (value) => {
+  if (value == null) return "";
+
+  return String(value)
+    .replace(/\u00A0/g, " ")      // Non-breaking space
+    .replace(/[\r\n\t]/g, "")     // Remove new lines/tabs
+    .replace(/\s+/g, " ")         // Multiple spaces -> single
+    .trim()
+    .toUpperCase()
+    .replace(/(\d)(AM|PM)$/i, "$1 $2"); // 9:00AM -> 9:00 AM
+};
+
+const parseTime = (value) => {
+  const time = normalizeTime(value);
+
+  // Try multiple common formats
+  const formats = [
+    "h:mm A",
+    "hh:mm A",
+    "H:mm",
+    "HH:mm",
+  ];
+
+  for (const format of formats) {
+    const parsed = dayjs(time, format, true);
+    if (parsed.isValid()) {
+      return parsed;
+    }
+  }
+
+  console.error("Invalid time format:", {
+    original: value,
+    normalized: time,
+  });
+
+  return null;
+};
+function getSession(time) {
+  const hour = time.hour();
+
+  if (hour < 12) return "Morning";
+  if (hour < 17) return "Afternoon";
+  return "Evening";
+}
+function generateSlots(start, end, slotMinutes, sessionName = "General") {
+  if (!start || !end || !slotMinutes) {
     return [];
   }
 
-  const startTime = dayjs(
-    start,
-    "hh:mm A",
-    true
-  );
+  // console.log("sessionName", sessionName);
 
-  const endTime = dayjs(
-    end,
-    "hh:mm A",
-    true
-  );
+  const startTime = parseTime(start);
+  const endTime = parseTime(end);
 
-  // Invalid times
-  if (
-    !startTime.isValid() ||
-    !endTime.isValid()
-  ) {
+  if (!startTime || !endTime) {
     return [];
   }
 
-  // Invalid range
-  if (
-    endTime.isBefore(startTime) ||
-    endTime.isSame(startTime)
-  ) {
+  if (!endTime.isAfter(startTime)) {
     return [];
   }
 
   const slots = [];
 
-  let current = startTime;
+  let current = startTime.clone();
 
   while (current.isBefore(endTime)) {
-    const next = current.add(
-      Number(slotMinutes),
-      "minute"
-    );
+    const next = current.add(Number(slotMinutes), "minute");
 
-    // Prevent overflow
-    if (next.isAfter(endTime)) {
-      break;
-    }
+    if (next.isAfter(endTime)) break;
 
     slots.push({
-      start: current.format(
-        "hh:mm A"
-      ),
-
-      end: next.format(
-        "hh:mm A"
-      ),
-
+      start: current.format("hh:mm A"),
+      end: next.format("hh:mm A"),
       session: sessionName,
-
       isBooked: false,
     });
 
@@ -106,89 +113,100 @@ function generateSlots(
 
   return slots;
 }
-export function generateDoctorSlots(
-  doctor
-) {
+export async function generateDoctorSlots(doctor) {
   if (!doctor?.timings) {
-    console.log("Doctor timings not found, cannot generate slots.");
+    console.log("Doctor timings not found.");
     return [];
   }
-  const rawTime = doctor?.averagePatientTime;
+
+  // Average patient time
+  const rawTime = doctor.averagePatientTime;
 
   let slotMinutes = 10;
 
   if (typeof rawTime === "string") {
-    if (rawTime.includes("m")) {
-      slotMinutes = Number(rawTime.replace("m", "").trim());
-    } else {
-      slotMinutes = Number(rawTime) || 10;
-    }
+    slotMinutes = Number(rawTime.replace(/m|min|mins|minutes/gi, "").trim()) || 10;
   } else {
     slotMinutes = Number(rawTime) || 10;
   }
 
-  console.log("slotMinutes", slotMinutes)
-  if (
-    !slotMinutes
-  ) {
-    return [];
+  if (slotMinutes <= 0) {
+    slotMinutes = 10;
   }
+
+  const clean = (value) =>
+    value == null
+      ? ""
+      : String(value)
+        .replace(/\u00A0/g, " ")
+        .replace(/[\r\n\t]/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toUpperCase();
+
+  const timings = {
+    morning: {
+      start: clean(doctor.timings?.morning?.start),
+      end: clean(doctor.timings?.morning?.end),
+    },
+    evening: {
+      start: clean(doctor.timings?.evening?.start),
+      end: clean(doctor.timings?.evening?.end),
+    },
+    custom: {
+      start: clean(doctor.timings?.custom?.start),
+      end: clean(doctor.timings?.custom?.end),
+    },
+  };
+
+  // console.log("Doctor:", doctor.name);
+  // console.log("Timings:", timings);
 
   let allSlots = [];
 
-  if (
-    doctor.timings?.morning?.start &&
-    doctor.timings?.morning?.end
-  ) {
-    allSlots = [
-      ...allSlots,
-      ...generateSlots(
-        doctor.timings.morning.start,
-        doctor.timings.morning.end,
-        slotMinutes,
-        "Morning"
-      ),
-    ];
+  // Morning
+  if (timings.morning.start && timings.morning.end) {
+    const morningSlots = generateSlots(
+      timings.morning.start,
+      timings.morning.end,
+      slotMinutes,
+      "Morning"
+    );
+
+    // console.log("Morning Slots:", morningSlots.length);
+
+    allSlots.push(...morningSlots);
   }
 
-  // =========================
-  // EVENING SHIFT
-  // =========================
+  // Evening
+  if (timings.evening.start && timings.evening.end) {
+    const eveningSlots = generateSlots(
+      timings.evening.start,
+      timings.evening.end,
+      slotMinutes,
+      "Evening"
+    );
 
-  if (
-    doctor.timings?.evening?.start &&
-    doctor.timings?.evening?.end
-  ) {
-    allSlots = [
-      ...allSlots,
-      ...generateSlots(
-        doctor.timings.evening.start,
-        doctor.timings.evening.end,
-        slotMinutes,
-        "Evening"
-      ),
-    ];
+    // console.log("Evening Slots:", eveningSlots.length);
+
+    allSlots.push(...eveningSlots);
   }
 
-  // =========================
-  // CUSTOM SHIFT
-  // =========================
+  // Custom
+  if (timings.custom.start && timings.custom.end) {
+    const customSlots = generateSlots(
+      timings.custom.start,
+      timings.custom.end,
+      slotMinutes,
+      "Custom"
+    );
 
-  if (
-    doctor.timings?.custom?.start &&
-    doctor.timings?.custom?.end
-  ) {
-    allSlots = [
-      ...allSlots,
-      ...generateSlots(
-        doctor.timings.custom.start,
-        doctor.timings.custom.end,
-        slotMinutes,
-        maxPatients,
-        "Custom"
-      ),
-    ];
+    // console.log("Custom Slots:", customSlots.length);
+
+    allSlots.push(...customSlots);
   }
+
+  // console.log("Total Slots:", allSlots.length);
 
   return allSlots;
 }
@@ -1543,7 +1561,11 @@ export const addDoctor = async (req, res) => {
 
     doctorData.surgeries = await updateSuggestions(conn, "surgery", doctorData.surgeries);
     doctorData.specialties = await updateSuggestions(conn, "speciality", doctorData.specialties);
-    doctorData.slots = generateDoctorSlots(doctorData);
+    doctorData.slots = await generateDoctorSlots(doctorData);
+
+    // console.log("doctorData", doctorData);
+
+
 
     // console.log("Creating doctor with data:", doctorData);
     const createdDoctor = await DoctorModel.create([doctorData], { session });
@@ -1979,7 +2001,7 @@ export const updateDoctor = async (req, res) => {
       body.isEnabled === "true" ||
       body.isEnabled === true;
 
-    doctor.slots = generateDoctorSlots(doctor);
+    doctor.slots = await generateDoctorSlots(doctor);
 
     // =============================
     // SAVE DOCTOR
@@ -7484,11 +7506,6 @@ export const uploadBranchCSV = async (req, res) => {
     const normalize = (val) => val?.trim();
 
     let result; // uploadBranchCSV FIX (let instead of const)
-
-    console.log("CSV Rows:", rows);
-
-    console.log("type", type);
-
     switch (type.toLowerCase()) {
       case "doctor":
         result = await uploadDoctorCSV({
@@ -7588,14 +7605,14 @@ const uploadDoctorCSV = async ({
 
     const branchObjectId =
       toObjectId(branchId);
-    const splitPipe = (val) =>
-      val
-        ? val
-          .split("|")
-          .map((v) => v.trim())
-          .filter(Boolean)
-        : [];
+    const splitPipe = (val) => {
+      if (val == null) return [];
 
+      return String(val)
+        .split("|")
+        .map(v => v.trim())
+        .filter(Boolean);
+    };
     const cleanPhone = (val) => {
       if (!val) return "";
 
@@ -7911,7 +7928,11 @@ const uploadDoctorCSV = async ({
 
         }
 
-        doc.slots = generateDoctorSlots(doc);
+        doc.slots = await generateDoctorSlots(doc);
+        // console.log("slots:", slots);
+        // console.log("isPromise:", slots instanceof Promise);
+        // console.log("constructor:", slots?.constructor?.name);
+
         doctorsToInsert.push(doc);
       } catch (innerError) {
         console.log(

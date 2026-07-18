@@ -615,6 +615,9 @@ export const getFilledForms = async (req, res) => {
               "formData.patientDetails.patientName": "$patientInfo.patientName",
               "formData.patientDetails.patientMobile": "$patientInfo.patientMobile",
               "formData.patientDetails.patientStatus": "$patientInfo.status",
+              "formData.patientDetails.patientAge": "$patientInfo.patientAge",
+              "formData.patientDetails.patientCategory": "$patientInfo.category",
+              "formData.patientDetails.patientlocation": "$patientInfo.location",
               gender: "$patientInfo.gender",
               // Raw/Nested fields from form
               appointmentSlot: "$formData.appointmentSlot",

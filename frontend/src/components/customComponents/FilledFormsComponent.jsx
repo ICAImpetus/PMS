@@ -106,6 +106,9 @@ const FilledFormsComponent = ({
     "formData.patientDetails.patientName",
     "formData.patientDetails.patientMobile",
     "formData.patientDetails.patientStatus",
+    "formData.patientDetails.patientAge",
+    "formData.patientDetails.patientCategory",
+    "formData.patientDetails.patientlocation",
     "purpose",
     "formData.remarks",
     ...(formsModalOpen === "Appointments"

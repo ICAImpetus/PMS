@@ -940,14 +940,14 @@ const AddDoctorModal = ({
     // if (!currentDoctor.opdNo?.toString().trim())
     //   tempErrors.opdNo = "OPD number is required.";
 
-    if (!currentDoctor.experience?.toString().trim())
-      tempErrors.experience = "Experience is required.";
+    // if (!currentDoctor.experience?.toString().trim())
+    //   tempErrors.experience = "Experience is required.";
 
     // if (!currentDoctor.title?.trim())
     //   tempErrors.title = "Title  is required.";
 
-    if (!currentDoctor.specialization?.trim())
-      tempErrors.specialization = "Specialization is required.";
+    // if (!currentDoctor.specialization?.trim())
+    //   tempErrors.specialization = "Specialization is required.";
 
     if (!currentDoctor.type?.trim())
       tempErrors.type = "Doctor type is required.";
@@ -967,15 +967,15 @@ const AddDoctorModal = ({
     if (!currentDoctor.teleMedicine?.trim())
       tempErrors.teleMedicine = "Tele-consultation selection is required.";
 
-    if (!currentDoctor.consultationCharges?.toString().trim())
-      tempErrors.consultationCharges = "Consultation charges are required.";
+    // if (!currentDoctor.consultationCharges?.toString().trim())
+    //   tempErrors.consultationCharges = "Consultation charges are required.";
 
     // ── Contact number: must be exactly 10 digits ──────────────────────────
-    if (!currentDoctor.contactNumber?.toString().trim()) {
-      tempErrors.contactNumber = "Contact number is required.";
-    } else if (currentDoctor.contactNumber.toString().trim().length !== 10) {
-      tempErrors.contactNumber = "Contact number must be exactly 10 digits.";
-    }
+    // if (!currentDoctor.contactNumber?.toString().trim()) {
+    //   tempErrors.contactNumber = "Contact number is required.";
+    // } else if (currentDoctor.contactNumber.toString().trim().length !== 10) {
+    //   tempErrors.contactNumber = "Contact number must be exactly 10 digits.";
+    // }
 
     // ── PA Contact: if provided must be exactly 10 digits ──────────────────
     if (
@@ -995,15 +995,15 @@ const AddDoctorModal = ({
     }
 
     // ── Degrees: at least one standard or custom degree ─────────────────────
-    const totalDegrees =
-      (currentDoctor.degrees?.length || 0) +
-      (currentDoctor.customDegrees?.length || 0);
-    if (totalDegrees === 0)
-      tempErrors.degrees = "At least one degree is required.";
+    // const totalDegrees =
+    //   (currentDoctor.degrees?.length || 0) +
+    //   (currentDoctor.customDegrees?.length || 0);
+    // if (totalDegrees === 0)
+    //   tempErrors.degrees = "At least one degree is required.";
 
     // ── Specialties / Treatable list ──────────────────────────────────────
-    if (!currentDoctor.specialties || currentDoctor.specialties.length === 0)
-      tempErrors.specialties = "At least one treatable condition is required.";
+    // if (!currentDoctor.specialties || currentDoctor.specialties.length === 0)
+    //   tempErrors.specialties = "At least one treatable condition is required.";
 
     // ── OPD Days ──────────────────────────────────────────────────────────
     const opdDaysVal = currentDoctor.opdDays || "";
