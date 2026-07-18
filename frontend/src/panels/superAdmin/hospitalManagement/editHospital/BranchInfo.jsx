@@ -580,14 +580,14 @@ const BranchInfo = () => {
     const videoConsultationCharges = normalizeValue(row.videoConsultationCharges);
     const videoConsultationDays = normalizeValue(row.videoConsultationDays);
 
-    if (!specialization) {
-      errors.push({
-        rowNumber,
-        columnName: "specialization",
-        invalidValue: specialization,
-        message: "Specialization is Required! Please select one of: surgeon, physician",
-      });
-    }
+    // if (!specialization) {
+    //   errors.push({
+    //     rowNumber,
+    //     columnName: "specialization",
+    //     invalidValue: specialization,
+    //     message: "Specialization is Required! Please select one of: surgeon, physician",
+    //   });
+    // }
 
     if (specialization && !["surgeon", "physician"].includes(specialization)) {
       errors.push({
@@ -656,7 +656,7 @@ const BranchInfo = () => {
     }
 
     if (
-      !experience ||
+      experience &&
       isNaN(Number(experience)) ||
       Number(experience) < 0 ||
       Number(experience) > 60
@@ -666,24 +666,24 @@ const BranchInfo = () => {
         columnName: "experience",
         invalidValue: experience,
         message:
-          "Experience is required and must be a number between 0 and 60.",
+          "Experience must be a number between 0 and 60.",
       });
     }
 
-    if (
-      !consultationCharges ||
-      isNaN(Number(consultationCharges)) ||
-      Number(consultationCharges) < 0 ||
-      Number(consultationCharges) > 5000
-    ) {
-      errors.push({
-        rowNumber,
-        columnName: "consultationCharges",
-        invalidValue: consultationCharges,
-        message:
-          "Consultation Charges is required and must be a number between 0 and 5000.",
-      });
-    }
+    // if (
+    //   !consultationCharges ||
+    //   isNaN(Number(consultationCharges)) ||
+    //   Number(consultationCharges) < 0 ||
+    //   Number(consultationCharges) > 5000
+    // ) {
+    //   errors.push({
+    //     rowNumber,
+    //     columnName: "consultationCharges",
+    //     invalidValue: consultationCharges,
+    //     message:
+    //       "Consultation Charges is required and must be a number between 0 and 5000.",
+    //   });
+    // }
 
     if (opdDays?.trim() || videoConsultationDays?.trim()) {
 
