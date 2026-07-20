@@ -8783,15 +8783,27 @@ export const getDoctorAppointment = async (req, res) => {
       });
     }
 
-    // Get hospital
-    const hospital = await HospitalModel.findById(hospitalId)
-      .select("trimmedName")
-      .lean();
+
+    const [profile, hospital] = await Promise.all([
+      AdminAndAgentModel.findById(doctorId).select("refId").lean(),
+      HospitalModel.findById(hospitalId)
+        .select("trimmedName")
+        .lean()
+
+    ])
+
 
     if (!hospital) {
       return res.status(404).json({
         success: false,
         message: "Hospital not found",
+      });
+    }
+
+    if (!profile || !profile?.refId) {
+      return res.status(404).json({
+        success: false,
+        message: "Profile not found",
       });
     }
 
@@ -8805,7 +8817,7 @@ export const getDoctorAppointment = async (req, res) => {
     const start = Date.now();
 
     const query = {
-      // doctorId,
+      doctor: profile?.refId,
       // branchId,
       // appointmentStatus: "pending",
     };
@@ -8813,14 +8825,13 @@ export const getDoctorAppointment = async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    console.log("Date Filter:", dateFilter);
-    console.log("Date Filter:", doctorId);
+
     switch (dateFilter) {
       case "today": {
         const tomorrow = new Date(today);
         tomorrow.setDate(today.getDate() + 1);
 
-        query["formData.appointmentSlot.date"] = {
+        query["formData.dateTime"] = {
           $gte: today,
           $lt: tomorrow,
         };
@@ -8834,7 +8845,7 @@ export const getDoctorAppointment = async (req, res) => {
         const dayAfterTomorrow = new Date(today);
         dayAfterTomorrow.setDate(today.getDate() + 2);
 
-        query["formData.appointmentSlot.date"] = {
+        query["formData.dateTime"] = {
           $gte: tomorrow,
           $lt: dayAfterTomorrow,
         };
@@ -8845,7 +8856,7 @@ export const getDoctorAppointment = async (req, res) => {
         const next3Days = new Date(today);
         next3Days.setDate(today.getDate() + 3);
 
-        query["formData.appointmentSlot.date"] = {
+        query["formData.dateTime"] = {
           $gte: today,
           $lte: next3Days,
         };
@@ -8856,7 +8867,7 @@ export const getDoctorAppointment = async (req, res) => {
         const next7Days = new Date(today);
         next7Days.setDate(today.getDate() + 7);
 
-        query["formData.appointmentSlot.date"] = {
+        query["formData.dateTime"] = {
           $gte: today,
           $lte: next7Days,
         };
@@ -8864,7 +8875,7 @@ export const getDoctorAppointment = async (req, res) => {
       }
 
       case "all": {
-        query["formData.appointmentSlot.date"] = {
+        query["formData.dateTime"] = {
           $gte: today,
         };
         break;
@@ -8879,10 +8890,12 @@ export const getDoctorAppointment = async (req, res) => {
     const limitNumber = Number(limit);
     const skip = (pageNumber - 1) * limitNumber;
 
+
+
     const [data, total] = await Promise.all([
       FilledFormsModel.find(query)
         .populate({ model: PatientModel, path: "formData.patientDetails", select: "patientName patientMobile" })
-        .select("formData.patientDetails formData.appointmentSlot createdAt")
+        .select("formData.patientDetails formData.appointmentSlot formData.dateTime formData.remarks createdAt")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNumber)
@@ -8953,10 +8966,30 @@ export const getPastDoctorAppointments = async (req, res) => {
       });
     }
 
-    // Get hospital
-    const hospital = await HospitalModel.findById(hospitalId)
-      .select("trimmedName")
-      .lean();
+
+
+    const [profile, hospital] = await Promise.all([
+      AdminAndAgentModel.findById(doctorId).select("refId").lean(),
+      HospitalModel.findById(hospitalId)
+        .select("trimmedName")
+        .lean()
+
+    ])
+
+
+    if (!hospital) {
+      return res.status(404).json({
+        success: false,
+        message: "Hospital not found",
+      });
+    }
+
+    if (!profile || !profile?.refId) {
+      return res.status(404).json({
+        success: false,
+        message: "Profile not found",
+      });
+    }
 
     if (!hospital) {
       return res.status(404).json({
@@ -8970,37 +9003,30 @@ export const getPastDoctorAppointments = async (req, res) => {
 
     // Model
     const FilledFormsModel = getFilledFormsModel(conn);
+    const PatientModel = getPatientModel(conn)
 
     // Pagination
     const pageNumber = Math.max(parseInt(page) || 1, 1);
     const limitNumber = Math.max(parseInt(limit) || 10, 1);
     const skip = (pageNumber - 1) * limitNumber;
 
-    // Today's start
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-
-    const start = Date.now();
 
     // Query
     const query = {
-      doctorId,
-      branchId,
-
-      // Past appointments only
-      appointmentSlot: {
-        date: {
-          $lt: todayStart,
-        }
-      }
+      doctor: profile?.refId,
+      branchId
     };
 
     // Count
     const total = await FilledFormsModel.countDocuments(query);
 
+    console.log("query", query);
+
     // Data
     const data = await FilledFormsModel.find(query)
-      // .sort({ appointmentSlot: { date: -1 } })
+      .populate({ model: PatientModel, path: "formData.patientDetails", select: "patientName patientMobile" })
+      .select("formData.patientDetails formData.appointmentSlot formData.dateTime  formData.remarks createdAt")
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNumber)
       .lean();
@@ -9019,8 +9045,6 @@ export const getPastDoctorAppointments = async (req, res) => {
         hasNextPage: pageNumber * limitNumber < total,
         hasPrevPage: pageNumber > 1,
       },
-
-      executionTime: `${end - start} ms`,
 
       data,
     });

@@ -897,8 +897,9 @@ const DoctorDashboard = () => {
                             <TableBody>
                                 {getFilteredPastAppointments().length > 0 ? (
                                     getFilteredPastAppointments().map((apt, idx) => (
+
                                         <TableRow
-                                            key={apt.id}
+                                            key={idx}
                                             sx={{
                                                 backgroundColor: idx % 2 === 0 ? "transparent" : `white`,
                                                 borderBottom: `1px solid ${colors.primary[500]} `,
@@ -906,39 +907,40 @@ const DoctorDashboard = () => {
                                                 opacity: apt.status === "Cancelled" ? 0.6 : 1,
                                             }}
                                         >
+
                                             <TableCell sx={{ color: colors.grey[100] }}>
                                                 <Box display="flex" alignItems="center" gap={1}>
                                                     <Avatar sx={{ width: 32, height: 32, fontSize: "0.9rem", backgroundColor: colors.blueAccent[500] }}>
-                                                        {apt.patientName.charAt(0)}
+                                                        {apt?.formData?.patientDetails?.patientName?.charAt(0)}
                                                     </Avatar>
                                                     <Box>
                                                         <Typography color={colors.grey[100]} variant="body2">
-                                                            {apt.patientName}
+                                                            {apt?.formData?.patientDetails?.patientName}
                                                         </Typography>
-                                                        <Typography color={colors.grey[300]} variant="caption">
-                                                            {apt.patientId}
-                                                        </Typography>
+                                                        {/* <Typography color={colors.grey[300]} variant="caption">
+                                                            {apt?.patientId}
+                                                        </Typography> */}
                                                     </Box>
                                                 </Box>
                                             </TableCell>
                                             <TableCell >
-                                                {apt.appointmentDate} <br /> {apt.appointmentTime}
+                                                {apt?.appointmentDate || apt?.formData?.dateTime} <br /> {apt?.appointmentTime}
                                             </TableCell>
                                             <TableCell>
-                                                <Chip label={apt.type} size="small" variant="outlined" />
+                                                <Chip label={apt?.type} size="small" variant="outlined" />
                                             </TableCell>
                                             <TableCell>
                                                 <Chip
-                                                    label={apt.status}
+                                                    label={"Pending"}
                                                     size="small"
-                                                    color={apt.status === "Completed" ? "success" : "error"}
+                                                    color={apt?.status === "Completed" ? "success" : "error"}
                                                 />
                                             </TableCell>
                                             <TableCell sx={{}}>
-                                                {apt.consultationType}
+                                                Appointment
                                             </TableCell>
                                             <TableCell sx={{ maxWidth: 250 }}>
-                                                <Typography variant="caption">{apt.notes}</Typography>
+                                                <Typography variant="caption">{apt?.formData?.remarks}</Typography>
                                             </TableCell>
                                         </TableRow>
                                     ))
