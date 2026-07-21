@@ -198,5 +198,6 @@ router.get("/single-patient-history", auth, hospitalController.singlePatientHist
 
 router.get("/doctor-appointments", hospitalController.getDoctorAppointment);
 router.get("/doctor-past-appointments", hospitalController.getPastDoctorAppointments);
+router.get("/doctor-dashboard-stats", hospitalController.getDoctorDashboardStats);
 
 export default router;

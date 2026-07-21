@@ -57,6 +57,15 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
     const [selectedBranch, setSelectedBranch] = useState(isDoctor ? currentUser?.refId?.branch || null : null);
     const [branchCount, setBranchCount] = useState(0);
+    const [doctorStats, setDoctorStats] = useState({
+        todayAppointments: 0,
+        totalPatients: 0,
+        pendingConsultations: 0,
+        emergencyAlerts: 0,
+        averageRating: 0,
+        consultationRate: 0,
+
+    })
 
     const [pagination, setPagination] = useState({
         patients: { ...defaultPagination },
@@ -91,6 +100,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     const [pastappointments, setPastAppointments] = useState([]);
     const [users, setUsers] = useState([]);
     const [allLogs, setAllLogs] = useState([]);
+    const [tabValue, setTabValue] = useState(0);
 
     const [forms, setForms] = useState({
         today: [],
@@ -441,7 +451,9 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             return res.data?.data;
         },
 
-        enabled: enabledQuery,
+        enabled: enabledQuery && isDoctor &&
+            !!selectedHostpital &&
+            !!currentUser?._id
     });
 
     const {
@@ -455,29 +467,75 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             selectedHostpital,
             selectedBranch,
             currentUser?._id,
+            tabValue,
         ],
 
         queryFn: async () => {
-            const res =
-                await commonRoutes.getPastDoctorAppointments(
-                    selectedHostpital,
-                    selectedBranch,
-                    currentUser?._id,
-                    1, // page
-                    10 // limit
-                );
+            const res = await commonRoutes.getPastDoctorAppointments(
+                selectedHostpital,
+                selectedBranch,
+                currentUser?._id,
+                1,
+                10
+            );
 
             return res.data?.data;
         },
 
-        enabled: enabledQuery,
+        enabled:
+            enabledQuery &&
+            !!selectedHostpital &&
+            !!currentUser?._id &&
+            isDoctor &&
+            tabValue === 1,
     });
 
+
+
+
+    // 1. Doctor Stats Fetching with React Query
+    const {
+        data: doctorStatsData,
+        isFetching: isStatsLoading,
+        refetch: refetchDoctorStats,
+        error: doctorStatsError,
+    } = useQuery({
+        queryKey: [
+            "doctorDashboardStats",
+            selectedHostpital,
+            selectedBranch,
+            currentUser?._id,
+        ],
+        queryFn: async () => {
+            const res = await commonRoutes.getDoctorDashboard(
+                selectedHostpital,
+                selectedBranch,
+                currentUser?._id
+            );
+            return res.data?.data;
+        },
+        enabled: enabledQuery && !!selectedHostpital && !!currentUser?._id && isDoctor,
+    });
+
+    // 2. Set Stats State when Data Arrives
+    useEffect(() => {
+        if (!doctorStatsData) return;
+
+        setDoctorStats((prevStats) => ({
+            ...prevStats,
+            todayAppointments: doctorStatsData.todayAppointments ?? prevStats.todayAppointments,
+            totalPatients: doctorStatsData.totalPatients ?? prevStats.totalPatients,
+            pendingConsultations: doctorStatsData.pendingConsultations ?? prevStats.pendingConsultations,
+            emergencyAlerts: doctorStatsData.emergencyAlerts ?? prevStats.emergencyAlerts,
+            averageRating: doctorStatsData.averageRating ?? prevStats.averageRating,
+            consultationRate: doctorStatsData.consultationRate ?? prevStats.consultationRate,
+        }));
+    }, [doctorStatsData]);
     useEffect(() => {
         if (!pastAppointmentData) return;
 
         setPastAppointments(pastAppointmentData);
-    }, [pastAppointmentData]);
+    }, [pastAppointmentData, tabValue]);
     useEffect(() => {
 
         if (!appointmentData) return;
@@ -617,12 +675,13 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         auditLogs: auditLogsLoading,
         appointmentLoading,
         pastAppointmentLoading,
+        isStatsLoading,
 
 
-        isAnyLoading:
-            hospitalsLoading ||
-            branchesLoading ||
-            dashboardLoading
+        // isAnyLoading:
+        //     hospitalsLoading ||
+        //     branchesLoading ||
+        //     dashboardLoading
     };
 
 
@@ -670,8 +729,11 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         dateRange,
 
         filterOptions,
+        tabValue,
+        doctorStats,
 
 
+        setTabValue,
         setDateFilter,
         setSelectedHostpital,
         setAppointments,
@@ -681,6 +743,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         setForms,
         setDateRangeFilter,
         setDateRange,
+        setDoctorStats,
 
         isSuperAdmin,
         isAdmin,
@@ -699,6 +762,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         handleFilterChange
 
     }), [
+        tabValue,
         hospitals,
         branches,
         users,

@@ -458,6 +458,20 @@ export const commonRoutes = {
         limit,
       },
     }),
+
+  getDoctorDashboard: (
+    hospitalId,
+    branchId,
+    doctorId,
+
+  ) =>
+    API.get("api/doctor-dashboard-stats", {
+      params: {
+        hospitalId,
+        branchId,
+        doctorId
+      },
+    }),
   getAuditLogs: () => API.get(`api/get-audit-logs`),
 
   getSelectedBranches: (hospitalId) => {

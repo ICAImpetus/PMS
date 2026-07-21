@@ -9061,3 +9061,142 @@ export const getPastDoctorAppointments = async (req, res) => {
     });
   }
 };
+
+export const getDoctorDashboardStats = async (req, res) => {
+  try {
+    const { hospitalId, branchId, doctorId } = req.query;
+
+    // 1. Validation
+    if (
+      !hospitalId ||
+      !branchId ||
+      !doctorId ||
+      !mongoose.isValidObjectId(hospitalId) ||
+      !mongoose.isValidObjectId(branchId) ||
+      !mongoose.isValidObjectId(doctorId)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid Hospital Id, Branch Id and Doctor Id are required",
+      });
+    }
+
+    // 2. Fetch Profile & Hospital
+    const [profile, hospital] = await Promise.all([
+      AdminAndAgentModel.findById(doctorId).select("refId").lean(),
+      HospitalModel.findById(hospitalId).select("trimmedName").lean(),
+    ]);
+
+    if (!hospital) {
+      return res.status(404).json({
+        success: false,
+        message: "Hospital not found",
+      });
+    }
+
+    if (!profile || !profile?.refId) {
+      return res.status(404).json({
+        success: false,
+        message: "Doctor profile not found",
+      });
+    }
+
+    // 3. Multi-tenant connection & Models
+    const conn = await getConnection(hospital.trimmedName);
+    const FilledFormsModel = getFilledFormsModel(conn);
+
+    const docRefId = profile.refId;
+
+    // 4. Date Calculations (Start and End of Today)
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    // 5. Parallel DB Queries for maximum efficiency
+    const [
+      todayAppointments,
+      totalPatientsCount,
+      pendingConsultations,
+      emergencyAlerts,
+    ] = await Promise.all([
+      // Today's Appointments Count
+      FilledFormsModel.countDocuments({
+        doctor: docRefId,
+        branchId,
+        createdAt: { $gte: startOfToday, $lte: endOfToday },
+      }),
+
+      // Total Unique Patients Count
+      FilledFormsModel.distinct("formData.patientDetails", {
+        doctor: docRefId,
+        branchId,
+      }),
+
+      // Pending Consultations (Status e.g. 'pending' or 'scheduled')
+      FilledFormsModel.countDocuments({
+        doctor: docRefId,
+        branchId,
+        "formData.status": "pending", // Apne schema ke hisab se field update karein
+      }),
+
+      // Emergency Alerts Count
+      FilledFormsModel.countDocuments({
+        doctor: docRefId,
+        branchId,
+        "formData.isEmergency": true, // Apne schema ke hisab se field update karein
+      }),
+    ]);
+
+    const resulkt = await FilledFormsModel.updateMany({
+      doctor: docRefId,
+      branchId,
+
+    }, {
+      "formData.status": "pending"
+    })
+    console.log("resulkt", resulkt);
+
+    // Total Completed/Consulted for calculating Consultation Rate
+    const completedConsultations = await FilledFormsModel.countDocuments({
+      doctor: docRefId,
+      branchId,
+      "formData.status": "completed",
+    });
+
+    const totalAllAppointments = await FilledFormsModel.countDocuments({
+      doctor: docRefId,
+      branchId,
+    });
+
+    // Calculate Consultation Rate %
+    const consultationRate = totalAllAppointments > 0
+      ? Math.round((completedConsultations / totalAllAppointments) * 100)
+      : 0;
+
+    // Response Data structure matching your React state
+    const stats = {
+      todayAppointments,
+      totalPatients: totalPatientsCount.length, // Unique patients length
+      pendingConsultations,
+      emergencyAlerts,
+      averageRating: 4.7, // Agar reviews table nahi hai toh fixed, warna aggregate se nikal sakte hain
+      consultationRate,
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: "Doctor stats fetched successfully",
+      data: stats,
+    });
+
+  } catch (error) {
+    console.error("Get Doctor Dashboard Stats Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};

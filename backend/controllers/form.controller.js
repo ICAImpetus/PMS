@@ -210,7 +210,9 @@ export const createFilledForm = async (req, res) => {
 
       purpose: data.purpose,
 
-      followupStatus,
+      ...(data.purpose?.toLowerCase() === "appointment" && {
+        status: "pending",
+      }),
 
       formData: {
         ...data.formData,

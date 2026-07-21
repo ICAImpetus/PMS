@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
+
 import {
     Box,
     Container,
@@ -57,7 +58,7 @@ import { UserContextHook } from "../../../contexts/UserContexts";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import HospitalContext from "../../../contexts/HospitalContexts";
-
+import moment from "moment"
 
 const DATE_FILTER_OPTIONS = {
     today: "Today",
@@ -79,7 +80,9 @@ const DoctorDashboard = () => {
         refetchAppointments,
         refetchPastAppointments,
         dateFilter,
-        setDateFilter
+        setDateFilter,
+        tabValue,
+        setTabValue
     } = useContext(HospitalContext)
 
 
@@ -104,7 +107,7 @@ const DoctorDashboard = () => {
 
 
     // Tab for past appointments
-    const [tabValue, setTabValue] = useState(0);
+
 
     // Enhanced stat card with gradient
     const StatCard = ({ title, value, icon: Icon, color, unit = "", trend = null }) => (
@@ -620,19 +623,19 @@ const DoctorDashboard = () => {
         }
 
         // Sorting
-        switch (sortBy) {
-            case "date-desc":
-                filtered.sort((a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate));
-                break;
-            case "date-asc":
-                filtered.sort((a, b) => new Date(a.appointmentDate) - new Date(b.appointmentDate));
-                break;
-            case "name":
-                filtered.sort((a, b) => a.patientName.localeCompare(b.patientName));
-                break;
-            default:
-                break;
-        }
+        // switch (sortBy) {
+        //     case "date-desc":
+        //         filtered.sort((a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate));
+        //         break;
+        //     case "date-asc":
+        //         filtered.sort((a, b) => new Date(a.appointmentDate) - new Date(b.appointmentDate));
+        //         break;
+        //     case "name":
+        //         filtered.sort((a, b) => a.patientName.localeCompare(b.patientName));
+        //         break;
+        //     default:
+        //         break;
+        // }
 
         return filtered;
     };
@@ -888,14 +891,21 @@ const DoctorDashboard = () => {
                                 <TableRow sx={{ backgroundColor: colors.primary[500] }}>
                                     <TableCell sx={{ color: colors.grey[100], fontWeight: 600 }}>Patient</TableCell>
                                     <TableCell sx={{ color: colors.grey[100], fontWeight: 600 }}>Date & Time</TableCell>
-                                    <TableCell sx={{ color: colors.grey[100], fontWeight: 600 }}>Type</TableCell>
+                                    {/* <TableCell sx={{ color: colors.grey[100], fontWeight: 600 }}>Type</TableCell> */}
                                     <TableCell sx={{ color: colors.grey[100], fontWeight: 600 }}>Status</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Consultation Type</TableCell>
+                                    {/* <TableCell sx={{ fontWeight: 600 }}>Consultation Type</TableCell> */}
                                     <TableCell sx={{ fontWeight: 600 }}>Notes</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {getFilteredPastAppointments().length > 0 ? (
+                                {loading?.pastAppointmentLoading && <TableRow>
+                                    <TableCell
+                                    >
+                                        <CircularProgress size={22} />
+
+                                    </TableCell>
+                                </TableRow>}
+                                {!loading?.pastAppointmentLoading && getFilteredPastAppointments().length > 0 ? (
                                     getFilteredPastAppointments().map((apt, idx) => (
 
                                         <TableRow
@@ -923,12 +933,14 @@ const DoctorDashboard = () => {
                                                     </Box>
                                                 </Box>
                                             </TableCell>
-                                            <TableCell >
-                                                {apt?.appointmentDate || apt?.formData?.dateTime} <br /> {apt?.appointmentTime}
-                                            </TableCell>
                                             <TableCell>
-                                                <Chip label={apt?.type} size="small" variant="outlined" />
+                                                {apt?.formData?.dateTime
+                                                    ? moment(apt.formData.dateTime).format("DD MMM YYYY, hh:mm A")
+                                                    : "-"}
                                             </TableCell>
+                                            {/* <TableCell>
+                                                <Chip label={apt?.type} size="small" variant="outlined" />
+                                            </TableCell> */}
                                             <TableCell>
                                                 <Chip
                                                     label={"Pending"}
@@ -936,9 +948,9 @@ const DoctorDashboard = () => {
                                                     color={apt?.status === "Completed" ? "success" : "error"}
                                                 />
                                             </TableCell>
-                                            <TableCell sx={{}}>
+                                            {/* <TableCell sx={{}}>
                                                 Appointment
-                                            </TableCell>
+                                            </TableCell> */}
                                             <TableCell sx={{ maxWidth: 250 }}>
                                                 <Typography variant="caption">{apt?.formData?.remarks}</Typography>
                                             </TableCell>
