@@ -162,6 +162,8 @@ export const FilledFormSchema = new mongoose.Schema(
       patientArrivalTime: {
         type: String,
       },
+
+      status: String,
       isCancelApp: {
         type: Boolean,
       },
