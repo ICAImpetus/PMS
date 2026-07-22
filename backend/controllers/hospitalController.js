@@ -1137,7 +1137,7 @@ export const getSingleBranchForForms = async (req, res) => {
 
       // Departments
       Department.find({ branch: id, isDeleted: false })
-        .populate(pop("doctors", Doctor, "name"))
+        .populate(pop("doctors", Doctor, "name opdDays unavailableDates timings degrees experience consultationCharges"))
         .sort({ createdAt: -1 })
         .lean(),
 
@@ -8761,19 +8761,18 @@ export const getDoctorAppointment = async (req, res) => {
     const {
       hospitalId,
       branchId,
-      doctorId,
+
       dateFilter = "today",
       page = 1,
       limit = 20,
     } = req.query;
 
     // Validate ids
+    const doctorId = req.user.id
     if (
       !hospitalId ||
-      !branchId ||
       !doctorId ||
       !mongoose.isValidObjectId(hospitalId) ||
-      !mongoose.isValidObjectId(branchId) ||
       !mongoose.isValidObjectId(doctorId)
     ) {
       return res.status(400).json({
@@ -8892,10 +8891,18 @@ export const getDoctorAppointment = async (req, res) => {
 
 
 
-    const [data, total] = await Promise.all([
+    const [data, recentConsultations, total] = await Promise.all([
       FilledFormsModel.find(query)
-        .populate({ model: PatientModel, path: "formData.patientDetails", select: "patientName patientMobile" })
-        .select("formData.patientDetails formData.appointmentSlot formData.dateTime formData.remarks createdAt")
+        .populate({ model: PatientModel, path: "formData.patientDetails", select: "patientName status category patientAge gender" })
+        .select("formData.patientDetails formData.appointmentSlot formData.dateTime formData.remarks formData.status createdAt")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNumber)
+        .lean(),
+
+      FilledFormsModel.find({ doctor: profile?.refId, "formData.status": "completed" })
+        .populate({ model: PatientModel, path: "formData.patientDetails", select: "patientName status category patientAge gender" })
+        .select("formData.patientDetails formData.appointmentSlot formData.dateTime formData.remarks  formData.status createdAt")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNumber)
@@ -8911,6 +8918,7 @@ export const getDoctorAppointment = async (req, res) => {
       executionTime: `${end - start} ms`,
 
       data,
+      recentConsultations,
 
       pagination: {
         page: pageNumber,
@@ -8945,12 +8953,13 @@ export const getPastDoctorAppointments = async (req, res) => {
     const {
       hospitalId,
       branchId,
-      doctorId,
+
       page = 1,
       limit = 10,
     } = req.query;
 
     // Validate ids
+    const doctorId = req.user.id
     if (
       !hospitalId ||
       !branchId ||
@@ -9024,8 +9033,8 @@ export const getPastDoctorAppointments = async (req, res) => {
 
     // Data
     const data = await FilledFormsModel.find(query)
-      .populate({ model: PatientModel, path: "formData.patientDetails", select: "patientName patientMobile" })
-      .select("formData.patientDetails formData.appointmentSlot formData.dateTime  formData.remarks createdAt")
+      .populate({ model: PatientModel, path: "formData.patientDetails", select: "patientName status category patientAge gender" })
+      .select("formData.patientDetails formData.appointmentSlot formData.dateTime  formData.status formData.remarks createdAt")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNumber)
@@ -9064,15 +9073,13 @@ export const getPastDoctorAppointments = async (req, res) => {
 
 export const getDoctorDashboardStats = async (req, res) => {
   try {
-    const { hospitalId, branchId, doctorId } = req.query;
+    const { hospitalId, branchId } = req.query;
+    const doctorId = req.user.id;
 
-    // 1. Validation
     if (
       !hospitalId ||
-      !branchId ||
       !doctorId ||
       !mongoose.isValidObjectId(hospitalId) ||
-      !mongoose.isValidObjectId(branchId) ||
       !mongoose.isValidObjectId(doctorId)
     ) {
       return res.status(400).json({
@@ -9081,108 +9088,154 @@ export const getDoctorDashboardStats = async (req, res) => {
       });
     }
 
-    // 2. Fetch Profile & Hospital
     const [profile, hospital] = await Promise.all([
       AdminAndAgentModel.findById(doctorId).select("refId").lean(),
       HospitalModel.findById(hospitalId).select("trimmedName").lean(),
     ]);
 
-    if (!hospital) {
+    if (!hospital || !profile?.refId) {
       return res.status(404).json({
         success: false,
-        message: "Hospital not found",
+        message: "Hospital or Doctor profile not found",
       });
     }
 
-    if (!profile || !profile?.refId) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor profile not found",
-      });
-    }
-
-    // 3. Multi-tenant connection & Models
     const conn = await getConnection(hospital.trimmedName);
     const FilledFormsModel = getFilledFormsModel(conn);
-
     const docRefId = profile.refId;
 
-    // 4. Date Calculations (Start and End of Today)
+    // --- DATE RANGES ---
+    // 1. Today Range
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
 
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
 
-    // 5. Parallel DB Queries for maximum efficiency
+    // 2. Same Day Last Week Range (7 Days Ago)
+    const startOfLastWeekDay = new Date(startOfToday);
+    startOfLastWeekDay.setDate(startOfLastWeekDay.getDate() - 7);
+
+    const endOfLastWeekDay = new Date(endOfToday);
+    endOfLastWeekDay.setDate(endOfLastWeekDay.getDate() - 7);
+
+    // 3. Cutoff Date 7 Days Ago (For overall snapshot counts like total patients till last week)
+    const sevenDaysAgoCutoff = new Date(endOfToday);
+    sevenDaysAgoCutoff.setDate(sevenDaysAgoCutoff.getDate() - 7);
+
+    // --- PARALLEL QUERIES ---
     const [
+      // 1. Today's Appointments & Last Week's Same Day Appointments
       todayAppointments,
-      totalPatientsCount,
+      lastWeekTodayAppointments,
+
+      // 2. Current Pending vs Pending Created Till Last Week
       pendingConsultations,
+      lastWeekPendingConsultations,
+
+      // 3. Current Total Unique Patients vs Patients Till Last Week
+      currentTotalPatients,
+      lastWeekTotalPatients,
+
+      // Other metrics
       emergencyAlerts,
+      // completedConsultations,
+      // totalAllAppointments,
     ] = await Promise.all([
-      // Today's Appointments Count
+      // Appointments Today
       FilledFormsModel.countDocuments({
         doctor: docRefId,
         branchId,
         createdAt: { $gte: startOfToday, $lte: endOfToday },
       }),
+      // Appointments Same Day Last Week
+      FilledFormsModel.countDocuments({
+        doctor: docRefId,
+        branchId,
+        createdAt: { $gte: startOfLastWeekDay, $lte: endOfLastWeekDay },
+      }),
 
-      // Total Unique Patients Count
+      // Current Pending Consultations
+      FilledFormsModel.countDocuments({
+        doctor: docRefId,
+        branchId,
+        "formData.status": "pending",
+      }),
+      // Pending Consultations (Filter till 7 days ago)
+      FilledFormsModel.countDocuments({
+        doctor: docRefId,
+        branchId,
+        "formData.status": "pending",
+        createdAt: { $lte: sevenDaysAgoCutoff },
+      }),
+
+      // Total Unique Patients Now
       FilledFormsModel.distinct("formData.patientDetails", {
         doctor: docRefId,
         branchId,
       }),
-
-      // Pending Consultations (Status e.g. 'pending' or 'scheduled')
-      FilledFormsModel.countDocuments({
+      // Total Unique Patients Till 7 Days Ago
+      FilledFormsModel.distinct("formData.patientDetails", {
         doctor: docRefId,
         branchId,
-        "formData.status": "pending", // Apne schema ke hisab se field update karein
+        createdAt: { $lte: sevenDaysAgoCutoff },
       }),
 
-      // Emergency Alerts Count
-      FilledFormsModel.countDocuments({
-        doctor: docRefId,
-        branchId,
-        "formData.isEmergency": true, // Apne schema ke hisab se field update karein
-      }),
+      // Emergency Alerts
+      // FilledFormsModel.countDocuments({
+      //   doctor: docRefId,
+      //   branchId,
+      //   "formData.isEmergency": true,
+      // }),
+
+      // Completed
+      // FilledFormsModel.countDocuments({
+      //   doctor: docRefId,
+      //   branchId,
+      //   "formData.status": "completed",
+      // }),
+
+      // // Total All
+      // FilledFormsModel.countDocuments({
+      //   doctor: docRefId,
+      //   branchId,
+      // }),
     ]);
 
-    const resulkt = await FilledFormsModel.updateMany({
-      doctor: docRefId,
-      branchId,
+    // --- TREND HELPER FUNCTION ---
+    const calculateTrend = (current, previous) => {
+      if (previous === 0) return current > 0 ? 100 : 0;
+      return Math.round(((current - previous) / previous) * 100);
+    };
 
-    }, {
-      "formData.status": "pending"
-    })
-    console.log("resulkt", resulkt);
+    // Calculate Trends
+    const appointmentsTrend = calculateTrend(todayAppointments, lastWeekTodayAppointments);
+    const pendingTrend = calculateTrend(pendingConsultations, lastWeekPendingConsultations);
+    const totalPatientsCount = currentTotalPatients.length;
+    const lastWeekPatientsCount = lastWeekTotalPatients.length;
+    const patientsTrend = calculateTrend(totalPatientsCount, lastWeekPatientsCount);
 
-    // Total Completed/Consulted for calculating Consultation Rate
-    const completedConsultations = await FilledFormsModel.countDocuments({
-      doctor: docRefId,
-      branchId,
-      "formData.status": "completed",
-    });
+    // const consultationRate =
+    //   totalAllAppointments > 0
+    //     ? Math.round((completedConsultations / totalAllAppointments) * 100)
+    //     : 0;
 
-    const totalAllAppointments = await FilledFormsModel.countDocuments({
-      doctor: docRefId,
-      branchId,
-    });
-
-    // Calculate Consultation Rate %
-    const consultationRate = totalAllAppointments > 0
-      ? Math.round((completedConsultations / totalAllAppointments) * 100)
-      : 0;
-
-    // Response Data structure matching your React state
     const stats = {
-      todayAppointments,
-      totalPatients: totalPatientsCount.length, // Unique patients length
-      pendingConsultations,
-      emergencyAlerts,
-      averageRating: 4.7, // Agar reviews table nahi hai toh fixed, warna aggregate se nikal sakte hain
-      consultationRate,
+      todayAppointments: {
+        value: todayAppointments,
+        trend: appointmentsTrend, // e.g., +12
+      },
+      pendingConsultations: {
+        value: pendingConsultations,
+        trend: pendingTrend, // e.g., -5
+      },
+      totalPatients: {
+        value: totalPatientsCount,
+        trend: patientsTrend, // e.g., +18
+      },
+      // emergencyAlerts,
+      averageRating: 4.7,
+      // consultationRate,
     };
 
     return res.status(200).json({
@@ -9190,7 +9243,6 @@ export const getDoctorDashboardStats = async (req, res) => {
       message: "Doctor stats fetched successfully",
       data: stats,
     });
-
   } catch (error) {
     console.error("Get Doctor Dashboard Stats Error:", error);
     return res.status(500).json({

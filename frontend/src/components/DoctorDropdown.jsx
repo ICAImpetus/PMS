@@ -101,6 +101,9 @@ export default function DoctorDropdown({
       );
 
     // Final availability
+
+
+
     return isOpdDay && !isUnavailable;
   };
 
@@ -110,20 +113,20 @@ export default function DoctorDropdown({
       <Autocomplete
         options={doctors}
         sx={{
-                  "& .MuiOutlinedInput-root": {
-                    height: 28,
-                    minHeight: 28,
-                    border: "1px solid var(--border-color)",
-                    borderRadius: "var(--radius)",
-                    backgroundColor: "#fff",
-                    fontSize: "12px",
-                  },
+          "& .MuiOutlinedInput-root": {
+            height: 28,
+            minHeight: 28,
+            border: "1px solid var(--border-color)",
+            borderRadius: "var(--radius)",
+            backgroundColor: "#fff",
+            fontSize: "12px",
+          },
 
-                  "& .MuiInputBase-input": {
-                    fontSize: "12px",
-                    padding: "0 14px",
-                  },
-                }}
+          "& .MuiInputBase-input": {
+            fontSize: "12px",
+            padding: "0 14px",
+          },
+        }}
         value={value}
         onChange={(event, newValue) => {
           if (!newValue) {
@@ -160,6 +163,7 @@ export default function DoctorDropdown({
           // const opdDaysStr = option.opdDays && option.opdDays.length > 0 ? option.opdDays.join(", ") : "";
           const degsStr = option.degrees && option.degrees.length > 0 ? `(${option.degrees.join(", ")})` : "";
           const disabled = !isDoctorAvailableOnDay(option);
+
 
           return (
             <li {...props} key={option._id}>

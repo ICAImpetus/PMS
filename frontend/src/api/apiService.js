@@ -430,14 +430,12 @@ export const commonRoutes = {
   getDoctorAppointments: (
     hospitalId,
     branchId,
-    doctorId,
     dateFilter
   ) => {
     return API.get("api/doctor-appointments", {
       params: {
         hospitalId,
         branchId,
-        doctorId,
         dateFilter
       },
     })
@@ -445,7 +443,7 @@ export const commonRoutes = {
   getPastDoctorAppointments: (
     hospitalId,
     branchId,
-    doctorId,
+
     page = 1,
     limit = 10
   ) =>
@@ -453,25 +451,30 @@ export const commonRoutes = {
       params: {
         hospitalId,
         branchId,
-        doctorId,
         page,
         limit,
       },
     }),
 
-  getDoctorDashboard: (
-    hospitalId,
-    branchId,
-    doctorId,
+  getDoctorDashboard: async (hospitalId, branchId) => {
+    try {
+      const response = await API.get("api/doctor-dashboard-stats", {
+        params: {
+          hospitalId,
+          branchId
+        },
+      });
 
-  ) =>
-    API.get("api/doctor-dashboard-stats", {
-      params: {
-        hospitalId,
-        branchId,
-        doctorId
-      },
-    }),
+      console.log("respon", response);
+
+      return response;
+    } catch (error) {
+      console.error("Error fetching doctor dashboard stats:", error);
+      throw error;
+    }
+  }
+
+  ,
   getAuditLogs: () => API.get(`api/get-audit-logs`),
 
   getSelectedBranches: (hospitalId) => {
