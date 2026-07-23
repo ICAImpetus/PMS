@@ -3488,17 +3488,17 @@ function Forms() {
 
                     <Autocomplete
                       freeSolo
-
                       sx={{
                         width: "100%",
-
+                        maxWidth: "100%",
+                        // fontSize: '12px',
                         "& .MuiOutlinedInput-root": {
-                          minHeight: 38,
-                          border:
-                            "1px solid var(--border-color)",
+                          height: 28,
+                          minHeight: 28,
+                          border: "1px solid var(--border-color)",
                           borderRadius: "var(--radius)",
                           backgroundColor: "#fff",
-                          fontSize: "13px",
+                          fontSize: '12px',
 
                           "& fieldset": {
                             border: "none",
@@ -3506,7 +3506,7 @@ function Forms() {
                         },
 
                         "& .MuiInputBase-input": {
-                          fontSize: "13px",
+                          fontSize: '12px',
                           padding: "0 14px",
                         },
                       }}
@@ -3546,6 +3546,73 @@ function Forms() {
                       )}
                     />
                   </div>
+
+
+                  // <div className="input-group">
+                  //   <label className={isRequired ? "required" : ""}>
+                  //     Reference From
+                  //   </label>
+
+                  //   <Autocomplete
+                  //     freeSolo
+
+                  //     sx={{
+                  //       width: "100%",
+
+                  //       "& .MuiOutlinedInput-root": {
+                  //         minHeight: 38,
+                  //         border:
+                  //           "1px solid var(--border-color)",
+                  //         borderRadius: "var(--radius)",
+                  //         backgroundColor: "#fff",
+                  //         fontSize: "13px",
+
+                  //         "& fieldset": {
+                  //           border: "none",
+                  //         },
+                  //       },
+
+                  //       "& .MuiInputBase-input": {
+                  //         fontSize: "13px",
+                  //         padding: "0 14px",
+                  //       },
+                  //     }}
+                  //     options={REFERENCE_OPTIONS}
+                  //     getOptionLabel={(option) =>
+                  //       typeof option === "string"
+                  //         ? option
+                  //         : option.label
+                  //     }
+                  //     value={
+                  //       REFERENCE_OPTIONS.find(
+                  //         (item) =>
+                  //           item.value ===
+                  //           form.formData.referenceFrom
+                  //       ) || form.formData.referenceFrom
+                  //     }
+                  //     onChange={(_, newValue) => {
+                  //       handleChange(
+                  //         "formData.referenceFrom",
+                  //         typeof newValue === "string"
+                  //           ? newValue
+                  //           : newValue?.value || ""
+                  //       );
+                  //     }}
+                  //     onInputChange={(_, newInputValue) => {
+                  //       handleChange(
+                  //         "formData.referenceFrom",
+                  //         newInputValue
+                  //       );
+                  //     }}
+                  //     renderInput={(params) => (
+                  //       <TextField
+                  //         required={isRequired}
+                  //         {...params}
+                  //         placeholder="Search or select reference"
+                  //       />
+                  //     )}
+                  //   />
+                  // </div>
                 )}
             </div>
 

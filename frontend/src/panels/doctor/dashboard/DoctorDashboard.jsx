@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useContext } from "react";
+
 import {
     Box,
+    Tooltip,
+    Stack,
     Container,
     Grid,
     Paper,
@@ -49,15 +52,17 @@ import {
     Schedule as ScheduleIcon,
     Info as InfoIcon,
     TrendingDown as TrendingDownIcon,
+    RememberMeOutlined,
 } from "@mui/icons-material";
 import CampaignIcon from "@mui/icons-material/Campaign";
 import RefreshIcon from '@mui/icons-material/Refresh';
+
 import { tokens } from "../../../theme";
 import { UserContextHook } from "../../../contexts/UserContexts";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import HospitalContext from "../../../contexts/HospitalContexts";
-
+import moment from "moment"
 
 const DATE_FILTER_OPTIONS = {
     today: "Today",
@@ -74,23 +79,19 @@ const DoctorDashboard = () => {
 
     const {
         appointments,
+        recentConsultations,
         pastappointments,
         loading,
         refetchAppointments,
         refetchPastAppointments,
         dateFilter,
-        setDateFilter
+        setDateFilter,
+        tabValue,
+        setTabValue,
+        doctorStats,
     } = useContext(HospitalContext)
 
 
-    const [stats, setStats] = useState({
-        todayAppointments: 8,
-        totalPatients: 156,
-        pendingConsultations: 5,
-        emergencyAlerts: 2,
-        averageRating: 4.7,
-        consultationRate: 92,
-    });
     // Dialog states
     const [openEditDialog, setOpenEditDialog] = useState(false);
     const [editingAppointment, setEditingAppointment] = useState(null);
@@ -104,7 +105,7 @@ const DoctorDashboard = () => {
 
 
     // Tab for past appointments
-    const [tabValue, setTabValue] = useState(0);
+
 
     // Enhanced stat card with gradient
     const StatCard = ({ title, value, icon: Icon, color, unit = "", trend = null }) => (
@@ -249,127 +250,149 @@ const DoctorDashboard = () => {
                     <Box sx={{ maxHeight: "500px", overflowY: "auto" }}>
                         {appointments?.length > 0 ? (
                             appointments.slice(0, 5).map((apt, idx) => (
-                                <Box
+                                <Paper
                                     key={apt.id}
+                                    elevation={0}
                                     sx={{
                                         p: 2,
-                                        borderBottom:
-                                            idx < appointments.slice(0, 5).length - 1
-                                                ? `1px solid ${colors.primary[500]}`
-                                                : "none",
+                                        mb: idx < appointments.slice(0, 5).length - 1 ? 1.5 : 0,
+                                        borderRadius: "12px",
+                                        border: "1px solid",
+                                        borderColor: "divider",
+                                        backgroundColor: "background.paper",
                                         transition: "all 0.2s ease",
-
                                         "&:hover": {
-                                            backgroundColor: `${colors.primary[500]}20`,
+                                            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+                                            backgroundColor: "rgba(0, 0, 0, 0.05)"
+
                                         },
                                     }}
                                 >
+                                    {/* Main Row Header */}
                                     <Box
                                         display="flex"
                                         justifyContent="space-between"
                                         alignItems="flex-start"
                                         gap={2}
-                                        mb={1}
+                                        mb={1.5}
                                     >
+                                        {/* Left Section: Patient Meta */}
                                         <Box flex={1}>
-                                            <Typography
-                                                color={colors.grey[100]}
-                                                variant="subtitle2"
-                                                fontWeight={600}
-                                            >
-                                                {apt.formData.patientDetails?.patientName}
-                                            </Typography>
+                                            <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
+                                                <Typography
+                                                    variant="subtitle1"
+                                                    fontWeight={700}
+                                                    color="text.primary"
+                                                    lineHeight={1.2}
+                                                >
+                                                    {apt?.formData?.patientDetails?.patientName || "Unknown Patient"}
+                                                </Typography>
 
-                                            <Typography
-                                                variant="caption"
-                                                display="block"
-                                                color={colors.grey[400]}
-                                            >
-                                                ID: {apt.formData.patientDetails?.patientId}
-                                            </Typography>
+                                                {/* Status Badge */}
+                                                <Chip
+                                                    size="small"
+                                                    label={apt?.status || "New"}
+                                                    color={
+                                                        apt?.status === "New"
+                                                            ? "success"
+                                                            : apt?.status === "Old"
+                                                                ? "error"
+                                                                : "default"
+                                                    }
+                                                    variant="outlined"
+                                                    sx={{ height: 20, fontSize: "0.7rem", fontWeight: 600 }}
+                                                />
+                                            </Stack>
 
-                                            <Typography
-                                                variant="caption"
-                                                display="block"
-                                                color={colors.greenAccent[400]}
-                                                fontWeight={600}
-                                            >
-                                                {apt.formData.appointmentSlot?.date} • {apt.formData.appointmentSlot?.time}
-                                            </Typography>
+                                            {/* Sub-info Row */}
+                                            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Gender: <strong>{apt?.formData?.patientDetails?.gender || "N/A"}</strong>
+                                                </Typography>
+
+                                                <Typography variant="body2" color="text.secondary">•</Typography>
+
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Age: <strong>{apt?.formData?.patientDetails?.patientAge || "N/A"}</strong>
+                                                </Typography>
+
+                                                {apt?.formData?.patientDetails?.category && (
+                                                    <>
+                                                        <Typography variant="body2" color="text.secondary">•</Typography>
+                                                        <Chip
+                                                            label={apt.formData.patientDetails.category}
+                                                            size="small"
+                                                            color="success"
+                                                            variant="soft" // If using MUI Joy, or use light background for MUI Material
+                                                            sx={{
+                                                                height: 22,
+                                                                fontSize: "0.7rem",
+                                                                fontWeight: 600,
+                                                                backgroundColor: "rgba(46, 125, 50, 0.1)",
+                                                                color: "#2e7d32",
+                                                            }}
+                                                        />
+                                                    </>
+                                                )}
+                                            </Stack>
                                         </Box>
 
-                                        <Box
-                                            display="flex"
-                                            alignItems="center"
-                                            gap={1}
-                                            flexWrap="wrap"
-                                        >
-                                            <Chip
-                                                size="small"
-                                                label={apt.status || "Scheduled"}
-                                                color={
-                                                    apt.status === "Completed"
-                                                        ? "success"
-                                                        : apt.status === "Cancelled"
-                                                            ? "error"
-                                                            : "primary"
-                                                }
-                                            />
+                                        {/* Right Section: Action Buttons */}
+                                        <Stack direction="row" spacing={0.5} alignItems="center">
+                                            {/* <Tooltip title="Edit" arrow>
+                                                <IconButton
+                                                    size="small"
+                                                    color="primary"
+                                                    onClick={() => handleEditAppointment(apt)}
+                                                >
+                                                    <EditIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip> */}
 
-                                            <IconButton
-                                                size="small"
-                                                onClick={() =>
-                                                    handleEditAppointment(apt)
-                                                }
-                                                sx={{
-                                                    color:
-                                                        colors.blueAccent[400],
-                                                }}
-                                            >
-                                                <EditIcon fontSize="small" />
-                                            </IconButton>
+                                            <Tooltip title="Complete" arrow>
+                                                <IconButton
+                                                    size="small"
+                                                    color="success"
+                                                    onClick={() => handleCompleteAppointment(apt.id)}
+                                                >
+                                                    <CheckCircleIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
 
-                                            <IconButton
-                                                size="small"
-                                                onClick={() =>
-                                                    handleCompleteAppointment(
-                                                        apt.id
-                                                    )
-                                                }
-                                                sx={{
-                                                    color:
-                                                        colors.greenAccent[400],
-                                                }}
-                                            >
-                                                <CheckCircleIcon fontSize="small" />
-                                            </IconButton>
-
-                                            <IconButton
-                                                size="small"
-                                                onClick={() =>
-                                                    handleCancelAppointment(
-                                                        apt.id
-                                                    )
-                                                }
-                                                sx={{
-                                                    color:
-                                                        colors.redAccent[400],
-                                                }}
-                                            >
-                                                <CancelIcon fontSize="small" />
-                                            </IconButton>
-                                        </Box>
+                                            <Tooltip title="Cancel" arrow>
+                                                <IconButton
+                                                    size="small"
+                                                    color="error"
+                                                    onClick={() => handleCancelAppointment(apt.id)}
+                                                >
+                                                    <CancelIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </Stack>
                                     </Box>
 
-                                    <Typography
-                                        variant="caption"
-                                        display="block"
-                                        color={colors.grey[400]}
+                                    {/* Remarks Block */}
+                                    <Box
+                                        sx={{
+                                            backgroundColor: "action.hover",
+                                            p: 1.25,
+                                            borderRadius: "8px",
+                                            borderLeft: "3px solid",
+                                            borderLeftColor: "primary.main",
+                                        }}
                                     >
-                                        {apt.notes ||
-                                            "No notes available"}
-                                    </Typography>
-                                </Box>
+                                        <Typography
+                                            variant="body2"
+                                            color="text.primary"
+                                            sx={{
+                                                opacity: apt?.formData?.remarks ? 1 : 0.6,
+                                                fontStyle: apt?.formData?.remarks ? "normal" : "italic",
+                                            }}
+                                        >
+                                            <strong>Remarks:</strong> {apt?.formData?.remarks || "No notes available"}
+                                        </Typography>
+                                    </Box>
+                                </Paper>
                             ))
                         ) : (
                             <Box
@@ -438,8 +461,8 @@ const DoctorDashboard = () => {
 
             <CardContent sx={{ p: 0 }}>
                 <Box sx={{ maxHeight: "500px", overflowY: "auto" }}>
-                    {appointments?.length > 0 ? (
-                        appointments.map((apt, idx) => (
+                    {recentConsultations?.length > 0 ? (
+                        recentConsultations.map((apt, idx) => (
                             <Box
                                 key={apt.id}
                                 sx={{
@@ -464,7 +487,7 @@ const DoctorDashboard = () => {
                                             fontSize: "0.9rem",
                                         }}
                                     >
-                                        {apt.patientName?.charAt(0) || "P"}
+                                        {apt?.formData?.patientDetails?.patientName?.charAt(0) || "P"}
                                     </Avatar>
 
                                     <Box flex={1}>
@@ -478,33 +501,59 @@ const DoctorDashboard = () => {
                                                 variant="subtitle2"
                                                 fontWeight={600}
                                             >
-                                                {apt.patientName}
+                                                {apt?.formData?.patientDetails?.patientName}
                                             </Typography>
 
                                             <Typography
                                                 color={colors.grey[300]}
                                                 variant="caption"
                                             >
-                                                {apt.appointmentDate}
+                                                {apt?.formData?.dateTime
+                                                    ? moment(apt?.formData.dateTime).format("DD MMM YYYY, hh:mm A")
+                                                    : "-"}
                                             </Typography>
                                         </Box>
+                                        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                                            <Typography variant="body2" color="text.secondary">
+                                                Gender: <strong>{apt?.formData?.patientDetails?.gender || "N/A"}</strong>
+                                            </Typography>
 
-                                        <Typography
-                                            color={colors.grey[300]}
-                                            variant="caption"
-                                            display="block"
-                                        >
-                                            {apt.appointmentTime} •{" "}
-                                            {apt.consultationType}
-                                        </Typography>
+                                            <Typography variant="body2" color="text.secondary">•</Typography>
 
+                                            <Typography variant="body2" color="text.secondary">
+                                                Age: <strong>{apt?.formData?.patientDetails?.patientAge || "N/A"}</strong>
+                                            </Typography>
+
+                                            {apt?.formData?.patientDetails?.category && (
+                                                <>
+                                                    <Typography variant="body2" color="text.secondary">•</Typography>
+                                                    <Chip
+                                                        label={apt.formData.patientDetails.category}
+                                                        size="small"
+                                                        color="success"
+                                                        variant="soft" // If using MUI Joy, or use light background for MUI Material
+                                                        sx={{
+                                                            height: 22,
+                                                            fontSize: "0.7rem",
+                                                            fontWeight: 600,
+                                                            backgroundColor: "rgba(46, 125, 50, 0.1)",
+                                                            color: "#2e7d32",
+                                                        }}
+                                                    />
+                                                </>
+                                            )}
+                                        </Stack>
                                         <Typography
-                                            color={colors.grey[400]}
                                             variant="caption"
+                                            color="text.secondary"
                                             display="block"
                                             mt={0.5}
+                                            sx={{
+                                                fontStyle: apt?.formData?.remarks ? "normal" : "italic",
+                                                opacity: apt?.formData?.remarks ? 1 : 0.7,
+                                            }}
                                         >
-                                            {apt.notes || "No consultation notes available"}
+                                            <strong>Remarks:</strong> {apt?.formData?.remarks || "No consultation notes available"}
                                         </Typography>
                                     </Box>
                                 </Box>
@@ -521,7 +570,7 @@ const DoctorDashboard = () => {
                                     />
 
                                     <Chip
-                                        label={`${apt.duration || 0} min`}
+                                        label={`${apt?.formData?.patientDetails?.status}`}
                                         size="small"
                                         variant="outlined"
                                         sx={{
@@ -611,28 +660,28 @@ const DoctorDashboard = () => {
 
         // Status filter
         if (filterStatus !== "All") {
-            filtered = filtered.filter((apt) => apt.status === filterStatus);
+            filtered = filtered.filter((apt) => apt?.formData?.status?.toLowerCase() === filterStatus?.toLowerCase());
         }
 
         // Date filter
         if (filterDate) {
-            filtered = filtered.filter((apt) => apt.appointmentDate === filterDate);
+            filtered = filtered.filter((apt) => apt?.formData?.dateTime === filterDate);
         }
 
         // Sorting
-        switch (sortBy) {
-            case "date-desc":
-                filtered.sort((a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate));
-                break;
-            case "date-asc":
-                filtered.sort((a, b) => new Date(a.appointmentDate) - new Date(b.appointmentDate));
-                break;
-            case "name":
-                filtered.sort((a, b) => a.patientName.localeCompare(b.patientName));
-                break;
-            default:
-                break;
-        }
+        // switch (sortBy) {
+        //     case "date-desc":
+        //         filtered.sort((a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate));
+        //         break;
+        //     case "date-asc":
+        //         filtered.sort((a, b) => new Date(a.appointmentDate) - new Date(b.appointmentDate));
+        //         break;
+        //     case "name":
+        //         filtered.sort((a, b) => a.patientName.localeCompare(b.patientName));
+        //         break;
+        //     default:
+        //         break;
+        // }
 
         return filtered;
     };
@@ -819,7 +868,7 @@ const DoctorDashboard = () => {
                             >
                                 <MenuItem value="All">All Status</MenuItem>
                                 <MenuItem value="Completed">Completed</MenuItem>
-                                <MenuItem value="Cancelled">Cancelled</MenuItem>
+                                <MenuItem value="Pending">Pending</MenuItem>
                             </TextField>
                         </Grid>
                         <Grid item xs={12} md={3}>
@@ -839,26 +888,7 @@ const DoctorDashboard = () => {
                                 }}
                             />
                         </Grid>
-                        <Grid item xs={12} md={3}>
-                            <TextField
-                                fullWidth
-                                select
-                                label="Sort By"
-                                value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value)}
-                                sx={{
-                                    "& .MuiOutlinedInput-root": {
-                                        color: colors.grey[100],
-                                        "& fieldset": { borderColor: colors.primary[500] },
-                                    },
-                                    "& .MuiInputBase-input": { color: colors.grey[100] },
-                                }}
-                            >
-                                <MenuItem value="date-desc">Date (Newest)</MenuItem>
-                                <MenuItem value="date-asc">Date (Oldest)</MenuItem>
-                                <MenuItem value="name">Patient Name</MenuItem>
-                            </TextField>
-                        </Grid>
+
                     </Grid>
                 </CardContent>
             </Card>
@@ -881,71 +911,141 @@ const DoctorDashboard = () => {
                         transform: "none !important",
                     }
                 }} >
-
-                    < TableContainer >
-                        <Table>
-                            <TableHead>
-                                <TableRow sx={{ backgroundColor: colors.primary[500] }}>
-                                    <TableCell sx={{ color: colors.grey[100], fontWeight: 600 }}>Patient</TableCell>
-                                    <TableCell sx={{ color: colors.grey[100], fontWeight: 600 }}>Date & Time</TableCell>
-                                    <TableCell sx={{ color: colors.grey[100], fontWeight: 600 }}>Type</TableCell>
-                                    <TableCell sx={{ color: colors.grey[100], fontWeight: 600 }}>Status</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Consultation Type</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Notes</TableCell>
+                    <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: "12px", overflow: "hidden" }}>
+                        <Table sx={{ minWidth: 650 }}>
+                            <TableHead sx={{ backgroundColor: "action.hover" }}>
+                                <TableRow>
+                                    <TableCell sx={{ fontWeight: 700, color: "text.primary" }}>Patient</TableCell>
+                                    <TableCell sx={{ fontWeight: 700, color: "text.primary" }}>Date & Time</TableCell>
+                                    <TableCell sx={{ fontWeight: 700, color: "text.primary" }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 700, color: "text.primary" }}>Gender / Age</TableCell>
+                                    <TableCell sx={{ fontWeight: 700, color: "text.primary" }}>Category</TableCell>
+                                    <TableCell sx={{ fontWeight: 700, color: "text.primary" }}>Remarks</TableCell>
                                 </TableRow>
                             </TableHead>
+
                             <TableBody>
-                                {getFilteredPastAppointments().length > 0 ? (
-                                    getFilteredPastAppointments().map((apt, idx) => (
-                                        <TableRow
-                                            key={apt.id}
-                                            sx={{
-                                                backgroundColor: idx % 2 === 0 ? "transparent" : `white`,
-                                                borderBottom: `1px solid ${colors.primary[500]} `,
-                                                "&:hover": { backgroundColor: "lightgrey" },
-                                                opacity: apt.status === "Cancelled" ? 0.6 : 1,
-                                            }}
-                                        >
-                                            <TableCell sx={{ color: colors.grey[100] }}>
-                                                <Box display="flex" alignItems="center" gap={1}>
-                                                    <Avatar sx={{ width: 32, height: 32, fontSize: "0.9rem", backgroundColor: colors.blueAccent[500] }}>
-                                                        {apt.patientName.charAt(0)}
-                                                    </Avatar>
-                                                    <Box>
-                                                        <Typography color={colors.grey[100]} variant="body2">
-                                                            {apt.patientName}
-                                                        </Typography>
-                                                        <Typography color={colors.grey[300]} variant="caption">
-                                                            {apt.patientId}
+                                {/* Loading State */}
+                                {loading?.pastAppointmentLoading ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
+                                            <CircularProgress size={30} />
+                                        </TableCell>
+                                    </TableRow>
+                                ) : getFilteredPastAppointments().length > 0 ? (
+                                    getFilteredPastAppointments().map((apt, idx) => {
+                                        const patientName = apt?.formData?.patientDetails?.patientName || "Unknown";
+                                        const gender = apt?.formData?.patientDetails?.gender || "N/A";
+                                        const age = apt?.formData?.patientDetails?.patientAge || "N/A";
+                                        const category = apt?.formData?.patientDetails?.category;
+
+                                        return (
+                                            <TableRow
+                                                key={apt.id || idx}
+                                                sx={{
+                                                    transition: "background-color 0.2s ease",
+                                                    "&:hover": { backgroundColor: "action.hover" },
+                                                    opacity: apt?.status === "Cancelled" ? 0.5 : 1,
+                                                }}
+                                            >
+                                                {/* Patient Column */}
+                                                <TableCell>
+                                                    <Box display="flex" alignItems="center" gap={1.5}>
+                                                        <Avatar
+                                                            sx={{
+                                                                width: 34,
+                                                                height: 34,
+                                                                fontSize: "0.85rem",
+                                                                fontWeight: 600,
+                                                                backgroundColor: "primary.main",
+                                                                color: "primary.contrastText"
+                                                            }}
+                                                        >
+                                                            {patientName.charAt(0).toUpperCase()}
+                                                        </Avatar>
+                                                        <Typography variant="body2" fontWeight={600} color="text.primary">
+                                                            {patientName}
                                                         </Typography>
                                                     </Box>
-                                                </Box>
-                                            </TableCell>
-                                            <TableCell >
-                                                {apt.appointmentDate} <br /> {apt.appointmentTime}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Chip label={apt.type} size="small" variant="outlined" />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Chip
-                                                    label={apt.status}
-                                                    size="small"
-                                                    color={apt.status === "Completed" ? "success" : "error"}
-                                                />
-                                            </TableCell>
-                                            <TableCell sx={{}}>
-                                                {apt.consultationType}
-                                            </TableCell>
-                                            <TableCell sx={{ maxWidth: 250 }}>
-                                                <Typography variant="caption">{apt.notes}</Typography>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
+                                                </TableCell>
+
+                                                {/* Date & Time Column */}
+                                                <TableCell>
+                                                    <Typography variant="body2" color="text.primary">
+                                                        {apt?.formData?.dateTime
+                                                            ? moment(apt?.formData.dateTime).format("DD MMM YYYY, hh:mm A")
+                                                            : "-"}
+                                                    </Typography>
+                                                </TableCell>
+
+                                                {/* Status Column */}
+                                                <TableCell>
+                                                    <Chip
+                                                        label={apt?.status || "Pending"}
+                                                        size="small"
+                                                        color={
+                                                            apt?.status === "Completed"
+                                                                ? "success"
+                                                                : apt?.status === "Cancelled"
+                                                                    ? "error"
+                                                                    : "warning"
+                                                        }
+                                                        variant="soft"
+                                                        sx={{ fontWeight: 600, fontSize: "0.75rem" }}
+                                                    />
+                                                </TableCell>
+
+                                                {/* Gender / Age Column */}
+                                                <TableCell>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        {gender} / {age}
+                                                    </Typography>
+                                                </TableCell>
+
+                                                {/* Category Column */}
+                                                <TableCell>
+                                                    {category ? (
+                                                        <Chip
+                                                            label={category}
+                                                            size="small"
+                                                            sx={{
+                                                                backgroundColor: "rgba(46, 125, 50, 0.1)",
+                                                                color: "#2e7d32",
+                                                                fontWeight: 600,
+                                                                fontSize: "0.7rem",
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <Typography variant="body2" color="text.secondary">-</Typography>
+                                                    )}
+                                                </TableCell>
+
+                                                {/* Remarks Column */}
+                                                <TableCell sx={{ maxWidth: 220 }}>
+                                                    <Typography
+                                                        variant="caption"
+                                                        color="text.secondary"
+                                                        sx={{
+                                                            display: "-webkit-box",
+                                                            WebkitLineClamp: 2,
+                                                            WebkitBoxOrient: "vertical",
+                                                            overflow: "hidden",
+                                                            fontStyle: apt?.formData?.remarks ? "normal" : "italic"
+                                                        }}
+                                                    >
+                                                        {apt?.formData?.remarks || "No remarks"}
+                                                    </Typography>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
                                 ) : (
+                                    /* Empty State */
                                     <TableRow>
-                                        <TableCell colSpan={6} sx={{ textAlign: "center", py: 4 }}>
-                                            No past appointments found matching your filters.
+                                        <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                                            <Typography variant="body2" color="text.secondary">
+                                                No past appointments found matching your filters.
+                                            </Typography>
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -1031,85 +1131,89 @@ const DoctorDashboard = () => {
             }}>
                 <Box>
                     <Typography variant="h4" color={colors.grey[100]} fontWeight="bold">
-                        Welcome, Dr. {currentUser?.name} <Chip>Hello</Chip>
+                        Welcome, Dr. {currentUser?.name}
                     </Typography>
                     <Typography
                         variant="h6"
                         sx={{ color: "grey" }}
                     >
-                        Here’s your dashboard overview
+                        dashboard overview
                     </Typography>
 
                 </Box>
-                <Box>
-                    <Button
-                        className="executiveannoucementbutton"
-                    // onClick={() => setModalOpen("announcement")}
-                    >
-                        <CampaignIcon sx={{ fontSize: 25 }} />Announcements
-                    </Button>
-                </Box>
+
             </Card>
 
 
             {/* Enhanced Stats Grid */}
             <Grid container spacing={2} mb={2}>
+                {/* Today's Appointments */}
                 <Grid item xs={12} sm={6} md={4}>
                     <StatCard
                         title="Today's Appointments"
-                        value={appointments?.length || 0}
+                        value={doctorStats?.todayAppointments?.value ?? 0}
                         icon={EventIcon}
                         color={colors.blueAccent[400]}
-                        trend={12}
+                        trend={doctorStats?.todayAppointments?.trend ?? 0}
+                        subtitle="from last week"
                     />
                 </Grid>
+
+                {/* Pending Consultations */}
                 <Grid item xs={12} sm={6} md={4}>
                     <StatCard
                         title="Pending Consultations"
-                        value={stats.pendingConsultations}
+                        value={doctorStats?.pendingConsultations?.value ?? 0}
                         icon={AssignmentIcon}
                         color={colors.yellowAccent[400]}
-                        trend={-5}
+                        trend={doctorStats?.pendingConsultations?.trend ?? 0}
+                        subtitle="from last week"
                     />
                 </Grid>
-                {/* <Grid item xs={12} sm={6} md={4}>
-                    <StatCard
-                        title="Emergency Alerts"
-                        value={stats.emergencyAlerts}
-                        icon={NotificationsIcon}
-                        color={colors.redAccent[400]}
-                        trend={8}
-                    />
-                </Grid> */}
+
+                {/* Total Patients */}
                 <Grid item xs={12} sm={6} md={4}>
                     <StatCard
                         title="Total Patients"
-                        value={stats.totalPatients}
+                        value={doctorStats?.totalPatients?.value ?? 0}
                         icon={PersonIcon}
                         color={colors.greenAccent[400]}
-                        trend={18}
+                        trend={doctorStats?.totalPatients?.trend ?? 0}
+                        subtitle="from last week"
                     />
                 </Grid>
-                {/* <Grid item xs={12} sm={6} md={4}>
-                    <StatCard
-                        title="Avg. Rating"
-                        value={stats.averageRating}
-                        icon={TrendingUpIcon}
-                        color={colors.blueAccent[400]}
-                        unit="/5"
-                        trend={3}
-                    />
-                </Grid> */}
-                {/* <Grid item xs={12} sm={6} md={4}>
-                    <StatCard
-                        title="Consultation Rate"
-                        value={stats.consultationRate}
-                        icon={SpeedIcon}
-                        color={colors.greenAccent[400]}
-                        unit="%"
-                        trend={6}
-                    />
-                </Grid> */}
+
+                {/* Optional Metrics (If uncommented later) */}
+                {/* 
+    <Grid item xs={12} sm={6} md={4}>
+        <StatCard
+            title="Emergency Alerts"
+            value={doctorStats?.emergencyAlerts ?? 0}
+            icon={NotificationsIcon}
+            color={colors.redAccent[400]}
+        />
+    </Grid> 
+
+    <Grid item xs={12} sm={6} md={4}>
+        <StatCard
+            title="Avg. Rating"
+            value={doctorStats?.averageRating ?? 0}
+            icon={TrendingUpIcon}
+            color={colors.blueAccent[400]}
+            unit="/5"
+        />
+    </Grid> 
+
+    <Grid item xs={12} sm={6} md={4}>
+        <StatCard
+            title="Consultation Rate"
+            value={doctorStats?.consultationRate ?? 0}
+            icon={SpeedIcon}
+            color={colors.greenAccent[400]}
+            unit="%"
+        />
+    </Grid> 
+    */}
             </Grid>
 
             {/* Tabbed Interface */}
