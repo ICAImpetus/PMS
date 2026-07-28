@@ -7,11 +7,13 @@ import apiFormRoutes from "./routes/form.routes.js";
 import apiHospitalRoutes from "./routes/hospital.routes.js";
 import apiUserRoutes from "./routes/user.routes.js";
 import apiPaymentRoutes from './routes/paymentRoutes.js'
+import publicRoutes from './routes/public_routes.js'
 import errorHandler from "./middlewares/errorHandler.js";
 import "./crons/backupCron.js";
 
 // Security middleware
 import {
+  apiRateLimiter,
   loginRateLimiter,
   mongoSanitization,
   sanitizeInput,
@@ -74,8 +76,10 @@ app.use("/api", apiHospitalRoutes);
 app.use("/api", apiUserRoutes);
 app.use("/api", apiPaymentRoutes);
 
-// Health check and future REST-style routes (optional)
-// app.use("/api", apiRoutes);
+// Public EndPoint 
+
+app.use("/api/v2", apiRateLimiter, publicRoutes);
+
 
 // Serve static files from frontend
 const __filename = fileURLToPath(import.meta.url);
