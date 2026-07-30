@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"refId":{"$numberInt":"1"}},"name":"refId_1","background":true}],"uuid":"f7d07632013f49b7b45cbcbede86fb47","collectionName":"adminagentschemas","type":"collection"}

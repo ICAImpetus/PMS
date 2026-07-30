@@ -326,12 +326,27 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                 (isSuperAdmin || isAdmin) && (
                   <>
                     <Item
+                      title="Whatsapp Conversations"
+                      to="/whatsapp-conversations"
+                      icon={<AssessmentOutlinedIcon />}
+                      selected={selected}
+                      setSelected={setSelected}
+                    />
+                    <Item
+                      title="Whatsapp Flow Builder"
+                      to="/whatsapp-flow-builder"
+                      icon={<AssessmentOutlinedIcon />}
+                      selected={selected}
+                      setSelected={setSelected}
+                    />
+                    <Item
                       title="Audit Logs"
                       to="/admin-audit-logs"
                       icon={<AssessmentOutlinedIcon />}
                       selected={selected}
                       setSelected={setSelected}
                     />
+
                   </>
                 )
               }

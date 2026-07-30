@@ -57,6 +57,8 @@ import { PatientHistory } from "./scenes/global/Patient_Management/PatientHistor
 import { PatientHistory as PatientHistoryForNonAdmins } from "./scenes/global/Patient_Management/PatientHistoryForNonAdmins";
 import { SInglePatientDetails } from "./scenes/global/Patient_Management/SInglePatientDetails";
 import Subscription from "./panels/superManager/subscription_plan/Subscription";
+import WhatsAppConversations from "./components/WhatsAppAutomation/WhatsAppConversations";
+import WhatsAppFlowBuilder from "./components/WhatsAppAutomation/WhatsAppFlowBuilder";
 
 
 const HospitalManagementLayout = () => {
@@ -94,6 +96,15 @@ function App() {
           <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
           <Route path="/user-management" element={<UserManagement />} />
           <Route path="/admin-audit-logs" element={<AuditLog />} />
+          <Route
+            path="/whatsapp-conversations"
+            element={<WhatsAppConversations />}
+          />
+          <Route
+            path="/whatsapp-flow-builder"
+            element={<WhatsAppFlowBuilder />}
+          />
+
         </>
       )}
       {userRole === "admin" && (
