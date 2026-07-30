@@ -18,6 +18,7 @@ import { NotificationSchema } from "../models/master.models/NotiificationModel.j
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat.js";
 import bcrypt from "bcrypt"
+import { connecttoAca } from "../utils/database.js";
 dayjs.extend(customParseFormat);
 
 const HospitalModel = getHospitalModel(MasterConn)
@@ -1656,7 +1657,7 @@ export const updateDoctor = async (req, res) => {
   let uploadedPublicId = null;
   let uploadedImageUrl = null;
   let session;
-  console.log("doctor", req.body);
+
   try {
 
     const { id } = req.params;
@@ -1684,7 +1685,7 @@ export const updateDoctor = async (req, res) => {
       _id: hosId,
       isDeleted: false,
     })
-      .lean()
+      .lean()?.select("name trimmedName")
 
     if (!hospital) {
 
@@ -1705,7 +1706,17 @@ export const updateDoctor = async (req, res) => {
     // FIND DOCTOR
     // =============================
 
-    const doctor = await DoctorModel.findById(id).session(session);
+    const doctor = await DoctorModel.findById(id).populate({ path: "department", model: DepartmentModel, select: "name" }).session(session);
+
+
+    let updateDoctorObjectInACA = {
+      "Department": doctor?.department?.name,
+      "DoctorName": "",
+      "OPD_Timings": "",
+      "Days": "",
+      "Fees": "",
+      "hospital": ""
+    }
 
     if (!doctor || doctor.isDeleted) {
       await session.abortTransaction();
@@ -1820,17 +1831,22 @@ export const updateDoctor = async (req, res) => {
         }
 
         // ADD TO NEW DEPARTMENT
-        await DepartmentModel.findByIdAndUpdate(
+        const updatedDep = await DepartmentModel.findByIdAndUpdate(
           newDepId,
           {
             $addToSet: {
               doctors: doctor._id,
             },
           },
-          { session }
+          { new: true, session }
         );
 
+        if (!updatedDep) {
+          throw new Error("Department not found");
+        }
+
         doctor.department = newDepId;
+        updateDoctorObjectInACA.Department = updatedDep.name;
       }
     }
 
@@ -2058,6 +2074,25 @@ export const updateDoctor = async (req, res) => {
         message: "Error To Create Doctor",
       });
     }
+
+
+    updateDoctorObjectInACA.DoctorName = doctor?.name;
+    updateDoctorObjectInACA.Fees = doctor?.consultationCharges;
+    updateDoctorObjectInACA.hospital = hospital?.name;
+    updateDoctorObjectInACA.Days = (doctor?.opdDays || []).join(",")
+    updateDoctorObjectInACA.OPD_Timings = `${doctor?.timings?.morning?.start || ""
+      } - ${doctor?.timings?.morning?.end || ""
+      }, ${doctor?.timings?.evening?.start || ""
+      } - ${doctor?.timings?.evening?.end || ""
+      }`;
+
+    setImmediate(async () => {
+      try {
+        await connecttoAca(updateDoctorObjectInACA);
+      } catch (err) {
+        console.error("ACA sync failed:", err);
+      }
+    });
 
     await session.commitTransaction();
     await session.endSession();
@@ -5576,7 +5611,7 @@ export const deleteBranchById = async (req, res) => {
         action: "DELETE_BRANCH",
         role: actorRole,
         module: "Branch Management",
-        customMessage: `Branch soft deleted by ${actorRole}. BranchID: ${branchId}`,
+        customMessage: `Branch soft deleted by ${actorRole}.BranchID: ${branchId} `,
       });
     } catch (auditError) {
       console.error("Audit log failed:", auditError.message);

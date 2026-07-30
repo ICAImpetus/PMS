@@ -16,6 +16,7 @@ export const env = {
   mongoUrl: process.env.MONGO_URL,
   mongoDbName: process.env.database,
   jwtSecret: process.env.keyForToken,
+  MONGODB_URI_ACA: process.env.MONGODB_URI_ACA,
   corsOrigins: (process.env.CORS_ORIGINS || "http://localhost:3000")
     .split(",")
     .map((origin) => origin.trim())
