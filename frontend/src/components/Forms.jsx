@@ -196,10 +196,7 @@ const getRemainingTime = (
 
   return `${minutes} Min left`;
 };
-const getDayName = (dateTime) => {
-  const date = new Date(dateTime);
-  return date.toLocaleDateString("en-US", { weekday: "long" });
-};
+
 const today = new Date();
 today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
 const minDate = today.toISOString().slice(0, 16);
@@ -480,7 +477,7 @@ function Forms() {
         Array.isArray(selectedDep.doctors) &&
         selectedDep.doctors?.length > 0
       ) {
-        setSelectedDay(getDayName(form?.formData.dateTime) || null)
+        setSelectedDay(form?.formData.dateTime || null)
 
 
         setfilteredDoctors(selectedDep.doctors);
@@ -570,7 +567,7 @@ function Forms() {
   useEffect(() => {
     if (!form?.formData.dateTime) return;
 
-    const day = getDayName(form?.formData.dateTime);
+    const day = form?.formData.dateTime
     setSelectedDay(day);
 
     // doctor list re-render karne ke liye
