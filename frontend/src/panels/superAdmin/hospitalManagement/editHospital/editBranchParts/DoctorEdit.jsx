@@ -3305,21 +3305,23 @@ const AddDoctorModal = ({
     if (!open) return null;
 
     return (
-      <Box
-        sx={{
-          width: "100%",
-          borderRadius: 3,
-          border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
-          background:
-            theme.palette.mode === "dark"
-              ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
-              : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
-          overflow: "hidden",
-          mb: 3,
-        }}
-      >
-        {formContent}
-      </Box>
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <Box
+          sx={{
+            width: "100%",
+            borderRadius: 3,
+            border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+            background:
+              theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+            overflow: "hidden",
+            mb: 3,
+          }}
+        >
+          {formContent}
+        </Box>
+      </LocalizationProvider>
     );
   }
 
