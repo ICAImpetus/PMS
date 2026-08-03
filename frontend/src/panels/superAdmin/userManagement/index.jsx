@@ -53,10 +53,22 @@ const ScrollableForm = styled(Box)({
   "-ms-overflow-style": "none", // Hide scrollbar for IE/Edge
 });
 
+const StyledIconButton = styled(IconButton)(({ bgColor, color, hoverBgColor }) => ({
+  transition: "background-color 0.3s",
+  backgroundColor: bgColor,
+  color,
+  "&:hover": {
+    backgroundColor: hoverBgColor,
+    color,
+    animation: "oscillate 0.5s ease-in-out infinite",
+  },
+  "@keyframes oscillate": oscillateRotation,
+}));
+
 function UserManageMent() {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const location = useLocation()
+  const location = useLocation();
   const [userUpdateData, setUserUpdateData] = React.useState(null);
   const [open, setOpen] = React.useState(false);
   const [updateOpen, setUpdateOpen] = React.useState(false);
@@ -72,16 +84,13 @@ function UserManageMent() {
     page: 0,
   });
   const [searchTerm, setSearchTerm] = React.useState("");
-  // console.log("colors grey is :", colors.grey);
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm")); // Checks for screens below 'sm' breakpoint (600px)
-
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
   const {
     request: deleteUserById,
     loading: deleteLoading,
     error: deleteError,
   } = useApi(superAdminRoutes.deleteUser);
-
 
   const {
     hospitals,
@@ -100,48 +109,34 @@ function UserManageMent() {
   // console.log("UserData", context.userData);
   useEffect(() => {
     if (location?.state?.selectedHostpital) {
-      setSelectedHostpital(location?.state?.selectedHostpital)
+      setSelectedHostpital(location?.state?.selectedHostpital);
     }
-  }, [location?.state?.selectedHostpital])
+  }, [location?.state?.selectedHostpital]);
 
   useEffect(() => {
     if (userData.length > 0) {
       const superManager = userData.find(user => user.type === "supermanager");
       setIsSuperManager(superManager || null);
     } else {
-      setIsSuperManager(null)
+      setIsSuperManager(null);
     }
-  }, [userData])
+  }, [userData]);
 
   const deleteUser = async () => {
     const response = await deleteUserById(deleteUserId);
     if (response?.success) {
-      if (refetchUsers) await refetchUsers()
+      if (refetchUsers) await refetchUsers();
       setDeleteOpen(false);
       setDeleteUserId(null);
       refetchUsers();
       toast.success("User deleted successfully");
     }
-
   };
 
   const handleDeleteUser = async (userId) => {
-    // deleteUser(userId)
     setDeleteUserId(userId);
     setDeleteOpen(true);
   };
-
-  const StyledIconButton = styled(IconButton)(({ bgColor, color }) => ({
-    transition: "background-color 0.3s",
-    backgroundColor: bgColor, // Initial background color
-    color,
-    "&:hover": {
-      backgroundColor: colors.primary[900], // Background color on hover
-      color, // Icon color on hover
-      animation: "oscillate 0.5s ease-in-out infinite", // Apply oscillation animation
-    },
-    "@keyframes oscillate": oscillateRotation,
-  }));
 
   const handleOpenUpdateModel = (row) => {
     // console.log("row data is :", row);

@@ -714,7 +714,7 @@ function Forms() {
     });
   }, [latestVisits, latestVisitSearch, latestVisitFilter]);
 
-  const LatestPatientComponents = () => {
+  const renderLatestPatientComponents = () => {
     const canShowLatestVisits =
       form?.formData?.patientDetails?.patientMobile !== "" &&
       !getSinglePatientLoading &&
@@ -776,8 +776,6 @@ function Forms() {
                 <th>Purpose</th>
                 <th>Doctor</th>
                 <th>Department</th>
-                {/* <th>Remarks</th>
-                <th>Submitted Date</th> */}
               </tr>
             </thead>
 
@@ -788,12 +786,6 @@ function Forms() {
                   <td>{lv?.purpose || "-"}</td>
                   <td>{lv?.doctor?.name || "-"}</td>
                   <td>{lv?.department?.name || "-"}</td>
-                  {/* <td>{lv?.formData?.remarks || "-"}</td>
-                  <td>
-                    {lv?.createdAt
-                      ? moment(lv.createdAt).format("DD MMM YYYY, hh:mm A")
-                      : "-"}
-                  </td> */}
                 </tr>
               ))}
             </tbody>
@@ -802,7 +794,7 @@ function Forms() {
       </div>
     );
   };
-  const RemarksComponents = () => {
+  const renderRemarksComponents = () => {
     return (
       <div className="input-row">
         <div className="input-group textarea-field-container">
@@ -819,9 +811,9 @@ function Forms() {
           />
         </div>
       </div>
-    )
+    );
 
-  }
+  };
 
   const renderInboundPurposeDetails = () => {
     switch (form.formType === "inbound" && form.purpose) {
@@ -3421,17 +3413,17 @@ function Forms() {
           </div>
         );
       case "Justdial":
-        return <RemarksComponents />;
+        return renderRemarksComponents();
 
       case "Practo":
-        return <RemarksComponents />;
+        return renderRemarksComponents();
 
       case "Whatsapp":
-        return <RemarksComponents />;
+        return renderRemarksComponents();
 
 
       case "Facebook":
-        return <RemarksComponents />;
+        return renderRemarksComponents();
 
       default:
         return null;
@@ -4044,7 +4036,7 @@ function Forms() {
           </div>
         )} */}
 
-        <LatestPatientComponents />
+        {renderLatestPatientComponents()}
 
       </div >
 
@@ -4198,7 +4190,7 @@ function Forms() {
   const renderOutboundForm = () => (
     <form onSubmit={submitForm} className="all-sections-container">
       <div className="patient-classification-section">
-        <LatestPatientComponents />
+        {renderLatestPatientComponents()}
         <div className="section">
           <h3>Caller Details</h3>
 

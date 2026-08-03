@@ -1259,103 +1259,59 @@ const AddDoctorModal = ({
   const surgery = suggestionList.filter(
     (item) => item?.type === "surgery"
   );
-  const FormContainer = ({ children }) => {
-    if (isInline) {
-      if (!open) return null;
-      return (
-        <Box
-          sx={{
-            width: "100%",
-            borderRadius: 3,
-            border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
-            background:
-              theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
-                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
-            overflow: "hidden",
-            mb: 3,
-          }}
-        >
-          {children}
-        </Box>
-      );
-    }
-    return (
-      <Dialog
-        open={open}
-        onClose={!loading ? onClose : undefined}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            background:
-              theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
-                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
-          },
-        }}
-      >
-        {children}
-      </Dialog>
-    );
-  };
-
   const FormHeader = isInline ? Box : DialogTitle;
   const FormContent = isInline ? Box : DialogContent;
   const FormActions = isInline ? Box : DialogActions;
 
-  return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-
-      <FormContainer>
-        <FormHeader
+  const formContent = (
+    <>
+      <FormHeader
+        sx={{
+          background:
+            theme.palette.mode === "dark"
+              ? `linear-gradient(135deg, ${colors.blueAccent[700]} 0%, ${colors.blueAccent[800]} 100%)`
+              : `linear-gradient(135deg, ${colors.blueAccent[500]} 0%, ${colors.blueAccent[600]} 100%)`,
+          color: "white",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          py: 2,
+          px: 3,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <MedicalServicesIcon sx={{ fontSize: 28 }} />
+          <Typography variant="h5" component="div" sx={{ fontWeight: 600 }}>
+            {doctorData ? "Edit Doctor Details" : "Add New Doctor"}
+          </Typography>
+        </Box>
+        <IconButton
+          onClick={onClose}
+          disabled={loading}
           sx={{
-            background:
-              theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${colors.blueAccent[700]} 0%, ${colors.blueAccent[800]} 100%)`
-                : `linear-gradient(135deg, ${colors.blueAccent[500]} 0%, ${colors.blueAccent[600]} 100%)`,
             color: "white",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            py: 2,
-            px: 3,
+            "&:hover": {
+              backgroundColor: "rgba(255, 255, 255, 0.1)",
+              transform: "scale(1.1)",
+            },
+            transition: "all 0.2s ease-in-out",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <MedicalServicesIcon sx={{ fontSize: 28 }} />
-            <Typography variant="h5" component="div" sx={{ fontWeight: 600 }}>
-              {doctorData ? "Edit Doctor Details" : "Add New Doctor"}
-            </Typography>
-          </Box>
-          <IconButton
-            onClick={onClose}
-            disabled={loading}
-            sx={{
-              color: "white",
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-                transform: "scale(1.1)",
-              },
-              transition: "all 0.2s ease-in-out",
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </FormHeader>
+          <CloseIcon />
+        </IconButton>
+      </FormHeader>
 
-        <FormContent
-          sx={{
-            p: 0,
-            backgroundColor:
-              theme.palette.mode === "dark"
-                ? colors.primary[900]
-                : colors.grey[50],
-          }}
-        >
-          <Box sx={{ p: 4 }}>
-            <Stack spacing={4}>
+      <FormContent
+        sx={{
+          p: 0,
+          backgroundColor:
+            theme.palette.mode === "dark"
+              ? colors.primary[900]
+              : colors.grey[50],
+        }}
+      >
+        <Box sx={{ p: 4 }}>
+          <Stack spacing={4}>
               {/* Basic Information Card */}
               <Card
                 elevation={3}
@@ -3342,8 +3298,52 @@ const AddDoctorModal = ({
                 : "Add Doctor"}
           </Button>
         </FormActions>
-      </FormContainer>
+      </>
+    );
+
+  if (isInline) {
+    if (!open) return null;
+
+    return (
+      <Box
+        sx={{
+          width: "100%",
+          borderRadius: 3,
+          border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+          background:
+            theme.palette.mode === "dark"
+              ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+              : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+          overflow: "hidden",
+          mb: 3,
+        }}
+      >
+        {formContent}
+      </Box>
+    );
+  }
+
+  return (
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Dialog
+        open={open}
+        onClose={!loading ? onClose : undefined}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            background:
+              theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+          },
+        }}
+      >
+        {formContent}
+      </Dialog>
     </LocalizationProvider>
   );
 };
+
 export default AddDoctorModal;

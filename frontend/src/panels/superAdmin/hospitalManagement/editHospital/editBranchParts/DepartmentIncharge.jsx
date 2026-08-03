@@ -280,55 +280,12 @@ const AddDepartmentInchargeModal = ({
   const serviceType = globalSuggestion?.filter(
     (item) => item?.type === "serviceType"
   ) || [];
-  const FormContainer = ({ children }) => {
-    if (isInline) {
-      if (!open) return null;
-      return (
-        <Box
-          sx={{
-            width: "100%",
-            borderRadius: 3,
-            border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
-            background:
-              theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
-                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
-            overflow: "hidden",
-            mb: 3,
-          }}
-        >
-          {children}
-        </Box>
-      );
-    }
-    return (
-      <Dialog
-        open={open}
-        onClose={onClose}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            background:
-              theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
-                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
-          },
-        }}
-      >
-        {children}
-      </Dialog>
-    );
-  };
-
   const FormHeader = isInline ? Box : DialogTitle;
   const FormContent = isInline ? Box : DialogContent;
   const FormActions = isInline ? Box : DialogActions;
 
-  return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <FormContainer>
+  const formContent = (
+    <>
         <FormHeader
           sx={{
             background:
@@ -752,8 +709,52 @@ const AddDepartmentInchargeModal = ({
           {loading ? "Saving..." : inchargeData ? "Update Incharge" : "Add Incharge"}
         </Button>
       </FormActions>
-    </FormContainer>
-  </LocalizationProvider>
+    </>
+  );
+
+  if (isInline) {
+    if (!open) return null;
+    return (
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <Box
+          sx={{
+            width: "100%",
+            borderRadius: 3,
+            border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+            background:
+              theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+            overflow: "hidden",
+            mb: 3,
+          }}
+        >
+          {formContent}
+        </Box>
+      </LocalizationProvider>
+    );
+  }
+
+  return (
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Dialog
+        open={open}
+        onClose={onClose}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            background:
+              theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+          },
+        }}
+      >
+        {formContent}
+      </Dialog>
+    </LocalizationProvider>
   );
 };
 
