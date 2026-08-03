@@ -791,3 +791,30 @@ export const useMode = () => {
 
 // Export tokens for use in components
 export { tokens as modernTokens };
+
+
+
+
+export const projectThemeSettings = {
+
+  backgroundColor: {
+    main: "#F7F9FB"
+  },
+  cardColor: {
+    main: "#FFFFFF"
+  },
+
+  titleTextColor: {
+    one: "#0052CC",
+
+  },
+
+  regularTextColor: {
+
+    one: "#1A1C1E",
+    two: "#1A1C1E",
+    three: "#44474A",
+    four: "#737685"
+  },
+
+}

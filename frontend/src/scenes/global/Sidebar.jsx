@@ -4,7 +4,7 @@ import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import { Link, useLocation } from "react-router-dom";
 import "react-pro-sidebar/dist/css/styles.css";
 import LogoutModal from "../../components/LogoutModal";
-import { tokens } from "../../theme";
+import { projectThemeSettings, tokens } from "../../theme";
 import { UserContextHook } from "../../contexts/UserContexts";
 import { logoutApi } from "../../utils/services";
 
@@ -41,7 +41,7 @@ const Item = ({ title, to, icon, selected, setSelected, testId }) => {
 
       active={isActive}
       style={{
-        color: "white",
+        color: `${projectThemeSettings.regularTextColor.two} !important`,
       }}
       onClick={() => setSelected(to)}
 
@@ -128,11 +128,12 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
             height: "100%",
             position: "relative",
             display: "flex",
+            borderRadius: "10px",
             flexDirection: "column",
-            background:
-              theme.palette.mode === "dark"
-                ? `${colors.primary[800]} !important`
-                : `#212f3d !important`,
+            background: `${projectThemeSettings.cardColor.main} !important`,
+            // theme.palette.mode === "dark"
+            //   ? `${colors.primary[800]} !important`
+            //   : `#212f3d !important`,
           },
           "& .pro-sidebar-inner": {
             background: "transparent !important",
@@ -158,10 +159,10 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
             padding: "5px 20px 5px 20px !important",
           },
           "& .pro-inner-item:hover": {
-            color: "#868dfb !important",
+            color: `${projectThemeSettings.titleTextColor.one} !important`,
           },
           "& .pro-menu-item.active": {
-            color: "#6870fa !important",
+            color: `${projectThemeSettings.titleTextColor.one} !important`,
           },
         }}
       >
@@ -184,18 +185,23 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                   alignItems="center"
                   ml="15px"
                 >
-                  <Typography variant="h3" color={"white"}>
-                    {/* SuperAdmin */}
-                  </Typography>
-                  <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
+
+                  {/* <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
                     <MenuOutlinedIcon sx={{ color: "white" }} />
+                  </IconButton> */}
+                  <IconButton
+                    onClick={() => setIsToggled(!toggled)}
+                    sx={{ display: { xs: "flex", md: "none" }, color: "white" }}
+                  >
+                    <MenuOutlinedIcon />
                   </IconButton>
                 </Box>
               )}
             </MenuItem>
             {(!isCollapsed || toggled) && (
-              <Box mb="10px">
-                <Box display="flex" justifyContent="center" alignItems="center">
+              <Box mb="10px" display="flex" alignItems="center" justifyContent="space-between">
+
+                {/* <Box display="flex" justifyContent="center" alignItems="center">
                   <img
                     alt="profile-user"
                     width="100px"
@@ -203,11 +209,11 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                     src={isSuperAdmin ? adminImage3 : adminImage}
                     style={{ cursor: "pointer", borderRadius: "50%" }}
                   />
-                </Box>
+                </Box> */}
                 <Box textAlign="center">
                   <Typography
                     sx={{
-                      color: "white !important",
+                      color: `${projectThemeSettings.regularTextColor.one} !important`,
                       fontWeight: "bold",
                       m: "10px 0 0 0",
                       fontSize: "clamp(14px, 2vw, 20px)",
@@ -217,11 +223,19 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {currentUser?.name || "USER"}
+                    Infinis.
                   </Typography>
-                  <Typography variant="h5" sx={{ color: "white !important" }}>
-                    {userType ? capitalizeFirstChar(userType) : "Admin"}
+                  <Typography variant="h5" sx={{ color: `${projectThemeSettings.titleTextColor.one} !important`, fontSize: "clamp(10px, 2.5vw, 10px)" }}>
+                    PATIENT MANAGEMENT SYSTEM
                   </Typography>
+
+
+                </Box>
+                <Box
+                  onClick={() => setIsToggled(!toggled)}
+                  sx={{ color: `${projectThemeSettings.regularTextColor.two} !important` }}
+                >
+                  <MenuOutlinedIcon />
                 </Box>
               </Box>
             )}
