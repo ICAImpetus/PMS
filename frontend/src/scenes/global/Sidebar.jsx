@@ -4,7 +4,7 @@ import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import { Link, useLocation } from "react-router-dom";
 import "react-pro-sidebar/dist/css/styles.css";
 import LogoutModal from "../../components/LogoutModal";
-import { projectThemeSettings, tokens } from "../../theme";
+import { ProjectThemeSettings, tokens } from "../../theme";
 import { UserContextHook } from "../../contexts/UserContexts";
 import { logoutApi } from "../../utils/services";
 
@@ -41,7 +41,7 @@ const Item = ({ title, to, icon, selected, setSelected, testId }) => {
 
       active={isActive}
       style={{
-        color: `${projectThemeSettings.regularTextColor.two} !important`,
+        color: `${ProjectThemeSettings.regularTextColor.two} !important`,
       }}
       onClick={() => setSelected(to)}
 
@@ -130,7 +130,7 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
             display: "flex",
             borderRadius: "10px",
             flexDirection: "column",
-            background: `${projectThemeSettings.cardColor.main} !important`,
+            background: `${ProjectThemeSettings.cardColor.main} !important`,
             // theme.palette.mode === "dark"
             //   ? `${colors.primary[800]} !important`
             //   : `#212f3d !important`,
@@ -159,10 +159,10 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
             padding: "5px 20px 5px 20px !important",
           },
           "& .pro-inner-item:hover": {
-            color: `${projectThemeSettings.titleTextColor.one} !important`,
+            color: `${ProjectThemeSettings.titleTextColor.one} !important`,
           },
           "& .pro-menu-item.active": {
-            color: `${projectThemeSettings.titleTextColor.one} !important`,
+            color: `${ProjectThemeSettings.titleTextColor.one} !important`,
           },
         }}
       >
@@ -213,7 +213,7 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                 <Box textAlign="center">
                   <Typography
                     sx={{
-                      color: `${projectThemeSettings.regularTextColor.one} !important`,
+                      color: `${ProjectThemeSettings.regularTextColor.one} !important`,
                       fontWeight: "bold",
                       m: "10px 0 0 0",
                       fontSize: "clamp(14px, 2vw, 20px)",
@@ -225,7 +225,7 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                   >
                     Infinis.
                   </Typography>
-                  <Typography variant="h5" sx={{ color: `${projectThemeSettings.titleTextColor.one} !important`, fontSize: "clamp(10px, 2.5vw, 10px)" }}>
+                  <Typography variant="h5" sx={{ color: `${ProjectThemeSettings.titleTextColor.one} !important`, fontSize: "clamp(10px, 2.5vw, 10px)" }}>
                     PATIENT MANAGEMENT SYSTEM
                   </Typography>
 
@@ -233,7 +233,7 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                 </Box>
                 <Box
                   onClick={() => setIsToggled(!toggled)}
-                  sx={{ color: `${projectThemeSettings.regularTextColor.two} !important` }}
+                  sx={{ color: `${ProjectThemeSettings.regularTextColor.two} !important` }}
                 >
                   <MenuOutlinedIcon />
                 </Box>

@@ -26,7 +26,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  CircularProgress
+  CircularProgress,
+  Box, Card, Grid, Typography, LinearProgress, Stack, Avatar, Divider, Chip
 } from "@mui/material";
 import { Line, Bar } from "react-chartjs-2";
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -45,6 +46,7 @@ import { toast } from "react-toastify";
 import SectionLoader from "../../../components/SectionLoader";
 import { UserContextHook } from "../../../contexts/UserContexts";
 import HospitalContext from "../../../contexts/HospitalContexts";
+import { ProjectThemeSettings } from "../../../theme";
 
 
 // Register ChartJS components
@@ -61,6 +63,23 @@ ChartJS.register(
 );
 
 
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false }, // Legend is custom rendered above
+    tooltip: { enabled: true }
+  },
+  scales: {
+    x: {
+      grid: { display: false, drawBorder: false },
+      ticks: { color: "#94a3b8", font: { size: 10, weight: "600" } }
+    },
+    y: {
+      display: false // Hide Y-axis to match clean UI
+    }
+  }
+};
 // --- HELPER FUNCTIONS ---
 const filterOptions = [
   { key: "Today", value: "today" },
@@ -389,93 +408,92 @@ const SuperAdminDashboard = () => {
       ) : (
         <div className="dashboard-container">
 
+          <div className="info-header">
+            <div style={{
+              display: "flex",
+              alignItems: "center",
 
-          {/* --- FILTER BAR --- */}
-          <div className="hospital-info-card" style={{ borderLeft: "5px solid #0f172a" }}>
-            <div className="info-header">
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                // backgroundColor: "antiquewhite",
-                width: '650px',
-                gap: "20px"
+              width: '650px',
+              gap: "20px"
 
-              }}>
-                <h3 className="hospital-name">
-                  {"Select Hospital"}
-                </h3>
-                <FormControl sx={{ width: '220px' }} size="small">
-                  {/* <InputLabel id="hospital-label">Select Hospital</InputLabel> */}
+            }}>
 
-                  <Select
-                    value={selectedHostpital}
-                    onChange={(e) => setSelectedHostpital(e.target.value)}
-                    disabled={loading?.hospitalsLoading}
-                    displayEmpty
-                    sx={{
-                      borderRadius: 2,
+              <FormControl sx={{ width: '220px' }} size="small">
+                {/* <InputLabel id="hospital-label">Select Hospital</InputLabel> */}
+
+                <Select
+                  value={selectedHostpital}
+                  onChange={(e) => setSelectedHostpital(e.target.value)}
+                  disabled={loading?.hospitalsLoading}
+                  displayEmpty
+                  sx={{
+                    borderRadius: "24px",
+                    color: "black",
+                    "&.Mui-focused": {
                       color: "black",
-                      "&.Mui-focused": {
-                        color: "black",
-                      },
-                      backgroundColor: "#fff"
-                    }}
-                  >
-                    {loading?.hospitalsLoading ? (
-                      <MenuItem value="">
-                        <CircularProgress size={20} sx={{ mr: 1 }} />
-                        Loading...
-                      </MenuItem>
-                    ) : hospitals.length > 0 ? (
-                      hospitals.map((hospital) => (
-                        <MenuItem key={hospital._id} value={hospital._id}>
-                          {hospital.name}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem value="">No hospitals Assigned</MenuItem>
-                    )}
-                  </Select>
-                </FormControl>
-                <FormControl sx={{ width: '220px' }} size="small">
-                  <Select
-                    labelId="hospital-label"
-                    value={filter}
-                    displayEmpty
-                    onChange={(e) => handleFilterChange(e.target.value)}
-                    sx={{
-                      borderRadius: 2,
-                      backgroundColor: "#fff"
-                    }}
-                  >
-                    <MenuItem value="" disabled>
+                    },
+                    backgroundColor: "#fff"
+                  }}
+                >
+                  {loading?.hospitalsLoading ? (
+                    <MenuItem value="">
+                      <CircularProgress size={20} sx={{ mr: 1 }} />
+                      Loading...
                     </MenuItem>
-                    {filterOptions.length > 0 ? (
-                      filterOptions.map((opt) => (
-                        <MenuItem key={opt.key} value={opt.value}>
-                          {opt.key}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem value="">No Options For Select</MenuItem>
-                    )}
-                  </Select>
-                </FormControl>
+                  ) : hospitals.length > 0 ? (
+                    hospitals.map((hospital) => (
+                      <MenuItem key={hospital._id} value={hospital._id}>
+                        {hospital.name}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem value="">No hospitals Assigned</MenuItem>
+                  )}
+                </Select>
+              </FormControl>
+              <FormControl sx={{ width: '220px' }} size="small">
+                <Select
+                  labelId="hospital-label"
+                  value={filter}
+                  displayEmpty
+                  onChange={(e) => handleFilterChange(e.target.value)}
+                  sx={{
+                    borderRadius: "24px",
+                    backgroundColor: "#fff"
+                  }}
+                >
+                  <MenuItem value="" disabled>
+                  </MenuItem>
+                  {filterOptions.length > 0 ? (
+                    filterOptions.map((opt) => (
+                      <MenuItem key={opt.key} value={opt.value}>
+                        {opt.key}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem value="">No Options For Select</MenuItem>
+                  )}
+                </Select>
+              </FormControl>
+              <div className="h-stat-box">
+
+
+                <div className="h-stat-lbl" style={{ color: `${ProjectThemeSettings.titleTextColor.one}` }}>
+                  Hospitals
+                </div>
+                <div className="h-stat-val">
+                  {hospitals.length || 0}
+                </div>
 
               </div>
-              <div className="hospital-stats">
-                <div className="h-stat-box">
-                  <div className="h-stat-val">
-                    {hospitals.length || 0}
-                  </div>
-                  <div className="h-stat-lbl">Hospitals</div>
-                </div>
-                {/* <div className="h-stat-box">
+            </div>
+
+
+            {/* <div className="h-stat-box">
               <div className="h-stat-val">{12}</div>
               <div className="h-stat-lbl">Branches</div>
             </div> */}
-              </div>
-            </div>
+
           </div>
 
           {/* --- ALERT SECTION --- */}
@@ -518,293 +536,480 @@ const SuperAdminDashboard = () => {
           )}
 
           {/* --- CRITICAL KPI STRIP --- */}
-          <section className="critical-strip" style={{ marginBottom: "12px" }}>
-            <UsersCard label="Users" count={analytics?.totalUsers} onClick={() => navigate("/user-management", { replace: true, state: { selectedHostpital } })} />
-            <UsersCard label="Branches" count={analytics?.totalBranches || 0} onClick={() => {
-              const selectedHospitalData = hospitals.find(
-                (h) => h._id === selectedHostpital
-              );
-              navigate(`/hospital-management/edit-branches/${selectedHostpital}`, {
-                replace: true,
-                state: {
-                  hospital: {
-                    name: selectedHospitalData?.name,
-                    hospitalCode: selectedHospitalData?.hospitalCode,
-                    contact: selectedHospitalData?.contact,
-                    hospitallogo: selectedHospitalData?.hospitallogo
-
+          <section className="critical-strip" style={{ marginBottom: "20px" }}>
+            <UsersCard
+              label="Users"
+              count={analytics?.totalUsers}
+              onClick={() => navigate("/user-management", { replace: true, state: { selectedHostpital } })}
+            />
+            <UsersCard
+              label="Branches"
+              count={analytics?.totalBranches || 0}
+              onClick={() => {
+                const selectedHospitalData = hospitals.find((h) => h._id === selectedHostpital);
+                navigate(`/hospital-management/edit-branches/${selectedHostpital}`, {
+                  replace: true,
+                  state: {
+                    hospital: {
+                      name: selectedHospitalData?.name,
+                      hospitalCode: selectedHospitalData?.hospitalCode,
+                      contact: selectedHospitalData?.contact,
+                      hospitallogo: selectedHospitalData?.hospitallogo
+                    }
                   }
-                }
-              })
-            }
-
-            } />
-            <UsersCard label="Appointments" count={analytics?.appointments?.total} onClick={() => {
-              setFormsTypeFilter("all");
-              setFormsModalOpen("Appointments");
-            }} option={
-              {
+                });
+              }}
+            />
+            <UsersCard
+              label="Appointments"
+              count={analytics?.appointments?.total}
+              onClick={() => {
+                setFormsTypeFilter("all");
+                setFormsModalOpen("Appointments");
+              }}
+              option={{
                 "inbound": analytics?.appointments?.inbound,
                 "outbound": analytics?.appointments?.outbound
-              }
-            } />
-            <UsersCard label="Forms" onClick={() => {
-              setFormsTypeFilter("all");
-              setFormsModalOpen("Forms");
-            }} count={analytics?.forms?.total} option={
-              {
+              }}
+            />
+            <UsersCard
+              label="Forms"
+              onClick={() => {
+                setFormsTypeFilter("all");
+                setFormsModalOpen("Forms");
+              }}
+              count={analytics?.forms?.total}
+              option={{
                 "inbound": analytics?.forms?.inbound,
                 "outbound": analytics?.forms?.outbound
-              }
-            } />
-
+              }}
+            />
           </section>
 
-          <div
-            className="data-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: "8px",
-              width: "100%",
-              marginBottom: "8px"
-            }}
-          >
-            <div className="data-card" style={{ width: "100%", height: "310px", borderLeft: "5px solid #0f172a" }}>
-              <h4>
-                <Users size={18} className="mr-2" /> Hospital Activity
-              </h4>
 
-              <div
-                className="chart-container-sm"
-                style={{ width: "100%", height: "240px" }}
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            {/* Hospital Activity Bar Chart */}
+            <Grid item xs={12} md={7.5}>
+              <Card
+                elevation={0}
+                sx={{
+                  borderRadius: "24px",
+                  p: 3.5,
+                  border: "1px solid #e2e8f0",
+                  height: "100%",
+                  boxShadow: "none",
+                  bgcolor: "#ffffff"
+                }}
               >
-                <Bar data={data} options={options} />
-              </div>
-            </div>
-
-            <div className="data-card" style={{ width: "100%", height: "310px", borderLeft: "5px solid #0f172a" }}>
-              <h4>
-                <MedicalServicesIcon sx={{ mr: 1 }} /> Patient Analytics
-              </h4>
-
-              <div className="scrollable-content">
-                <table className="metrics-table">
-                  <thead>
-                    <tr>
-                      <th>Month</th>
-                      <th>New Patient</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {newPatientData?.length > 0 ? (
-                      newPatientData.map((item, i) => (
-                        <tr key={i}>
-                          <td>{item.month}</td>
-                          <td>{item.newPatients}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="2">No data available</td>
-                      </tr>
-                    )}
-
-                    <tr className="total-row">
-                      <td>
-                        <strong>Total</strong>
-                      </td>
-
-                      <td>
-                        <strong>{totalNew}</strong>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-
-                <div className="patient-summary" style={{ marginTop: "15px" }}>
-                  <p><strong>New Patients :</strong> {totalNew}</p>
-                  <p><strong>Total Registered Patients :</strong> {totalNew}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="executive-dashboard-section" style={{ marginBottom: "8px" }}>
-            <div className="executive-outbound-grid">
-              <div className="executive-outbound-card">
-                <div className="executive-chart-title">
-                  <PieChartIcon />Top Inbound Purpose
-                </div>
-                {analytics?.topInboundPurpose?.length === 0 ? (
-                  <div className="executive-leads-breakdown">
-                    <div>No Data Are Found</div>
-                  </div>
-                ) : (
-                  analytics?.topInboundPurpose?.map((item, i) => {
-                    return <div key={i} className="executive-lead-source">
-                      <div className="executive-source-name">
-                        <LabelIcon sx={{ fontSize: 16 }} /> {item?.purpose || "-"}
-                      </div>
-                      <div className="executive-source-count">{item?.count || 0}</div>
-                    </div>
-                  })
-
-
-                )}
-
-              </div>
-              <div className="executive-outbound-card">
-                <div className="executive-chart-title">
-                  <BarChartIcon />Top Outbound Purpose
-                </div>
-                {analytics?.topOutboundPurpose?.length === 0 ? (
-                  <div className="executive-leads-breakdown">
-                    <div>No Data Are Found</div>
-                  </div>
-                ) : (
-                  analytics?.topOutboundPurpose?.map((item, i) => {
-                    return <div key={i} className="executive-lead-source">
-                      <div className="executive-source-name">
-                        <i className="fab fa-facebook"></i> {item?.purpose || "-"}
-                      </div>
-                      <div className="executive-source-count">{item?.count || 0}</div>
-                    </div>
-                  })
-                )}
-
-              </div>
-
-              {/* <div className="executive-outbound-card">
-              <div className="executive-chart-title">
-                <i className="fas fa-smile"></i> Customer Sentiment
-              </div>
-              <div className executive-sentiment-stats>
-                <div className="executive-sentiment-item">
-                  <div className="executive-sentiment-value executive-positive-sentiment">
-                    65%
-                  </div>
-                  <div className="executive-sentiment-label">Positive</div>
-                </div>
-                <div className="executive-sentiment-item">
-                  <div className="executive-sentiment-value executive-negative-sentiment">
-                    15%
-                  </div>
-                  <div className="executive-sentiment-label">Negative</div>
-                </div>
-                <div className="executive-sentiment-item">
-                  <div className="executive-sentiment-value executive-neutral-sentiment">
-                    20%
-                  </div>
-                  <div className="executive-sentiment-label">Neutral</div>
-                </div>
-              </div>
-              <div className="executive-nps-container">
-                <div className="executive-nps-score">+42</div>
-                <div className="executive-nps-label">Net Promoter Score</div>
-              </div>
-            </div> */}
-
-              {/* <div className="executive-outbound-card">
-              <div className="executive-chart-title">
-                <i className="fas fa-chart-line"></i> Conversion & Revenue
-              </div>
-              <div className="executive-revenue-stats">
-                <div className="executive-revenue-item">
-                  <div className="executive-revenue-type">Conversion Rate</div>
-                  <div className="executive-revenue-amount">18.2%</div>
-                </div>
-                <div className="executive-revenue-item">
-                  <div className="executive-revenue-type">Total Revenue</div>
-                  <div className="executive-revenue-amount">₹2,85,000</div>
-                </div>
-                <div className="executive-revenue-item">
-                  <div className="executive-revenue-type">
-                    Avg. Revenue per Call
-                  </div>
-                  <div className="executive-revenue-amount">₹338</div>
-                </div>
-                <div className="executive-revenue-item">
-                  <div className="executive-revenue-type">
-                    Revenue per Connected Call
-                  </div>
-                  <div className="executive-revenue-amount">₹498</div>
-                </div>
-              </div>
-            </div> */}
-            </div>
-          </div>
-          <div className="data-grid row-3" style={{ marginBottom: "8px", gap: "8px" }}>
-            <div className="data-card">
-              <h4>Recent Activity</h4>
-              <div className="scrollable-content">
-                {analytics?.recentActivity?.length === 0 && (
-                  <div className="log-entry">
-                    <p>No Activity Found</p>
-                  </div>
-                )}
-                {analytics?.recentActivity?.map((item, i) => (
-                  <div key={i} className="log-entry">
-                    <div className="log-icon info">
-                      <UserPlus size={16} />
-                    </div>
-                    <div style={{ flexGrow: 1 }}>
-                      <div>
-                        <strong style={{ fontSize: "12px" }}>{item?.customMessage || "Unknown Activity"}</strong>
-                      </div>
-                      <small style={{ color: "var(--muted)" }}>
-                        {item?.name} • {moment(item?.createdAt).format("hh:mm A")}
-                      </small>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="data-card">
-              <h4>Agent Performance</h4>
-              <div className="scrollable-content">
-                {analytics?.teamOverview?.map((item, i) => {
-                  const status = statusClasses[i % statusClasses.length];
-                  return (
-                    <div
-                      key={i}
-                      className="log-entry"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: "10px",
+                {/* Header & Legend */}
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3 }}>
+                  <Box>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontSize: "18px",
+                        fontWeight: 700,
+                        color: "#1e293b",
+                        lineHeight: 1.2,
+                        fontFamily: "Inter, sans-serif"
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <div className={`log-icon ${status}`}>
-                          <User size={16} />
-                        </div>
-                        <strong>{item?.agentName || "name"}</strong>
-                      </div>
-                      <span>
-                        Forms: {item?.totalCalls || 0}
-                      </span>
-                    </div>
-                  );
-                })}
+                      Hospital Activity
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontSize: "12px",
+                        color: "#64748b",
+                        mt: 0.75,
+                        fontWeight: 400
+                      }}
+                    >
+                      Month-wise analysis of new patients and appointments
+                    </Typography>
+                  </Box>
+
+                  {/* Legend */}
+                  <Stack direction="row" spacing={2.5} sx={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.5px" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "#475569" }}>
+                      <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: "#0052cc" }} /> APPOINTMENTS
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "#475569" }}>
+                      <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: "#93c5fd" }} /> PATIENTS
+                    </Box>
+                  </Stack>
+                </Box>
+
+                {/* Bar Chart Canvas Container */}
+                <Box sx={{ width: "100%", height: "240px", pt: 1 }}>
+                  <Bar data={data} options={options || chartOptions} />
+                </Box>
+              </Card>
+            </Grid>
+
+            {/* Inbound & Outbound Cards Container */}
+            <Grid item xs={12} md={4.5}>
+              <Stack spacing={2.5}>
+                {/* Top Inbound Purpose */}
+                <Card
+                  elevation={0}
+                  sx={{
+                    borderRadius: "24px",
+                    p: 3,
+                    border: "1px solid #e2e8f0",
+                    boxShadow: "none",
+                    bgcolor: "#ffffff"
+                  }}
+                >
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ fontSize: "11px", fontWeight: 700, color: "#2563eb", letterSpacing: "0.5px", textTransform: "uppercase" }}
+                    >
+                      TOP INBOUND PURPOSE
+                    </Typography>
+                    <Typography variant="h6" sx={{ fontSize: "20px", fontWeight: 800, color: "#0f172a" }}>
+                      {analytics?.appointments?.inbound || "1,482"}
+                    </Typography>
+                  </Box>
+
+                  <Stack spacing={1.75}>
+                    {analytics?.topInboundPurpose?.length === 0 ? (
+                      <Typography variant="body2" sx={{ fontSize: "13px", color: "#94a3b8" }}>
+                        No Data Found
+                      </Typography>
+                    ) : (
+                      analytics?.topInboundPurpose?.map((item, i) => (
+                        <Box key={i}>
+                          <Box sx={{ display: "flex", justifyContent: "space-between", fontSize: "12px", mb: 0.5 }}>
+                            <Typography variant="body2" sx={{ fontSize: "12px", color: "#334155", fontWeight: 500 }}>
+                              {item?.purpose || "-"}
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontSize: "12px", color: "#2563eb", fontWeight: 700 }}>
+                              {item?.count || 0} Calls
+                            </Typography>
+                          </Box>
+                          <LinearProgress
+                            variant="determinate"
+                            value={Math.min(item?.count || 0, 100)}
+                            sx={{
+                              height: 4,
+                              borderRadius: 2,
+                              bgcolor: "#f1f5f9",
+                              "& .MuiLinearProgress-bar": {
+                                bgcolor: "#2563eb",
+                                borderRadius: 2
+                              }
+                            }}
+                          />
+                        </Box>
+                      ))
+                    )}
+                  </Stack>
+                </Card>
+
+                {/* Top Outbound Purpose */}
+                <Card
+                  elevation={0}
+                  sx={{
+                    borderRadius: "24px",
+                    p: 3,
+                    border: "1px solid #e2e8f0",
+                    boxShadow: "none",
+                    bgcolor: "#ffffff"
+                  }}
+                >
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ fontSize: "11px", fontWeight: 700, color: "#2563eb", letterSpacing: "0.5px", textTransform: "uppercase" }}
+                    >
+                      TOP OUTBOUND PURPOSE
+                    </Typography>
+                    <Typography variant="h6" sx={{ fontSize: "20px", fontWeight: 800, color: "#0f172a" }}>
+                      {analytics?.appointments?.outbound || "1,240"}
+                    </Typography>
+                  </Box>
+
+                  <Stack spacing={1.75}>
+                    {analytics?.topOutboundPurpose?.length === 0 ? (
+                      <Typography variant="body2" sx={{ fontSize: "13px", color: "#94a3b8" }}>
+                        No Data Found
+                      </Typography>
+                    ) : (
+                      analytics?.topOutboundPurpose?.map((item, i) => (
+                        <Box key={i}>
+                          <Box sx={{ display: "flex", justifyContent: "space-between", fontSize: "12px", mb: 0.5 }}>
+                            <Typography variant="body2" sx={{ fontSize: "12px", color: "#334155", fontWeight: 500 }}>
+                              {item?.purpose || "-"}
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontSize: "12px", color: "#2563eb", fontWeight: 700 }}>
+                              {item?.count || 0} Calls
+                            </Typography>
+                          </Box>
+                          <LinearProgress
+                            variant="determinate"
+                            value={Math.min(item?.count || 0, 100)}
+                            sx={{
+                              height: 4,
+                              borderRadius: 2,
+                              bgcolor: "#f1f5f9",
+                              "& .MuiLinearProgress-bar": {
+                                bgcolor: "#2563eb",
+                                borderRadius: 2
+                              }
+                            }}
+                          />
+                        </Box>
+                      ))
+                    )}
+                  </Stack>
+                </Card>
+              </Stack>
+            </Grid>
+          </Grid>
+          {/* --- BOTTOM ROW: PATIENT ANALYTICS TABLE --- */}
+          <div style={{ background: "#fff", borderRadius: "16px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0" }}>
+
+            {/* Header & Badges */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+              <div>
+                <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#0f172a", margin: 0 }}>Patient Analytics</h3>
+                <p style={{ fontSize: "13px", color: "#64748b", margin: "4px 0 0 0" }}>Comparative performance metrics across surgical and outpatient facilities.</p>
+              </div>
+
+              <div style={{ display: "flex", gap: "12px" }}>
+                <div style={{ background: "#eff6ff", borderRadius: "16px", padding: "10px 20px", textAlign: "center" }}>
+                  <div style={{ fontSize: "10px", fontWeight: "700", color: "#2563eb", letterSpacing: "0.5px" }}>TOTAL REGISTERED PATIENTS</div>
+                  <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a" }}>{totalNew || "4,200"}</div>
+                </div>
+                <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "16px", padding: "10px 20px", textAlign: "center" }}>
+                  <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", letterSpacing: "0.5px" }}>NEW PATIENTS TOTAL COUNT</div>
+                  <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a" }}>{totalNew || "2,650"}</div>
+                </div>
               </div>
             </div>
 
-            <div className="data-card">
-              <div className="chart-head">
-                <span>
-                  <ShowChartIcon /> Patient Status Trend
-                </span>
-              </div>
-              <div style={{ flex: 1, minHeight: 0 }}>
-                <Line data={patientStatusData} options={lineOptions} />
-              </div>
-            </div>
+            {/* Data Table */}
+            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+                  <th style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8", padding: "12px 0", letterSpacing: "0.5px" }}>TEMPORAL PERIOD</th>
+                  <th style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8", padding: "12px 0", letterSpacing: "0.5px", textAlign: "center" }}>NEW PATIENTS</th>
+                  <th style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8", padding: "12px 0", letterSpacing: "0.5px", textAlign: "center" }}>TOTAL PATIENTS</th>
+                  <th style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8", padding: "12px 0", letterSpacing: "0.5px", textAlign: "right" }}>MOMENTUM</th>
+                </tr>
+              </thead>
+              <tbody>
+                {newPatientData?.length > 0 ? (
+                  newPatientData.map((item, i) => (
+                    <tr key={i} style={{ borderBottom: i !== newPatientData.length - 1 ? "1px solid #f8fafc" : "none" }}>
+                      <td style={{ padding: "16px 0", fontSize: "13px", fontWeight: "700", color: "#0f172a" }}>{item.month}</td>
+                      <td style={{ padding: "16px 0", fontSize: "13px", color: "#475569", textAlign: "center" }}>{item.newPatients}</td>
+                      <td style={{ padding: "16px 0", fontSize: "13px", color: "#475569", textAlign: "center" }}>{item.totalPatients || item.newPatients}</td>
+                      <td style={{ padding: "16px 0", textAlign: "right" }}>
+                        <span style={{ background: "#eff6ff", color: "#2563eb", fontSize: "12px", fontWeight: "600", padding: "4px 8px", borderRadius: "12px" }}>
+                          📈 {item.momentum || "12%"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" style={{ padding: "20px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                      No data available
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
 
+            {/* 1. RECENT ACTIVITY CARD */}
+            <Grid item xs={12} md={4}>
+              <Card
+                elevation={0}
+                sx={{
+                  borderRadius: "16px",
+                  p: 3,
+                  border: "1px solid #e2e8f0",
+                  height: "360px",
+                  display: "flex",
+                  flexDirection: "column",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ fontSize: "11px", fontWeight: 700, color: "#64748b", letterSpacing: "0.5px", textTransform: "uppercase", mb: 2 }}
+                >
+                  RECENT ACTIVITY
+                </Typography>
+
+                <Box sx={{ flexGrow: 1, overflowY: "auto", pr: 0.5 }}>
+                  {analytics?.recentActivity?.length === 0 ? (
+                    <Typography variant="body2" sx={{ fontSize: "13px", color: "#94a3b8", textAlign: "center", mt: 4 }}>
+                      No Activity Found
+                    </Typography>
+                  ) : (
+                    <Stack spacing={2}>
+                      {analytics?.recentActivity?.map((item, i) => {
+                        const isOutbound = item?.customMessage?.toLowerCase().includes("outbound");
+                        const isInbound = item?.customMessage?.toLowerCase().includes("inbound");
+
+                        return (
+                          <Box key={i} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+                            <Avatar
+                              src={item?.userAvatar || ""}
+                              alt={item?.name || "User"}
+                              sx={{ width: 32, height: 32, bgcolor: "#e2e8f0", fontSize: "12px", color: "#475569" }}
+                            >
+                              {item?.name?.charAt(0) || "U"}
+                            </Avatar>
+                            <Box sx={{ flexGrow: 1 }}>
+                              <Typography variant="body2" sx={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", lineHeight: 1.3 }}>
+                                {item?.customMessage || "Unknown Activity"}
+                                {isInbound && (
+                                  <Chip
+                                    label="INBOUND"
+                                    size="small"
+                                    sx={{ ml: 0.75, height: 16, fontSize: "9px", fontWeight: 700, bgcolor: "#dbeafe", color: "#1d4ed8" }}
+                                  />
+                                )}
+                                {isOutbound && (
+                                  <Chip
+                                    label="OUTBOUND"
+                                    size="small"
+                                    sx={{ ml: 0.75, height: 16, fontSize: "9px", fontWeight: 700, bgcolor: "#eff6ff", color: "#2563eb" }}
+                                  />
+                                )}
+                              </Typography>
+                              <Typography variant="caption" sx={{ fontSize: "10px", color: "#94a3b8", textTransform: "uppercase", mt: 0.25, display: "block" }}>
+                                {item?.name || "SYSTEM"} • {moment(item?.createdAt).format("hh:mm A")}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        );
+                      })}
+                    </Stack>
+                  )}
+                </Box>
+              </Card>
+            </Grid>
+
+            {/* 2. AGENT PRODUCTIVITY CARD */}
+            <Grid item xs={12} md={4}>
+              <Card
+                elevation={0}
+                sx={{
+                  borderRadius: "16px",
+                  p: 3,
+                  border: "1px solid #e2e8f0",
+                  height: "360px",
+                  display: "flex",
+                  flexDirection: "column",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ fontSize: "11px", fontWeight: 700, color: "#64748b", letterSpacing: "0.5px", textTransform: "uppercase", mb: 2 }}
+                >
+                  AGENT PRODUCTIVITY
+                </Typography>
+
+                <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
+                  <Stack divider={<Divider sx={{ borderColor: "#f1f5f9" }} />} spacing={1.5}>
+                    {analytics?.teamOverview?.map((item, i) => (
+                      <Box
+                        key={i}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          py: 0.5
+                        }}
+                      >
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                          <Avatar
+                            src={item?.avatar || ""}
+                            alt={item?.agentName || "Agent"}
+                            sx={{ width: 32, height: 32, bgcolor: "#0052cc", fontSize: "12px" }}
+                          >
+                            {item?.agentName?.charAt(0) || "A"}
+                          </Avatar>
+                          <Typography variant="body2" sx={{ fontSize: "13px", fontWeight: 600, color: "#0f172a" }}>
+                            {item?.agentName || "Agent"}
+                          </Typography>
+                        </Box>
+
+                        <Chip
+                          label={`${item?.totalCalls || 0} Forms`}
+                          sx={{
+                            bgcolor: "#0052cc",
+                            color: "#fff",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            height: 24,
+                            borderRadius: "12px",
+                            px: 0.5
+                          }}
+                        />
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+              </Card>
+            </Grid>
+
+            {/* 3. PATIENT STATUS TRENDS CARD */}
+            <Grid item xs={12} md={4}>
+              <Card
+                elevation={0}
+                sx={{
+                  borderRadius: "16px",
+                  p: 3,
+                  border: "1px solid #e2e8f0",
+                  height: "360px",
+                  display: "flex",
+                  flexDirection: "column",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                }}
+              >
+                <Box sx={{ mb: 1.5 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ fontSize: "11px", fontWeight: 700, color: "#64748b", letterSpacing: "0.5px", textTransform: "uppercase", display: "block" }}
+                  >
+                    PATIENT STATUS TRENDS
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontSize: "12px", color: "#94a3b8", mt: 0.25 }}>
+                    Temporal classification mapping
+                  </Typography>
+                </Box>
+
+                {/* Chart Section */}
+                <Box sx={{ flexGrow: 1, minHeight: 0, position: "relative" }}>
+                  <Bar data={patientStatusData} options={lineOptions} />
+                </Box>
+
+                {/* Footer Legend */}
+                <Stack direction="row" justifyContent="space-between" sx={{ pt: 1.5, mt: 1, borderTop: "1px solid #f1f5f9", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "#0052cc" }}>
+                    <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#0052cc" }} /> ACTIVE
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "#8da4f7" }}>
+                    <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#8da4f7" }} /> OBSERVED
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "#cbd5e1" }}>
+                    <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#e2e8f0" }} /> CLOSED
+                  </Box>
+                </Stack>
+              </Card>
+            </Grid>
+
+          </Grid>
 
           {
             profileModalOpen && (

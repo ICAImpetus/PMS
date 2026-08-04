@@ -5,7 +5,7 @@ import {
     Box,
     Divider
 } from "@mui/material";
-
+import { ProjectThemeSettings } from "../../src/theme.js"
 
 export default function UsersCard({ label = "total", count = 0, option = {}, onClick, pointer = true }) {
     return (
@@ -17,7 +17,7 @@ export default function UsersCard({ label = "total", count = 0, option = {}, onC
                 minHeight: 80,
                 border: "none",
                 borderRadius: "10px",
-                borderLeft: "6px solid #0f172a",
+                color: ProjectThemeSettings.titleTextColor.one,
                 cursor: pointer ? "pointer" : "default"
             }}
         >
@@ -37,7 +37,11 @@ export default function UsersCard({ label = "total", count = 0, option = {}, onC
                 <Typography
                     variant="h4"
                     fontWeight="bold"
-                    sx={{ mb: Object.keys(option).length > 0 ? 0.5 : 0 }}
+                    sx={{
+                        mb: Object.keys(option).length > 0 ? 0.5 : 0,
+                        color: ProjectThemeSettings.regularTextColor.one,
+                        fontsize: "calc(48px,48px,48px)"
+                    }}
                 >
                     {count}
                 </Typography>

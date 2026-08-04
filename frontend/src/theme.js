@@ -795,7 +795,7 @@ export { tokens as modernTokens };
 
 
 
-export const projectThemeSettings = {
+export const ProjectThemeSettings = {
 
   backgroundColor: {
     main: "#F7F9FB"
