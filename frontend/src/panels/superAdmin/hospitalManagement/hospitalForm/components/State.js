@@ -1226,6 +1226,12 @@ export const initialFormData = {
   informativeTopic: "",
   informativeDetailsShared: "",
   feedbackType: "",
+  feedback: {
+    feedbackType: "",
+    ipdNumber: "",
+    opdNumber: "",
+    questions: []
+  },
   noFeedbackRemarks: "",
   notConnectedRemarks: "",
   opdNumber: "",

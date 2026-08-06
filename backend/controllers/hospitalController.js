@@ -8710,6 +8710,7 @@ export const singlePatientHistory = async (req, res) => {
 };
 
 
+
 export const getPatientByNumber = async (req, res) => {
   try {
     const { hospitalId, branchId, patientMobile } = req.query;
@@ -8763,13 +8764,13 @@ export const getPatientByNumber = async (req, res) => {
     const latestVisits = await FilledFormsModel.find({
       "formData.patientDetails": patient._id,
       isDeleted: false,
-    }).select("formType doctor department purpose formData.remarks createdAt")
+    }).select("agentName formType gender callStatus purpose appointmentSlot followupStatus createdAt formData.patientDetails formData.patientArrivalTime formData.remarks formData.surgeryName formData.healthPackageName formData.healthSchemeName formData.govertHealthSchemeName formData.nonGovtHealthSchemeName formData.reportName formData.referenceFrom formData.feedbackType formData.feedback")
       .populate(pop("doctor", DoctorModel, "name"))
       .populate(pop("department", DepartmentModel, "name"))
+      // .populate(pop("formData.patientDetails", PatientModel, "patientName patientMobileNo patientStatus patientAge patientCategory patientlocation patientGender"))
       .sort({ createdAt: -1 })
       .limit(5)
       .lean();
-
 
     return res.status(200).json({
       success: true,
@@ -8790,7 +8791,78 @@ export const getPatientByNumber = async (req, res) => {
     });
   }
 };
+export const getRegisteredPatientsByNumber = async (req, res) => {
+  try {
+    const { hospitalId, branchId, patientMobile } = req.query;
 
+    // Validate patientMobile
+    if (!patientMobile) {
+      return res.status(400).json({
+        success: false,
+        message: "Patient mobile number is required",
+      });
+    }
+
+    // Validate hospitalId and branchId
+    if (
+      !hospitalId ||
+      !branchId ||
+      !mongoose.isValidObjectId(hospitalId) ||
+      !mongoose.isValidObjectId(branchId)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid Hospital Id and Branch Id are required",
+      });
+    }
+
+    // Get hospital details
+    const hospital = await HospitalModel.findById(hospitalId)
+      .select("trimmedName")
+      .lean();
+
+    if (!hospital) {
+      return res.status(404).json({
+        success: false,
+        message: "Hospital not found",
+      });
+    }
+
+    // Establish multi-tenant database connection
+    const conn = await getConnection(hospital.trimmedName);
+    const PatientModel = getPatientModel(conn);
+
+    // Query single patient by mobile number
+    const patient = await PatientModel.find({
+      patientMobile,
+      branchId: new mongoose.Types.ObjectId(branchId),
+      isDeleted: false,
+    })
+      .select("-lastVisit")
+      .lean();
+
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: "Patient not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Patient fetched successfully",
+      data: patient,
+    });
+  } catch (error) {
+    console.error("Get Patient Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
 export const getDoctorAppointment = async (req, res) => {
   try {
     const {

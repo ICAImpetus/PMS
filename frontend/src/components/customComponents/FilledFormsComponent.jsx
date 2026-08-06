@@ -713,10 +713,9 @@ const FilledFormsComponent = ({
   );
   const exportFormsToSheet = async () => {
 
-    let exportdateFrom = dateFilterFrom
-    let exportdateTo = dateFilterTo
+    let exportdateFrom = dateFilterFrom;
+    let exportdateTo = dateFilterTo;
     if (!exportdateFrom || !exportdateTo) {
-
       exportdateFrom = dateRange.startDate;
       exportdateTo = dateRange.endDate;
     }
@@ -778,9 +777,25 @@ const FilledFormsComponent = ({
               val = moment(val).format("DD MMM YYYY hh:mm A");
             }
 
+
+            if (val && Array.isArray(val)) {
+              val = val
+                .map((q) => {
+                  if (q && typeof q === "object" && q.questionText) {
+                    return `${q.questionId || ""}: ${q.questionText} -> Rating: ${q.rating ?? "-"}`;
+                  }
+                  return JSON.stringify(q);
+                })
+                .join("\n"); // Multi-line string inside single cell
+            }
+            // =========================================================================================
+
             if (val && typeof val === "object" && !Array.isArray(val)) {
               val = val.name || JSON.stringify(val);
             }
+
+            // Null/Undefined values safe check
+            val = val ?? "";
 
             return `"${String(val).replace(/"/g, '""')}"`;
           })

@@ -108,15 +108,6 @@ export default function DoctorDropdown({
       );
 
     // Final availability
-
-
-    console.log("isUnavailable-selectedDay", selectedDay);
-    console.log("isUnavailable-formattedDate", formattedDate);
-    console.log("isUnavailable-doctor", doctor);
-    console.log("doctor-isUnavailable", isUnavailable);
-
-
-
     return isOpdDay && !isUnavailable;
   };
 

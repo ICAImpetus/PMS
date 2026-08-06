@@ -87,15 +87,70 @@ export const FORMS_AVAILABLE_COLUMNS = [
     { key: "formData.reportName", label: "Report Name" },
     { key: "followupStatus", label: "Follow-up Status" },
     { key: "formData.referenceFrom", label: "Reference From" },
-
-    { key: "formData.callerType", label: "Caller Type" },
+    { key: "formData.feedbackType", label: "Feedback Type" },
+    { key: "formData.feedbackQuestions", label: "Feedback Questions" },
     { key: "createdAt", label: "Submitted At" },
 ];
-export const getNestedValue = (obj, path) => {
-    const value = path.split(".").reduce((acc, key) => acc?.[key], obj);
 
+export const PatientCallHistory = [
+    { key: "agentName", label: "Agent Name" },
+    { key: "formType", label: "Form Type" },
+    { key: "formData.patientDetails.patientName", label: "Patient Name" },
+    { key: "formData.patientDetails.patientMobile", label: "Patient Mobile No" },
+    { key: "formData.patientDetails.patientStatus", label: "Patient Status" },
+    { key: "formData.patientDetails.patientAge", label: "Patient Age" },
+    { key: "formData.patientDetails.patientCategory", label: "Patient Category" },
+    { key: "formData.patientDetails.patientlocation", label: "Patient Location" },
+    { key: "gender", label: "Patient Gender" },
+    { key: "callStatus", label: "Call Status" },
+    { key: "purpose", label: "POC / Purpose" },
+    { key: "appointmentSlot", label: "App. Slot" },
+    { key: "formData.patientArrivalTime", label: "PatientArrivalTime" },
+    { key: "formData.remarks", label: "Remarks" },
+    { key: "doctor.name", label: "Doctor" },
+    { key: "department.name", label: "Department" },
+    { key: "formData.surgeryName", label: "Surgery Name" },
+    { key: "formData.healthPackageName", label: "Health Package" },
+    { key: "formData.healthSchemeName", label: "Health Scheme Name" },
+    { key: "formData.govertHealthSchemeName", label: "On-Govt Health Scheme Name" },
+    { key: "formData.nonGovtHealthSchemeName", label: "Non-Govt Health Scheme Name" },
+    { key: "formData.reportName", label: "Report Name" },
+    { key: "followupStatus", label: "Follow-up Status" },
+    { key: "formData.referenceFrom", label: "Reference From" },
+    { key: "formData.feedbackType", label: "Feedback Type" },
+    { key: "formData.feedbackQuestions", label: "Feedback Questions" },
+    { key: "createdAt", label: "Submitted At" },
+];
+
+// Simple Memoization Cache to make path processing O(1) after first lookup
+const pathCache = new Map();
+
+/**
+ * Safely retrieves nested values with high performance and defensive checks.
+ * 
+ * @param {Object} obj - Source object to read from
+ * @param {string} path - Dot-notation path string (e.g., "user.address.city")
+ * @param {any} [fallback="-"] - Value returned if path evaluation yields empty/nullish
+ */
+export const getNestedValue = (obj, path, fallback = "-") => {
+    // 1. Guard against bad parameters
+    if (!obj || typeof obj !== "object" || typeof path !== "string") {
+        return fallback;
+    }
+
+    // 2. Retrieve or compute split path array (Cached for speed)
+    let keys = pathCache.get(path);
+    if (!keys) {
+        keys = path.split(".");
+        pathCache.set(path, keys);
+    }
+
+    // 3. Traversal using optional chaining
+    const value = keys.reduce((acc, key) => acc?.[key], obj);
+
+    // 4. Return normalized value or fallback
     return value === "" || value === null || value === undefined
-        ? "-"
+        ? fallback
         : value;
 };
 

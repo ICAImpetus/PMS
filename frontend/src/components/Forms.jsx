@@ -30,6 +30,7 @@ import {
   IndianStatesWithDistricts, initialFormState, OUTBOUND_PURPOSE_OPTIONS,
   REFERENCE_OPTIONS, initialFormData
 } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
+import { PatientCallHistory } from "../utils/exportUtils";
 
 const getPatientArrivalDateTime = (
   appointmentSlot,
@@ -215,6 +216,10 @@ function Forms() {
   const [selectedDay, setSelectedDay] = useState(null);
   const [bookedSlotIds, setBookedSlotIds] = useState([]);
   const [latestVisits, setLatestVisits] = useState([]);
+  const [patientProfile, setPatient] = useState(null);
+
+  const [patientList, setPatientList] = useState([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showLatestVisitsPanel, setShowLatestVisitsPanel] = useState(true);
   const [latestVisitsModalOpen, setLatestVisitsModalOpen] = useState(false);
   const [latestVisitSearch, setLatestVisitSearch] = useState("");
@@ -255,6 +260,14 @@ function Forms() {
   );
 
   const {
+    request: getRegisteredPatientsByNumber,
+    error: getRegisteredPatientsByNumberError,
+    loading: getRegisteredPatientsByNumberLoading,
+  } = useApi(
+    commonRoutes.getRegisteredPatientsByNumber
+  );
+
+  const {
     loading,
     selectedBranch,
     setSelectedBranch,
@@ -282,21 +295,113 @@ function Forms() {
     }
   }, [selectedHostpital, selectedBranch]);
 
+  const fetchPatient = async (patientId) => {
+
+    try {
+
+      const number =
+        form.formData.patientDetails.patientMobile;
+
+      if (
+        !number ||
+        (number.length !== 10 &&
+          number.length !== 12)
+      ) {
+        return;
+      }
+
+      const res = await getSinglePatientApi(
+        selectedHostpital,
+        selectedBranch,
+        patientId
+      );
+      const patient = res?.data;
+      setPatient(patient);
+      setLatestVisits(res?.latestVisits || [])
+
+      if (res?.success) {
+        setForm((prev) => ({
+          ...prev,
+
+          formData: {
+            ...prev.formData,
+
+            patientDetails: {
+              ...prev.formData.patientDetails,
+
+              patientName:
+                patient?.patientName || "",
+
+              patientAge:
+                patient?.patientAge || "",
+
+              gender:
+                patient?.gender || "",
+
+              alternateMobile:
+                patient?.alternateMobile || "",
+
+              location:
+                patient?.location || "",
+
+              category:
+                patient?.category || "",
+            },
+          },
+        }));
+
+
+
+        toast.success("Patient details auto-filled based on mobile number.");
+        return;
+      }
+      else {
+        toast.error(" No patient details found.");
+        // setForm((prev) => ({
+        //   ...prev,
+
+        //   formData: {
+        //     ...prev.formData,
+
+        //     patientDetails: {
+        //       ...prev.formData.patientDetails,
+
+        //       patientName: "",
+
+        //       patientAge: "",
+
+        //       gender: "",
+
+        //       alternateMobile: "",
+
+        //       location: "",
+
+        //       category: "",
+        //     },
+        //   },
+        // }));
+
+        return
+      }
+
+    } catch (error) {
+
+      console.error(
+        "Fetch Patient Error:",
+        error
+      );
+    }
+  };
+
 
   useEffect(() => {
-
-    const fetchPatient = async () => {
-
+    const fetchRegisteredPatients = async () => {
       try {
+        const number = form.formData.patientDetails.patientMobile;
 
-        const number =
-          form.formData.patientDetails.patientMobile;
-
-        if (
-          !number ||
-          (number.length !== 10 &&
-            number.length !== 12)
-        ) {
+        if (!number || (number.length !== 10 && number.length !== 12)) {
+          setPatientList([]);
+          setIsDropdownOpen(false);
           return;
         }
 
@@ -306,88 +411,50 @@ function Forms() {
           number
         );
 
-        if (res?.success) {
+        const patients = res?.data || [];
 
-          const patient = res?.data;
-
-          setForm((prev) => ({
-            ...prev,
-
-            formData: {
-              ...prev.formData,
-
-              patientDetails: {
-                ...prev.formData.patientDetails,
-
-                patientName:
-                  patient?.patientName || "",
-
-                patientAge:
-                  patient?.patientAge || "",
-
-                gender:
-                  patient?.gender || "",
-
-                alternateMobile:
-                  patient?.alternateMobile || "",
-
-                location:
-                  patient?.location || "",
-
-                category:
-                  patient?.category || "",
-              },
-            },
-          }));
-
-          setLatestVisits(res?.latestVisits || [])
-
-          toast.success("Patient details auto-filled based on mobile number.");
-          return;
+        if (res?.success && patients.length > 0) {
+          if (patients.length === 1) {
+            // Exactly 1 patient found -> Auto-fetch single patient details
+            await fetchPatient(selectedHostpital, selectedBranch, patients[0]._id);
+            setPatientList([]);
+            setIsDropdownOpen(false);
+            toast.success("Patient details auto-filled.");
+          } else {
+            // Multiple patients found -> Store in list state and open dropdown
+            setPatientList(patients);
+            setIsDropdownOpen(true);
+            toast.info("Multiple patients found. Please select a patient.");
+          }
+        } else {
+          setPatientList([]);
+          setIsDropdownOpen(false);
+          toast.error("No patient details found.");
         }
-        else {
-          toast.error(" No patient details found.");
-          // setForm((prev) => ({
-          //   ...prev,
-
-          //   formData: {
-          //     ...prev.formData,
-
-          //     patientDetails: {
-          //       ...prev.formData.patientDetails,
-
-          //       patientName: "",
-
-          //       patientAge: "",
-
-          //       gender: "",
-
-          //       alternateMobile: "",
-
-          //       location: "",
-
-          //       category: "",
-          //     },
-          //   },
-          // }));
-          setLatestVisits(res?.latestVisits || [])
-          return
-        }
-
       } catch (error) {
-
-        console.error(
-          "Fetch Patient Error:",
-          error
-        );
+        console.error("Fetch Patient Error:", error);
+        toast.error("Failed to fetch patient details.");
       }
     };
 
-    fetchPatient();
-
+    fetchRegisteredPatients();
   }, [
     form.formData.patientDetails.patientMobile,
+    selectedHostpital,
+    selectedBranch,
   ]);
+
+  // Patient Select Handler
+  const handleSelectPatient = async (patientId) => {
+    try {
+      await fetchPatient(selectedHostpital, selectedBranch, patientId);
+      setIsDropdownOpen(false);
+      setPatientList([]);
+      toast.success("Patient selected successfully.");
+    } catch (error) {
+      console.error("Select Patient Error:", error);
+    }
+  };
 
   const fetchBookedSlots = async () => {
     try {
@@ -732,7 +799,7 @@ function Forms() {
             className="btn btn-primary"
             onClick={() => setShowLatestVisitsPanel(true)}
           >
-            Show Latest Visits
+            Show Latest Calls
           </button>
         </div>
       );
@@ -741,7 +808,7 @@ function Forms() {
     return (
       <div className="latest-patient-container">
         <div className="patient-latest-visit-heading">
-          <h4>Latest Visit</h4>
+          <h4>Latest Call</h4>
           <div className="latest-visit-actions">
             <button
               type="button"
@@ -957,8 +1024,7 @@ function Forms() {
 
             </div> */}
 
-            {/* Available Slots Display - Button Style for Easy Selection */}
-            {console.log("selectedDoctor", selectedDoctor)}
+
 
             {
 
@@ -1326,6 +1392,7 @@ function Forms() {
 
             </div>
 
+
             {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
             <div className="input-row">
@@ -1589,7 +1656,8 @@ function Forms() {
                 />
               </div>
             </div>
-            {selectedDoctor && <DoctorProfileCard doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
+
 
             <div className="input-row">
               <div className="input-group">
@@ -2398,7 +2466,7 @@ function Forms() {
               </div>
             </div>
 
-            {selectedDoctor && <DoctorProfileCard doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
             <div className="input-row">
               <div className="input-group">
@@ -2528,7 +2596,7 @@ function Forms() {
                 />
               </div>
             </div>
-            {selectedDoctor && <DoctorProfileCard doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
             <div className="input-row">
               <div className="input-group">
@@ -2725,10 +2793,7 @@ function Forms() {
                       padding: "0 14px",
                     },
                   }}
-                  options={[
-                    { _id: "", name: "Select Department" },
-                    ...(dynamicDepartments || []),
-                  ]}
+                  options={dynamicDepartments || []}
                   getOptionLabel={(option) => option?.name || ""}
                   isOptionEqualToValue={(option, value) =>
                     option._id === value._id
@@ -2736,7 +2801,7 @@ function Forms() {
                   value={
                     dynamicDepartments?.find(
                       (dept) => dept._id === form?.department
-                    ) || { _id: "", name: "Select Department" }
+                    ) || null
                   }
                   onChange={(_, newValue) => {
                     const depId = newValue?._id || "";
@@ -2749,14 +2814,28 @@ function Forms() {
                     handleChange("department", depId);
                   }}
                   renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      placeholder="Select Department"
-                      required
-                    />
-                  )} />
+                    <>
+                      <TextField
+                        {...params}
+                        placeholder="Select Department"
+                      />
+                      {/* Hidden native input to enforce HTML5 browser 'required' validation */}
+                      <input
+                        type="text"
+                        value={form?.department || ""}
+                        required
+                        style={{
+                          opacity: 0,
+                          position: "absolute",
+                          pointerEvents: "none",
+                          height: 0,
+                          width: 0,
+                        }}
+                      />
+                    </>
+                  )}
+                />
               </div>
-
               <div className="input-group">
                 <label className="required">Date & Time</label>
 
@@ -2779,11 +2858,12 @@ function Forms() {
                 value={selectedDoctor}
                 onChange={handleDoctorSelect}
                 label="Select Doctor"
+                required={true}
               // selectedDay={selectedDay}
               />
             </div>
 
-            {selectedDoctor && <DoctorProfileCard doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
             <div className="input-row">
               <div className="input-group textarea-field-container">
                 <label className="required">Remarks</label>
@@ -2900,13 +2980,14 @@ function Forms() {
                   value={selectedDoctor}
                   onChange={handleDoctorSelect}
                   label="Select Doctor"
+                  required={true}
                 // selectedDay={selectedDay}
                 />
               </div>
 
 
             </div>
-            {selectedDoctor && <DoctorProfileCard doctor={selectedDoctor} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
             <div className="input-group textarea-field-container">
               <label className="required">Remarks</label>
 
@@ -3058,37 +3139,32 @@ function Forms() {
 
                 <select
                   className="select-field"
-                  value={form.formData.feedbackType}
+                  value={form.formData.feedback?.feedbackType || ""}
                   onChange={(e) =>
-                    handleChange("formData.feedbackType", e.target.value)
+                    handleChange("formData.feedback.feedbackType", e.target.value)
                   }
                   required
                 >
                   <option value="">Select</option>
-
                   <option value="ipd">IPD Feedback</option>
-
                   <option value="opd">OPD Feedback</option>
-
                   <option value="noFeedback">No Feedback</option>
-
                   <option value="notConnected">Not Connected</option>
                 </select>
               </div>
             </div>
 
-            {form.formData.feedbackType === "ipd" && (
+            {form.formData.feedback?.feedbackType === "ipd" && (
               <div className="feedback-questions">
                 <div className="input-row">
                   <div className="input-group">
                     <label className="required">IPD Number</label>
-
                     <input
                       type="text"
                       className="input-field"
-                      value={form.formData.ipdNumber}
+                      value={form.formData.feedback?.ipdNumber || ""}
                       onChange={(e) =>
-                        handleChange("formData.ipdNumber", e.target.value)
+                        handleChange("formData.feedback.ipdNumber", e.target.value)
                       }
                       required
                     />
@@ -3096,22 +3172,24 @@ function Forms() {
                 </div>
 
                 {/* Rendering 10 Questions Grid */}
-
                 <div
                   className="input-row"
                   style={{ gridTemplateColumns: "repeat(2, 1fr)" }}
                 >
                   {[
-                    "Question 1: Are you happy with the treatment provided in the hospital? *",
-                    "Question 2: Did the Doctor Explain about your problem / disease ? *",
-                    "Question 3: Did the nursing staff gave solution to your problem ? *",
-                    "Question 4: Are you happy with the hygiene and cleanliness maintained in the wards ? *",
-                    "Question 5: Did you receive blood reports / ultrasound / X- Ray reports on time ? *",
-                    "Question 6: Was the admission / discharge process smooth ? *",
-                    "Question 7: Was the pharmacy available 24 x 7 ? *",
-                    "Question 8: Did the dietitian visit you and provide food on time? *"
+                    "Are you happy with the treatment provided in the hospital? *",
+                    "Did the Doctor Explain about your problem / disease ? *",
+                    "Did the nursing staff gave solution to your problem ? *",
+                    "Are you happy with the hygiene and cleanliness maintained in the wards ? *",
+                    "Did you receive blood reports / ultrasound / X- Ray reports on time ? *",
+                    "Was the admission / discharge process smooth ? *",
+                    "Was the pharmacy available 24 x 7 ? *",
+                    "Did the dietitian visit you and provide food on time? *"
                   ].map((questionText, index) => {
                     const qNum = index + 1;
+                    const currentQuestions = form.formData.feedback?.questions || [];
+                    const existingQ = currentQuestions.find((q) => q.questionId === `ipdQ${qNum}`);
+
                     return (
                       <div key={qNum} className="input-group">
                         <label className="required">{questionText}</label>
@@ -3121,13 +3199,25 @@ function Forms() {
                             <button
                               key={num}
                               type="button"
-                              className={`rating-btn ${form.formData[`ipdQ${qNum}`] === num.toString() ? "active" : ""}`}
-                              onClick={() =>
-                                handleChange(
-                                  `formData.ipdQ${qNum}`,
-                                  num.toString(),
-                                )
-                              }
+                              className={`rating-btn ${existingQ?.rating === num ? "active" : ""}`}
+                              onClick={() => {
+                                const updatedQuestions = [...currentQuestions];
+                                const qIndex = updatedQuestions.findIndex((q) => q.questionId === `ipdQ${qNum}`);
+
+                                const newQuestionObj = {
+                                  questionId: `ipdQ${qNum}`,
+                                  questionText: questionText,
+                                  rating: num,
+                                };
+
+                                if (qIndex > -1) {
+                                  updatedQuestions[qIndex] = newQuestionObj;
+                                } else {
+                                  updatedQuestions.push(newQuestionObj);
+                                }
+
+                                handleChange("formData.feedback.questions", updatedQuestions);
+                              }}
                             >
                               {num}
                             </button>
@@ -3141,10 +3231,9 @@ function Forms() {
                 <div className="input-row">
                   <div className="input-group textarea-field-container">
                     <label className="required">Remarks</label>
-
                     <textarea
                       className="textarea-field"
-                      value={form.formData.remarks}
+                      value={form.formData.remarks || ""}
                       onChange={(e) =>
                         handleChange("formData.remarks", e.target.value)
                       }
@@ -3156,18 +3245,17 @@ function Forms() {
               </div>
             )}
 
-            {form.formData.feedbackType === "opd" && (
+            {form.formData.feedback?.feedbackType === "opd" && (
               <div className="feedback-questions">
                 <div className="input-row">
                   <div className="input-group">
                     <label className="">OPD Number</label>
-
                     <input
                       type="text"
                       className="input-field"
-                      value={form.formData.opdNumber}
+                      value={form.formData.feedback?.opdNumber || ""}
                       onChange={(e) =>
-                        handleChange("formData.opdNumber", e.target.value)
+                        handleChange("formData.feedback.opdNumber", e.target.value)
                       }
                     />
                   </div>
@@ -3178,18 +3266,21 @@ function Forms() {
                   style={{ gridTemplateColumns: "repeat(2, 1fr)" }}
                 >
                   {[
-                    "Question 1: Are OPD timings convenient for you ? *",
-                    "Question 2: Did you find parking facility comfortably in the hospital? *",
-                    "Question 3: Have you faced problems in finding the concerned department? *",
-                    "Question 4: Did you find waiting area clean / sufficient ? *",
-                    "Question 5: Did you wait for long before consultation? *",
-                    "Question 6: Did you wait for long before your tests? *",
-                    "Question 7: Was the Doctor focused about your treatment and your problem? *",
-                    "Question 8: Did you receive reports on time? *",
-                    "Question 9: Doctor explained about your treatment and responded to all your questions? *",
-                    "Question 10: Are you happy with the treatment / services provided in the Hospital? *"
+                    "Are OPD timings convenient for you ? *",
+                    "Did you find parking facility comfortably in the hospital? *",
+                    "Have you faced problems in finding the concerned department? *",
+                    "Did you find waiting area clean / sufficient ? *",
+                    "Did you wait for long before consultation? *",
+                    "Did you wait for long before your tests? *",
+                    "Was the Doctor focused about your treatment and your problem? *",
+                    "Did you receive reports on time? *",
+                    "Doctor explained about your treatment and responded to all your Questions",
+                    "Are you happy with the treatment / services provided in the Hospital? *"
                   ].map((questionText, index) => {
                     const qNum = index + 1;
+                    const currentQuestions = form.formData.feedback?.questions || [];
+                    const existingQ = currentQuestions.find((q) => q.questionId === `opdQ${qNum}`);
+
                     return (
                       <div key={qNum} className="input-group">
                         <label className="required">{questionText}</label>
@@ -3199,14 +3290,25 @@ function Forms() {
                             <button
                               key={num}
                               type="button"
-                              className={`rating-btn ${form.formData[`opdQ${qNum}`] === num.toString() ? "active" : ""}`}
-                              onClick={() =>
-                                handleChange(
-                                  `formData.opdQ${qNum}`,
+                              className={`rating-btn ${existingQ?.rating === num ? "active" : ""}`}
+                              onClick={() => {
+                                const updatedQuestions = [...currentQuestions];
+                                const qIndex = updatedQuestions.findIndex((q) => q.questionId === `opdQ${qNum}`);
 
-                                  num.toString(),
-                                )
-                              }
+                                const newQuestionObj = {
+                                  questionId: `opdQ${qNum}`,
+                                  questionText: questionText,
+                                  rating: num,
+                                };
+
+                                if (qIndex > -1) {
+                                  updatedQuestions[qIndex] = newQuestionObj;
+                                } else {
+                                  updatedQuestions.push(newQuestionObj);
+                                }
+
+                                handleChange("formData.feedback.questions", updatedQuestions);
+                              }}
                             >
                               {num}
                             </button>
@@ -3220,10 +3322,9 @@ function Forms() {
                 <div className="input-row">
                   <div className="input-group textarea-field-container">
                     <label className="required">Remarks</label>
-
                     <textarea
                       className="textarea-field"
-                      value={form.formData.remarks}
+                      value={form.formData.remarks || ""}
                       onChange={(e) =>
                         handleChange("formData.remarks", e.target.value)
                       }
@@ -3235,24 +3336,17 @@ function Forms() {
               </div>
             )}
 
-            {(form.formData.feedbackType === "noFeedback" ||
-              form.formData.feedbackType === "notConnected") && (
+            {(form.formData.feedback?.feedbackType === "noFeedback" ||
+              form.formData.feedback?.feedbackType === "notConnected") && (
                 <div className="input-row">
                   <div className="input-group textarea-field-container">
                     <label className="required">Remarks</label>
-
                     <textarea
                       className="textarea-field"
-                      value={
-                        form.formData.feedbackType === "noFeedback"
-                          ? form.formData.remarks
-                          : form.formData.remarks
-                      }
-
-
+                      value={form.formData.remarks || ""}
                       onChange={(e) => {
-                        handleChange("callStatus", "Not-Conected")
-                        handleChange("formData.remarks", e.target.value)
+                        handleChange("callStatus", "Not-Conected");
+                        handleChange("formData.remarks", e.target.value);
                       }}
                       required
                       rows="3"
@@ -3717,6 +3811,90 @@ function Forms() {
                       title="Enter 10 to 12 digit mobile number"
                       placeholder="10-12 digit number"
                     />
+                    {patientList?.length > 0 && (
+                      <Box sx={{ position: "relative", width: "100%" }}>
+
+                        {/* Multiple Patients Dropdown List using MUI */}
+                        {isDropdownOpen && patientList.length > 1 && (
+                          <Paper
+                            elevation={4}
+                            sx={{
+                              position: "absolute",
+                              top: "100%",
+                              left: 0,
+                              right: 0,
+                              zIndex: 10,
+                              mt: 1,
+                              maxHeight: 240,
+                              overflowY: "auto",
+                              borderRadius: 1,
+                            }}
+                          >
+                            {/* Header */}
+                            <Box
+                              sx={{
+                                p: 1.5,
+                                backgroundColor: "grey.100",
+                                borderBottom: "1px solid",
+                                borderColor: "divider",
+                              }}
+                            >
+                              <Typography variant="caption" sx={{ fontWeight: "bold", color: "text.secondary" }}>
+                                Select Patient ({patientList.length} found):
+                              </Typography>
+                            </Box>
+
+                            {/* Patient List */}
+                            <List disablePadding>
+                              {patientList.map((patient, index) => (
+                                <React.Fragment key={patient._id || index}>
+                                  <ListItem
+                                    onClick={() => handleSelectPatient(patient._id)}
+                                    sx={{
+                                      cursor: "pointer",
+                                      transition: "background-color 0.2s",
+                                      "&:hover": {
+                                        backgroundColor: "action.hover",
+                                      },
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                      alignItems: "center",
+                                      py: 1.5,
+                                      px: 2,
+                                    }}
+                                  >
+                                    <ListItemText
+                                      primary={
+                                        <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
+                                          {patient.patientName || "Unknown Name"}
+                                        </Typography>
+                                      }
+                                      secondary={
+                                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                                          Age: {patient.patientAge || "N/A"} | Gender: {patient.gender || "N/A"}
+                                        </Typography>
+                                      }
+                                    />
+                                    <Button
+                                      variant="contained"
+                                      size="small"
+                                      sx={{ textTransform: "none", ml: 2 }}
+                                      onClick={(e) => {
+                                        e.stopPropagation(); // Prevents double click trigger if parent handles click
+                                        handleSelectPatient(patient._id);
+                                      }}
+                                    >
+                                      Select
+                                    </Button>
+                                  </ListItem>
+                                  {index < patientList.length - 1 && <Divider />}
+                                </React.Fragment>
+                              ))}
+                            </List>
+                          </Paper>
+                        )}
+                      </Box>
+                    )}
                   </div>
                   <div className="input-group">
                     <label className={isRequired ? "required" : ""} >Patient Name</label>
@@ -3774,7 +3952,7 @@ function Forms() {
                         value = value.slice(0, 5); // e.g. 99.99
 
                         // Validation
-                        if (value !== "" && parseFloat(value) <= 0) {
+                        if (value !== "" && parseFloat(value) < 0) {
                           value = "";
                         }
                         // max age 110
@@ -4215,7 +4393,7 @@ function Forms() {
               />
             </div>
             <div className="input-group">
-              <label className="required">Patient Name</label>
+              <label className="">Patient Name</label>
 
               <input
                 type="text"
@@ -4294,20 +4472,25 @@ function Forms() {
         </div>
       )}
 
-      <div className="button-group">
-        <button
-          disabled={saveFilledFormLoading}
-          type="button"
-          className="btn btn-clear"
-          onClick={resetForm}
-        >
-          Clear Form
-        </button>
 
-        <button type="submit" disabled={saveFilledFormLoading} className="btn btn-submit">
-          {saveFilledFormLoading ? <CircularProgress size={20} color="inherit" /> : "Submit"}
-        </button>
-      </div>
+      {form.formType === "outbound" && form.purpose && (
+        <div className="button-group">
+          <button
+            disabled={saveFilledFormLoading}
+            type="button"
+            className="btn btn-clear"
+            onClick={resetForm}
+          >
+            Clear Form
+          </button>
+
+          <button type="submit" disabled={saveFilledFormLoading || !form.purpose} className="btn btn-submit">
+            {saveFilledFormLoading ? <CircularProgress size={20} color="inherit" /> : "Submit"}
+          </button>
+        </div>
+      )}
+
+
     </form>
   );
 
@@ -4358,14 +4541,25 @@ function Forms() {
 
           <button
             className={`toggle-btn ${form?.formType === "inbound" ? "active" : ""}`}
-            onClick={() => handleChange("formType", "inbound")}
+            onClick={() => {
+
+              resetForm();
+              setPatient(null)
+              setLatestVisits([]);
+              handleChange("formType", "inbound")
+            }}
           >
             Inbound
           </button>
 
           <button
             className={`toggle-btn ${form?.formType === "outbound" ? "active" : ""}`}
-            onClick={() => handleChange("formType", "outbound")}
+            onClick={() => {
+              resetForm();
+              setPatient(null)
+              setLatestVisits([]);
+              handleChange("formType", "outbound")
+            }}
           >
             Outbound
           </button>
@@ -4382,7 +4576,8 @@ function Forms() {
         fullWidth
         PaperProps={{
           sx: {
-            minHeight: "600px",
+            minHeight: "800px",
+            // minWidth: "1000px",
             borderRadius: 3,
             background: "#f7fbff",
             boxShadow: 8,
@@ -4390,8 +4585,13 @@ function Forms() {
         }}
       >
         <DialogTitle sx={{ bgcolor: '#1976d2', color: 'white', fontWeight: 700 }}>
-          Latest Visit History
+          Latest Call History
         </DialogTitle>
+        <DialogActions>
+          <Button onClick={() => setLatestVisitsModalOpen(false)} sx={{ fontWeight: 600 }}>
+            Close
+          </Button>
+        </DialogActions>
         <DialogContent>
           <Stack spacing={2} mt={1}>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" justifyContent="space-between">
@@ -4420,19 +4620,19 @@ function Forms() {
               <table className="patient-details-table" style={{ minWidth: 900 }}>
                 <thead>
                   <tr>
-                    <th>Form Type</th>
-                    <th>Purpose</th>
-                    <th>Doctor</th>
-                    <th>Department</th>
-                    <th>Remarks</th>
-                    <th>Submitted Date</th>
+                    {PatientCallHistory.map(col => (
+                      <th key={col.key}>{col.label}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filteredLatestVisits.length > 0 ? (
                     filteredLatestVisits.map((lv, index) => (
                       <tr key={lv?._id || index}>
+                        <td>{lv?.agentName || "-"}</td>
                         <td>{lv?.formType || "-"}</td>
+                        <td>{patientProfile?.patientName || "-"}</td>
+                        <td>{patientProfile?.patientName || "-"}</td>
                         <td>{lv?.purpose || "-"}</td>
                         <td>{lv?.doctor?.name || "-"}</td>
                         <td>{lv?.department?.name || "-"}</td>
@@ -4456,11 +4656,7 @@ function Forms() {
             </Box>
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setLatestVisitsModalOpen(false)} sx={{ fontWeight: 600 }}>
-            Close
-          </Button>
-        </DialogActions>
+
       </Dialog>
 
       <Dialog
