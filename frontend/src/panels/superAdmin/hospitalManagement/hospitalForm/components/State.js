@@ -1210,6 +1210,7 @@ const initialPatientDetails = {
 };
 
 export const initialFormData = {
+  typeOfDisease: "",
   callerType: "",
   referenceFrom: "",
   refDoctorName: "",

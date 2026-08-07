@@ -419,12 +419,23 @@ export const commonRoutes = {
       }
     }),
 
-  getPatientByMobile: (hospitalId, branchId, patientId) =>
+  getPatientByMobile: (hospitalId, branchId, patientMobile, selctedPatientId) =>
     API.get(`api/getpatientByMobile`, {
       params: {
         hospitalId,
         branchId,
-        patientId
+        patientMobile,
+        selctedPatientId
+
+      }
+    }),
+
+  getPatientCallHistoryByMobile: (hospitalId, branchId, patientMobile) =>
+    API.get(`api/getpatientCallHistoryByMobile`, {
+      params: {
+        hospitalId,
+        branchId,
+        patientMobile
       }
     }),
 

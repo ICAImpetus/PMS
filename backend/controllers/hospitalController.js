@@ -8713,12 +8713,103 @@ export const singlePatientHistory = async (req, res) => {
 
 export const getPatientByNumber = async (req, res) => {
   try {
+    const { hospitalId, branchId, patientMobile, selctedPatientId } = req.query;
+
+    if (!patientMobile) {
+      return res.status(400).json({
+        success: false,
+        message: "Patient Mobile Number is required",
+      });
+    }
+
+    if (!selctedPatientId) {
+      return res.status(400).json({
+        success: false,
+        message: "Patient Not Selected ",
+      });
+    }
+    // Validate hospitalId
+    if (!hospitalId || !branchId || !mongoose.isValidObjectId(hospitalId) || !mongoose.isValidObjectId(branchId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid Hospital Id and Branch Id are required",
+      });
+    }
+
+    // Get hospital
+    const hospital = await HospitalModel.findById(hospitalId)
+      .select("trimmedName")
+      .lean();
+
+    if (!hospital) {
+      return res.status(404).json({
+        success: false,
+        message: "Hospital not found",
+      });
+    }
+
+    // Multi-tenant connection
+    const conn = await getConnection(hospital.trimmedName);
+    const PatientModel = getPatientModel(conn);
+    const FilledFormsModel = getFilledFormsModel(conn);
+    const DoctorModel = getDoctorModel(conn)
+    const DepartmentModel = getDepartmentModel(conn)
+
+
+
+    const [patient, patients] = await Promise.all([
+      PatientModel.findById(selctedPatientId).select("patientName patientMobile status patientAge gender alternateMobile location category").lean(),
+      PatientModel.find({ patientMobile }).select("_id").lean()
+    ]);
+
+
+    const patientIds = patients.map(p => p._id);
+
+    if (!patients.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Patient not found",
+      });
+    }
+    const latestVisits = await FilledFormsModel.find({
+      "formData.patientDetails": { $in: patientIds },
+      isDeleted: false,
+    }).select("formType purpose")
+      .populate(pop("doctor", DoctorModel, "name"))
+      .populate(pop("department", DepartmentModel, "name"))
+      // .populate(pop("formData.patientDetails", PatientModel, "patientName patientMobileNo patientStatus patientAge patientCategory patientlocation patientGender"))
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      message: "Patient fetched successfully",
+      data: patient,
+      latestVisits: latestVisits || []
+
+
+    });
+
+  } catch (error) {
+    console.error("Get Patient Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+export const getPatientCallHistoryByNumber = async (req, res) => {
+  try {
     const { hospitalId, branchId, patientMobile } = req.query;
 
     if (!patientMobile) {
       return res.status(400).json({
         success: false,
-        message: "Patient mobile number is required",
+        message: "Patient Mobile Number is required",
       });
     }
 
@@ -8749,34 +8840,32 @@ export const getPatientByNumber = async (req, res) => {
     const DoctorModel = getDoctorModel(conn)
     const DepartmentModel = getDepartmentModel(conn)
 
+    const patients = await PatientModel.find({ patientMobile }).select("_id").lean();
+    const patientIds = patients.map(p => p._id);
 
-    const patient = await PatientModel.findOne({
-      patientMobile,
-      isDeleted: false,
-    }).select("-lastVisit").lean();
-
-    if (!patient) {
+    if (!patients.length) {
       return res.status(404).json({
         success: false,
         message: "Patient not found",
-      });
+      })
+
+
     }
     const latestVisits = await FilledFormsModel.find({
-      "formData.patientDetails": patient._id,
+      "formData.patientDetails": { $in: patientIds },
       isDeleted: false,
     }).select("agentName formType gender callStatus purpose appointmentSlot followupStatus createdAt formData.patientDetails formData.patientArrivalTime formData.remarks formData.surgeryName formData.healthPackageName formData.healthSchemeName formData.govertHealthSchemeName formData.nonGovtHealthSchemeName formData.reportName formData.referenceFrom formData.feedbackType formData.feedback")
       .populate(pop("doctor", DoctorModel, "name"))
       .populate(pop("department", DepartmentModel, "name"))
       // .populate(pop("formData.patientDetails", PatientModel, "patientName patientMobileNo patientStatus patientAge patientCategory patientlocation patientGender"))
       .sort({ createdAt: -1 })
-      .limit(5)
+      .limit(10)
       .lean();
 
     return res.status(200).json({
       success: true,
       message: "Patient fetched successfully",
-      data: patient,
-      latestVisits: latestVisits || []
+      data: latestVisits || []
 
 
     });
@@ -8838,7 +8927,7 @@ export const getRegisteredPatientsByNumber = async (req, res) => {
       branchId: new mongoose.Types.ObjectId(branchId),
       isDeleted: false,
     })
-      .select("-lastVisit")
+      .select("patientName")
       .lean();
 
     if (!patient) {

@@ -191,6 +191,7 @@ router.delete("/clear-notifications", auth, hospitalController.clearNotification
 // patient
 router.get("/get-patients", auth, hospitalController.getPatientByRole);
 router.get("/getpatientByMobile", hospitalController.getPatientByNumber);
+router.get("/getpatientCallHistoryByMobile", hospitalController.getPatientCallHistoryByNumber);
 router.get("/registered-patients-by-number", hospitalController.getRegisteredPatientsByNumber);
 router.get("/single-patient-history", auth, hospitalController.singlePatientHistory);
 

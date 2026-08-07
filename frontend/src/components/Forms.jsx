@@ -21,7 +21,17 @@ import {
   MenuItem,
   DialogActions,
   Button,
-
+  Grid,
+  Card,
+  CardContent,
+  Checkbox,
+  FormControlLabel,
+  FormHelperText,
+  Paper,
+  List,
+  ListItem,
+  Divider,
+  ListItemText
 } from "@mui/material";
 import DoctorProfileCard from "./DoctorCard";
 import HospitalContext from "../contexts/HospitalContexts";
@@ -30,7 +40,7 @@ import {
   IndianStatesWithDistricts, initialFormState, OUTBOUND_PURPOSE_OPTIONS,
   REFERENCE_OPTIONS, initialFormData
 } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
-import { PatientCallHistory } from "../utils/exportUtils";
+import { FORMS_AVAILABLE_COLUMNS, PatientCallHistory } from "../utils/exportUtils";
 
 const getPatientArrivalDateTime = (
   appointmentSlot,
@@ -216,8 +226,9 @@ function Forms() {
   const [selectedDay, setSelectedDay] = useState(null);
   const [bookedSlotIds, setBookedSlotIds] = useState([]);
   const [latestVisits, setLatestVisits] = useState([]);
+  const [latestCallHistory, setLatestCallHistory] = useState([]);
   const [patientProfile, setPatient] = useState(null);
-
+  const [selctedPatientId, setSelectedPatientId] = useState(null);
   const [patientList, setPatientList] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showLatestVisitsPanel, setShowLatestVisitsPanel] = useState(true);
@@ -260,7 +271,15 @@ function Forms() {
   );
 
   const {
-    request: getRegisteredPatientsByNumber,
+    request: getSinglePatientCallHistoryApi,
+    error: getSinglePatientCallHistoryError,
+    loading: getSinglePatientCallHistoryLoading,
+  } = useApi(
+    commonRoutes.getPatientCallHistoryByMobile
+  );
+
+  const {
+    request: getRegisteredPatientsByNumberApi,
     error: getRegisteredPatientsByNumberError,
     loading: getRegisteredPatientsByNumberLoading,
   } = useApi(
@@ -310,15 +329,22 @@ function Forms() {
         return;
       }
 
+
+
+      if (!patientId) {
+        toast.error("No patient selected. Please select a patient from the dropdown.");
+        return;
+      }
+
       const res = await getSinglePatientApi(
         selectedHostpital,
         selectedBranch,
+        number,
         patientId
       );
       const patient = res?.data;
       setPatient(patient);
       setLatestVisits(res?.latestVisits || [])
-
       if (res?.success) {
         setForm((prev) => ({
           ...prev,
@@ -350,9 +376,9 @@ function Forms() {
           },
         }));
 
-
-
         toast.success("Patient details auto-filled based on mobile number.");
+        setIsDropdownOpen(false);
+        setPatientList([]);
         return;
       }
       else {
@@ -393,6 +419,39 @@ function Forms() {
     }
   };
 
+  const fetchPatientCallHistory = async () => {
+
+    try {
+
+      const number =
+        form.formData.patientDetails.patientMobile;
+
+      if (
+        !number ||
+        (number.length !== 10 &&
+          number.length !== 12)
+      ) {
+        return;
+      }
+      const res = await getSinglePatientCallHistoryApi(
+        selectedHostpital,
+        selectedBranch,
+        number
+      );
+
+      if (res?.success) {
+        setLatestCallHistory(res?.data || [])
+        return;
+      }
+    } catch (error) {
+
+      console.error(
+        "Fetch Patient Call History Error:",
+        error
+      );
+    }
+  };
+
 
   useEffect(() => {
     const fetchRegisteredPatients = async () => {
@@ -405,7 +464,7 @@ function Forms() {
           return;
         }
 
-        const res = await getSinglePatientApi(
+        const res = await getRegisteredPatientsByNumberApi(
           selectedHostpital,
           selectedBranch,
           number
@@ -415,13 +474,13 @@ function Forms() {
 
         if (res?.success && patients.length > 0) {
           if (patients.length === 1) {
-            // Exactly 1 patient found -> Auto-fetch single patient details
-            await fetchPatient(selectedHostpital, selectedBranch, patients[0]._id);
+
+            await fetchPatient(patients[0]?._id);
             setPatientList([]);
             setIsDropdownOpen(false);
-            toast.success("Patient details auto-filled.");
+            // toast.success("Patient details auto-filled.");
           } else {
-            // Multiple patients found -> Store in list state and open dropdown
+            // Multiple patients found -> Store in list state and open dropdownpatient
             setPatientList(patients);
             setIsDropdownOpen(true);
             toast.info("Multiple patients found. Please select a patient.");
@@ -429,11 +488,11 @@ function Forms() {
         } else {
           setPatientList([]);
           setIsDropdownOpen(false);
-          toast.error("No patient details found.");
+          // toast.error("No patient details found.");
         }
       } catch (error) {
         console.error("Fetch Patient Error:", error);
-        toast.error("Failed to fetch patient details.");
+        // toast.error("Failed to fetch patient details.");
       }
     };
 
@@ -444,13 +503,19 @@ function Forms() {
     selectedBranch,
   ]);
 
+  const handleGetPatientCallHistory = async () => {
+
+    await fetchPatientCallHistory();
+
+  }
+
   // Patient Select Handler
   const handleSelectPatient = async (patientId) => {
     try {
-      await fetchPatient(selectedHostpital, selectedBranch, patientId);
-      setIsDropdownOpen(false);
-      setPatientList([]);
-      toast.success("Patient selected successfully.");
+
+      await fetchPatient(patientId);
+
+      // toast.success("Patient selected successfully.");
     } catch (error) {
       console.error("Select Patient Error:", error);
     }
@@ -763,12 +828,12 @@ function Forms() {
   };
 
   const filteredLatestVisits = useMemo(() => {
-    if (!Array.isArray(latestVisits)) {
+    if (!Array.isArray(latestCallHistory) || latestCallHistory.length === 0) {
       return [];
     }
 
     const normalizedSearch = latestVisitSearch.trim().toLowerCase();
-    return latestVisits.filter((visit) => {
+    return latestCallHistory.filter((visit) => {
       const purpose = String(visit?.purpose || "").toLowerCase();
       const type = String(visit?.formType || "").toLowerCase();
 
@@ -779,7 +844,7 @@ function Forms() {
 
       return matchesPurpose && matchesType;
     });
-  }, [latestVisits, latestVisitSearch, latestVisitFilter]);
+  }, [latestCallHistory, latestVisitSearch, latestVisitFilter]);
 
   const renderLatestPatientComponents = () => {
     const canShowLatestVisits =
@@ -813,7 +878,11 @@ function Forms() {
             <button
               type="button"
               className="btn btn-secondary"
-              onClick={() => setLatestVisitsModalOpen(true)}
+              onClick={() => {
+                handleGetPatientCallHistory()
+                setLatestVisitsModalOpen(true)
+
+              }}
             >
               View More
             </button>
@@ -1197,99 +1266,150 @@ function Forms() {
                 </Box>
               </div>
             )}
-
-            <div className="input-group textarea-field-container"
-
-            >
-              <label className="required">Patient Status</label>
-              <div className="followup-container"
-
+            <Box sx={{ width: "100%", my: 2 }}>
+              {/* Required Header Label */}
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 600,
+                  mb: 1.5,
+                  "&::after": {
+                    content: '" *"',
+                    color: "error.main",
+                  },
+                }}
               >
-                {/* Follow-up Checkbox */}
-                <div className="followup-card">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={form.useForFollowup}
-                      onChange={(e) =>
-                        handleChange("useForFollowup", e.target.checked)
-                      }
-                      className="checkbox-input"
-                    />
+                Patient Status
+              </Typography>
 
-                    <span>Useful for Making Follow-up Patients</span>
-                  </label>
-                </div>
-
-                {/* Patient Arrival Time */}
-                <div className="followup-card time-car">
-                  <label className="input-label">
-                    Patient Arrival Time
-                  </label>
-
-                  <input
-
-                    type="time"
-
-                    disabled={form.formData.appointmentSlot?.start ? true : false}
-                    value={
-                      form.formData.patientArrivalTime
-                        ? dayjs(
-                          form.formData.patientArrivalTime,
-                          "hh:mm A"
-                        ).format("HH:mm")
-                        : ""
-                    }
-
-                    onChange={(e) => {
-
-                      const formattedTime =
-                        dayjs(
-                          e.target.value,
-                          "HH:mm"
-                        ).format("hh:mm A");
-
-                      handleChange(
-                        "formData.patientArrivalTime",
-                        formattedTime
-                      );
+              <Grid container spacing={2}>
+                {/* Follow-up Checkbox Card */}
+                <Grid item xs={12} md={4}>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      height: "100%",
+                      borderRadius: 2,
+                      boxShadow: "none",
+                      transform: "none",
+                      "&:hover": {
+                        transform: "none",
+                        boxShadow: "none",
+                      },
                     }}
+                  >
+                    <CardContent
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        height: "100%",
+                        py: 1.5,
+                        "&:last-child": { pb: 1.5 },
+                      }}
+                    >
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={Boolean(form.useForFollowup)}
+                            onChange={(e) =>
+                              handleChange("useForFollowup", e.target.checked)
+                            }
+                            color="primary"
+                          />
+                        }
+                        label="Useful for Making Follow-up Patients"
+                        componentsProps={{
+                          typography: { variant: "body2", fontWeight: 500 },
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
 
-                    required
-                    className="time-input"
+                {/* Patient Arrival Time Card */}
+                <Grid item xs={12} sm={6} md={4}>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      height: "100%",
+                      borderRadius: 2,
+                      boxShadow: "none",
+                      transform: "none",
+                      "&:hover": {
+                        transform: "none",
+                        boxShadow: "none",
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+                      <TextField
+                        fullWidth
+                        required
+                        type="time"
+                        label="Patient Arrival Time"
+                        size="small"
+                        disabled={Boolean(form.formData.appointmentSlot?.start)}
+                        value={
+                          form.formData.patientArrivalTime
+                            ? dayjs(
+                              form.formData.patientArrivalTime,
+                              "hh:mm A"
+                            ).format("HH:mm")
+                            : ""
+                        }
+                        onChange={(e) => {
+                          const formattedTime = dayjs(
+                            e.target.value,
+                            "HH:mm"
+                          ).format("hh:mm A");
+                          handleChange(
+                            "formData.patientArrivalTime",
+                            formattedTime
+                          );
+                        }}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                      {form.formData.appointmentSlot?.start && (
+                        <FormHelperText sx={{ mt: 0.5 }}>
+                          Auto-filled from selected slot (
+                          {form.formData.appointmentSlot.start})
+                        </FormHelperText>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
 
-                  />
-
-                  {
-                    form.formData.appointmentSlot?.start && (
-                      <small className="slot-time-helper">
-                        Auto-filled from selected slot (
-                        {form.formData.appointmentSlot.start}
-                        )
-                      </small>
-                    )
-                  }
-
-                  {/* {
-                    liveTime && (
-                      <div className="live-arrival-time">
-
-                        <span className="live-time-label">
-                          Patient will arrive in:
-                        </span>
-
-                        <span className="live-time-value">
-                          {liveTime}
-                        </span>
-
-                      </div>
-                    )
-                  } */}
-
-                </div>
-
-              </div>
-            </div>
+                {/* Type of Disease Card (Optional Field) */}
+                <Grid item xs={12} sm={6} md={4}>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      height: "100%",
+                      borderRadius: 2,
+                      boxShadow: "none",
+                      transform: "none",
+                      "&:hover": {
+                        transform: "none",
+                        boxShadow: "none",
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+                      <TextField
+                        fullWidth
+                        label="Type of Disease"
+                        placeholder="e.g. Diabetes, Hypertension"
+                        size="small"
+                        value={form.formData.typeOfDisease || ""}
+                        onChange={(e) =>
+                          handleChange("formData.typeOfDisease", e.target.value)
+                        }
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            </Box>
 
             <div className="input-group textarea-field-container">
               <label className="required">Remarks</label>
@@ -3558,8 +3678,8 @@ function Forms() {
                   </button>
                 </div>
               </div>
-
-              {console.log("Reference From", isRequired)}
+              {/* 
+              {console.log("Reference From", isRequired)} */}
               {(form.formData.callerType === "Patient" ||
                 form.formData.callerType === "Attendant")
                 && (
@@ -3847,9 +3967,8 @@ function Forms() {
                             {/* Patient List */}
                             <List disablePadding>
                               {patientList.map((patient, index) => (
-                                <React.Fragment key={patient._id || index}>
+                                <React.Fragment key={patient?._id || index}>
                                   <ListItem
-                                    onClick={() => handleSelectPatient(patient._id)}
                                     sx={{
                                       cursor: "pointer",
                                       transition: "background-color 0.2s",
@@ -3881,7 +4000,9 @@ function Forms() {
                                       sx={{ textTransform: "none", ml: 2 }}
                                       onClick={(e) => {
                                         e.stopPropagation(); // Prevents double click trigger if parent handles click
-                                        handleSelectPatient(patient._id);
+                                        console.log("Selected Patient ID:", patient?._id);
+
+                                        handleSelectPatient(patient?._id)
                                       }}
                                     >
                                       Select
@@ -4620,23 +4741,45 @@ function Forms() {
               <table className="patient-details-table" style={{ minWidth: 900 }}>
                 <thead>
                   <tr>
-                    {PatientCallHistory.map(col => (
+                    {FORMS_AVAILABLE_COLUMNS.map(col => (
                       <th key={col.key}>{col.label}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredLatestVisits.length > 0 ? (
+                  {getSinglePatientCallHistoryLoading ? (
+                    <tr>
+                      <td
+                        colSpan={FORMS_AVAILABLE_COLUMNS.length}
+                        style={{ textAlign: "center", padding: "16px" }}
+                      >
+                        <CircularProgress size={24} />
+                      </td>
+                    </tr>
+                  ) : filteredLatestVisits.length > 0 ? (
                     filteredLatestVisits.map((lv, index) => (
                       <tr key={lv?._id || index}>
                         <td>{lv?.agentName || "-"}</td>
                         <td>{lv?.formType || "-"}</td>
                         <td>{patientProfile?.patientName || "-"}</td>
-                        <td>{patientProfile?.patientName || "-"}</td>
+                        <td>{patientProfile?.patientMobile || "-"}</td>
+                        <td>{patientProfile?.status || "-"}</td>
+                        <td>{patientProfile?.patientAge || "-"}</td>
+                        <td>{patientProfile?.category || "-"}</td>
+                        <td>{patientProfile?.location || "-"}</td>
+                        <td>{patientProfile?.gender || "-"}</td>
+                        <td>{lv?.callStatus || "-"}</td>
                         <td>{lv?.purpose || "-"}</td>
+                        <td>{lv?.purpose || "-"}</td>
+                        <td>{lv?.purpose || "-"}</td>
+                        <td>{lv?.formData?.remarks || "-"}</td>
                         <td>{lv?.doctor?.name || "-"}</td>
                         <td>{lv?.department?.name || "-"}</td>
-                        <td>{lv?.formData?.remarks || "-"}</td>
+                        <td>{lv?.department?.name || "-"}</td>
+                        <td>{lv?.department?.name || "-"}</td>
+                        <td>{lv?.department?.name || "-"}</td>
+                        <td>{lv?.department?.name || "-"}</td>
+
                         <td>
                           {lv?.createdAt
                             ? moment(lv.createdAt).format("DD MMM YYYY, hh:mm A")
@@ -4646,7 +4789,10 @@ function Forms() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={6} style={{ textAlign: 'center', padding: '16px' }}>
+                      <td
+                        colSpan={FORMS_AVAILABLE_COLUMNS.length}
+                        style={{ textAlign: "center", padding: "16px" }}
+                      >
                         No matching visit records found.
                       </td>
                     </tr>

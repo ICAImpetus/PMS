@@ -84,6 +84,7 @@ export const FilledFormSchema = new mongoose.Schema(
     },
 
     formData: {
+      typeOfDisease: String,
       callerType: String,
       referenceFrom: String,
       refDoctorName: String,
