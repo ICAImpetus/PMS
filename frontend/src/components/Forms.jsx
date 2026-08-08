@@ -273,7 +273,7 @@ function Forms() {
   const {
     request: getSinglePatientCallHistoryApi,
     error: getSinglePatientCallHistoryError,
-    loading: getSinglePatientCallHistoryLoading,
+    loading: patientCallHistoryApiLoading,
   } = useApi(
     commonRoutes.getPatientCallHistoryByMobile
   );
@@ -846,6 +846,66 @@ function Forms() {
     });
   }, [latestCallHistory, latestVisitSearch, latestVisitFilter]);
 
+  const TableMessageRow = React.memo(({ colSpan, children }) => (
+    <tr>
+      <td colSpan={colSpan} style={{ textAlign: "center", padding: "16px" }}>
+        {children}
+      </td>
+    </tr>
+  ));
+  function PatientHistoryTableBody({
+  }) {
+    const colSpan = FORMS_AVAILABLE_COLUMNS.length;
+
+    if (patientCallHistoryApiLoading) {
+      return (
+        <tbody>
+          <TableMessageRow colSpan={colSpan}>
+            <CircularProgress size={24} />
+          </TableMessageRow>
+        </tbody>
+      );
+    }
+
+    if (!filteredLatestVisits?.length) {
+      return (
+        <tbody>
+          <TableMessageRow colSpan={colSpan}>
+            No matching visit records found.
+          </TableMessageRow>
+        </tbody>
+      );
+    }
+
+    return (
+      <tbody>
+        {filteredLatestVisits.map((lv, rowIndex) => {
+          const rowKey = lv?._id ?? `row-${rowIndex}`;
+          const fieldMap = {
+            "formData.patientDetails.patientName": patientProfile?.patientName,
+            "formData.patientDetails.patientMobile": patientProfile?.patientMobile,
+            "formData.patientDetails.status": patientProfile?.status,
+            "formData.patientDetails.patientAge": patientProfile?.patientAge,
+            "formData.patientDetails.category": patientProfile?.category,
+            "formData.patientDetails.location": patientProfile?.location,
+            "formData.patientDetails.gender": patientProfile?.gender,
+          };
+
+          return (
+            <tr key={rowKey}>
+              {FORMS_AVAILABLE_COLUMNS.map((col, colIndex) => {
+                const key = col?.key;
+                // 1. Look up from fieldMap first, fall back to lv[key], default to "-"
+                const value = fieldMap[key] ?? lv?.[key] ?? "-";
+
+                return <td key={col?.id || colIndex}>{value}</td>;
+              })}
+            </tr>
+          );
+        })}
+      </tbody>
+    );
+  }
   const renderLatestPatientComponents = () => {
     const canShowLatestVisits =
       form?.formData?.patientDetails?.patientMobile !== "" &&
@@ -4746,58 +4806,7 @@ function Forms() {
                     ))}
                   </tr>
                 </thead>
-                <tbody>
-                  {getSinglePatientCallHistoryLoading ? (
-                    <tr>
-                      <td
-                        colSpan={FORMS_AVAILABLE_COLUMNS.length}
-                        style={{ textAlign: "center", padding: "16px" }}
-                      >
-                        <CircularProgress size={24} />
-                      </td>
-                    </tr>
-                  ) : filteredLatestVisits.length > 0 ? (
-                    filteredLatestVisits.map((lv, index) => (
-                      <tr key={lv?._id || index}>
-                        <td>{lv?.agentName || "-"}</td>
-                        <td>{lv?.formType || "-"}</td>
-                        <td>{patientProfile?.patientName || "-"}</td>
-                        <td>{patientProfile?.patientMobile || "-"}</td>
-                        <td>{patientProfile?.status || "-"}</td>
-                        <td>{patientProfile?.patientAge || "-"}</td>
-                        <td>{patientProfile?.category || "-"}</td>
-                        <td>{patientProfile?.location || "-"}</td>
-                        <td>{patientProfile?.gender || "-"}</td>
-                        <td>{lv?.callStatus || "-"}</td>
-                        <td>{lv?.purpose || "-"}</td>
-                        <td>{lv?.purpose || "-"}</td>
-                        <td>{lv?.purpose || "-"}</td>
-                        <td>{lv?.formData?.remarks || "-"}</td>
-                        <td>{lv?.doctor?.name || "-"}</td>
-                        <td>{lv?.department?.name || "-"}</td>
-                        <td>{lv?.department?.name || "-"}</td>
-                        <td>{lv?.department?.name || "-"}</td>
-                        <td>{lv?.department?.name || "-"}</td>
-                        <td>{lv?.department?.name || "-"}</td>
-
-                        <td>
-                          {lv?.createdAt
-                            ? moment(lv.createdAt).format("DD MMM YYYY, hh:mm A")
-                            : "-"}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={FORMS_AVAILABLE_COLUMNS.length}
-                        style={{ textAlign: "center", padding: "16px" }}
-                      >
-                        No matching visit records found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
+                <PatientHistoryTableBody />
               </table>
             </Box>
           </Stack>
