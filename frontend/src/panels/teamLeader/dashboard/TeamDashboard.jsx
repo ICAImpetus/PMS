@@ -1,106 +1,64 @@
-import React, { useState, useEffect, useContext, useMemo } from "react";
-import "./Team.css";
-import SectionLoader from "../../../components/SectionLoader";
-import { useNavigate } from "react-router-dom";
-import RefreshIcon from '@mui/icons-material/Refresh';
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
+import {
+  TextField, Button, CircularProgress, MenuItem,
+  FormControl, Select, Dialog, DialogTitle,
+  Typography, DialogContent, DialogActions, Grid,
+  Box, Paper, Chip, Avatar, IconButton, LinearProgress
+} from "@mui/material";
+import { Bar, Doughnut } from "react-chartjs-2";
+import SearchIcon from "@mui/icons-material/Search";
+import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
+import SettingsIcon from "@mui/icons-material/Settings";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import DescriptionIcon from "@mui/icons-material/Description";
 import EventIcon from "@mui/icons-material/Event";
 import PeopleIcon from "@mui/icons-material/People";
-import PhoneMissedIcon from "@mui/icons-material/PhoneMissed";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import PhoneMissedIcon from "@mui/icons-material/PhoneMissed";
 import SpeakerNotesIcon from "@mui/icons-material/SpeakerNotes";
-import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
-import SettingsIcon from "@mui/icons-material/Settings";
-import SearchIcon from "@mui/icons-material/Search";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
 import SignalCellularAltIcon from "@mui/icons-material/SignalCellularAlt";
-import LabelIcon from "@mui/icons-material/Label";
-import {
-  AlertTriangle,
-  User,
-} from "lucide-react";
-
-import { ProfilePopup } from "../../../scenes/global/ProfileAndCodeAnnousementPopup";
-import { toast } from "react-toastify";
-import FilledFormsComponent from "../../../components/customComponents/FilledFormsComponent";
+import { AlertTriangle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import HospitalContext from "../../../contexts/HospitalContexts";
 import { UserContextHook } from "../../../contexts/UserContexts";
-import {
-  IconButton, Grid, FormControl, Typography, Select, MenuItem,
-  Box, Paper, Button, TextField, Avatar, Chip, LinearProgress, CircularProgress,
-  Dialog, DialogTitle, DialogContent, DialogActions
-} from "@mui/material";
-import { Doughnut, Bar } from "react-chartjs-2";
-import Chart from "chart.js/auto";
+import SectionLoader from "../../../components/SectionLoader";
+import FilledFormsComponent from "../../../components/customComponents/FilledFormsComponent";
+import NotificationCenter from "../../../components/NotificationCenter";
+import { ProfilePopup } from "../../../scenes/global/ProfileAndCodeAnnousementPopup";
+import { toast } from "react-toastify";
 
-const filterOptions = [
-  { key: "Today", value: "today" },
-  { key: "Yesterday", value: "yesterday" },
-  { key: "Last 7 Days", value: "last7" },
-  { key: "Last 30 Days", value: "last30" },
-  { key: "Last 3 Month", value: "last3M" }
-];
+const chartColors = ["#0a4bb6", "#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe", "#dbeafe"];
 
 const TeamDashboard = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState(null);
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [formsModalOpen, setFormsModalOpen] = useState(null);
   const [formsTypeFilter, setFormsTypeFilter] = useState("all");
   const [profileModalOpen, setProfileModalOpen] = useState(false);
-  const [formsModalOpen, setFormsModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const navigate = useNavigate();
   const { currentUser } = UserContextHook();
 
   const {
-    forms,
     loading,
     analytics,
-    errors,
     codeAlerts,
     branches,
     selectedBranch,
     selectedHostpital,
     setSelectedBranch,
     filter,
-    setFilter,
-    handleFilterChange,
+    filterOptions,
     refetchDashboard,
     refetchUsers,
-    dateRange
+    dateRange,
+    handleFilterChange,
   } = useContext(HospitalContext);
 
-  // Normalize Connection Status Structure
-  const statusMap = {
-    connected: 0,
-    "not connected": 0,
-    "call-drop": 0
-  };
-
-  analytics?.connectionStatus?.forEach(item => {
-    if (item.callStatus && statusMap.hasOwnProperty(item.callStatus)) {
-      statusMap[item.callStatus] = item.count;
-    }
-  });
-
-  const totalCallsStatus =
-    statusMap.connected +
-    statusMap["not connected"] +
-    statusMap["call-drop"];
-
-  const getPercent = (val) =>
-    totalCallsStatus ? Math.round((val / totalCallsStatus) * 100) : 0;
-
-  useEffect(() => {
-    const error = errors?.dashError || errors?.branchesError || errors?.formsError;
-    if (error) toast.error(error);
-  }, [errors?.dashError, errors?.branchesError, errors?.formsError]);
-
-  const closeAssignModal = () => {
-    setIsModalOpen(false);
-    setSelectedTask(null);
-  };
+  const openAssignModal = () => setIsModalOpen(true);
+  const closeAssignModal = () => setIsModalOpen(false);
 
   const handleAssignTask = (e) => {
     e.preventDefault();
@@ -112,64 +70,85 @@ const TeamDashboard = () => {
   const branchLabel = currentBranch?.name || "Main Branch";
   const hospitalName = selectedHostpital?.name || "Mahatma Gandhi";
 
-  // Chart Colors Palette
-  const chartColors = ["#0a4bb6", "#64748b", "#38bdf8", "#a855f7", "#f59e0b", "#10b981"];
+  // ── PREPARE PRODUCTIVITY BAR DATA ──
+  const productivityBarData = useMemo(() => {
+    const hourly = analytics?.hourlyStats || [];
+    const labels = hourly.length > 0
+      ? hourly.map(h => `${String(h.hour).padStart(2, "0")}:00`)
+      : ["09:00", "11:00", "13:00", "15:00", "17:00", "19:00"];
 
-  // Top Outbound Purpose Chart Data
-  const outboundDoughnutData = useMemo(() => {
-    const items = analytics?.topOutboundPurpose || [];
-    if (items.length === 0) return null;
+    const actualData = hourly.length > 0
+      ? hourly.map(h => (h.inbound || 0) + (h.outbound || 0))
+      : [12, 19, 15, 22, 18, 25];
+
+    const targetData = actualData.map(v => Math.round(v * 1.2) || 20);
+
     return {
-      labels: items.map(i => i.purpose || "Other"),
+      labels,
       datasets: [
         {
-          data: items.map(i => i.count || 0),
-          backgroundColor: chartColors.slice(0, items.length),
+          label: "Target",
+          data: targetData,
+          backgroundColor: "#cbd5e1",
+          borderRadius: 6,
+          barThickness: 10,
+        },
+        {
+          label: "Actual",
+          data: actualData,
+          backgroundColor: "#0a4bb6",
+          borderRadius: 6,
+          barThickness: 10,
+        },
+      ],
+    };
+  }, [analytics?.hourlyStats]);
+
+  // ── PREPARE DOUGHNUT DATA ──
+  const outboundDoughnutData = useMemo(() => {
+    if (!analytics?.topOutboundPurpose?.length) return null;
+    return {
+      labels: analytics.topOutboundPurpose.map(p => p.purpose),
+      datasets: [
+        {
+          data: analytics.topOutboundPurpose.map(p => p.count),
+          backgroundColor: chartColors,
           borderWidth: 0,
         },
       ],
     };
   }, [analytics?.topOutboundPurpose]);
 
-  // Top Inbound Purpose Chart Data
   const inboundDoughnutData = useMemo(() => {
-    const items = analytics?.topInboundPurpose || [];
-    if (items.length === 0) return null;
+    if (!analytics?.topInboundPurpose?.length) return null;
     return {
-      labels: items.map(i => i.purpose || "Other"),
+      labels: analytics.topInboundPurpose.map(p => p.purpose),
       datasets: [
         {
-          data: items.map(i => i.count || 0),
-          backgroundColor: chartColors.slice(0, items.length),
+          data: analytics.topInboundPurpose.map(p => p.count),
+          backgroundColor: chartColors,
           borderWidth: 0,
         },
       ],
     };
   }, [analytics?.topInboundPurpose]);
 
-  // Productivity Trends Bar Data
-  const productivityBarData = useMemo(() => {
-    const dist = analytics?.callsDistribution;
-    const labels = Array.isArray(dist?.labels) && dist.labels.length > 0
-      ? dist.labels
-      : ["MON", "TUE", "WED", "THU", "FRI"];
-    const callData = Array.isArray(dist?.callData) && dist.callData.length > 0
-      ? dist.callData
-      : [45, 52, 55, 48, 52];
+  // ── CONNECTION STATUS PERCENTAGES ──
+  const statusMap = useMemo(() => {
+    const map = { connected: 0, "call-drop": 0, "not connected": 0 };
+    if (analytics?.connectionStatus) {
+      analytics.connectionStatus.forEach(item => {
+        const key = item.status?.toLowerCase();
+        if (map[key] !== undefined) {
+          map[key] = item.count;
+        }
+      });
+    }
+    return map;
+  }, [analytics?.connectionStatus]);
 
-    return {
-      labels,
-      datasets: [
-        {
-          label: "Actual Calls",
-          data: callData,
-          backgroundColor: "#0a4bb6",
-          borderRadius: 8,
-          barThickness: 28,
-        },
-      ],
-    };
-  }, [analytics?.callsDistribution]);
+  const totalStatusCount = statusMap.connected + statusMap["call-drop"] + statusMap["not connected"];
+  const getPercent = (count) => totalStatusCount > 0 ? Math.round((count / totalStatusCount) * 100) : 0;
 
   const barOptions = {
     responsive: true,
@@ -259,14 +238,15 @@ const TeamDashboard = () => {
 
             {/* User Info & Icons */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <IconButton size="small" sx={{ bgcolor: "#fff", border: "1px solid #e2e8f0", p: 1 }}>
-                <NotificationsNoneIcon sx={{ fontSize: 18, color: "#475569" }} />
-              </IconButton>
+              {/* Functional Notification Bell */}
+              <NotificationCenter />
+
               <IconButton size="small" onClick={() => setProfileModalOpen(true)} sx={{ bgcolor: "#fff", border: "1px solid #e2e8f0", p: 1 }}>
                 <SettingsIcon sx={{ fontSize: 18, color: "#475569" }} />
               </IconButton>
 
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 1, bgcolor: "#fff", border: "1px solid #e2e8f0", borderRadius: "50px", py: 0.5, px: 2 }}>
+              {/* Profile Box - Clicking triggers Profile Dialog */}
+              <Box onClick={() => setProfileModalOpen(true)} sx={{ display: "flex", alignItems: "center", gap: 1, ml: 1, bgcolor: "#fff", border: "1px solid #e2e8f0", borderRadius: "50px", py: 0.5, px: 2, cursor: "pointer", "&:hover": { bgcolor: "#f8fafc" } }}>
                 <Box sx={{ textAlign: "right" }}>
                   <Typography variant="body2" fontWeight={800} color="#0f172a" fontSize="0.8rem">
                     {hospitalName}
@@ -276,7 +256,7 @@ const TeamDashboard = () => {
                   </Typography>
                 </Box>
                 <Avatar sx={{ width: 32, height: 32, bgcolor: "#0a4bb6", fontSize: "0.8rem", fontWeight: 800 }}>
-                  {currentUser?.name ? currentUser.name.slice(0, 2).toUpperCase() : "MG"}
+                  {currentUser?.name ? currentUser.name.slice(0, 2).toUpperCase() : "TL"}
                 </Avatar>
               </Box>
             </Box>
@@ -285,7 +265,7 @@ const TeamDashboard = () => {
           {/* ── GREETING TITLE SECTION ── */}
           <Box sx={{ mb: 3 }}>
             <Typography variant="h4" fontWeight={800} color="#0f172a" sx={{ fontSize: { xs: "1.5rem", md: "1.85rem" } }}>
-              Good Morning, {currentUser?.name || "Kunal"}
+              Good Morning, {currentUser?.name || "Team Leader"}
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
               <LocationOnIcon sx={{ fontSize: 16, color: "#94a3b8" }} />
@@ -417,11 +397,11 @@ const TeamDashboard = () => {
             </Box>
           )}
 
-          {/* ── MAIN DASHBOARD GRID (8 / 4 LAYOUT) ── */}
+          {/* ── MAIN DASHBOARD GRID (8 / 4 LAYOUT WITH EQUAL HEIGHT CARDS) ── */}
           <Grid container spacing={2.5}>
 
             {/* ── LEFT COLUMN (8 UNITS) ── */}
-            <Grid item xs={12} lg={8}>
+            <Grid item xs={12} lg={8} sx={{ display: "flex", flexDirection: "column" }}>
 
               {/* CARD 1: TEAM PRODUCTIVITY TRENDS */}
               <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", mb: 2.5 }}>
@@ -453,8 +433,8 @@ const TeamDashboard = () => {
               {/* ROW 2: TOP OUTBOUND PURPOSE & CONNECTION STATUS */}
               <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
                 {/* Top Outbound Purpose */}
-                <Grid item xs={12} md={6}>
-                  <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", height: "100%" }}>
+                <Grid item xs={12} md={6} sx={{ display: "flex" }}>
+                  <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
                       <Box sx={{ width: 4, height: 20, bgcolor: "#0a4bb6", borderRadius: "2px" }} />
                       <Typography variant="h6" fontWeight={800} color="#0f172a" fontSize="1.05rem">
@@ -489,8 +469,8 @@ const TeamDashboard = () => {
                 </Grid>
 
                 {/* Connection Status */}
-                <Grid item xs={12} md={6}>
-                  <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", height: "100%" }}>
+                <Grid item xs={12} md={6} sx={{ display: "flex" }}>
+                  <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
                       <Box sx={{ width: 4, height: 20, bgcolor: "#0a4bb6", borderRadius: "2px" }} />
                       <Typography variant="h6" fontWeight={800} color="#0f172a" fontSize="1.05rem">
@@ -538,10 +518,10 @@ const TeamDashboard = () => {
               </Grid>
 
               {/* ROW 3: TOP INBOUND PURPOSE & ACTIVE CALLING AGENTS */}
-              <Grid container spacing={2.5}>
+              <Grid container spacing={2.5} sx={{ flexGrow: 1 }}>
                 {/* Top Inbound Purpose */}
-                <Grid item xs={12} md={6}>
-                  <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", height: "100%" }}>
+                <Grid item xs={12} md={6} sx={{ display: "flex" }}>
+                  <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
                       <Box sx={{ width: 4, height: 20, bgcolor: "#0a4bb6", borderRadius: "2px" }} />
                       <Typography variant="h6" fontWeight={800} color="#0f172a" fontSize="1.05rem">
@@ -576,8 +556,8 @@ const TeamDashboard = () => {
                 </Grid>
 
                 {/* Active Calling Agents / Team Overview */}
-                <Grid item xs={12} md={6}>
-                  <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", height: "100%" }}>
+                <Grid item xs={12} md={6} sx={{ display: "flex" }}>
+                  <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
                       <Box sx={{ width: 4, height: 20, bgcolor: "#0a4bb6", borderRadius: "2px" }} />
                       <Typography variant="h6" fontWeight={800} color="#0f172a" fontSize="1.05rem">
@@ -618,40 +598,76 @@ const TeamDashboard = () => {
             </Grid>
 
             {/* ── RIGHT COLUMN (4 UNITS) ── */}
-            <Grid item xs={12} lg={4}>
+            <Grid item xs={12} lg={4} sx={{ display: "flex", flexDirection: "column" }}>
 
-              {/* 2X2 STAT CARDS GRID */}
+              {/* 2X2 STAT CARDS GRID - STRICTLY EQUAL 1:1 UNIFORM SIZE */}
               <Grid container spacing={2} sx={{ mb: 2.5 }}>
                 {/* Stat 1: AGENTS */}
-                <Grid item xs={6}>
+                <Grid item xs={6} sx={{ display: "flex" }}>
                   <Paper elevation={0} onClick={() => navigate("/user-management", { replace: true })}
-                    sx={{ p: 2.5, borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", textAlign: "center", cursor: "pointer", "&:hover": { boxShadow: "0 4px 16px rgba(0,0,0,0.06)" } }}>
-                    <Box sx={{ width: 38, height: 38, borderRadius: "50%", bgcolor: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 1 }}>
+                    sx={{
+                      p: 2.5,
+                      width: "100%",
+                      height: "100%",
+                      minHeight: 140,
+                      borderRadius: "20px",
+                      bgcolor: "#fff",
+                      border: "1px solid #edf2f7",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      display: "flex",
+                      flexDirection: "column",
+                      justify: "space-between",
+                      alignItems: "center",
+                      "&:hover": { boxShadow: "0 4px 16px rgba(0,0,0,0.06)" }
+                    }}>
+                    <Box sx={{ width: 38, height: 38, borderRadius: "50%", bgcolor: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <PeopleIcon sx={{ fontSize: 20, color: "#0a4bb6" }} />
                     </Box>
-                    <Typography variant="h3" fontWeight={800} color="#0a4bb6" lineHeight={1}>
-                      {analytics?.totalAgents || 0}
-                    </Typography>
-                    <Typography variant="caption" fontWeight={800} color="#94a3b8" letterSpacing={0.5} display="block" mt={1}>
-                      AGENTS
-                    </Typography>
+                    <Box>
+                      <Typography variant="h3" fontWeight={800} color="#0a4bb6" lineHeight={1}>
+                        {analytics?.totalAgents || 0}
+                      </Typography>
+                      <Typography variant="caption" fontWeight={800} color="#94a3b8" letterSpacing={0.5} display="block" mt={0.5}>
+                        AGENTS
+                      </Typography>
+                    </Box>
+                    {/* Spacer for vertical layout equality */}
+                    <Box sx={{ minHeight: 18 }} />
                   </Paper>
                 </Grid>
 
                 {/* Stat 2: FORMS */}
-                <Grid item xs={6}>
+                <Grid item xs={6} sx={{ display: "flex" }}>
                   <Paper elevation={0} onClick={() => { setFormsTypeFilter("all"); setFormsModalOpen("Forms"); }}
-                    sx={{ p: 2.5, borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", textAlign: "center", cursor: "pointer", "&:hover": { boxShadow: "0 4px 16px rgba(0,0,0,0.06)" } }}>
-                    <Box sx={{ width: 38, height: 38, borderRadius: "50%", bgcolor: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 1 }}>
+                    sx={{
+                      p: 2.5,
+                      width: "100%",
+                      height: "100%",
+                      minHeight: 140,
+                      borderRadius: "20px",
+                      bgcolor: "#fff",
+                      border: "1px solid #edf2f7",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      display: "flex",
+                      flexDirection: "column",
+                      justify: "space-between",
+                      alignItems: "center",
+                      "&:hover": { boxShadow: "0 4px 16px rgba(0,0,0,0.06)" }
+                    }}>
+                    <Box sx={{ width: 38, height: 38, borderRadius: "50%", bgcolor: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <DescriptionIcon sx={{ fontSize: 20, color: "#0a4bb6" }} />
                     </Box>
-                    <Typography variant="h3" fontWeight={800} color="#0a4bb6" lineHeight={1}>
-                      {analytics?.forms?.total || 0}
-                    </Typography>
-                    <Typography variant="caption" fontWeight={800} color="#94a3b8" letterSpacing={0.5} display="block" mt={1}>
-                      FORMS
-                    </Typography>
-                    <Box sx={{ display: "flex", justifyContent: "center", gap: 1, mt: 0.5 }}>
+                    <Box>
+                      <Typography variant="h3" fontWeight={800} color="#0a4bb6" lineHeight={1}>
+                        {analytics?.forms?.total || 0}
+                      </Typography>
+                      <Typography variant="caption" fontWeight={800} color="#94a3b8" letterSpacing={0.5} display="block" mt={0.5}>
+                        FORMS
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", justifyContent: "center", gap: 1, minHeight: 18 }}>
                       <Typography variant="caption" fontSize="0.62rem" fontWeight={700} color="#94a3b8" onClick={(e) => { e.stopPropagation(); setFormsTypeFilter("inbound"); setFormsModalOpen("Forms"); }}>
                         INBOUND <strong style={{ color: "#0a4bb6" }}>{analytics?.forms?.inbound || 0}</strong>
                       </Typography>
@@ -663,19 +679,36 @@ const TeamDashboard = () => {
                 </Grid>
 
                 {/* Stat 3: APPOINTMENTS */}
-                <Grid item xs={6}>
+                <Grid item xs={6} sx={{ display: "flex" }}>
                   <Paper elevation={0} onClick={() => { setFormsTypeFilter("all"); setFormsModalOpen("Appointments"); }}
-                    sx={{ p: 2.5, borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", textAlign: "center", cursor: "pointer", "&:hover": { boxShadow: "0 4px 16px rgba(0,0,0,0.06)" } }}>
-                    <Box sx={{ width: 38, height: 38, borderRadius: "50%", bgcolor: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 1 }}>
+                    sx={{
+                      p: 2.5,
+                      width: "100%",
+                      height: "100%",
+                      minHeight: 140,
+                      borderRadius: "20px",
+                      bgcolor: "#fff",
+                      border: "1px solid #edf2f7",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      display: "flex",
+                      flexDirection: "column",
+                      justify: "space-between",
+                      alignItems: "center",
+                      "&:hover": { boxShadow: "0 4px 16px rgba(0,0,0,0.06)" }
+                    }}>
+                    <Box sx={{ width: 38, height: 38, borderRadius: "50%", bgcolor: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <EventIcon sx={{ fontSize: 20, color: "#0a4bb6" }} />
                     </Box>
-                    <Typography variant="h3" fontWeight={800} color="#0a4bb6" lineHeight={1}>
-                      {analytics?.appointments?.total || 0}
-                    </Typography>
-                    <Typography variant="caption" fontWeight={800} color="#94a3b8" letterSpacing={0.5} display="block" mt={1}>
-                      APPOINTMENTS
-                    </Typography>
-                    <Box sx={{ display: "flex", justifyContent: "center", gap: 1, mt: 0.5 }}>
+                    <Box>
+                      <Typography variant="h3" fontWeight={800} color="#0a4bb6" lineHeight={1}>
+                        {analytics?.appointments?.total || 0}
+                      </Typography>
+                      <Typography variant="caption" fontWeight={800} color="#94a3b8" letterSpacing={0.5} display="block" mt={0.5}>
+                        APPOINTMENTS
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", justifyContent: "center", gap: 1, minHeight: 18 }}>
                       <Typography variant="caption" fontSize="0.62rem" fontWeight={700} color="#94a3b8" onClick={(e) => { e.stopPropagation(); setFormsTypeFilter("inbound"); setFormsModalOpen("Appointments"); }}>
                         INBOUND <strong style={{ color: "#0a4bb6" }}>{analytics?.appointments?.inbound || 0}</strong>
                       </Typography>
@@ -687,68 +720,89 @@ const TeamDashboard = () => {
                 </Grid>
 
                 {/* Stat 4: PENDING FOLLOW UP */}
-                <Grid item xs={6}>
+                <Grid item xs={6} sx={{ display: "flex" }}>
                   <Paper elevation={0} onClick={() => { setFormsTypeFilter("all"); setFormsModalOpen("Followups"); }}
-                    sx={{ p: 2.5, borderRadius: "20px", bgcolor: "#fff7f7", border: "1.5px solid #fee2e2", textAlign: "center", cursor: "pointer", "&:hover": { boxShadow: "0 4px 16px rgba(220,38,38,0.08)" } }}>
-                    <Box sx={{ width: 38, height: 38, borderRadius: "50%", bgcolor: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 1 }}>
+                    sx={{
+                      p: 2.5,
+                      width: "100%",
+                      height: "100%",
+                      minHeight: 140,
+                      borderRadius: "20px",
+                      bgcolor: "#fff7f7",
+                      border: "1.5px solid #fee2e2",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      display: "flex",
+                      flexDirection: "column",
+                      justify: "space-between",
+                      alignItems: "center",
+                      "&:hover": { boxShadow: "0 4px 16px rgba(220,38,38,0.08)" }
+                    }}>
+                    <Box sx={{ width: 38, height: 38, borderRadius: "50%", bgcolor: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <AlertTriangle size={18} color="#dc2626" />
                     </Box>
-                    <Typography variant="h3" fontWeight={800} color="#dc2626" lineHeight={1}>
-                      {String(analytics?.followups || 0).padStart(2, "0")}
-                    </Typography>
-                    <Typography variant="caption" fontWeight={800} color="#94a3b8" letterSpacing={0.5} display="block" mt={1}>
-                      PENDING FOLLOW UP
-                    </Typography>
+                    <Box>
+                      <Typography variant="h3" fontWeight={800} color="#dc2626" lineHeight={1}>
+                        {String(analytics?.followups || 0).padStart(2, "0")}
+                      </Typography>
+                      <Typography variant="caption" fontWeight={800} color="#dc2626" letterSpacing={0.5} display="block" mt={0.5}>
+                        PENDING FOLLOW UP
+                      </Typography>
+                    </Box>
+                    {/* Spacer for vertical layout equality */}
+                    <Box sx={{ minHeight: 18 }} />
                   </Paper>
                 </Grid>
               </Grid>
 
               {/* CARD BELOW STAT GRID: LEAD SOURCES */}
-              <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", minHeight: 280, position: "relative" }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
-                  <Box sx={{ width: 4, height: 20, bgcolor: "#0a4bb6", borderRadius: "2px" }} />
-                  <Typography variant="h6" fontWeight={800} color="#0f172a" fontSize="1.05rem">
-                    LEAD SOURCES
-                  </Typography>
+              <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", flexGrow: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                <Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
+                    <Box sx={{ width: 4, height: 20, bgcolor: "#0a4bb6", borderRadius: "2px" }} />
+                    <Typography variant="h6" fontWeight={800} color="#0f172a" fontSize="1.05rem">
+                      LEAD SOURCES
+                    </Typography>
+                  </Box>
+
+                  {analytics?.topReference && analytics.topReference.length > 0 ? (
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      {analytics.topReference.map((item, i) => {
+                        const totalRef = analytics.topReference.reduce((s, r) => s + (r.count || 0), 0);
+                        const percent = totalRef > 0 ? Math.round(((item.count || 0) / totalRef) * 100) : 0;
+                        return (
+                          <Box key={i}>
+                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.8 }}>
+                              <Typography variant="body2" fontWeight={700} color="#334155">
+                                {item.reference || "Other"}
+                              </Typography>
+                              <Typography variant="body2" fontWeight={800} color="#0a4bb6">
+                                {item.count || 0} ({percent}%)
+                              </Typography>
+                            </Box>
+                            <LinearProgress
+                              variant="determinate"
+                              value={percent}
+                              sx={{
+                                height: 8,
+                                borderRadius: 4,
+                                bgcolor: "#f1f5f9",
+                                "& .MuiLinearProgress-bar": {
+                                  borderRadius: 4,
+                                  bgcolor: chartColors[i % chartColors.length],
+                                },
+                              }}
+                            />
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  ) : (
+                    <Typography variant="body2" color="#94a3b8" textAlign="center" py={4}>No Data Are Found</Typography>
+                  )}
                 </Box>
 
-                {analytics?.topReference && analytics.topReference.length > 0 ? (
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    {analytics.topReference.map((item, i) => {
-                      const totalRef = analytics.topReference.reduce((s, r) => s + (r.count || 0), 0);
-                      const percent = totalRef > 0 ? Math.round(((item.count || 0) / totalRef) * 100) : 0;
-                      return (
-                        <Box key={i}>
-                          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.8 }}>
-                            <Typography variant="body2" fontWeight={700} color="#334155">
-                              {item.reference || "Other"}
-                            </Typography>
-                            <Typography variant="body2" fontWeight={800} color="#0a4bb6">
-                              {item.count || 0} ({percent}%)
-                            </Typography>
-                          </Box>
-                          <LinearProgress
-                            variant="determinate"
-                            value={percent}
-                            sx={{
-                              height: 8,
-                              borderRadius: 4,
-                              bgcolor: "#f1f5f9",
-                              "& .MuiLinearProgress-bar": {
-                                borderRadius: 4,
-                                bgcolor: chartColors[i % chartColors.length],
-                              },
-                            }}
-                          />
-                        </Box>
-                      );
-                    })}
-                  </Box>
-                ) : (
-                  <Typography variant="body2" color="#94a3b8" textAlign="center" py={4}>No Data Are Found</Typography>
-                )}
-
-                <Box sx={{ display: "flex", justifyContent: "center", mt: 4, opacity: 0.25 }}>
+                <Box sx={{ display: "flex", justifyContent: "center", mt: 3, opacity: 0.25 }}>
                   <SignalCellularAltIcon sx={{ fontSize: 40, color: "#94a3b8" }} />
                 </Box>
               </Paper>

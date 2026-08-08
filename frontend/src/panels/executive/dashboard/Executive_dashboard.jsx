@@ -4,7 +4,7 @@ import {
   TextField, Button, CircularProgress, MenuItem,
   FormControl, Select, Dialog, DialogTitle,
   Typography, DialogContent, DialogActions, Grid,
-  Box, Paper, Chip, IconButton,
+  Box, Paper, Chip, IconButton, Avatar
 } from "@mui/material";
 import Chart from "chart.js/auto";
 import "./Executive.css";
@@ -20,9 +20,10 @@ import { ProfilePopup, CodeAnnousementPopup } from "../../../scenes/global/Profi
 import { toast } from "react-toastify";
 import FilledFormsComponent from "../../../components/customComponents/FilledFormsComponent";
 import HospitalContext from "../../../contexts/HospitalContexts";
+import { UserContextHook } from "../../../contexts/UserContexts";
 import { useApi } from "../../../api/useApi";
 import { commonRoutes } from "../../../api/apiService";
-import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
+import NotificationCenter from "../../../components/NotificationCenter";
 import SettingsIcon from "@mui/icons-material/Settings";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
@@ -47,6 +48,8 @@ const ExecutiveDashboard = () => {
     const savedNotes = localStorage.getItem("notes");
     return savedNotes ? JSON.parse(savedNotes) : [];
   });
+
+  const { currentUser } = UserContextHook();
 
   const {
     forms,
@@ -102,121 +105,111 @@ const ExecutiveDashboard = () => {
             label: "Inbound",
             data: hourlyChartData.inboundData,
             backgroundColor: "#0a4bb6",
-            borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 6, bottomRight: 6 },
-            borderSkipped: false,
-            barThickness: 16,
-            stack: "stack1",
+            borderRadius: 6,
+            barThickness: 12,
           },
           {
             label: "Outbound",
             data: hourlyChartData.outboundData,
-            backgroundColor: "#e2e8f0",
-            borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
-            borderSkipped: false,
-            barThickness: 16,
-            stack: "stack1",
+            backgroundColor: "#cbd5e1",
+            borderRadius: 6,
+            barThickness: 12,
           },
         ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { enabled: true },
-        },
         scales: {
           x: {
             stacked: true,
             grid: { display: false },
-            border: { display: false },
             ticks: { font: { size: 10, weight: "600" }, color: "#94a3b8" },
           },
           y: {
             stacked: true,
             beginAtZero: true,
             grid: { color: "#f1f5f9" },
-            border: { display: false },
             ticks: { font: { size: 10, weight: "600" }, color: "#94a3b8" },
+          },
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: "#0f172a",
+            padding: 10,
+            cornerRadius: 8,
           },
         },
       },
     });
 
     return () => {
-      hourlyChartInstance.current?.destroy();
+      if (hourlyChartInstance.current) {
+        hourlyChartInstance.current.destroy();
+      }
     };
   }, [hourlyChartData]);
 
-  // ── CODE ALERT STATUS TOGGLE ──
-  const handleToggleStatus = async (id) => {
-    if (!id) return;
+  const handleToggleStatus = async (alertId) => {
     try {
-      setLoadingId(id);
-      const res = await toggleAlertStatus(selectedHostpital, id);
-      if (res?.success) {
-        toast.success("Status Updated");
-        await refetchDashboard();
-      } else {
-        toast.error(res?.message || "Something went wrong");
-      }
-    } catch (error) {
-      console.log("error", error);
-      toast.error("Server Error");
+      setLoadingId(alertId);
+      await toggleAlertStatus(alertId);
+      toast.success("Code alert status updated");
+      refetchDashboard();
+    } catch (err) {
+      toast.error("Failed to update status");
     } finally {
       setLoadingId(null);
     }
   };
 
-  // ── NOTES MANAGEMENT ──
-  const handleAddNote = () => {
-    if (newNote.heading.trim() && newNote.body.trim()) {
-      const note = {
-        id: Date.now(),
-        heading: newNote.heading.trim(),
-        body: newNote.body.trim(),
-        createdAt: new Date().toISOString()
-      };
-      const updatedNotes = [...notes, note];
-      setNotes(updatedNotes);
-      localStorage.setItem("notes", JSON.stringify(updatedNotes));
-      setNewNote({ heading: '', body: '' });
-      setNotesModalOpen(false);
-      toast.success("Note added successfully");
-    } else {
-      toast.error("Please fill both heading and body");
-    }
+  const handleAddNote = (e) => {
+    e.preventDefault();
+    if (!newNote.heading.trim() || !newNote.body.trim()) return;
+    const noteObj = { id: Date.now(), ...newNote };
+    const updated = [noteObj, ...notes];
+    setNotes(updated);
+    localStorage.setItem("notes", JSON.stringify(updated));
+    setNewNote({ heading: '', body: '' });
+    setNotesModalOpen(false);
+    toast.success("Note saved!");
   };
 
   const handleDeleteNote = (id) => {
-    const updatedNotes = notes.filter(note => note.id !== id);
-    setNotes(updatedNotes);
-    localStorage.setItem("notes", JSON.stringify(updatedNotes));
-    toast.success("Note deleted");
+    const updated = notes.filter((n) => n.id !== id);
+    setNotes(updated);
+    localStorage.setItem("notes", JSON.stringify(updated));
+    toast.info("Note deleted");
   };
-
-  useEffect(() => {
-    localStorage.setItem("notes", JSON.stringify(notes));
-  }, [notes]);
 
   const currentBranch = branches?.find((b) => b._id === selectedBranch);
   const branchLabel = currentBranch?.name || "Main Hospital";
-  const todayStr = new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" });
+  const hospitalName = selectedHostpital?.name || "Mahatma Gandhi";
 
-  // Status Chip Formatting for Latest Appointments
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  }, []);
+
   const getAppointmentBadge = (status) => {
-    const s = (status || "SCHEDULED").toUpperCase();
-    if (s.includes("CONFIRM")) {
-      return { label: "CONFIRMED", bg: "#dcfce7", color: "#16a34a", icon: <CheckCircleOutlineIcon sx={{ fontSize: "14px !important", color: "#16a34a" }} /> };
+    switch (status?.toLowerCase()) {
+      case "completed":
+        return { label: "COMPLETED", color: "#16a34a", bg: "#f0fdf4", icon: <CheckCircleOutlineIcon sx={{ fontSize: 14 }} /> };
+      case "cancelled":
+        return { label: "CANCELLED", color: "#dc2626", bg: "#fef2f2", icon: <CloseIcon sx={{ fontSize: 14 }} /> };
+      default:
+        return { label: "SCHEDULED", color: "#0a4bb6", bg: "#eff6ff", icon: <ScheduleIcon sx={{ fontSize: 14 }} /> };
     }
-    if (s.includes("PROGRESS") || s.includes("IN_PROGRESS")) {
-      return { label: "IN-PROGRESS", bg: "#dbeafe", color: "#0a4bb6", icon: <WatchLaterOutlinedIcon sx={{ fontSize: "14px !important", color: "#0a4bb6" }} /> };
-    }
-    if (s.includes("WAIT")) {
-      return { label: "WAITING", bg: "#fef9c3", color: "#ca8a04", icon: <WatchLaterOutlinedIcon sx={{ fontSize: "14px !important", color: "#ca8a04" }} /> };
-    }
-    return { label: "SCHEDULED", bg: "#f1f5f9", color: "#64748b", icon: <ScheduleIcon sx={{ fontSize: "14px !important", color: "#64748b" }} /> };
   };
+
+  if (loading?.dashboardLoading) {
+    return (
+      <Box sx={{ p: 4, display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <>
@@ -396,12 +389,27 @@ const ExecutiveDashboard = () => {
                 Announcements
               </Button>
 
-              <IconButton size="small" sx={{ bgcolor: "#fff", border: "1px solid #e2e8f0", p: 1 }}>
-                <NotificationsNoneIcon sx={{ fontSize: 18, color: "#475569" }} />
-              </IconButton>
+              {/* Working Notification Bell Center */}
+              <NotificationCenter />
+
               <IconButton size="small" onClick={() => setModalOpen("profile")} sx={{ bgcolor: "#fff", border: "1px solid #e2e8f0", p: 1 }}>
                 <SettingsIcon sx={{ fontSize: 18, color: "#475569" }} />
               </IconButton>
+
+              {/* Profile Avatar Box - Click opens Profile Popup */}
+              <Box onClick={() => setModalOpen("profile")} sx={{ display: "flex", alignItems: "center", gap: 1, ml: 1, bgcolor: "#fff", border: "1px solid #e2e8f0", borderRadius: "50px", py: 0.5, px: 2, cursor: "pointer" }}>
+                <Box sx={{ textAlign: "right" }}>
+                  <Typography variant="body2" fontWeight={800} color="#0f172a" fontSize="0.8rem">
+                    {hospitalName}
+                  </Typography>
+                  <Typography variant="caption" fontWeight={700} color="#94a3b8" fontSize="0.65rem">
+                    {branchLabel.toUpperCase()}
+                  </Typography>
+                </Box>
+                <Avatar sx={{ width: 32, height: 32, bgcolor: "#0a4bb6", fontSize: "0.8rem", fontWeight: 800 }}>
+                  {currentUser?.name ? currentUser.name.slice(0, 2).toUpperCase() : "EX"}
+                </Avatar>
+              </Box>
             </Box>
           </Box>
 
@@ -445,13 +453,18 @@ const ExecutiveDashboard = () => {
             </Box>
           )}
 
-          {/* ── ROW 1: STAT CARDS (REAL DYNAMIC DATA) ── */}
+          {/* ── ROW 1: STAT CARDS (STRICT EQUAL HEIGHTS) ── */}
           <Grid container spacing={2.5} sx={{ mb: 3 }}>
             {/* Forms Stat Card */}
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={4} sx={{ display: "flex" }}>
               <Paper elevation={0} onClick={() => { setFormsTypeFilter("all"); setFormsModalOpen("Forms"); }} role="button" tabIndex={0}
                 sx={{
                   p: 3,
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justify: "space-between",
                   borderRadius: "20px",
                   bgcolor: "#fff",
                   border: "1px solid #edf2f7",
@@ -492,10 +505,15 @@ const ExecutiveDashboard = () => {
             </Grid>
 
             {/* Appointments Stat Card */}
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={4} sx={{ display: "flex" }}>
               <Paper elevation={0} onClick={() => { setFormsTypeFilter("all"); setFormsModalOpen("Appointments"); }} role="button" tabIndex={0}
                 sx={{
                   p: 3,
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justify: "space-between",
                   borderRadius: "20px",
                   bgcolor: "#fff",
                   border: "1px solid #edf2f7",
@@ -536,10 +554,15 @@ const ExecutiveDashboard = () => {
             </Grid>
 
             {/* Urgent Followups Stat Card */}
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={4} sx={{ display: "flex" }}>
               <Paper elevation={0} onClick={() => { setFormsTypeFilter("all"); setFormsModalOpen("Followups"); }} role="button" tabIndex={0}
                 sx={{
                   p: 3,
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justify: "space-between",
                   borderRadius: "20px",
                   bgcolor: "#fff7f7",
                   border: "1.5px solid #fee2e2",
@@ -573,11 +596,11 @@ const ExecutiveDashboard = () => {
             </Grid>
           </Grid>
 
-          {/* ── ROW 2: TOP INBOUND & OUTBOUND PURPOSE (DYNAMIC MAPPING) ── */}
+          {/* ── ROW 2: TOP INBOUND & OUTBOUND PURPOSE (EQUAL HEIGHTS & ONE LINE LAYOUT) ── */}
           <Grid container spacing={2.5} sx={{ mb: 3 }}>
             {/* Top Inbound Purpose */}
-            <Grid item xs={12} md={6}>
-              <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", boxShadow: "0 2px 12px rgba(0,0,0,0.03)" }}>
+            <Grid item xs={12} md={6} sx={{ display: "flex" }}>
+              <Paper elevation={0} sx={{ p: 3, width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", boxShadow: "0 2px 12px rgba(0,0,0,0.03)" }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5 }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Box sx={{ width: 4, height: 20, bgcolor: "#0a4bb6", borderRadius: "2px" }} />
@@ -589,20 +612,18 @@ const ExecutiveDashboard = () => {
                 </Box>
 
                 {analytics?.topInboundPurpose && analytics.topInboundPurpose.length > 0 ? (
-                  <Grid container spacing={2}>
+                  <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
                     {analytics.topInboundPurpose.slice(0, 6).map((item, i) => (
-                      <Grid item xs={4} key={i}>
-                        <Box sx={{ bgcolor: "#f8fafc", borderRadius: "24px", py: 2.5, px: 1.5, textAlign: "center" }}>
-                          <Typography variant="caption" fontWeight={800} color="#94a3b8" letterSpacing={0.5} display="block" mb={0.5}>
-                            {(item.purpose || "-").toUpperCase()}
-                          </Typography>
-                          <Typography variant="h3" fontWeight={800} color="#0a4bb6">
-                            {String(item.count || 0).padStart(2, "0")}
-                          </Typography>
-                        </Box>
-                      </Grid>
+                      <Box key={i} sx={{ bgcolor: "#f8fafc", borderRadius: "20px", py: 2, px: 2, textAlign: "center", flex: "1 1 calc(33.333% - 12px)", minWidth: 100 }}>
+                        <Typography variant="caption" fontWeight={800} color="#94a3b8" letterSpacing={0.5} display="block" mb={0.5}>
+                          {(item.purpose || "-").toUpperCase()}
+                        </Typography>
+                        <Typography variant="h3" fontWeight={800} color="#0a4bb6">
+                          {String(item.count || 0).padStart(2, "0")}
+                        </Typography>
+                      </Box>
                     ))}
-                  </Grid>
+                  </Box>
                 ) : (
                   <Typography variant="body2" color="#94a3b8" textAlign="center" py={3}>No Data Found</Typography>
                 )}
@@ -610,8 +631,8 @@ const ExecutiveDashboard = () => {
             </Grid>
 
             {/* Top Outbound Purpose */}
-            <Grid item xs={12} md={6}>
-              <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", boxShadow: "0 2px 12px rgba(0,0,0,0.03)" }}>
+            <Grid item xs={12} md={6} sx={{ display: "flex" }}>
+              <Paper elevation={0} sx={{ p: 3, width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", boxShadow: "0 2px 12px rgba(0,0,0,0.03)" }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5 }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Box sx={{ width: 4, height: 20, bgcolor: "#0a4bb6", borderRadius: "2px" }} />
@@ -623,20 +644,18 @@ const ExecutiveDashboard = () => {
                 </Box>
 
                 {analytics?.topOutboundPurpose && analytics.topOutboundPurpose.length > 0 ? (
-                  <Grid container spacing={2}>
+                  <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
                     {analytics.topOutboundPurpose.slice(0, 6).map((item, i) => (
-                      <Grid item xs={4} key={i}>
-                        <Box sx={{ bgcolor: "#f8fafc", borderRadius: "24px", py: 2.5, px: 1.5, textAlign: "center" }}>
-                          <Typography variant="caption" fontWeight={800} color="#94a3b8" letterSpacing={0.5} display="block" mb={0.5}>
-                            {(item.purpose || "-").toUpperCase()}
-                          </Typography>
-                          <Typography variant="h3" fontWeight={800} color="#0a4bb6">
-                            {String(item.count || 0).padStart(2, "0")}
-                          </Typography>
-                        </Box>
-                      </Grid>
+                      <Box key={i} sx={{ bgcolor: "#f8fafc", borderRadius: "20px", py: 2, px: 2, textAlign: "center", flex: "1 1 calc(33.333% - 12px)", minWidth: 100 }}>
+                        <Typography variant="caption" fontWeight={800} color="#94a3b8" letterSpacing={0.5} display="block" mb={0.5}>
+                          {(item.purpose || "-").toUpperCase()}
+                        </Typography>
+                        <Typography variant="h3" fontWeight={800} color="#0a4bb6">
+                          {String(item.count || 0).padStart(2, "0")}
+                        </Typography>
+                      </Box>
                     ))}
-                  </Grid>
+                  </Box>
                 ) : (
                   <Typography variant="body2" color="#94a3b8" textAlign="center" py={3}>No Data Found</Typography>
                 )}
@@ -647,8 +666,8 @@ const ExecutiveDashboard = () => {
           {/* ── ROW 3: REAL-TIME HOURLY CHART & LATEST APPOINTMENTS ── */}
           <Grid container spacing={2.5} sx={{ mb: 3 }}>
             {/* Real Call Volume by Hour (Stacked Bar Chart) */}
-            <Grid item xs={12} md={7}>
-              <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", boxShadow: "0 2px 12px rgba(0,0,0,0.03)", height: "100%" }}>
+            <Grid item xs={12} md={7} sx={{ display: "flex" }}>
+              <Paper elevation={0} sx={{ p: 3, width: "100%", height: "100%", borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", boxShadow: "0 2px 12px rgba(0,0,0,0.03)" }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Box sx={{ width: 4, height: 20, bgcolor: "#0a4bb6", borderRadius: "2px" }} />
@@ -673,9 +692,9 @@ const ExecutiveDashboard = () => {
               </Paper>
             </Grid>
 
-            {/* Real Latest Appointments */}
-            <Grid item xs={12} md={5}>
-              <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", boxShadow: "0 2px 12px rgba(0,0,0,0.03)", height: "100%" }}>
+            {/* Real Latest Appointments (JUSTIFY BETWEEN RIGHT ALIGNED TIME SCHEDULE) */}
+            <Grid item xs={12} md={5} sx={{ display: "flex" }}>
+              <Paper elevation={0} sx={{ p: 3, width: "100%", height: "100%", borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", boxShadow: "0 2px 12px rgba(0,0,0,0.03)" }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2.5 }}>
                   <Box sx={{ width: 4, height: 20, bgcolor: "#0a4bb6", borderRadius: "2px" }} />
                   <Typography variant="h6" fontWeight={800} color="#0f172a" fontSize="1.05rem">Latest Appointments</Typography>
@@ -696,10 +715,12 @@ const ExecutiveDashboard = () => {
                           bgcolor: "#fff",
                           border: "1px solid #f1f5f9",
                           display: "flex",
-                          justify: "space-between",
+                          justifyContent: "space-between",
                           alignItems: "center",
+                          width: "100%"
                         }}>
-                          <Box>
+                          {/* Left: Patient Name & Doctor */}
+                          <Box sx={{ pr: 2 }}>
                             <Typography variant="body2" fontWeight={800} color="#0f172a">
                               {apt.patientName || "Unknown Patient"}
                             </Typography>
@@ -708,7 +729,8 @@ const ExecutiveDashboard = () => {
                             </Typography>
                           </Box>
 
-                          <Box sx={{ textAlign: "right" }}>
+                          {/* Right: Time Schedule & Status Chip (Right-Aligned) */}
+                          <Box sx={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", flexShrink: 0 }}>
                             <Typography variant="caption" fontWeight={800} color="#0a4bb6" display="block" mb={0.4}>
                               {timeDisplay}
                             </Typography>
@@ -738,63 +760,55 @@ const ExecutiveDashboard = () => {
             </Grid>
           </Grid>
 
-          {/* ── FOOTER ── */}
-          <Typography variant="caption" fontWeight={700} color="#94a3b8" letterSpacing={0.5} sx={{ display: "block", mt: 3, mb: 1 }}>
-            © {new Date().getFullYear()} INFINIS CLINICAL PRECISION
-          </Typography>
-
-          {/* ── MODALS ── */}
-          {modalOpen === "profile" && <ProfilePopup onClose={() => setModalOpen(null)} />}
-          {modalOpen === "announcement" && (
-            <CodeAnnousementPopup selectedHostpital={selectedHostpital} selectedBranch={selectedBranch} data={codeAlertsData} onClose={() => setModalOpen(null)} refetchDashboard={refetchDashboard} />
-          )}
-
-          {/* Calls Modal */}
-          {callsModalOpen && (
-            <div className="executive-modal-overlay" onClick={() => setCallsModalOpen(false)}>
-              <div className="executive-modal executive-modal-lg" onClick={(e) => e.stopPropagation()}>
-                <div className="executive-modal-header">
-                  <h3>Call Details</h3>
-                  <div className="executive-modal-actions">
-                    <button className="executive-modal-close" onClick={() => setCallsModalOpen(false)}><CloseIcon /></button>
-                  </div>
-                </div>
-                <div className="executive-modal-body">
-                  <div className="executive-calls-filters">
-                    <select value={callsDateFilter} onChange={(e) => setCallsDateFilter(e.target.value)} className="executive-calls-date-select">
-                      <option value="today">Today</option>
-                      <option value="yesterday">Yesterday</option>
-                      <option value="week">This Week</option>
-                      <option value="month">This Month</option>
-                    </select>
-                    <div className="executive-calls-tabs">
-                      {["all", "inbound", "outbound"].map((t) => (
-                        <button key={t} className={callsTab === t ? "active" : ""} onClick={() => setCallsTab(t)}>{t.charAt(0).toUpperCase() + t.slice(1)}</button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Notes Modal */}
-          <Dialog open={notesModalOpen} onClose={() => setNotesModalOpen(false)} maxWidth="sm" fullWidth>
-            <DialogTitle>Create New Note</DialogTitle>
-            <DialogContent>
-              <TextField autoFocus margin="dense" label="Heading" fullWidth variant="outlined" value={newNote.heading}
-                onChange={(e) => setNewNote((p) => ({ ...p, heading: e.target.value }))} sx={{ mb: 2 }} />
-              <TextField margin="dense" label="Body" fullWidth multiline rows={4} variant="outlined" value={newNote.body}
-                onChange={(e) => setNewNote((p) => ({ ...p, body: e.target.value }))} />
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setNotesModalOpen(false)}>Cancel</Button>
-              <Button onClick={handleAddNote} variant="contained">Add Note</Button>
-            </DialogActions>
-          </Dialog>
-
         </Box>
       )}
+
+      {/* Profile Modal */}
+      {modalOpen === "profile" && (
+        <ProfilePopup
+          user={currentUser}
+          onClose={() => setModalOpen(null)}
+        />
+      )}
+
+      {/* Announcements Modal */}
+      {modalOpen === "announcement" && (
+        <CodeAnnousementPopup
+          onClose={() => setModalOpen(null)}
+          announcements={codeAlertsData}
+        />
+      )}
+
+      {/* Notes Modal */}
+      <Dialog open={notesModalOpen} onClose={() => setNotesModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800 }}>Create New Note</DialogTitle>
+        <form onSubmit={handleAddNote}>
+          <DialogContent>
+            <TextField
+              label="Heading"
+              fullWidth
+              size="small"
+              value={newNote.heading}
+              onChange={(e) => setNewNote({ ...newNote, heading: e.target.value })}
+              sx={{ mb: 2 }}
+              required
+            />
+            <TextField
+              label="Note Body"
+              fullWidth
+              multiline
+              rows={3}
+              value={newNote.body}
+              onChange={(e) => setNewNote({ ...newNote, body: e.target.value })}
+              required
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setNotesModalOpen(false)}>Cancel</Button>
+            <Button type="submit" variant="contained" sx={{ bgcolor: "#0a4bb6" }}>Save Note</Button>
+          </DialogActions>
+        </form>
+      </Dialog>
     </>
   );
 };
