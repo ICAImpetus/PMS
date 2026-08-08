@@ -8459,18 +8459,22 @@ export const clearNotifications = async (req, res) => {
 
 export const getPatientByRole = async (req, res) => {
   try {
-    const { hospitalId, branchId, page = 1, isExport, searchInput, startDate, endDate } = req.query;
+    const {
+      hospitalId,
+      branchId,
+      page = 1,
+      isExport,
+      searchInput,
+      startDate,
+      endDate,
+    } = req.query;
 
-    console.log("call", req.query);
     const isExportMode = isExport === "true";
-
-
     const PAGE_LIMIT = 10;
-    const pageNum = Math.max(parseInt(page) || 1, 1);
-
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
     const skip = (pageNum - 1) * PAGE_LIMIT;
 
-    // Validate hospitalId
+    // 1. Validate Hospital ID
     if (!hospitalId || !mongoose.isValidObjectId(hospitalId)) {
       return res.status(400).json({
         success: false,
@@ -8478,7 +8482,7 @@ export const getPatientByRole = async (req, res) => {
       });
     }
 
-    // Get hospital
+    // 2. Fetch Hospital Details
     const hospital = await HospitalModel.findById(hospitalId)
       .select("trimmedName")
       .lean();
@@ -8490,14 +8494,12 @@ export const getPatientByRole = async (req, res) => {
       });
     }
 
-    // Multi-tenant connection
+    // 3. Setup Multi-tenant Database Connections
     const conn = await getConnection(hospital.trimmedName);
     const FilledFormsModel = getFilledFormsModel(conn);
     const PatientModel = getPatientModel(conn);
-    const DoctorModel = getDoctorModel(conn)
-    const DepartmentModel = getDepartmentModel(conn)
-
-
+    const DoctorModel = getDoctorModel(conn);
+    const DepartmentModel = getDepartmentModel(conn);
 
     let match = {
       isDeleted: false,
@@ -8507,75 +8509,87 @@ export const getPatientByRole = async (req, res) => {
       match.branchId = branchId;
     }
 
-    if (searchInput?.trim()) {
-      const search = searchInput.trim();
-
+    // 4. Safe Search Filter with Regex Special Character Escaping
+    if (searchInput && searchInput.trim()) {
+      const sanitizedSearch = searchInput.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       match.$or = [
-        {
-          patientName: {
-            $regex: search,
-            $options: "i",
-          },
-        },
-        {
-          patientMobile: {
-            $regex: search,
-            $options: "i",
-          },
-        },
+        { patientName: { $regex: sanitizedSearch, $options: "i" } },
+        { patientMobile: { $regex: sanitizedSearch, $options: "i" } },
       ];
     }
 
-    if (startDate || endDate) {
+    // 5. Safe Date Validation Helper
+    const isValidDateString = (dateStr) => {
+      if (
+        !dateStr ||
+        typeof dateStr !== "string" ||
+        dateStr === "undefined" ||
+        dateStr === "null" ||
+        dateStr === "[object Object]"
+      ) {
+        return false;
+      }
+      const d = new Date(dateStr);
+      return !isNaN(d.getTime());
+    };
+
+    if (isValidDateString(startDate) || isValidDateString(endDate)) {
       match.createdAt = {};
-      if (startDate) match.createdAt.$gte = new Date(startDate);
-      if (endDate) {
+
+      if (isValidDateString(startDate)) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        match.createdAt.$gte = start;
+      }
+
+      if (isValidDateString(endDate)) {
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
         match.createdAt.$lte = end;
       }
     }
 
-    // Fetch data
+    // 6. Build Query Pipeline
+    let patientQuery = PatientModel.find(match)
+      .populate({
+        path: "lastVisit",
+        model: FilledFormsModel,
+        populate: [
+          {
+            path: "department",
+            model: DepartmentModel,
+            select: "name",
+          },
+          {
+            path: "doctor",
+            model: DoctorModel,
+            select: "name",
+          },
+        ],
+      })
+      .sort({ createdAt: -1 });
+
+    // Apply pagination only if not exporting
+    if (!isExportMode) {
+      patientQuery = patientQuery.skip(skip).limit(PAGE_LIMIT);
+    }
+
+    // 7. Execute Queries Concurrently
     const [patients, totalDocument] = await Promise.all([
-      PatientModel.find(match)
-        .populate({
-          path: "lastVisit",
-          model: FilledFormsModel,
-          populate: [
-            {
-              path: "department",
-              model: DepartmentModel,
-              select: "name",
-            },
-            {
-              path: "doctor",
-              model: DoctorModel,
-              select: "name",
-            },
-          ],
-        })
-        .skip(isExportMode ? 0 : skip)
-        .limit(isExportMode ? 0 : PAGE_LIMIT)
-        .sort({ createdAt: -1 })
-        .lean(),
-
-
+      patientQuery.lean(),
       PatientModel.countDocuments(match),
     ]);
 
     return res.status(200).json({
       success: true,
-
       pagination: {
         totalDocument,
         page: pageNum,
-        totalPages: Math.ceil(totalDocument / PAGE_LIMIT),
+        pageSize: isExportMode ? totalDocument : PAGE_LIMIT,
+        totalPages: isExportMode ? 1 : Math.ceil(totalDocument / PAGE_LIMIT),
       },
-
       data: patients,
     });
-
   } catch (error) {
     console.error("Error fetching patients:", error);
 
@@ -8600,10 +8614,10 @@ export const singlePatientHistory = async (req, res) => {
     const isExportMode = isExport === "true";
 
     const PAGE_LIMIT = 10;
-    const pageNum = Math.max(parseInt(page) || 1, 1);
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
     const skip = (pageNum - 1) * PAGE_LIMIT;
 
-    // Validate IDs
+    // 1. Validate IDs
     if (
       !hospitalId ||
       !patientId ||
@@ -8616,7 +8630,7 @@ export const singlePatientHistory = async (req, res) => {
       });
     }
 
-    // Get hospital
+    // 2. Get Hospital
     const hospital = await HospitalModel.findById(hospitalId)
       .select("trimmedName")
       .lean();
@@ -8628,66 +8642,89 @@ export const singlePatientHistory = async (req, res) => {
       });
     }
 
-    // Multi-tenant connection
+    // 3. Multi-tenant Connections
     const conn = await getConnection(hospital.trimmedName);
     const FilledFormsModel = getFilledFormsModel(conn);
     const DoctorModel = getDoctorModel(conn);
     const DepartmentModel = getDepartmentModel(conn);
-    const PatientModel = getPatientModel(conn)
-    // Base match
-    let match = {
+    const PatientModel = getPatientModel(conn);
+
+    // 4. Base Match Stage
+    let matchStage = {
       isDeleted: false,
       "formData.patientDetails": patientId,
     };
 
-    //  DATE FILTER (FIXED)
-    if (startDate || endDate) {
-      match.createdAt = {};
+    // 5. Safe Date Filter
+    const isValidDateString = (dateStr) => {
+      if (
+        !dateStr ||
+        typeof dateStr !== "string" ||
+        dateStr === "undefined" ||
+        dateStr === "null" ||
+        dateStr === "[object Object]"
+      ) {
+        return false;
+      }
+      const d = new Date(dateStr);
+      return !isNaN(d.getTime());
+    };
 
-      if (startDate) {
-        match.createdAt.$gte = new Date(startDate);
+    if (isValidDateString(startDate) || isValidDateString(endDate)) {
+      matchStage.createdAt = {};
+
+      if (isValidDateString(startDate)) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        matchStage.createdAt.$gte = start;
       }
 
-      if (endDate) {
-        // include full day end
+      if (isValidDateString(endDate)) {
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
-        match.createdAt.$lte = end;
+        matchStage.createdAt.$lte = end;
       }
     }
 
-    //  SEARCH FILTER (example: patient name / mobile inside formData)
+    // 6. Safe Search Filter with Regex Escaping
     if (searchInput && searchInput.trim()) {
-      match.$or = [
-        { "purpose": { $regex: searchInput, $options: "i" } },
-        // { "formData.patientMobile": { $regex: searchInput, $options: "i" } },
+      const sanitizedSearch = searchInput.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      matchStage.$or = [
+        { purpose: { $regex: sanitizedSearch, $options: "i" } },
       ];
     }
 
-    // Fetch data
-    const [forms, totalDocument] = await Promise.all([
-      FilledFormsModel.find(match)
-        .populate({
-          path: "department",
-          model: DepartmentModel,
-          select: "name",
-        })
-        .populate({
-          path: "doctor",
-          model: DoctorModel,
-          select: "name",
-        })
-        .populate({
-          path: "formData.patientDetails",
-          model: PatientModel,
-          select: "patientName patientMobile",
-        })
-        .sort({ createdAt: -1 })
-        .skip(isExportMode ? 0 : skip)
-        .limit(isExportMode ? 0 : PAGE_LIMIT)
-        .lean(),
+    // 7. Build Mongoose Query Pipeline
+    let query = FilledFormsModel.find(matchStage)
+      .select(
+        "agentName formType gender callStatus purpose formData.appointmentSlot followupStatus createdAt formData.patientDetails formData.patientArrivalTime formData.remarks formData.surgeryName formData.healthPackageName formData.healthSchemeName formData.govertHealthSchemeName formData.nonGovtHealthSchemeName formData.reportName formData.referenceFrom formData.feedbackType formData.feedback"
+      )
+      .populate({
+        path: "doctor",
+        model: DoctorModel,
+        select: "name",
+      })
+      .populate({
+        path: "department",
+        model: DepartmentModel,
+        select: "name",
+      })
+      .populate({
+        path: "formData.patientDetails",
+        model: PatientModel,
+        select: "patientName patientMobile status patientAge category location gender",
+      })
+      .sort({ createdAt: -1 });
 
-      FilledFormsModel.countDocuments(match),
+    // Apply pagination conditionally if NOT exporting
+    if (!isExportMode) {
+      query = query.skip(skip).limit(PAGE_LIMIT);
+    }
+
+    // 8. Execute Queries Concurrently
+    const [forms, totalDocument] = await Promise.all([
+      query.lean(),
+      FilledFormsModel.countDocuments(matchStage),
     ]);
 
     return res.status(200).json({
@@ -8695,12 +8732,13 @@ export const singlePatientHistory = async (req, res) => {
       pagination: {
         totalDocument,
         page: pageNum,
-        totalPages: Math.ceil(totalDocument / PAGE_LIMIT),
+        pageSize: isExportMode ? totalDocument : PAGE_LIMIT,
+        totalPages: isExportMode ? 1 : Math.ceil(totalDocument / PAGE_LIMIT),
       },
       data: forms,
     });
   } catch (error) {
-    console.error("Error fetching patients:", error);
+    console.error("Error fetching patient history:", error);
 
     return res.status(500).json({
       success: false,
@@ -8708,7 +8746,6 @@ export const singlePatientHistory = async (req, res) => {
     });
   }
 };
-
 
 
 export const getPatientByNumber = async (req, res) => {
@@ -8854,7 +8891,7 @@ export const getPatientCallHistoryByNumber = async (req, res) => {
     const latestVisits = await FilledFormsModel.find({
       "formData.patientDetails": { $in: patientIds },
       isDeleted: false,
-    }).select("agentName formType gender callStatus purpose appointmentSlot followupStatus createdAt formData.patientDetails formData.patientArrivalTime formData.remarks formData.surgeryName formData.healthPackageName formData.healthSchemeName formData.govertHealthSchemeName formData.nonGovtHealthSchemeName formData.reportName formData.referenceFrom formData.feedbackType formData.feedback")
+    }).select("agentName formType gender callStatus purpose formData.appointmentSlot  followupStatus createdAt formData.patientDetails formData.patientArrivalTime formData.remarks formData.surgeryName formData.healthPackageName formData.healthSchemeName formData.govertHealthSchemeName formData.nonGovtHealthSchemeName formData.reportName formData.referenceFrom formData.feedbackType formData.feedback")
       .populate(pop("doctor", DoctorModel, "name"))
       .populate(pop("department", DepartmentModel, "name"))
       // .populate(pop("formData.patientDetails", PatientModel, "patientName patientMobileNo patientStatus patientAge patientCategory patientlocation patientGender"))

@@ -492,6 +492,11 @@ export const getFilledForms = async (req, res) => {
     const PatientModel = getPatientModel(conn);
     const DoctorModel = getDoctorModel(conn);
     const DepartmentModel = getDepartmentModel(conn);
+    const pop = (path, model, select = null) => ({
+      path,
+      model,
+      ...(select && { select })
+    });
 
     // ================= BASE MATCH STAGE =================
     const matchStage = { isDeleted: false };
@@ -527,208 +532,62 @@ export const getFilledForms = async (req, res) => {
         matchStage.formType = { $regex: "outbound", $options: "i" };
       }
     }
-
     const isSearchActive = Boolean(searchName && searchName.trim());
 
-    // ================= CASE 1: STANDARD PAGINATION (NO SEARCH, NO EXPORT) =================
-    // Ultra-fast path: Sorts on indexed `createdAt` before `$lookup`
-    if (!isSearchActive && !isExportMode) {
-      const [totalDocs, data] = await Promise.all([
-        FilledFormsModel.countDocuments(matchStage),
-        FilledFormsModel.aggregate([
-          { $match: matchStage },
-          { $sort: { createdAt: -1 } },
-          { $skip: skip },
-          { $limit: PAGE_LIMIT },
-          {
-            $lookup: {
-              from: PatientModel.collection.name,
-              localField: "formData.patientDetails",
-              foreignField: "_id",
-              as: "patientInfo",
-            },
-          },
-          { $unwind: { path: "$patientInfo", preserveNullAndEmptyArrays: true } },
-          {
-            $lookup: {
-              from: DoctorModel.collection.name,
-              localField: "doctor",
-              foreignField: "_id",
-              as: "doctorInfo",
-            },
-          },
-          { $unwind: { path: "$doctorInfo", preserveNullAndEmptyArrays: true } },
-          {
-            $lookup: {
-              from: DepartmentModel.collection.name,
-              localField: "department",
-              foreignField: "_id",
-              as: "departmentInfo",
-            },
-          },
-          { $unwind: { path: "$departmentInfo", preserveNullAndEmptyArrays: true } },
-          {
-            $project: {
-              _id: 1,
-              formType: 1,
-              purpose: 1,
-              agentName: 1,
-              callStatus: 1,
-              createdAt: 1,
-              followupStatus: 1,
-              referenceFrom: "$formData.referenceFrom",
-              "formData.patientDetails.patientName": "$patientInfo.patientName",
-              "formData.patientDetails.patientMobile": "$patientInfo.patientMobile",
-              "formData.patientDetails.patientStatus": "$patientInfo.status",
-              "formData.patientDetails.patientAge": "$patientInfo.patientAge",
-              "formData.patientDetails.patientCategory": "$patientInfo.category",
-              "formData.patientDetails.patientlocation": "$patientInfo.location",
-              gender: "$patientInfo.gender",
-              appointmentSlot: "$formData.appointmentSlot",
-              "formData.patientArrivalTime": "$formData.patientArrivalTime",
-              "doctor.name": "$doctorInfo.name",
-              "department.name": "$departmentInfo.name",
-              "formData.surgeryName": "$formData.surgeryName",
-              "formData.healthPackageName": "$formData.healthPackageName",
-              "formData.govertHealthSchemeName": "$formData.govertHealthSchemeName",
-              "formData.nonGovtHealthSchemeName": "$formData.nonGovtHealthSchemeName",
-              "formData.reportName": "$formData.reportName",
-              "formData.referenceFrom": "$formData.referenceFrom",
-              "formData.callerType": "$formData.callerType",
-              "formData.feedbackType": "$formData.feedbackType",
-              "formData.feedbackQuestions": "$formData.feedback.questions",
-              "formData.remarks": "$formData.remarks",
-            },
-          },
-        ]).allowDiskUse(true),
-      ]);
-
-      return res.status(200).json({
-        success: true,
-        data,
-        pagination: {
-          total: totalDocs,
-          page: pageNum,
-          pageSize: PAGE_LIMIT,
-          totalPages: Math.ceil(totalDocs / PAGE_LIMIT),
-        },
-      });
-    }
-
-    // ================= CASE 2: EXPORT OR SEARCH ACTIVE =================
-    // Always sorts by createdAt: -1 for export, without skipping or limiting
-    const pipeline = [
-      { $match: matchStage },
-      { $sort: { createdAt: -1 } },
-      {
-        $lookup: {
-          from: PatientModel.collection.name,
-          localField: "formData.patientDetails",
-          foreignField: "_id",
-          as: "patientInfo",
-        },
-      },
-      { $unwind: { path: "$patientInfo", preserveNullAndEmptyArrays: true } },
-      {
-        $lookup: {
-          from: DoctorModel.collection.name,
-          localField: "doctor",
-          foreignField: "_id",
-          as: "doctorInfo",
-        },
-      },
-      { $unwind: { path: "$doctorInfo", preserveNullAndEmptyArrays: true } },
-      {
-        $lookup: {
-          from: DepartmentModel.collection.name,
-          localField: "department",
-          foreignField: "_id",
-          as: "departmentInfo",
-        },
-      },
-      { $unwind: { path: "$departmentInfo", preserveNullAndEmptyArrays: true } },
-    ];
-
+    // 1. Handle Patient Search Filter
     if (isSearchActive) {
-      const safeSearch = searchName.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const searchRegex = new RegExp(safeSearch, "i");
-      pipeline.push({
-        $match: {
-          $or: [
-            { agentName: searchRegex },
-            { "patientInfo.patientName": searchRegex },
-            { "patientInfo.patientMobile": searchRegex },
-            { "doctorInfo.name": searchRegex },
-            { "departmentInfo.name": searchRegex },
-          ],
-        },
-      });
+      const patient = await PatientModel.findOne({
+        patientName: new RegExp(searchName.trim(), "i"),
+      }).select("_id");
+
+      if (patient) {
+        matchStage["formData.patientDetails"] = patient._id;
+      } else {
+        // If patient search yields no result, force matchStage to return empty results
+        matchStage["formData.patientDetails"] = null;
+      }
     }
 
-    // Data extraction sub-pipeline inside facet
-    const dataSubPipeline = [];
+    // 2. Build Mongoose Query
+    let query = FilledFormsModel.find(matchStage)
+      .select(
+        "agentName formType gender callStatus purpose formData.appointmentSlot followupStatus createdAt formData.patientDetails formData.patientArrivalTime formData.remarks formData.surgeryName formData.healthPackageName formData.healthSchemeName formData.govertHealthSchemeName formData.nonGovtHealthSchemeName formData.reportName formData.referenceFrom formData.feedbackType formData.feedback"
+      )
+      .populate(pop("doctor", DoctorModel, "name"))
+      .populate(pop("department", DepartmentModel, "name"))
+      .populate(
+        pop(
+          "formData.patientDetails",
+          PatientModel,
+          "patientName patientMobile status patientAge category location gender"
+        )
+      )
 
-    // If NOT exporting, apply pagination skip/limit
+
+    // 3. Apply Pagination conditionally if NOT exporting
     if (!isExportMode) {
-      dataSubPipeline.push({ $skip: skip }, { $limit: PAGE_LIMIT });
+      query = query.skip(skip).limit(PAGE_LIMIT).sort({ createdAt: -1 })
     }
 
-    dataSubPipeline.push({
-      $project: {
-        _id: 1,
-        formType: 1,
-        purpose: 1,
-        agentName: 1,
-        callStatus: 1,
-        createdAt: 1,
-        followupStatus: 1,
-        referenceFrom: "$formData.referenceFrom",
-        "formData.patientDetails.patientName": "$patientInfo.patientName",
-        "formData.patientDetails.patientMobile": "$patientInfo.patientMobile",
-        "formData.patientDetails.patientStatus": "$patientInfo.status",
-        "formData.patientDetails.patientAge": "$patientInfo.patientAge",
-        "formData.patientDetails.patientCategory": "$patientInfo.category",
-        "formData.patientDetails.patientlocation": "$patientInfo.location",
-        gender: "$patientInfo.gender",
-        appointmentSlot: "$formData.appointmentSlot",
-        "formData.patientArrivalTime": "$formData.patientArrivalTime",
-        "doctor.name": "$doctorInfo.name",
-        "department.name": "$departmentInfo.name",
-        "formData.surgeryName": "$formData.surgeryName",
-        "formData.healthPackageName": "$formData.healthPackageName",
-        "formData.govertHealthSchemeName": "$formData.govertHealthSchemeName",
-        "formData.nonGovtHealthSchemeName": "$formData.nonGovtHealthSchemeName",
-        "formData.reportName": "$formData.reportName",
-        "formData.referenceFrom": "$formData.referenceFrom",
-        "formData.callerType": "$formData.callerType",
-        "formData.remarks": "$formData.remarks",
-        "formData.feedbackType": "$formData.feedbackType",
-        "formData.feedbackQuestions": "$formData.feedback.questions",
-      },
-    });
-
-    pipeline.push({
-      $facet: {
-        metadata: [{ $count: "total" }],
-        data: dataSubPipeline,
-      },
-    });
-
-    const aggregationResult = await FilledFormsModel.aggregate(pipeline).allowDiskUse(true);
-
-    const data = aggregationResult[0]?.data || [];
-    const total = aggregationResult[0]?.metadata[0]?.total || 0;
+    // 4. Execute Count and Data Query in Parallel
+    const [totalDocs, data] = await Promise.all([
+      FilledFormsModel.countDocuments(matchStage),
+      query.lean(),
+    ]);
 
     return res.status(200).json({
       success: true,
       data,
       pagination: {
-        total,
-        page: isExportMode ? 1 : pageNum,
-        pageSize: isExportMode ? total : PAGE_LIMIT,
-        totalPages: isExportMode ? 1 : Math.ceil(total / PAGE_LIMIT),
+        total: totalDocs,
+        page: pageNum,
+        pageSize: isExportMode ? totalDocs : PAGE_LIMIT,
+        totalPages: isExportMode ? 1 : Math.ceil(totalDocs / PAGE_LIMIT),
       },
     });
+
+
+
   } catch (error) {
     console.error("Error fetching filled forms:", error);
     return res.status(500).json({

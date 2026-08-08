@@ -76,10 +76,10 @@ export const FORMS_AVAILABLE_COLUMNS = [
     { key: "formData.appointmentSlot", label: "App. Slot" },
     { key: "formData.patientArrivalTime", label: "PatientArrivalTime" },
     { key: "formData.remarks", label: "Remarks" },
-    { key: "formData.typeOfDisease", label: "Type Of Disease" },
     // Additional unique fields from second array
     { key: "doctor.name", label: "Doctor" },
     { key: "department.name", label: "Department" },
+    { key: "formData.typeOfDisease", label: "Type Of Disease" },
     { key: "formData.surgeryName", label: "Surgery Name" },
     { key: "formData.healthPackageName", label: "Health Package" },
     { key: "formData.healthSchemeName", label: "Health Scheme Name" },
@@ -88,8 +88,10 @@ export const FORMS_AVAILABLE_COLUMNS = [
     { key: "formData.reportName", label: "Report Name" },
     { key: "followupStatus", label: "Follow-up Status" },
     { key: "formData.referenceFrom", label: "Reference From" },
-    { key: "formData.feedbackType", label: "Feedback Type" },
-    { key: "formData.feedbackQuestions", label: "Feedback Questions" },
+    { key: "formData.feedback.feedbackType", label: "Feedback Type" },
+    { key: "formData.feedback.questions", label: "Feedback Questions" },
+    { key: "formData.feedback.ipdNumber", label: "Feedback Ipd No" },
+    { key: "formData.feedback.opdNumber", label: "Feedback Opd No" },
     { key: "createdAt", label: "Submitted At" },
 ];
 

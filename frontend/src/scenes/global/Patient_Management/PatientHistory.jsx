@@ -534,19 +534,18 @@ export const PatientHistory = () => {
                         </Box>
                     </Grid>
 
-                    <Grid item xs={12} md={2} display="flex" gap={1} pt={{ md: 2.5 }}>
+                    <Grid item xs={12} md={2} display="flex" gap={1}>
                         <Button
                             fullWidth
                             variant="contained"
                             startIcon={<FilterListIcon />}
                             onClick={handleApplyDatefilter}
                             sx={{
-                                bgcolor: "#1E293B",
+                                bgcolor: "#6c6e70",
                                 borderRadius: "20px",
                                 textTransform: "none",
                                 fontWeight: 700,
                                 fontSize: "11px",
-                                py: 1,
                                 "&:hover": { bgcolor: "#0F172A" },
                             }}
                         >
@@ -738,9 +737,31 @@ export const PatientHistory = () => {
                                             </TableCell>
 
                                             <TableCell align="right">
-                                                <IconButton size="small">
-                                                    <MoreVertIcon fontSize="small" />
-                                                </IconButton>
+                                                <Button
+                                                    onClick={() => {
+                                                        navigate(`/single-patient-history/${patient?._id}`, {
+                                                            state: {
+
+                                                                patient: {
+                                                                    ...patient,
+                                                                    hospitalId: selectedHostpital
+                                                                }
+                                                            }
+                                                        })
+                                                    }}
+                                                    variant="contained"
+                                                    color="success"
+                                                    size="small"
+                                                    sx={{
+                                                        fontSize: "12px",
+                                                        textTransform: "none", // keeps "View More" normal
+                                                        minWidth: "auto",      // removes default large width
+                                                        px: 1.5,               // horizontal padding
+                                                        py: 0.5,               // vertical padding
+                                                    }}
+                                                >
+                                                    View More
+                                                </Button>
                                             </TableCell>
                                         </TableRow>
                                     );

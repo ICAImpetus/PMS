@@ -51,6 +51,7 @@ import { commonRoutes } from "../../../api/apiService";
 import { useApi } from "../../../api/useApi";
 import moment from "moment";
 import { getNestedValue, handleExport, statusStyles, FORMS_AVAILABLE_COLUMNS } from "../../../utils/exportUtils";
+import { PatientHistoryTableBody } from "../../../components/customComponents/PatientHistoryTableBody";
 
 
 
@@ -742,7 +743,7 @@ export const SInglePatientDetails = () => {
                                 value="outbound"
                             />
                         </Tabs>
-                        <Table>
+                        {/* <Table>
                             <TableHead>
                                 <TableRow
                                     sx={{
@@ -934,7 +935,24 @@ export const SInglePatientDetails = () => {
                                     </TableRow>
                                 )}
                             </TableBody>
-                        </Table>
+                        </Table> */}
+
+                        <table className="ff-table">
+                            <thead>
+                                <tr>
+                                    {visibleFormColumns.map((col) => (
+                                        <th key={col.key}>{col.label}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <PatientHistoryTableBody
+                                columns={visibleFormColumns}
+                                filteredLatestVisits={filteredVisits}
+                                isLoading={patientHistoryLoading}
+                            />
+
+                        </table>
+
                     </TableContainer>
 
                     {/* Pagination */}

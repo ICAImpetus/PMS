@@ -31,7 +31,11 @@ import {
   List,
   ListItem,
   Divider,
-  ListItemText
+  ListItemText,
+  TableRow,
+  TableCell,
+  Link,
+  Rating,
 } from "@mui/material";
 import DoctorProfileCard from "./DoctorCard";
 import HospitalContext from "../contexts/HospitalContexts";
@@ -40,7 +44,8 @@ import {
   IndianStatesWithDistricts, initialFormState, OUTBOUND_PURPOSE_OPTIONS,
   REFERENCE_OPTIONS, initialFormData
 } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
-import { FORMS_AVAILABLE_COLUMNS, PatientCallHistory } from "../utils/exportUtils";
+import { FORMS_AVAILABLE_COLUMNS, getNestedValue, PatientCallHistory } from "../utils/exportUtils";
+import { PatientHistoryTableBody } from "./customComponents/PatientHistoryTableBody";
 
 const getPatientArrivalDateTime = (
   appointmentSlot,
@@ -219,6 +224,8 @@ const maxDate = nextWeek.toISOString().slice(0, 16);
 
 
 function Forms() {
+  const [form, setForm] = useState(initialFormState);
+  const [patientLatest, setPatientLatest] = useState(initialFormState);
   const [branchData, setBranchData] = useState(null);
   const [dynamicDepartments, setDynamicDepartments] = useState([]);
   const [dynamicDoctors, setDynamicDoctors] = useState([]);
@@ -242,8 +249,7 @@ function Forms() {
   const doctorDepartmentChangeFromSelect = useRef(false);
   const [bookedSlotAction, setBookedSlotAction] = useState("");
   const [cancelReason, setCancelReason] = useState("");
-  const [form, setForm] = useState(initialFormState);
-  const [patientLatest, setPatientLatest] = useState(initialFormState);
+  const [selectedQuestions, setSelectedQuestions] = useState(null);
   const { request: getSingleBranch, error: getSingleBranchError, loading: getSingleBranchLoading } = useApi(commonRoutes.getBranchByIdForForms)
   const { request: saveFilledForm, error: saveFilledFormError, loading: saveFilledFormLoading } = useApi(commonRoutes.saveFilledForm)
   const {
@@ -846,66 +852,6 @@ function Forms() {
     });
   }, [latestCallHistory, latestVisitSearch, latestVisitFilter]);
 
-  const TableMessageRow = React.memo(({ colSpan, children }) => (
-    <tr>
-      <td colSpan={colSpan} style={{ textAlign: "center", padding: "16px" }}>
-        {children}
-      </td>
-    </tr>
-  ));
-  function PatientHistoryTableBody({
-  }) {
-    const colSpan = FORMS_AVAILABLE_COLUMNS.length;
-
-    if (patientCallHistoryApiLoading) {
-      return (
-        <tbody>
-          <TableMessageRow colSpan={colSpan}>
-            <CircularProgress size={24} />
-          </TableMessageRow>
-        </tbody>
-      );
-    }
-
-    if (!filteredLatestVisits?.length) {
-      return (
-        <tbody>
-          <TableMessageRow colSpan={colSpan}>
-            No matching visit records found.
-          </TableMessageRow>
-        </tbody>
-      );
-    }
-
-    return (
-      <tbody>
-        {filteredLatestVisits.map((lv, rowIndex) => {
-          const rowKey = lv?._id ?? `row-${rowIndex}`;
-          const fieldMap = {
-            "formData.patientDetails.patientName": patientProfile?.patientName,
-            "formData.patientDetails.patientMobile": patientProfile?.patientMobile,
-            "formData.patientDetails.status": patientProfile?.status,
-            "formData.patientDetails.patientAge": patientProfile?.patientAge,
-            "formData.patientDetails.category": patientProfile?.category,
-            "formData.patientDetails.location": patientProfile?.location,
-            "formData.patientDetails.gender": patientProfile?.gender,
-          };
-
-          return (
-            <tr key={rowKey}>
-              {FORMS_AVAILABLE_COLUMNS.map((col, colIndex) => {
-                const key = col?.key;
-                // 1. Look up from fieldMap first, fall back to lv[key], default to "-"
-                const value = fieldMap[key] ?? lv?.[key] ?? "-";
-
-                return <td key={col?.id || colIndex}>{value}</td>;
-              })}
-            </tr>
-          );
-        })}
-      </tbody>
-    );
-  }
   const renderLatestPatientComponents = () => {
     const canShowLatestVisits =
       form?.formData?.patientDetails?.patientMobile !== "" &&
@@ -4572,6 +4518,91 @@ function Forms() {
                 title="Enter exactly 10-12 digit mobile number"
                 placeholder="10-12 digit number"
               />
+              {patientList?.length > 0 && (
+                <Box sx={{ position: "relative", width: "100%" }}>
+
+                  {/* Multiple Patients Dropdown List using MUI */}
+                  {isDropdownOpen && patientList.length > 1 && (
+                    <Paper
+                      elevation={4}
+                      sx={{
+                        position: "absolute",
+                        top: "100%",
+                        left: 0,
+                        right: 0,
+                        zIndex: 10,
+                        mt: 1,
+                        maxHeight: 240,
+                        overflowY: "auto",
+                        borderRadius: 1,
+                      }}
+                    >
+                      {/* Header */}
+                      <Box
+                        sx={{
+                          p: 1.5,
+                          backgroundColor: "grey.100",
+                          borderBottom: "1px solid",
+                          borderColor: "divider",
+                        }}
+                      >
+                        <Typography variant="caption" sx={{ fontWeight: "bold", color: "text.secondary" }}>
+                          Select Patient ({patientList.length} found):
+                        </Typography>
+                      </Box>
+
+                      {/* Patient List */}
+                      <List disablePadding>
+                        {patientList.map((patient, index) => (
+                          <React.Fragment key={patient?._id || index}>
+                            <ListItem
+                              sx={{
+                                cursor: "pointer",
+                                transition: "background-color 0.2s",
+                                "&:hover": {
+                                  backgroundColor: "action.hover",
+                                },
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                py: 1.5,
+                                px: 2,
+                              }}
+                            >
+                              <ListItemText
+                                primary={
+                                  <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
+                                    {patient.patientName || "Unknown Name"}
+                                  </Typography>
+                                }
+                                secondary={
+                                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                                    Age: {patient.patientAge || "N/A"} | Gender: {patient.gender || "N/A"}
+                                  </Typography>
+                                }
+                              />
+                              <Button
+                                variant="contained"
+                                size="small"
+                                sx={{ textTransform: "none", ml: 2 }}
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevents double click trigger if parent handles click
+                                  console.log("Selected Patient ID:", patient?._id);
+
+                                  handleSelectPatient(patient?._id)
+                                }}
+                              >
+                                Select
+                              </Button>
+                            </ListItem>
+                            {index < patientList.length - 1 && <Divider />}
+                          </React.Fragment>
+                        ))}
+                      </List>
+                    </Paper>
+                  )}
+                </Box>
+              )}
             </div>
             <div className="input-group">
               <label className="">Patient Name</label>
@@ -4806,7 +4837,12 @@ function Forms() {
                     ))}
                   </tr>
                 </thead>
-                <PatientHistoryTableBody />
+                <PatientHistoryTableBody
+                  columns={FORMS_AVAILABLE_COLUMNS}
+                  filteredLatestVisits={filteredLatestVisits}
+                  patientProfile={patientProfile}
+                  isLoading={patientCallHistoryApiLoading}
+                />
               </table>
             </Box>
           </Stack>
