@@ -53,6 +53,18 @@ const ScrollableForm = styled(Box)({
     "-ms-overflow-style": "none", // Hide scrollbar for IE/Edge
 });
 
+const StyledIconButton = styled(IconButton)(({ bgColor, color, hoverBgColor }) => ({
+    transition: "background-color 0.3s",
+    backgroundColor: bgColor,
+    color,
+    "&:hover": {
+        backgroundColor: hoverBgColor,
+        color,
+        animation: "oscillate 0.5s ease-in-out infinite",
+    },
+    "@keyframes oscillate": oscillateRotation,
+}));
+
 function AdminManagement() {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
@@ -71,8 +83,7 @@ function AdminManagement() {
         page: 0,
     });
     const [searchTerm, setSearchTerm] = React.useState("");
-    // console.log("colors grey is :", colors.grey);
-    const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm")); // Checks for screens below 'sm' breakpoint (600px)
+    const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
     const {
         loading,
@@ -90,32 +101,18 @@ function AdminManagement() {
     const deleteUser = async () => {
         const res = await deleteUserById(deleteUserId);
         if (res.success) {
-            await refetchAdmins()
+            await refetchAdmins();
             setDeleteOpen(false);
             setDeleteUserId(null);
             toast.success("User Deleted");
         }
-
     };
 
     const handleDeleteUser = async (userId) => {
         console.log("Deleting user with ID:", userId);
-        // deleteUser(userId)
         setDeleteUserId(userId);
         setDeleteOpen(true);
     };
-
-    const StyledIconButton = styled(IconButton)(({ bgColor, color }) => ({
-        transition: "background-color 0.3s",
-        backgroundColor: bgColor, // Initial background color
-        color,
-        "&:hover": {
-            backgroundColor: colors.primary[900], // Background color on hover
-            color, // Icon color on hover
-            animation: "oscillate 0.5s ease-in-out infinite", // Apply oscillation animation
-        },
-        "@keyframes oscillate": oscillateRotation,
-    }));
 
     const handleOpenUpdateModel = (row) => {
         // console.log("row data is :", row);

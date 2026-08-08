@@ -5,6 +5,10 @@ import "./DoctorDropdown.css";
 import dayjs from "dayjs";
 import { Tooltip } from "@mui/material";
 
+const getDayName = (dateTime) => {
+  const date = new Date(dateTime);
+  return date.toLocaleDateString("en-US", { weekday: "long" });
+};
 function convertTo12Hour(time) {
   if (!time) return "";
 
@@ -80,6 +84,7 @@ export default function DoctorDropdown({
     //   dayjs(selectedDay).format("dddd");
 
     // Selected full date
+
     const formattedDate =
       dayjs(selectedDay).format("YYYY-MM-DD");
 
@@ -88,8 +93,10 @@ export default function DoctorDropdown({
     // console.log("selectedDay:", selectedDay);
     // console.log("doctor:", doctor);
 
+
+    const day = getDayName(selectedDay)
     const isOpdDay =
-      doctor?.opdDays?.includes(selectedDay);
+      doctor?.opdDays?.includes(day);
 
     // console.log("isOpdDay:", isOpdDay);
     // console.log("dayName:", dayName);
@@ -101,9 +108,6 @@ export default function DoctorDropdown({
       );
 
     // Final availability
-
-
-
     return isOpdDay && !isUnavailable;
   };
 

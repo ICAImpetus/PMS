@@ -206,14 +206,14 @@ function App() {
             <CssBaseline />
             <GlobalLoader />
             <div className="app-container">
-              <div className="topbar-wrapper">
+              {/* <div className="topbar-wrapper">
                 <Topbar
                   setIsSidebar={setIsSidebar}
                   setIsToggled={setIsToggled}
                   toggled={toggled}
                   setRefresh={setRefresh}
                 />
-              </div>
+              </div> */}
 
               <div className="main-layout">
                 <Sidebar

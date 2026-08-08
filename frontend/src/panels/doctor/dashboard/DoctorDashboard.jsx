@@ -113,10 +113,8 @@ const DoctorDashboard = () => {
             sx={{
                 height: "100%",
                 backgroundColor: colors.primary[400],
-                // border: `1px solid ${colors.primary[500]}`,
                 transition: "all 0.3s ease",
                 "&:hover": {
-                    // boxShadow: `0 8px 16px ${color}40`,
                     transform: "translateY(-4px)",
                 },
             }}
@@ -162,7 +160,8 @@ const DoctorDashboard = () => {
             </CardContent>
         </Card>
     );
-    const TodayAppointmentsCard = () => (
+
+    const renderTodayAppointmentsCard = () => (
         <Card
             elevation={0}
             sx={{
@@ -426,7 +425,7 @@ const DoctorDashboard = () => {
         </Card>
     );
 
-    const RecentConsultationsCard = () => (
+    const renderRecentConsultationsCard = () => (
         <Card
             elevation={0}
             sx={{
@@ -620,30 +619,14 @@ const DoctorDashboard = () => {
     };
 
     const handleUpdateAppointment = () => {
-        // setAppointments((prev) =>
-        //     prev.map((apt) =>
-        //         apt.id === editingAppointment.id ? { ...apt, ...editFormData } : apt
-        //     )
-        // );
-        // setOpenEditDialog(false);
         toast.success("Appointment updated successfully!");
     };
 
     const handleCompleteAppointment = (id) => {
-        // setAppointments((prev) =>
-        //     prev.map((apt) =>
-        //         apt.id === id ? { ...apt, status: "Completed" } : apt
-        //     )
-        // );
         toast.success("Appointment marked as completed!");
     };
 
     const handleCancelAppointment = (id) => {
-        // setAppointments((prev) =>
-        //     prev.map((apt) =>
-        //         apt.id === id ? { ...apt, status: "Cancelled" } : apt
-        //     )
-        // );
         toast.error("Appointment cancelled!");
     };
 
@@ -651,19 +634,16 @@ const DoctorDashboard = () => {
     const getFilteredPastAppointments = () => {
         let filtered = pastappointments;
 
-        // Search filter
         if (searchTerm) {
             filtered = filtered.filter((apt) =>
                 apt.patientName.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
-        // Status filter
         if (filterStatus !== "All") {
             filtered = filtered.filter((apt) => apt?.formData?.status?.toLowerCase() === filterStatus?.toLowerCase());
         }
 
-        // Date filter
         if (filterDate) {
             filtered = filtered.filter((apt) => apt?.formData?.dateTime === filterDate);
         }
@@ -686,8 +666,8 @@ const DoctorDashboard = () => {
         return filtered;
     };
 
-    // All Appointments Tab
-    const AllAppointmentsTab = () => (
+    // All Appointments Tab render function
+    const renderAllAppointmentsTab = () => (
         <Card sx={{ backgroundColor: colors.primary[400], border: `1px solid ${colors.primary[500]} `, mt: 3 }}>
             <CardHeader
                 title="All Appointments"
@@ -796,8 +776,8 @@ const DoctorDashboard = () => {
         </Card>
     );
 
-    // Past Appointments Tab
-    const PastAppointmentsTab = () => (
+    // Past Appointments Tab render function
+    const renderPastAppointmentsTab = () => (
         <Box>
             {/* Filters */}
             <Card sx={{
@@ -816,7 +796,6 @@ const DoctorDashboard = () => {
                     titleTypographyProps={{ color: colors.grey[100], variant: "h6" }}
                     sx={{ pb: 2 }}
                 />
-                {/* <Divider sx={{ borderColor: colors.primary[500] }} /> */}
                 <CardContent sx={{
                     p: 0,
                     boxShadow: "none",
@@ -1057,8 +1036,8 @@ const DoctorDashboard = () => {
         </Box >
     );
 
-    // Edit appointment dialog
-    const EditAppointmentDialog = () => (
+    // Edit appointment dialog render function
+    const renderEditAppointmentDialog = () => (
         <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} maxWidth="sm" fullWidth>
             <DialogTitle sx={{ backgroundColor: colors.primary[400], color: colors.grey[100] }}>
                 Edit Appointment
@@ -1143,7 +1122,6 @@ const DoctorDashboard = () => {
                 </Box>
 
             </Card>
-
 
             {/* Enhanced Stats Grid */}
             <Grid container spacing={2} mb={2}>
@@ -1236,13 +1214,6 @@ const DoctorDashboard = () => {
                     <Tabs
                         value={tabValue}
                         onChange={(e, newValue) => setTabValue(newValue)}
-                        sx={{
-                            // "& .MuiTabs-indicator": { backgroundColor: colors.blueAccent[400] },
-                            // "& .MuiTab-root": {
-                            //     color: colors.grey[300],
-                            //     "&.Mui-selected": { color: colors.blueAccent[400] },
-                            // },
-                        }}
                     >
                         <Tab label="Today's Appointments" icon={<EventIcon />} iconPosition="start" />
                         <Tab label="Past Appointments" icon={<TrendingDownIcon />} iconPosition="start" />
@@ -1267,21 +1238,21 @@ const DoctorDashboard = () => {
                             >
                                 <Grid container spacing={3}>
                                     <Grid item xs={12} md={7}>
-                                        <TodayAppointmentsCard />
+                                        {renderTodayAppointmentsCard()}
                                     </Grid>
                                     <Grid item xs={12} md={5}>
-                                        <RecentConsultationsCard />
+                                        {renderRecentConsultationsCard()}
                                     </Grid>
                                 </Grid>
                             </CardContent>
                         </Box>
                     )}
-                    {tabValue === 1 && <PastAppointmentsTab />}
+                    {tabValue === 1 && renderPastAppointmentsTab()}
                 </Box>
             </Card>
 
             {/* Edit Appointment Dialog */}
-            <EditAppointmentDialog />
+            {renderEditAppointmentDialog()}
         </Container >
     );
 };

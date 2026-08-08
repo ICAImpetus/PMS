@@ -144,6 +144,7 @@ const AddEmpanelmentListModal = ({
   // --- Effects ---
 
   useEffect(() => {
+    console.log('effect fired');
     if (open) {
       if (empanelmentData) {
         // Edit Mode
@@ -330,54 +331,12 @@ const AddEmpanelmentListModal = ({
   ) || [];
 
 
-  const FormContainer = ({ children }) => {
-    if (isInline) {
-      if (!open) return null;
-      return (
-        <Box
-          sx={{
-            width: "100%",
-            borderRadius: 3,
-            border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
-            background:
-              theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
-                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
-            overflow: "hidden",
-            mb: 3,
-          }}
-        >
-          {children}
-        </Box>
-      );
-    }
-    return (
-      <Dialog
-        open={open}
-        onClose={!loading ? onClose : undefined}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            background:
-              theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
-                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
-          },
-        }}
-      >
-        {children}
-      </Dialog>
-    );
-  };
-
   const FormHeader = isInline ? Box : DialogTitle;
   const FormContent = isInline ? Box : DialogContent;
   const FormActions = isInline ? Box : DialogActions;
 
-  return (
-    <FormContainer>
+  const formContent = (
+    <>
       {/* Header */}
       <FormHeader
         sx={{
@@ -974,7 +933,48 @@ const AddEmpanelmentListModal = ({
               : "Add Policy"}
         </Button>
       </FormActions>
-    </FormContainer>
+    </>
+  );
+
+  if (isInline) {
+    if (!open) return null;
+    return (
+      <Box
+        sx={{
+          width: "100%",
+          borderRadius: 3,
+          border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+          background:
+            theme.palette.mode === "dark"
+              ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+              : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+          overflow: "hidden",
+          mb: 3,
+        }}
+      >
+        {formContent}
+      </Box>
+    );
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={!loading ? onClose : undefined}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          background:
+            theme.palette.mode === "dark"
+              ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+              : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+        },
+      }}
+    >
+      {formContent}
+    </Dialog>
   );
 };
 

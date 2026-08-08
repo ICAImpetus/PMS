@@ -32,6 +32,22 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { toTitleCase } from "../../../utils/normalizeUserType";
 
+const ProfileSection = ({ title, children, colors }) => {
+    const theme = useTheme();
+    const themeColors = colors || tokens(theme.palette.mode);
+    return (
+        <Card sx={{ backgroundColor: themeColors.primary[400], mb: 3 }}>
+            <CardHeader
+                title={title}
+                titleTypographyProps={{ color: themeColors.grey[100] }}
+                sx={{ pb: 1 }}
+            />
+            <Divider sx={{ borderColor: themeColors.primary[500] }} />
+            <CardContent>{children}</CardContent>
+        </Card>
+    );
+};
+
 const DoctorProfile = () => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
@@ -46,7 +62,6 @@ const DoctorProfile = () => {
             name: user?.name || "",
             username: user?.username || "",
 
-            // doctor core
             opdNo: user?.refId?.opdNo || "",
             contactNumber: user?.refId?.contactNumber || "",
             whatsappNumber: user?.refId?.whatsappNumber || "",
@@ -83,13 +98,13 @@ const DoctorProfile = () => {
     const [formData, setFormData] = useState(mapDoctorToForm(currentUser));
     const [editData, setEditData] = useState(formData);
 
-
     React.useEffect(() => {
         if (currentUser) {
             setFormData(mapDoctorToForm(currentUser));
             setEditData(mapDoctorToForm(currentUser));
         }
     }, [currentUser]);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setEditData((prev) => ({
@@ -121,18 +136,6 @@ const DoctorProfile = () => {
             reader.readAsDataURL(file);
         }
     };
-
-    const ProfileSection = ({ title, children }) => (
-        <Card sx={{ backgroundColor: colors.primary[400], mb: 3 }}>
-            <CardHeader
-                title={title}
-                titleTypographyProps={{ color: colors.grey[100] }}
-                sx={{ pb: 1 }}
-            />
-            <Divider sx={{ borderColor: colors.primary[500] }} />
-            <CardContent>{children}</CardContent>
-        </Card>
-    );
 
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
