@@ -13,6 +13,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
 import { initialBranchState } from "../../../../scenes/hospitalform/formData";
 import { IndianStatesWithDistricts } from "../hospitalForm/components/State";
@@ -502,7 +503,7 @@ const AddBranchBasic = ({
           // maxWidth: "620px",
           display: "flex",
           flexDirection: "column",
-          gap: { xs: 1.5, md: 2.5 },
+          gap: { xs: 2.5, md: 2.5 },
           mx: "auto",
           my: { xs: 1, md: 2 },
           border: "1px solid #e0e0e0",
@@ -515,27 +516,15 @@ const AddBranchBasic = ({
           variant="h5"
           component="h2"
           gutterBottom
+          gap="5px"
           justifyContent="space-between"
         // sx={{ textAlign: "center" }}
         >
-          <Button
-            variant="outlined"
-            onClick={handleClose}
-            size="small"
-            sx={{
-              color: "#212f3d",
-              borderColor: "#212f3d",
-              height: 32,
-              textTransform: "none",
-              "&:hover": {
-                backgroundColor: "#f0f0f0",
-                borderColor: "#212f3d",
-              },
-            }}
-          >
-            Back
-          </Button>
-          {isEdit ? "Edit Branch" : "Add New Hospital Branch"}
+          <IconButton onClick={handleClose}>
+            <ArrowBackIcon fontSize="small" />
+          </IconButton>
+
+          {isEdit ? "   Edit Branch" : "  Add New Hospital Branch"}
         </Typography>
 
         <TextField

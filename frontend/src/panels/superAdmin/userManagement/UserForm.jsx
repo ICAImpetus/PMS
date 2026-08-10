@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Formik, Form } from "formik";
-import * as Yup from "yup";
 import {
   Box,
   Button,
@@ -8,81 +7,75 @@ import {
   TextField,
   IconButton,
   InputAdornment,
-  useTheme,
   Grid,
   Typography,
   Switch,
-  FormControlLabel, Tooltip
-
+  FormControlLabel,
+  Chip,
+  Tooltip,
+  Paper,
+  Divider,
 } from "@mui/material";
-import { Visibility, VisibilityOff, Delete } from "@mui/icons-material";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import Header from "../../../components/Header";
-import { getDataFunc, sendDataApiFunc } from "../../../utils/services";
+import {
+  Visibility,
+  VisibilityOff,
+  InfoOutlined as InfoOutlinedIcon,
+  PersonOutline as PersonOutlineIcon,
+  Close as CloseIcon,
+} from "@mui/icons-material";
 import { toast } from "react-toastify";
-import { tokens } from "../../../theme";
-import MultiSelectDropdown from "./components/MultiSelectDropdown"; // Assuming this component is in this location
+
+// Imports from your project structure
+import Header from "../../../components/Header";
+import { sendDataApiFunc } from "../../../utils/services";
+import { UserContextHook } from "../../../contexts/UserContexts";
 import { useApi } from "../../../api/useApi";
 import { commonRoutes, superAdminRoutes } from "../../../api/apiService";
-import { getValidationSchema } from "../.././Schemas/validation";
-
+import MultiSelectDropdown from "../userManagement/components/MultiSelectDropdown";
+import { getValidationSchema } from "../../Schemas/validation";
 
 const UserForm = ({
   initialState = null,
   onClose,
-  allUsers = [],
-  refetchUsers,
   hospitalId,
-  setError = null,
+  allUsers = [],
+  refetchAdmins,
   isInline = false,
 }) => {
-
-
-  console.log("updateUser", hospitalId);
-
-
-
-  const theme = useTheme();
-  const colors = tokens(theme.palette.mode);
+  const { currentUser } = UserContextHook();
   const [showPassword, setShowPassword] = useState(false);
-  // ... (rest of your state)
 
   const isUpdateComp = !!initialState;
-  const initialValues = useMemo(() => ({
-    name: initialState?.name ?? "",
-    email: initialState?.email ?? "",
-    username: initialState?.username ?? "",
-    password: "",
 
-    type: isUpdateComp
-      ? (initialState?.type ?? "")
-      : "supermanager",
+  const initialValues = useMemo(
+    () => ({
+      name: initialState?.name ?? "",
+      email: initialState?.email ?? "",
+      username: initialState?.username ?? "",
+      password: "",
+      type: initialState?.type ?? "admin",
+      hospitalName: Array.isArray(initialState?.hospitals)
+        ? initialState.hospitals
+        : initialState?.hospitals
+          ? [initialState.hospitals]
+          : [],
+      selectedBranch: Array.isArray(initialState?.branches)
+        ? initialState.branches
+        : initialState?.branches
+          ? [initialState.branches]
+          : [],
 
-    hospitalName: [hospitalId],
-
-    selectedBranch: Array.isArray(initialState?.branches)
-      ? initialState.branches
-      : (initialState?.branches ? [initialState.branches] : []),
-
-    canDelete: initialState?.canDelete ?? false,
-  }), [initialState, isUpdateComp, hospitalId]);
-
-  // console.log("intial", initialValues);
-
-
-  // const {
-  //   request: checkUserNameApi,
-  //   loading: checkUserNameApiLoading,
-  //   error: checkUserNameApiError,
-  // } = useApi(commonRoutes.checkUserName);
-
-
+      canDelete: initialState?.canDelete ?? false,
+    }),
+    [initialState, isUpdateComp, hospitalId]
+  );
 
   const {
     request: addUser,
     loading: userLoading,
     error: userError,
   } = useApi(commonRoutes.addUsers);
+
   const {
     request: updateUser,
     loading: userUpdateLoading,
@@ -95,124 +88,145 @@ const UserForm = ({
     error: branchError,
   } = useApi(commonRoutes.getSelectedBranches);
 
-  const handleDeleteUser = async () => {
-    if (!initialState?._id) {
-      toast.error("User ID not found");
-      return;
-    }
-
-    if (
-      window.confirm(
-        "Are you sure you want to delete this user? This action cannot be undone.",
-      )
-    ) {
-      try {
-        const response = await sendDataApiFunc(
-          `deleteUser/${initialState._id}`,
-          {},
-          "delete",
-        );
-        if (response.success) {
-          toast.success("User deleted successfully");
-          if (onClose) onClose();
-        } else {
-          toast.error(response.message || "Failed to delete user");
-        }
-      } catch (error) {
-        console.error("Delete user error:", error);
-        toast.error("Error deleting user");
-      }
-    }
-  };
+  const {
+    request: allHospital,
+    loading: hosApiLoading,
+    error: hosApiError,
+  } = useApi(superAdminRoutes.getAllHospital);
 
   const handleSubmitForm = async (values, { setSubmitting }) => {
     try {
-
-      setSubmitting(true); // Start loading state
+      setSubmitting(true);
 
       let valuesToSubmit = { ...values };
-      valuesToSubmit.selectedBranch = valuesToSubmit?.selectedBranch?.map(
-        (item) => item?._id
-      ) || [];
+      valuesToSubmit.hospitalName =
+        valuesToSubmit?.hospitalName?.map((item) => item?._id) || [];
 
-      // console.log("selectedBranch are :", valuesToSubmit);
+      valuesToSubmit.selectedBranch =
+        valuesToSubmit?.selectedBranch?.map((item) =>
+          isUpdateComp ? item?.branchId : item?._id
+        ) || [];
+
+      let didClose = false;
 
       if (isUpdateComp) {
         const response = await updateUser(initialState?._id, valuesToSubmit);
-        if (response.success) {
-
-          if (refetchUsers) await refetchUsers()
-
+        if (response?.success) {
+          if (refetchAdmins) await refetchAdmins();
           toast.success("Profile Updated");
-          onClose();
+          didClose = true;
+        } else {
+          toast.error(response?.message || "Failed to update user");
         }
-
       } else {
         const data = await addUser(valuesToSubmit);
-        if (data.success) {
-          if (refetchUsers) await refetchUsers()
-          toast.success("New User Added")
-          onClose();
+        if (data?.success) {
+          if (refetchAdmins) await refetchAdmins();
+          toast.success("New User Added");
+          didClose = true;
+        } else {
+          toast.error(data?.message || "Failed to create user");
         }
-
       }
 
+      if (didClose && onClose) {
+        onClose();
+      }
     } catch (error) {
       console.error("Submit error:", error);
-      // toast.error("Error saving user");
+    } finally {
+      setSubmitting(false);
     }
   };
+
   const [hospitalNames, setHospitalNames] = useState([]);
-  const [branchOptions, setBranchOptions] = useState([]);
-
-  // useEffect(() => {
-  //   // if (initialState) return;
-  //   const fetchHospitals = async () => {
-  //     const response = await allHospital();
-  //     setHospitalNames(response?.data);
-  //   };
-  //   fetchHospitals();
-  // }, []);
-
-  // Fetch branches whenever selected hospitals change
-  // Note: We'll trigger this inside the Formik context to access values.hospitalName
   useEffect(() => {
-    const error = branchError || userError || userUpdate || null;
-    if (error && setError) {
-      setError(error);
+    const fetchHospitals = async () => {
+      const response = await allHospital();
+      setHospitalNames(response?.data || []);
+    };
+    fetchHospitals();
+  }, []);
+
+  useEffect(() => {
+    const error = hosApiError || branchError || userError || userUpdate || null;
+    if (error) {
+      toast.error(error);
     }
-  }, [userError, userUpdate, branchError]);
+  }, [userError, userUpdate, hosApiError, branchError]);
 
   return (
-    <Box m="20px">
-      <Header
-        title={isUpdateComp ? "UPDATE USER" : "CREATE USER"}
-        subtitle={isUpdateComp ? "Updating User" : "Managing User creation"}
-      />
+    <Paper
+      elevation={0}
+      sx={{
+        width: "100%",
+        maxWidth: isInline ? "100%" : 720,
+        margin: isInline ? "0" : "auto",
+        bgcolor: "#FFFFFF",
+        p: isInline ? 1 : 4,
+        borderRadius: isInline ? "0" : "20px",
+        border: isInline ? "none" : "1px solid #E2E8F0",
+        boxShadow: isInline ? "none" : "0px 20px 25px -5px rgba(0, 0, 0, 0.05)",
+      }}
+    >
+      {/* HEADER SECTION */}
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={3}
+      >
+        <Box display="flex" alignItems="center" gap={1.5}>
+          <Box
+            sx={{
+              width: 44,
+              height: 44,
+              borderRadius: "14px",
+              bgcolor: "#EFF6FF",
+              color: "#0256E8",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <PersonOutlineIcon />
+          </Box>
+          <Box>
+            <Typography variant="h6" fontWeight={800} color="#0F172A">
+              {isUpdateComp ? "Update User" : "Create New User"}
+            </Typography>
+            <Typography variant="caption" color="#64748B" fontWeight={500}>
+              {isUpdateComp
+                ? "Modify user profile and assigned hospital rights."
+                : "Add a new user credential into the platform."}
+            </Typography>
+          </Box>
+        </Box>
+
+        {onClose && (
+          <IconButton
+            onClick={onClose}
+            size="small"
+            sx={{
+              color: "#94A3B8",
+              bgcolor: "#F8FAFC",
+              border: "1px solid #E2E8F0",
+              "&:hover": { bgcolor: "#EFF6FF", color: "#0256E8" },
+            }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        )}
+      </Box>
+
+      <Divider sx={{ mb: 3, borderColor: "#F1F5F9" }} />
 
       <Formik
         initialValues={initialValues}
         enableReinitialize={true}
-        validationSchema={getValidationSchema(
-          isUpdateComp
-        )}
+        validationSchema={getValidationSchema(isUpdateComp)}
         validateOnChange={false}
         validateOnBlur={true}
-        validate={(values) => {
-          // ... (validate function is unchanged) .
-          // lo..
-          const errors = {};
-          // console.log(values);
-
-          // if (
-          //   ["admin", "supermanager", "teamleader", "executive"].includes(
-          //     values.type?.toLowerCase(),
-          //   )
-          // )
-          //   console.log("err", errors);
-
-          return errors;
-        }}
         onSubmit={async (values, { resetForm, setSubmitting }) => {
           await handleSubmitForm(values, { setSubmitting });
           if (!isUpdateComp) {
@@ -228,82 +242,14 @@ const UserForm = ({
           handleBlur,
           setFieldTouched,
           setFieldValue,
-          setFieldError,
         }) => {
-
-          console.log("errro", errors);
-
-          // ... (all useEffects and handlers inside Formik are unchanged) ...
-          // Fetch branches whenever hospital selection changes
-          // const handleBlur = async (e) => {
-          //   handleBlur(e);
-          //   console.log(e.target.value);
-
-          //   const username = e.target.value;
-
-          //   if (!username || username.length < 3) return;
-
-          //   // Important: Skip check if updating & username not changed
-          //   if (isUpdateComp && username === initialState?.username) {
-          //     return;
-          //   }
-
-          //   try {
-          //     const response = await checkUserNameApi(username);
-
-          //     if (response?.exists) {
-          //       setFieldError("username", "Username already exists");
-          //     }
-          //   } catch (err) {
-          //     console.error("Username check error:", err);
-          //   }
-          // };
-          useEffect(() => {
-            const fetchBranches = async () => {
-              if (!values.hospitalName || values.hospitalName.length === 0) {
-                setBranchOptions([]);
-                setFieldValue("selectedBranch", []);
-                return;
-              }
-
-              // only for these roles
-              const allowedTypes = ["teamleader", "executive"];
-
-              if (!allowedTypes.includes(values.type?.toLowerCase())) {
-                setBranchOptions([]);
-                setFieldValue("selectedBranch", []);
-                return;
-              }
-
-              try {
-                const response = await getBranches(hospitalId);
-                setBranchOptions(response?.data || []);
-              } catch (err) {
-                console.error("Error fetching branches:", err);
-                setBranchOptions([]);
-              }
-            };
-
-            fetchBranches();
-          }, [values.type]);
-
-          useEffect(() => {
-            if (initialState && isUpdateComp) {
-              const formattedBranches = initialState.branches?.map(branch => ({
-                _id: branch.branchId,
-                name: branch.name
-              })) || [];
-
-              setFieldValue("selectedBranch", formattedBranches);
-            }
-          }, [initialState])
           const customHandleChange = (event) => {
             const { name, value } = event.target;
             handleChange(event);
             if (
               name === "type" &&
-              ["admin", "supermanager", "teamleader", "executive"].includes(
-                value,
+              ["admin", "supermanager", "teamLeader", "executive"].includes(
+                value
               )
             ) {
               setFieldTouched("hospitalName", true);
@@ -311,261 +257,332 @@ const UserForm = ({
             }
           };
 
-          React.useEffect(() => {
-            if (
-              ["supermanager", "teamleader", "executive"].includes(
-                values.type,
-              )
-            ) {
-              setFieldTouched("hospitalName", true);
+          useEffect(() => {
+            if (initialState && isUpdateComp) {
+              const formatedHospitals =
+                initialState.hospitals?.map((hos) => ({
+                  _id: hos.hospitalId,
+                  name: hos.name,
+                })) || [];
+
+              setFieldValue("hospitalName", formatedHospitals);
             }
-            if (values.type?.toLowerCase() === "supermanager") {
-              setFieldTouched("selectedAdmin", true);
-            }
-          }, [
-            values.hospitalName,
-            values.selectedAdmin,
-            values.type,
-            setFieldTouched,
-          ]);
+          }, [initialState]);
 
           return (
             <Form>
+              {/* PERMISSION BAR */}
               <Box
                 sx={{
-                  width: "100%",
-                  maxWidth: isInline ? "100%" : 700,
-                  margin: isInline ? "0" : "auto",
-                  bgcolor: isInline ? "transparent" : colors.primary[800],
-                  p: isInline ? "0" : 4,
-                  borderRadius: isInline ? "0" : 2,
-                  boxShadow: isInline ? "none" : 3,
-                  minHeight: "auto",
-                  maxHeight: isInline ? "none" : "90vh",
-                  overflowY: isInline ? "visible" : "auto",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  bgcolor: "#F8FAFC",
+                  p: 2,
+                  borderRadius: "14px",
+                  border: "1px solid #E2E8F0",
+                  mb: 3,
                 }}
               >
-
-                <Grid container spacing={3}>
-                  {/* All your form fields (Name, Email, etc.) are unchanged */}
-
-                  <Grid item xs={12}>
-                    <TextField
-                      variant="standard"
-                      label="Full Name"
-                      name="name"
-                      value={values.name}
-                      onChange={customHandleChange}
-                      onBlur={handleBlur}
-                      error={touched.name && Boolean(errors.name)}
-                      helperText={touched.name && errors.name}
-                      fullWidth
+                <Box>
+                  <Typography variant="subtitle2" fontWeight={700} color="#0F172A">
+                    Deletion Privileges
+                  </Typography>
+                  <Typography variant="caption" color="#64748B">
+                    {values.canDelete
+                      ? "User is authorized to delete system records."
+                      : "User is restricted from deleting system records."}
+                  </Typography>
+                </Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={values.canDelete || false}
+                      onChange={(e) =>
+                        setFieldValue("canDelete", e.target.checked)
+                      }
+                      size="small"
+                      sx={{
+                        "& .MuiSwitch-switchBase.Mui-checked": {
+                          color: "#10B981",
+                        },
+                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                          backgroundColor: "#10B981",
+                        },
+                      }}
                     />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      variant="standard"
-                      label="Email"
-                      name="email"
-                      type="email"
-                      value={values.email}
-                      onChange={customHandleChange}
-                      onBlur={handleBlur}
-                      error={touched.email && Boolean(errors.email)}
-                      helperText={touched.email && errors.email}
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={isUpdateComp ? 12 : 6}>
-                    <TextField
-                      variant="standard"
-                      label="Username"
-                      name="username"
-                      type="text"
-                      value={values.username}
-                      onChange={customHandleChange}
-                      onBlur={handleBlur}
-                      error={touched.username && Boolean(errors.username)}
-                      helperText={touched.username && errors.username}
-                      fullWidth
-                      autoComplete={isUpdateComp ? undefined : "new-username"}
-                    />
-                  </Grid>
-                  {!isUpdateComp && (
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        variant="standard"
-                        label="Password"
-                        name="password"
-                        type={showPassword ? "text" : "password"}
-                        value={values.password}
-                        autoComplete="new-password"
-                        onChange={customHandleChange}
-                        onBlur={handleBlur}
-                        error={
-                          touched.password &&
-                          Boolean(errors.password)
-                        }
-                        helperText={
-                          touched.password &&
-                          errors.password
-                        }
-                        fullWidth
-                        InputProps={{
-                          endAdornment: (
-                            <InputAdornment position="end">
-
-                              <Tooltip
-                                title="Password must contain uppercase, lowercase, number and special character"
-                                arrow
-                              >
-                                <InfoOutlinedIcon
-                                  fontSize="small"
-                                  sx={{
-                                    mr: 1,
-                                    color: "text.secondary",
-                                    cursor: "pointer",
-                                  }}
-                                />
-                              </Tooltip>
-
-                              <IconButton
-                                onClick={() =>
-                                  setShowPassword(!showPassword)
-                                }
-                                edge="end"
-                              >
-                                {showPassword ? (
-                                  <VisibilityOff />
-                                ) : (
-                                  <Visibility />
-                                )}
-                              </IconButton>
-
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                    </Grid>
-                  )}
-
-                  <Grid item xs={12}>
-                    <TextField
-                      variant="standard"
-                      select
-                      label="User Type"
-                      name="type"
-                      value={values.type || "supermanager"} // safety
-                      onChange={customHandleChange}
-                      onBlur={handleBlur}
-                      error={touched.type && Boolean(errors.type)}
-                      helperText={touched.type && errors.type}
-                      fullWidth
-                      disabled={isUpdateComp}
+                  }
+                  label={
+                    <Typography
+                      variant="caption"
+                      fontWeight={800}
+                      color="#334155"
                     >
-                      {isUpdateComp ? <MenuItem value={values.type}>{values.type}</MenuItem> :
-                        <MenuItem value="supermanager">Super Manager</MenuItem>}
-                      {/* future ke liye */}
-                    </TextField>
-                  </Grid>
-
-
-                  {isUpdateComp &&
-                    (values.type === "teamleader" ||
-                      values.type === "executive") && (
-
-                      <>
-
-                        {console.log("branch options are :", errors?.selectedBranch, values.selectedBranch, branchOptions)} {/* Debug log */}
-
-                        <Grid item xs={12}>
-                          <MultiSelectDropdown
-                            options={branchOptions}
-                            name="selectedBranch"
-                            selectedOptions={values.selectedBranch}
-                            setSelectedOptions={(val) =>
-                              setFieldValue("selectedBranch", val)
-                            }
-                            label="Select Branch(s)"
-                            role={values.type}
-                            currentId={initialState?._id}
-
-                          />
-                          {touched.selectedBranch && errors.selectedBranch && (
-                            <div
-                              style={{
-                                color: "#f44336",
-                                fontSize: "0.75rem",
-                                marginTop: "3px",
-                                marginLeft: "14px",
-                              }}
-                            >
-                              {errors.selectedBranch}
-                            </div>
-                          )}
-                        </Grid>
-                      </>
-
-                    )}
-                  {/* 
-              
-                  {/* Can Delete Toggle - Only for admin updates */}
-                  {/* Submit and Cancel Buttons */}
-                  <Grid item xs={12} container spacing={2}>
-                    <Grid item xs={12} sm={6}>
-
-
-                      {isUpdateComp && isUpdateComp === true ? (
-                        <Button
-                          disabled={userUpdateLoading}
-                          type="submit"
-                          variant="contained"
-                          color="primary"
-                          fullWidth
-                          sx={{
-                            mt: 2,
-                            "&:hover": { backgroundColor: colors.primary[700] },
-                          }}
-                        >
-                          {userUpdateLoading ? "updating...." : `Updating User`}
-                        </Button>
-                      ) : (
-                        <Button
-                          disabled={userLoading}
-                          data-testid="createuserbtn"
-                          type="submit"
-                          variant="contained"
-                          color="primary"
-                          fullWidth
-                          sx={{
-                            mt: 2,
-                            "&:hover": { backgroundColor: colors.primary[700] },
-                          }}
-                        >
-                          {userLoading ? "Saving...." : `Create User`}
-                        </Button>
-                      )}
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Button
-                        type="button"
-                        variant="outlined"
-                        color="secondary"
-                        fullWidth
-                        sx={{ mt: 2 }}
-                        onClick={onClose}
-                      >
-                        Cancel
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </Grid>
+                      Can Delete
+                    </Typography>
+                  }
+                />
               </Box>
+
+              <Grid container spacing={2.5}>
+                {/* Full Name */}
+                <Grid item xs={12}>
+                  <TextField
+                    variant="outlined"
+                    size="small"
+                    label="Full Name"
+                    name="name"
+                    value={values.name}
+                    onChange={customHandleChange}
+                    onBlur={handleBlur}
+                    error={touched.name && Boolean(errors.name)}
+                    helperText={touched.name && errors.name}
+                    fullWidth
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "14px",
+                        backgroundColor: "#F8FAFC",
+                        fontSize: "13px",
+                        "& fieldset": { borderColor: "#E2E8F0" },
+                        "&:hover fieldset": { borderColor: "#CBD5E1" },
+                        "&.Mui-focused fieldset": { borderColor: "#0256E8" },
+                      },
+                      "& .MuiInputLabel-root": { fontSize: "13px", color: "#64748B" },
+                    }}
+                  />
+                </Grid>
+
+                {/* Email */}
+                <Grid item xs={12}>
+                  <TextField
+                    variant="outlined"
+                    size="small"
+                    label="Email Address"
+                    name="email"
+                    type="email"
+                    value={values.email}
+                    onChange={customHandleChange}
+                    onBlur={handleBlur}
+                    error={touched.email && Boolean(errors.email)}
+                    helperText={touched.email && errors.email}
+                    fullWidth
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "14px",
+                        backgroundColor: "#F8FAFC",
+                        fontSize: "13px",
+                        "& fieldset": { borderColor: "#E2E8F0" },
+                        "&:hover fieldset": { borderColor: "#CBD5E1" },
+                        "&.Mui-focused fieldset": { borderColor: "#0256E8" },
+                      },
+                      "& .MuiInputLabel-root": { fontSize: "13px", color: "#64748B" },
+                    }}
+                  />
+                </Grid>
+
+                {/* Username */}
+                <Grid item xs={12} sm={isUpdateComp ? 12 : 6}>
+                  <TextField
+                    variant="outlined"
+                    size="small"
+                    label="Username"
+                    name="username"
+                    type="text"
+                    value={values.username}
+                    onChange={customHandleChange}
+                    onBlur={handleBlur}
+                    error={touched.username && Boolean(errors.username)}
+                    helperText={touched.username && errors.username}
+                    fullWidth
+                    autoComplete={isUpdateComp ? undefined : "new-username"}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "14px",
+                        backgroundColor: "#F8FAFC",
+                        fontSize: "13px",
+                        "& fieldset": { borderColor: "#E2E8F0" },
+                        "&:hover fieldset": { borderColor: "#CBD5E1" },
+                        "&.Mui-focused fieldset": { borderColor: "#0256E8" },
+                      },
+                      "& .MuiInputLabel-root": { fontSize: "13px", color: "#64748B" },
+                    }}
+                  />
+                </Grid>
+
+                {/* Password (Only on Create) */}
+                {!isUpdateComp && (
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      variant="outlined"
+                      size="small"
+                      label="Password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      value={values.password}
+                      autoComplete="new-password"
+                      onChange={customHandleChange}
+                      onBlur={handleBlur}
+                      error={touched.password && Boolean(errors.password)}
+                      helperText={touched.password && errors.password}
+                      fullWidth
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <Tooltip
+                              title="Password must contain uppercase, lowercase, number and special character"
+                              arrow
+                            >
+                              <InfoOutlinedIcon
+                                fontSize="small"
+                                sx={{
+                                  mr: 0.5,
+                                  color: "#94A3B8",
+                                  cursor: "pointer",
+                                }}
+                              />
+                            </Tooltip>
+
+                            <IconButton
+                              onClick={() => setShowPassword(!showPassword)}
+                              edge="end"
+                              size="small"
+                              sx={{ color: "#94A3B8" }}
+                            >
+                              {showPassword ? (
+                                <VisibilityOff fontSize="small" />
+                              ) : (
+                                <Visibility fontSize="small" />
+                              )}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "14px",
+                          backgroundColor: "#F8FAFC",
+                          fontSize: "13px",
+                          "& fieldset": { borderColor: "#E2E8F0" },
+                          "&:hover fieldset": { borderColor: "#CBD5E1" },
+                          "&.Mui-focused fieldset": { borderColor: "#0256E8" },
+                        },
+                        "& .MuiInputLabel-root": { fontSize: "13px", color: "#64748B" },
+                      }}
+                    />
+                  </Grid>
+                )}
+
+                {/* User Type */}
+                <Grid item xs={12}>
+                  <TextField
+                    variant="outlined"
+                    size="small"
+                    select
+                    label="User Type"
+                    name="type"
+                    data-testid="type"
+                    value={values.type}
+                    onChange={customHandleChange}
+                    onBlur={handleBlur}
+                    error={touched.type && Boolean(errors.type)}
+                    helperText={touched.type && errors.type}
+                    fullWidth
+                    disabled={isUpdateComp}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "14px",
+                        backgroundColor: "#F8FAFC",
+                        fontSize: "13px",
+                        "& fieldset": { borderColor: "#E2E8F0" },
+                        "&:hover fieldset": { borderColor: "#CBD5E1" },
+                        "&.Mui-focused fieldset": { borderColor: "#0256E8" },
+                      },
+                      "& .MuiInputLabel-root": { fontSize: "13px", color: "#64748B" },
+                    }}
+                  >
+                    <MenuItem value="admin">Admin</MenuItem>
+                  </TextField>
+                </Grid>
+
+                {/* MultiSelect Hospitals */}
+                <Grid item xs={12}>
+                  <MultiSelectDropdown
+                    options={hospitalNames}
+                    selectedOptions={values.hospitalName}
+                    setSelectedOptions={(val) => {
+                      setFieldValue("hospitalName", val);
+                    }}
+                    label="Select Hospital(s)"
+                    role={values.type}
+                    currentId={initialState?._id}
+                  />
+                  {touched.hospitalName && errors.hospitalName && (
+                    <Typography
+                      variant="caption"
+                      color="#EF4444"
+                      sx={{ mt: 0.5, ml: 1.5, display: "block" }}
+                    >
+                      {errors.hospitalName}
+                    </Typography>
+                  )}
+                </Grid>
+
+                {/* Submit & Cancel Buttons */}
+                <Grid item xs={12} pt={2}>
+                  <Box display="flex" justifyContent="flex-end" gap={1.5}>
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      onClick={onClose}
+                      sx={{
+                        borderRadius: "12px",
+                        borderColor: "#CBD5E1",
+                        color: "#475569",
+                        textTransform: "none",
+                        fontWeight: 700,
+                        fontSize: "12px",
+                        px: 3,
+                        py: 1,
+                        "&:hover": { borderColor: "#94A3B8", bgcolor: "#F8FAFC" },
+                      }}
+                    >
+                      Cancel
+                    </Button>
+
+                    <Button
+                      disabled={userLoading || userUpdateLoading}
+                      data-testid="createuserbtn"
+                      type="submit"
+                      variant="contained"
+                      sx={{
+                        borderRadius: "12px",
+                        bgcolor: "#0256E8",
+                        color: "#FFFFFF",
+                        textTransform: "none",
+                        fontWeight: 800,
+                        fontSize: "12px",
+                        px: 3.5,
+                        py: 1,
+                        boxShadow: "none",
+                        "&:hover": { bgcolor: "#0143B8", boxShadow: "none" },
+                      }}
+                    >
+                      {isUpdateComp
+                        ? userUpdateLoading
+                          ? "Updating..."
+                          : "Update User"
+                        : userLoading
+                          ? "Saving..."
+                          : "Create User"}
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
             </Form>
           );
         }}
       </Formik>
-    </Box>
+    </Paper>
   );
 };
 

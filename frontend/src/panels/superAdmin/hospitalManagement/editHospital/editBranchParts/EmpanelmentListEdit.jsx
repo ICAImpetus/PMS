@@ -516,31 +516,10 @@ const AddEmpanelmentListModal = ({
                       <InputLabel>Types of Services</InputLabel>
                       <Select
                         label="Types of Services"
-                        multiple
                         value={selectedService}
                         onChange={(e) => {
                           setSelectedService(e.target.value);
                         }}
-                        renderValue={(selected) => (
-                          <Box
-                            sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}
-                          >
-                            {selected.map((value) => (
-                              <Chip
-                                key={value}
-                                label={
-                                  services.find((s) => s._id === value)?.name ||
-                                  value
-                                }
-                                size="small"
-                                sx={{
-                                  bgcolor: colors.blueAccent[100],
-                                  color: colors.blueAccent[800],
-                                }}
-                              />
-                            ))}
-                          </Box>
-                        )}
                         sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
                       >
                         {services.map((service) => (
@@ -806,7 +785,7 @@ const AddEmpanelmentListModal = ({
 
                             <Typography variant="body2" sx={{ mb: 1 }}>
                               <strong>Services:</strong>{" "}
-                              {coverage?.service?.join(",") || "No services"}
+                              {coverage?.service || "No services"}
                             </Typography>
                             <Typography variant="body2" sx={{ mb: 1 }}>
                               <strong>Doctors:</strong> {coverage?.doctor?.name}
