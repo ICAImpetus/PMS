@@ -9485,3 +9485,63 @@ export const getDoctorDashboardStats = async (req, res) => {
     });
   }
 };
+
+export const addHospitalIPs = async (req, res) => {
+  try {
+    const { hospitalId } = req.params;
+    const { ips } = req.body;
+
+    if (!Array.isArray(ips) || ips.length === 0) {
+      return res.status(400).json({ message: "Provide an array of IPs to add." });
+    }
+
+    const hospital = await HospitalModel.findByIdAndUpdate(
+      hospitalId,
+      {
+        $push: { ipAddresses: { $each: ips } },
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!hospital) {
+      return res.status(404).json({ message: "Hospital not found." });
+    }
+
+    return res.status(200).json({
+      message: "IP address(es) added successfully",
+      ipAddresses: hospital.ipAddresses,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+export const removeHospitalIP = async (req, res) => {
+  try {
+    const { hospitalId } = req.params;
+    const { ipId, ipAddress } = req.body;
+
+    const query = ipId
+      ? { _id: ipId }
+      : { ip: ipAddress };
+
+    const hospital = await HospitalModel.findByIdAndUpdate(
+      hospitalId,
+      {
+        $pull: { ipAddresses: query },
+      },
+      { new: true }
+    );
+
+    if (!hospital) {
+      return res.status(404).json({ message: "Hospital not found." });
+    }
+
+    return res.status(200).json({
+      message: "IP removed successfully",
+      ipAddresses: hospital.ipAddresses,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
