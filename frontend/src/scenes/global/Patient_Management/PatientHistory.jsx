@@ -534,23 +534,29 @@ export const PatientHistory = () => {
                         </Box>
                     </Grid>
 
-                    <Grid item xs={12} md={2} display="flex" gap={1}>
-                        <Button
-                            fullWidth
-                            variant="contained"
-                            startIcon={<FilterListIcon />}
-                            onClick={handleApplyDatefilter}
-                            sx={{
-                                bgcolor: "#6c6e70",
-                                borderRadius: "20px",
-                                textTransform: "none",
-                                fontWeight: 700,
-                                fontSize: "11px",
-                                "&:hover": { bgcolor: "#0F172A" },
-                            }}
-                        >
-                            APPLY FILTERS
-                        </Button>
+                    <Grid item xs={12} md={2} display="flex" alignItems="flex-end" gap={1}>
+                        <Box sx={{ width: "100%" }}>
+                            {/* Spacer label to match other filter fields */}
+                            <Typography variant="caption" fontWeight={800} color="transparent" display="block" mb={0.5}>
+                                &nbsp;
+                            </Typography>
+                            <Button
+                                fullWidth
+                                variant="contained"
+                                startIcon={<FilterListIcon />}
+                                onClick={handleApplyDatefilter}
+                                sx={{
+                                    bgcolor: "#6c6e70",
+                                    borderRadius: "20px",
+                                    textTransform: "none",
+                                    fontWeight: 700,
+                                    fontSize: "11px",
+                                    "&:hover": { bgcolor: "#0F172A" },
+                                }}
+                            >
+                                APPLY FILTERS
+                            </Button>
+                        </Box>
                     </Grid>
                 </Grid>
 
