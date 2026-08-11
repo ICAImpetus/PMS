@@ -107,7 +107,7 @@ const DoctorProfileCard = ({ doctor, hosId, setDoctorSlots = null }) => {
                         </Typography>
                         <Stack direction="row" spacing={0.5} mt={0.5} flexWrap="wrap">
 
-                            {console.log("data?.experience", data?.experience)}
+                            {/* {console.log("data?.experience", data?.experience)} */}
                             <Chip
                                 label={
                                     data?.experience !== null

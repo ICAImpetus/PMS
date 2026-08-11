@@ -1,54 +1,56 @@
 import { useState, useEffect } from "react";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
-import { Box, IconButton, Typography, useTheme } from "@mui/material";
+import { Box, Button, Typography, Avatar, IconButton, useTheme } from "@mui/material";
 import { Link, useLocation } from "react-router-dom";
 import "react-pro-sidebar/dist/css/styles.css";
 import LogoutModal from "../../components/LogoutModal";
-import { tokens } from "../../theme";
 import { UserContextHook } from "../../contexts/UserContexts";
 import { logoutApi } from "../../utils/services";
 
 // --- ICONS ---
-import LogoutIcon from "@mui/icons-material/Logout";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import SpaceDashboardOutlinedIcon from "@mui/icons-material/SpaceDashboardOutlined";
-import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
-import PhoneInTalkOutlinedIcon from "@mui/icons-material/PhoneInTalkOutlined";
-import LocalHospitalOutlinedIcon from "@mui/icons-material/LocalHospitalOutlined";
-import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
+import HistoryIcon from "@mui/icons-material/History";
+import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
+import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
+import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
+import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import AssignmentIndOutlinedIcon from "@mui/icons-material/AssignmentIndOutlined";
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import EventNoteIcon from "@mui/icons-material/EventNote";
-import PersonIcon from "@mui/icons-material/Person";
-import WarningIcon from "@mui/icons-material/Warning";
-import DescriptionIcon from "@mui/icons-material/Description";
-import ScheduleIcon from "@mui/icons-material/Schedule";
-import PaymentIcon from '@mui/icons-material/Payment';
-// Assets
-import adminImage from "../../assets/adminNew.jpg";
-import adminImage3 from "../../assets/adminFemaleNew.jpeg";
+import PaymentIcon from "@mui/icons-material/Payment";
+import HealingOutlinedIcon from "@mui/icons-material/HealingOutlined";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 
-// --- ITEM COMPONENT ---
-const Item = ({ title, to, icon, selected, setSelected, testId }) => {
-  const theme = useTheme();
-  const colors = tokens(theme.palette.mode);
-
-  // Check if this item is active based on the URL path
+// --- CUSTOM ITEM COMPONENT ---
+const CustomMenuItem = ({ title, to, icon, selected, setSelected, isCollapsed, testId }) => {
   const isActive = selected === to || (to !== "/" && selected.startsWith(to));
 
   return (
     <MenuItem
-
       active={isActive}
-      style={{
-        color: "white",
-      }}
       onClick={() => setSelected(to)}
-
       icon={icon}
       data-testid={testId}
+      style={{
+        margin: "4px 16px",
+        borderRadius: "16px",
+        backgroundColor: isActive ? "#EFF6FF" : "transparent",
+        color: isActive ? "#0256E8" : "#64748B",
+        transition: "all 0.2s ease-in-out",
+      }}
     >
-      <Typography fontSize={13}>{title}</Typography>
+      {!isCollapsed && (
+        <Typography
+          sx={{
+            fontSize: "11px",
+            fontWeight: 800,
+            letterSpacing: "0.5px",
+            textTransform: "uppercase",
+            color: isActive ? "#0256E8" : "#64748B",
+          }}
+        >
+          {title}
+        </Typography>
+      )}
       <Link to={to} />
     </MenuItem>
   );
@@ -57,14 +59,14 @@ const Item = ({ title, to, icon, selected, setSelected, testId }) => {
 const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
   const { currentUser } = UserContextHook();
 
-  // Define role groups for easier checking
+  // Define role groups
   const userType = currentUser?.type;
   const isManagement = [
     "superadmin",
     "admin",
     "supermanager",
     "teamLeader",
-    "teamleader"
+    "teamleader",
   ].includes(userType);
   const isSuperAdmin = userType === "superadmin";
   const isAdmin = userType === "admin";
@@ -73,25 +75,17 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
   const isExecutive = userType === "executive";
   const isHospital = userType === "hospital";
   const isDoctor = userType === "doctor";
-  const theme = useTheme();
-  const colors = tokens(theme.palette.mode);
-  const [isCollapsed, setIsCollapsed] = useState(isExecutive || isDoctor ? false : true);
 
-  // Initialize state with current URL path
+  const [isCollapsed, setIsCollapsed] = useState(
+    isExecutive || isDoctor ? false : true
+  );
+
   const location = useLocation();
   const [selected, setSelected] = useState(location.pathname);
 
-  // Sync state if the user navigates using back/forward buttons
   useEffect(() => {
     setSelected(location.pathname);
   }, [location.pathname]);
-
-  const capitalizeFirstChar = (str) => {
-    if (!str) return "";
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  };
-
-
 
   // --- LOGOUT HANDLER ---
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -117,29 +111,34 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
     setIsLogoutModalOpen(false);
   };
 
+  // Toggle Collapse Handler
+  const handleToggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
   return (
     <>
       <Box
         sx={{
           height: "100vh",
-          display: "flex",
-          flexDirection: "column",
+          padding: "16px",
+          backgroundColor: "#F8FAFC",
           "& .pro-sidebar": {
             height: "100%",
-            position: "relative",
-            display: "flex",
-            flexDirection: "column",
-            background:
-              theme.palette.mode === "dark"
-                ? `${colors.primary[800]} !important`
-                : `#212f3d !important`,
+            borderRadius: "24px",
+            border: "1px solid #E2E8F0",
+            backgroundColor: "#FFFFFF !important",
+            boxShadow: "0px 1px 3px rgba(0, 0, 0, 0.04)",
+            width: isCollapsed ? "80px !important" : "270px !important",
+            minWidth: isCollapsed ? "80px !important" : "270px !important",
+            transition: "all 0.3s ease",
           },
           "& .pro-sidebar-inner": {
             background: "transparent !important",
-            padding: "0 !important",
             display: "flex",
             flexDirection: "column",
             height: "100%",
+            padding: "24px 0",
           },
           "& .pro-menu": {
             padding: 0,
@@ -147,394 +146,254 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
             display: "flex",
             flexDirection: "column",
             overflowY: "auto",
-            "& > ul": {
-              flex: 1,
-            },
           },
           "& .pro-icon-wrapper": {
             backgroundColor: "transparent !important",
+            color: "inherit !important",
           },
           "& .pro-inner-item": {
-            padding: "5px 20px 5px 20px !important",
+            padding: "10px 16px !important",
           },
           "& .pro-inner-item:hover": {
-            color: "#868dfb !important",
-          },
-          "& .pro-menu-item.active": {
-            color: "#6870fa !important",
+            color: "#0256E8 !important",
           },
         }}
       >
-        <ProSidebar collapsed={toggled ? false : isCollapsed} breakPoint="md" toggled={toggled} onToggle={setIsToggled}>
-          <Menu iconShape="square">
-            {/* LOGO AND MENU ICON */}
-            <MenuItem
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              icon={
-                (!toggled && isCollapsed) ? (
-                  <MenuOutlinedIcon sx={{ color: "white" }} />
-                ) : undefined
-              }
-              style={{ margin: "10px 0 20px 0", color: colors.grey[100], display: toggled ? 'none' : 'block' }}
-            >
-              {(!isCollapsed || toggled) && (
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  ml="15px"
-                >
-                  <Typography variant="h3" color={"white"}>
-                    {/* SuperAdmin */}
-                  </Typography>
-                  <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
-                    <MenuOutlinedIcon sx={{ color: "white" }} />
-                  </IconButton>
-                </Box>
-              )}
-            </MenuItem>
+        <ProSidebar
+          collapsed={toggled ? false : isCollapsed}
+          breakPoint="md"
+          toggled={toggled}
+          onToggle={setIsToggled}
+        >
+          {/* HEADER / LOGO BRANDING WITH MENU TOGGLE ICON */}
+          <Box
+            px={isCollapsed ? 1.5 : 3}
+            mb={3}
+            display="flex"
+            alignItems="center"
+            justifyContent={isCollapsed ? "center" : "space-between"}
+          >
             {(!isCollapsed || toggled) && (
-              <Box mb="10px">
-                <Box display="flex" justifyContent="center" alignItems="center">
-                  <img
-                    alt="profile-user"
-                    width="100px"
-                    height="100px"
-                    src={isSuperAdmin ? adminImage3 : adminImage}
-                    style={{ cursor: "pointer", borderRadius: "50%" }}
-                  />
-                </Box>
-                <Box textAlign="center">
-                  <Typography
-                    sx={{
-                      color: "white !important",
-                      fontWeight: "bold",
-                      m: "10px 0 0 0",
-                      fontSize: "clamp(14px, 2vw, 20px)",
-                      maxWidth: "100%",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {currentUser?.name || "USER"}
-                  </Typography>
-                  <Typography variant="h5" sx={{ color: "white !important" }}>
-                    {userType ? capitalizeFirstChar(userType) : "Admin"}
-                  </Typography>
-                </Box>
+              <Box>
+                <Typography variant="h5" fontWeight={900} color="#0F172A">
+                  Infinis<span style={{ color: "#0256E8" }}>.</span>
+                </Typography>
+                <Typography
+                  variant="caption"
+                  fontWeight={800}
+                  color="#3B82F6"
+                  sx={{ letterSpacing: "0.8px", fontSize: "9px" }}
+                >
+                  PATIENT MANAGEMENT SYSTEM
+                </Typography>
               </Box>
             )}
-            <Box paddingLeft={isCollapsed ? undefined : "5%"}>
-              {/* --- DASHBOARD (Visible to All) --- */}
-              <Item
-                title="Dashboard"
-                to="/"
-                icon={<SpaceDashboardOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-              {!isDoctor && (
-                <Item
-                  title="Patient History"
-                  to="/patient-history"
-                  icon={<PersonAddIcon />}
-                  selected={selected}
-                  setSelected={setSelected}
-                />)}
 
-              {/* --- DOCTOR ITEMS --- */}
-              {isDoctor && (
-                <>
-                  <Item
-                    title="Profile"
-                    to="/profile"
-                    icon={<PersonAddIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                </>
-              )}
-
-              {/* --- EXECUTIVE ITEMS --- */}
-              {isExecutive && (
-                <>
-                  <Item
-                    title="Executive Forms"
-                    to="/executive-forms"
-                    icon={<AssignmentIndOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-
-                  {/* <Item
-                    title="Reports"
-                    to="/reports"
-                    icon={<AssessmentOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                  <Item
-                    title="Call Details"
-                    to="/call-details"
-                    icon={<PhoneInTalkOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  /> */}
-                </>
-              )}
-
-              {
-                isManagement && (
-                  <>
-                    <Item
-                      title="Hospital Management"
-                      to="/hospital-management"
-                      icon={<LocalHospitalOutlinedIcon />}
-                      selected={selected}
-                      setSelected={setSelected}
-                      testId="hospitalmanagementtestid"
-                    />
-                    {
-                      (isSuperAdmin) && (
-                        <>
-                          <Item
-                            title="Admin Managemnt"
-                            to="/admin-management"
-                            icon={<PeopleAltOutlinedIcon />}
-                            selected={selected}
-                            setSelected={setSelected}
-                          />
-                        </>
-                      )
-                    }
-                    <Item
-                      title="User Management"
-                      testId="usermanagementtestid"
-                      to="/user-management"
-                      icon={<PeopleAltOutlinedIcon />}
-                      selected={selected}
-                      setSelected={setSelected}
-                    />
-                  </>
-                )
-              }
-
-              {/* --- SUPERADMIN AND ADMIN ONLY --- */}
-
-              {
-                (isSuperAdmin || isAdmin) && (
-                  <>
-                    <Item
-                      title="Audit Logs"
-                      to="/admin-audit-logs"
-                      icon={<AssessmentOutlinedIcon />}
-                      selected={selected}
-                      setSelected={setSelected}
-                    />
-                  </>
-                )
-              }
-
-              {/* --- TEAM LEADER SPECIFIC --- */}
-              {
-                isTeamLeader && (
-                  <>
-                    <Item
-                      title="Executive Forms"
-                      to="/executive-forms"
-                      icon={<AssignmentIndOutlinedIcon />}
-                      selected={selected}
-                      setSelected={setSelected}
-                    />
-                    {/* <Item
-                    title="Team Reports"
-                    to="/team-reports"
-                    icon={<AssessmentOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                  <Item
-                    title="Call Details"
-                    to="/team-call-details"
-                    icon={<PhoneInTalkOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                  <Item
-                    title="Live Monitoring"
-                    to="/team-live-monitoring"
-                    icon={<MonitorHeartOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                  <Item
-                    title="Team Performance"
-                    to="/team-performance"
-                    icon={<TrendingUpOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  /> */}
-                  </>
-                )
-              }
-
-              {/* --- SUPER MANAGER SPECIFIC --- */}
-              {
-                isSuperManager && (
-
-                  <>
-                    <Item
-                      title="Subscription Plans"
-                      to="/Plans"
-                      icon={<PaymentIcon />}
-                      selected={selected}
-                      setSelected={setSelected}
-                    />
-                    {/* <Item
-                    title="Team Performance"
-                    to="/supermanager-team-performance"
-                    icon={<LocalHospitalOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                  <Item
-                    title="Call Details"
-                    to="/supermanager-calldetails"
-                    icon={<LocalHospitalOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  /> */}
-                    {/* <Item
-                    title="Reports"
-                    to="/team-reports"
-                    icon={<AssessmentOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  /> */}
-                    {/* <Item
-                    title="Action Center"
-                    to="/action-center"
-                    icon={<AssignmentIndOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                  <Item
-                    title="Agents"
-                    to="/agents"
-                    icon={<PeopleAltOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                  <Item
-                    title="Quality"
-                    to="/quality"
-                    icon={<ChecklistIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  /> */}
-                  </>
-                )
-              }
-
-              {/* --- ADMIN SPECIFIC --- */}
-              {
-                isAdmin && (
-                  <>
-                    {/* <Item
-    title="Integrations"
-    to="/integrations"
-    icon={<AllInclusiveIcon />}
-    selected={selected}
-    setSelected={setSelected}
-                  /> */}
-                    {/* <Item
-                    title="User Management"
-                    to="/admin-user-management"
-                    icon={<PeopleAltOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  /> */}
-
-                    {/* <Item
-                    title="Roles & Permissions"
-                    to="/roles-permissions"
-                    icon={<PeopleAltOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  /> */}
-
-                    {/* <Item
-                    title="Admin Audit Logs"
-                    to="/admin-audit-logs"
-                    icon={<SecurityOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  /> */}
-                    {/* <Item
-                    title="Assigned Hospitals"
-                    to="/assigned-hospitals"
-                    icon={<ListAltOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-
-                  /> */}
-                  </>
-                )
-              }
-
-              {/* --- HOSPITAL SPECIFIC --- */}
-              {
-                isHospital && (
-                  <Item
-                    title="Modify Hospital"
-                    to="/hospital-parts"
-                    icon={<HealingOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                )
-              }
-            </Box >
-
-            {/* Scrollable Content Spacer */}
-            < Box sx={{ flex: 1, overflowY: "auto" }}></Box >
-
-            {/* Fixed Bottom Section */}
-            < Box
+            <IconButton
+              onClick={handleToggleCollapse}
               sx={{
-                borderTop: "1px solid rgba(255, 255, 255, 0.1)",
-                position: "sticky",
-                bottom: 0,
-                background:
-                  theme.palette.mode === "dark"
-                    ? colors.primary[800]
-                    : "#212f3d",
-                zIndex: 1,
+                color: "#64748B",
+                bgcolor: "#F8FAFC",
+                border: "1px solid #E2E8F0",
+                "&:hover": { bgcolor: "#EFF6FF", color: "#0256E8" },
               }}
             >
-              <MenuItem
-                icon={<LogoutIcon sx={{ color: "white" }} />}
-                style={{
-                  color: "white",
-                  justifyContent: isCollapsed ? "center" : "flex-start",
-                  padding: isCollapsed ? "12px 0" : "12px 20px",
-                  margin: 0,
-                  width: "100%",
-                  boxSizing: "border-box",
-                }}
-                onClick={handleLogout}
+              <MenuOutlinedIcon fontSize="small" />
+            </IconButton>
+          </Box>
+
+          <Menu iconShape="square">
+            <Box flex={1}>
+              {/* DASHBOARD (Visible to All) */}
+              <CustomMenuItem
+                title="Dashboard"
+                to="/"
+                icon={<SpaceDashboardOutlinedIcon fontSize="small" />}
+                selected={selected}
+                setSelected={setSelected}
+                isCollapsed={isCollapsed}
+              />
+
+              {!isDoctor && (
+                <CustomMenuItem
+                  title="Patient History"
+                  to="/patient-history"
+                  icon={<HistoryIcon fontSize="small" />}
+                  selected={selected}
+                  setSelected={setSelected}
+                  isCollapsed={isCollapsed}
+                />
+              )}
+
+              {/* DOCTOR ITEMS */}
+              {isDoctor && (
+                <CustomMenuItem
+                  title="Profile"
+                  to="/profile"
+                  icon={<PersonAddIcon fontSize="small" />}
+                  selected={selected}
+                  setSelected={setSelected}
+                  isCollapsed={isCollapsed}
+                />
+              )}
+
+              {/* EXECUTIVE ITEMS */}
+              {isExecutive && (
+                <CustomMenuItem
+                  title="Executive Forms"
+                  to="/executive-forms"
+                  icon={<AssignmentIndOutlinedIcon fontSize="small" />}
+                  selected={selected}
+                  setSelected={setSelected}
+                  isCollapsed={isCollapsed}
+                />
+              )}
+
+              {/* MANAGEMENT ITEMS */}
+              {isManagement && (
+                <>
+                  <CustomMenuItem
+                    title="Hospital Management"
+                    to="/hospital-management"
+                    icon={<BusinessOutlinedIcon fontSize="small" />}
+                    selected={selected}
+                    setSelected={setSelected}
+                    isCollapsed={isCollapsed}
+                    testId="hospitalmanagementtestid"
+                  />
+
+                  {isSuperAdmin && (
+                    <CustomMenuItem
+                      title="Admin Management"
+                      to="/admin-management"
+                      icon={<AdminPanelSettingsOutlinedIcon fontSize="small" />}
+                      selected={selected}
+                      setSelected={setSelected}
+                      isCollapsed={isCollapsed}
+                    />
+                  )}
+
+                  <CustomMenuItem
+                    title="User Management"
+                    testId="usermanagementtestid"
+                    to="/user-management"
+                    icon={<GroupOutlinedIcon fontSize="small" />}
+                    selected={selected}
+                    setSelected={setSelected}
+                    isCollapsed={isCollapsed}
+                  />
+                </>
+              )}
+
+              {/* SUPERADMIN & ADMIN */}
+              {(isSuperAdmin || isAdmin) && (
+                <CustomMenuItem
+                  title="Audit Logs"
+                  to="/admin-audit-logs"
+                  icon={<ArticleOutlinedIcon fontSize="small" />}
+                  selected={selected}
+                  setSelected={setSelected}
+                  isCollapsed={isCollapsed}
+                />
+              )}
+
+              {/* TEAM LEADER SPECIFIC */}
+              {isTeamLeader && (
+                <CustomMenuItem
+                  title="Executive Forms"
+                  to="/executive-forms"
+                  icon={<AssignmentIndOutlinedIcon fontSize="small" />}
+                  selected={selected}
+                  setSelected={setSelected}
+                  isCollapsed={isCollapsed}
+                />
+              )}
+
+              {/* SUPER MANAGER SPECIFIC */}
+              {/* {isSuperManager && (
+                <CustomMenuItem
+                  title="Subscription Plans"
+                  to="/Plans"
+                  icon={<PaymentIcon fontSize="small" />}
+                  selected={selected}
+                  setSelected={setSelected}
+                  isCollapsed={isCollapsed}
+                />
+              )} */}
+
+              {/* HOSPITAL SPECIFIC */}
+              {isHospital && (
+                <CustomMenuItem
+                  title="Modify Hospital"
+                  to="/hospital-parts"
+                  icon={<HealingOutlinedIcon fontSize="small" />}
+                  selected={selected}
+                  setSelected={setSelected}
+                  isCollapsed={isCollapsed}
+                />
+              )}
+            </Box>
+          </Menu>
+
+          {/* FOOTER - LOGOUT & USER PROFILE */}
+          <Box px={isCollapsed ? 1 : 2.5} pt={2}>
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={handleLogout}
+              sx={{
+                bgcolor: "#0256E8",
+                borderRadius: "20px",
+                py: 1.2,
+                px: isCollapsed ? 0 : 2,
+                fontWeight: 800,
+                fontSize: "11px",
+                letterSpacing: "0.5px",
+                textTransform: "uppercase",
+                boxShadow: "none",
+                minWidth: "auto",
+                "&:hover": { bgcolor: "#0143B8", boxShadow: "none" },
+              }}
+            >
+              {isCollapsed ? "OUT" : "LOG OUT"}
+            </Button>
+
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent={isCollapsed ? "center" : "flex-start"}
+              gap={1.5}
+              mt={2.5}
+              pt={2}
+              borderTop="1px solid #F1F5F9"
+            >
+              <Avatar
+                src={currentUser?.avatarUrl}
+                sx={{ width: 36, height: 36, border: "2px solid #E2E8F0" }}
               >
-                {(!isCollapsed || toggled) && (
-                  <Box display="flex" alignItems="center" width="100%">
-                    <Typography sx={{ ml: 2 }}>Logout</Typography>
-                  </Box>
-                )}
-              </MenuItem>
-            </Box >
-          </Menu >
-        </ProSidebar >
-      </Box >
+                {currentUser?.name ? currentUser.name[0] : "D"}
+              </Avatar>
+              {!isCollapsed && (
+                <Box>
+                  <Typography variant="body2" fontWeight={700} color="#0F172A">
+                    {currentUser?.name || "Dr. Sarah Vance"}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    fontWeight={700}
+                    color="#94A3B8"
+                    fontSize="9px"
+                    sx={{ textTransform: "uppercase" }}
+                  >
+                    {currentUser?.role || "CHIEF OPS"}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Box>
+        </ProSidebar>
+      </Box>
+
       <LogoutModal
         open={isLogoutModalOpen}
         onClose={handleCloseLogoutModal}
@@ -543,4 +402,5 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
     </>
   );
 };
+
 export default Sidebar;

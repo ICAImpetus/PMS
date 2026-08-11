@@ -59,6 +59,18 @@ const modalStyle = {
   p: 3, // moderate padding
 };
 
+const StyledIconButton = styled(IconButton)(({ bgColor, color, hoverBgColor }) => ({
+  transition: "background-color 0.3s",
+  backgroundColor: bgColor,
+  color,
+  "&:hover": {
+    backgroundColor: hoverBgColor,
+    color,
+    animation: "oscillate 0.5s ease-in-out infinite",
+  },
+  "@keyframes oscillate": oscillateRotation,
+}));
+
 const EditHopsitalSuperadmin = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -66,21 +78,20 @@ const EditHopsitalSuperadmin = () => {
   const [open, setOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedHospital, setSelectedHospital] = useState(null);
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm")); // Checks for screens below 'sm' breakpoint (600px)
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const [deleteHospitalId, setDeleteHospitalId] = useState(null);
   const [paginationModel, setPaginationModel] = React.useState({
     pageSize: 15,
     page: 0,
   });
+
   useEffect(() => {
-    // Fetch hospital data
-    if (open) return; // Prevent fetching data if modal is not open
+    if (open) return;
     const fetchData = async () => {
       try {
         const response = await getDataFunc("hospitalsBasicInfo");
-        // [];
         if (response.success) {
-          toast.success(response.message)
+          toast.success(response.message);
           setData(response.data);
         } else {
           toast.error(response.message);
@@ -103,15 +114,14 @@ const EditHopsitalSuperadmin = () => {
       if (response.success) {
         toast.success(response.message);
         setDeleteOpen(false);
-        setDeleteHospitalId(null); // Reset deleteHospitalId after deletion
-        // Optionally, you can refetch the hospital data after deletion
+        setDeleteHospitalId(null);
       } else {
         toast.error(response.message);
       }
     } catch (error) {
       toast.error("Error deleting hospital");
       setDeleteOpen(false);
-      setDeleteHospitalId(null); // Reset deleteHospitalId on error
+      setDeleteHospitalId(null);
     }
     setDeleteOpen(false);
   };
@@ -122,23 +132,11 @@ const EditHopsitalSuperadmin = () => {
   };
 
   const handleOpenUpdateModel = (row) => {
-
     setSelectedHospital(row);
     setOpen(true);
   };
-  const handleClose = () => setOpen(false);
 
-  const StyledIconButton = styled(IconButton)(({ bgColor, color }) => ({
-    transition: "background-color 0.3s",
-    backgroundColor: bgColor, // Initial background color
-    color,
-    "&:hover": {
-      backgroundColor: colors.primary[900], // Background color on hover
-      color, // Icon color on hover
-      animation: "oscillate 0.5s ease-in-out infinite", // Apply oscillation animation
-    },
-    "@keyframes oscillate": oscillateRotation,
-  }));
+  const handleClose = () => setOpen(false);
 
   const columns = [
     {

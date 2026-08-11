@@ -735,8 +735,54 @@ export const themeSettings = (mode) => {
       MuiSelect: {
         styleOverrides: {
           select: {
-            fontSize: "0.875rem", // 14px - standalone select content font size
-            fontWeight: 400,
+            fontSize: "0.875rem",
+            fontWeight: 500,
+          },
+        },
+      },
+      // Global Dropdown Menu styling matching application design system
+      MuiMenu: {
+        styleOverrides: {
+          paper: {
+            borderRadius: "16px !important",
+            border: "1px solid #edf2f7 !important",
+            boxShadow: "0 12px 32px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(0,0,0,0.04) !important",
+            padding: "6px !important",
+            marginTop: "6px !important",
+          },
+          list: {
+            padding: "2px 0 !important",
+          },
+        },
+      },
+      // Global Menu Item styling for all Select & Menu options
+      MuiMenuItem: {
+        styleOverrides: {
+          root: {
+            borderRadius: "10px !important",
+            paddingTop: "8px !important",
+            paddingBottom: "8px !important",
+            paddingLeft: "16px !important",
+            paddingRight: "16px !important",
+            marginTop: "2px !important",
+            marginBottom: "2px !important",
+            fontSize: "0.85rem !important",
+            fontWeight: "700 !important",
+            color: "#334155 !important",
+            transition: "all 0.15s ease !important",
+            "&:hover": {
+              backgroundColor: "#eff6ff !important",
+              color: "#0a4bb6 !important",
+            },
+            "&.Mui-selected": {
+              backgroundColor: "#0a4bb6 !important",
+              color: "#ffffff !important",
+              fontWeight: "800 !important",
+            },
+            "&.Mui-selected:hover": {
+              backgroundColor: "#003aa3 !important",
+              color: "#ffffff !important",
+            },
           },
         },
       },
@@ -791,3 +837,35 @@ export const useMode = () => {
 
 // Export tokens for use in components
 export { tokens as modernTokens };
+
+
+
+
+export const ProjectThemeSettings = {
+
+  backgroundColor: {
+    main: "#F7F9FB"
+  },
+  cardColor: {
+    main: "#FFFFFF"
+  },
+
+  titleTextColor: {
+    lightest: "#E6F0FF",
+    lighter: "#B8D4FF",
+    light: "#94A3B8",
+    one: "#0052CC", // base
+    dark: "#0041A3",
+    darker: "#003080",
+    darkest: "#001F5C",
+  },
+
+  regularTextColor: {
+
+    one: "#1A1C1E",
+    two: "#1A1C1E",
+    three: "#44474A",
+    four: "#737685"
+  },
+
+}

@@ -8459,18 +8459,22 @@ export const clearNotifications = async (req, res) => {
 
 export const getPatientByRole = async (req, res) => {
   try {
-    const { hospitalId, branchId, page = 1, isExport, searchInput, startDate, endDate } = req.query;
+    const {
+      hospitalId,
+      branchId,
+      page = 1,
+      isExport,
+      searchInput,
+      startDate,
+      endDate,
+    } = req.query;
 
-    console.log("call", req.query);
     const isExportMode = isExport === "true";
-
-
     const PAGE_LIMIT = 10;
-    const pageNum = Math.max(parseInt(page) || 1, 1);
-
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
     const skip = (pageNum - 1) * PAGE_LIMIT;
 
-    // Validate hospitalId
+    // 1. Validate Hospital ID
     if (!hospitalId || !mongoose.isValidObjectId(hospitalId)) {
       return res.status(400).json({
         success: false,
@@ -8478,7 +8482,7 @@ export const getPatientByRole = async (req, res) => {
       });
     }
 
-    // Get hospital
+    // 2. Fetch Hospital Details
     const hospital = await HospitalModel.findById(hospitalId)
       .select("trimmedName")
       .lean();
@@ -8490,14 +8494,12 @@ export const getPatientByRole = async (req, res) => {
       });
     }
 
-    // Multi-tenant connection
+    // 3. Setup Multi-tenant Database Connections
     const conn = await getConnection(hospital.trimmedName);
     const FilledFormsModel = getFilledFormsModel(conn);
     const PatientModel = getPatientModel(conn);
-    const DoctorModel = getDoctorModel(conn)
-    const DepartmentModel = getDepartmentModel(conn)
-
-
+    const DoctorModel = getDoctorModel(conn);
+    const DepartmentModel = getDepartmentModel(conn);
 
     let match = {
       isDeleted: false,
@@ -8507,75 +8509,87 @@ export const getPatientByRole = async (req, res) => {
       match.branchId = branchId;
     }
 
-    if (searchInput?.trim()) {
-      const search = searchInput.trim();
-
+    // 4. Safe Search Filter with Regex Special Character Escaping
+    if (searchInput && searchInput.trim()) {
+      const sanitizedSearch = searchInput.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       match.$or = [
-        {
-          patientName: {
-            $regex: search,
-            $options: "i",
-          },
-        },
-        {
-          patientMobile: {
-            $regex: search,
-            $options: "i",
-          },
-        },
+        { patientName: { $regex: sanitizedSearch, $options: "i" } },
+        { patientMobile: { $regex: sanitizedSearch, $options: "i" } },
       ];
     }
 
-    if (startDate || endDate) {
+    // 5. Safe Date Validation Helper
+    const isValidDateString = (dateStr) => {
+      if (
+        !dateStr ||
+        typeof dateStr !== "string" ||
+        dateStr === "undefined" ||
+        dateStr === "null" ||
+        dateStr === "[object Object]"
+      ) {
+        return false;
+      }
+      const d = new Date(dateStr);
+      return !isNaN(d.getTime());
+    };
+
+    if (isValidDateString(startDate) || isValidDateString(endDate)) {
       match.createdAt = {};
-      if (startDate) match.createdAt.$gte = new Date(startDate);
-      if (endDate) {
+
+      if (isValidDateString(startDate)) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        match.createdAt.$gte = start;
+      }
+
+      if (isValidDateString(endDate)) {
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
         match.createdAt.$lte = end;
       }
     }
 
-    // Fetch data
+    // 6. Build Query Pipeline
+    let patientQuery = PatientModel.find(match)
+      .populate({
+        path: "lastVisit",
+        model: FilledFormsModel,
+        populate: [
+          {
+            path: "department",
+            model: DepartmentModel,
+            select: "name",
+          },
+          {
+            path: "doctor",
+            model: DoctorModel,
+            select: "name",
+          },
+        ],
+      })
+      .sort({ createdAt: -1 });
+
+    // Apply pagination only if not exporting
+    if (!isExportMode) {
+      patientQuery = patientQuery.skip(skip).limit(PAGE_LIMIT);
+    }
+
+    // 7. Execute Queries Concurrently
     const [patients, totalDocument] = await Promise.all([
-      PatientModel.find(match)
-        .populate({
-          path: "lastVisit",
-          model: FilledFormsModel,
-          populate: [
-            {
-              path: "department",
-              model: DepartmentModel,
-              select: "name",
-            },
-            {
-              path: "doctor",
-              model: DoctorModel,
-              select: "name",
-            },
-          ],
-        })
-        .skip(isExportMode ? 0 : skip)
-        .limit(isExportMode ? 0 : PAGE_LIMIT)
-        .sort({ createdAt: -1 })
-        .lean(),
-
-
+      patientQuery.lean(),
       PatientModel.countDocuments(match),
     ]);
 
     return res.status(200).json({
       success: true,
-
       pagination: {
         totalDocument,
         page: pageNum,
-        totalPages: Math.ceil(totalDocument / PAGE_LIMIT),
+        pageSize: isExportMode ? totalDocument : PAGE_LIMIT,
+        totalPages: isExportMode ? 1 : Math.ceil(totalDocument / PAGE_LIMIT),
       },
-
       data: patients,
     });
-
   } catch (error) {
     console.error("Error fetching patients:", error);
 
@@ -8600,10 +8614,10 @@ export const singlePatientHistory = async (req, res) => {
     const isExportMode = isExport === "true";
 
     const PAGE_LIMIT = 10;
-    const pageNum = Math.max(parseInt(page) || 1, 1);
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
     const skip = (pageNum - 1) * PAGE_LIMIT;
 
-    // Validate IDs
+    // 1. Validate IDs
     if (
       !hospitalId ||
       !patientId ||
@@ -8613,6 +8627,149 @@ export const singlePatientHistory = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Valid Hospital Id And Patient Id is required",
+      });
+    }
+
+    // 2. Get Hospital
+    const hospital = await HospitalModel.findById(hospitalId)
+      .select("trimmedName")
+      .lean();
+
+    if (!hospital) {
+      return res.status(404).json({
+        success: false,
+        message: "Hospital not found",
+      });
+    }
+
+    // 3. Multi-tenant Connections
+    const conn = await getConnection(hospital.trimmedName);
+    const FilledFormsModel = getFilledFormsModel(conn);
+    const DoctorModel = getDoctorModel(conn);
+    const DepartmentModel = getDepartmentModel(conn);
+    const PatientModel = getPatientModel(conn);
+
+    // 4. Base Match Stage
+    let matchStage = {
+      isDeleted: false,
+      "formData.patientDetails": patientId,
+    };
+
+    // 5. Safe Date Filter
+    const isValidDateString = (dateStr) => {
+      if (
+        !dateStr ||
+        typeof dateStr !== "string" ||
+        dateStr === "undefined" ||
+        dateStr === "null" ||
+        dateStr === "[object Object]"
+      ) {
+        return false;
+      }
+      const d = new Date(dateStr);
+      return !isNaN(d.getTime());
+    };
+
+    if (isValidDateString(startDate) || isValidDateString(endDate)) {
+      matchStage.createdAt = {};
+
+      if (isValidDateString(startDate)) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        matchStage.createdAt.$gte = start;
+      }
+
+      if (isValidDateString(endDate)) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        matchStage.createdAt.$lte = end;
+      }
+    }
+
+    // 6. Safe Search Filter with Regex Escaping
+    if (searchInput && searchInput.trim()) {
+      const sanitizedSearch = searchInput.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      matchStage.$or = [
+        { purpose: { $regex: sanitizedSearch, $options: "i" } },
+      ];
+    }
+
+    // 7. Build Mongoose Query Pipeline
+    let query = FilledFormsModel.find(matchStage)
+      .select(
+        "agentName formType gender callStatus purpose formData.appointmentSlot followupStatus createdAt formData.patientDetails formData.patientArrivalTime formData.remarks formData.surgeryName formData.healthPackageName formData.healthSchemeName formData.govertHealthSchemeName formData.nonGovtHealthSchemeName formData.reportName formData.referenceFrom formData.feedbackType formData.feedback"
+      )
+      .populate({
+        path: "doctor",
+        model: DoctorModel,
+        select: "name",
+      })
+      .populate({
+        path: "department",
+        model: DepartmentModel,
+        select: "name",
+      })
+      .populate({
+        path: "formData.patientDetails",
+        model: PatientModel,
+        select: "patientName patientMobile status patientAge category location gender",
+      })
+      .sort({ createdAt: -1 });
+
+    // Apply pagination conditionally if NOT exporting
+    if (!isExportMode) {
+      query = query.skip(skip).limit(PAGE_LIMIT);
+    }
+
+    // 8. Execute Queries Concurrently
+    const [forms, totalDocument] = await Promise.all([
+      query.lean(),
+      FilledFormsModel.countDocuments(matchStage),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      pagination: {
+        totalDocument,
+        page: pageNum,
+        pageSize: isExportMode ? totalDocument : PAGE_LIMIT,
+        totalPages: isExportMode ? 1 : Math.ceil(totalDocument / PAGE_LIMIT),
+      },
+      data: forms,
+    });
+  } catch (error) {
+    console.error("Error fetching patient history:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+
+export const getPatientByNumber = async (req, res) => {
+  try {
+    const { hospitalId, branchId, patientMobile, selctedPatientId } = req.query;
+
+    if (!patientMobile) {
+      return res.status(400).json({
+        success: false,
+        message: "Patient Mobile Number is required",
+      });
+    }
+
+    if (!selctedPatientId) {
+      return res.status(400).json({
+        success: false,
+        message: "Patient Not Selected ",
+      });
+    }
+    // Validate hospitalId
+    if (!hospitalId || !branchId || !mongoose.isValidObjectId(hospitalId) || !mongoose.isValidObjectId(branchId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid Hospital Id and Branch Id are required",
       });
     }
 
@@ -8630,94 +8787,66 @@ export const singlePatientHistory = async (req, res) => {
 
     // Multi-tenant connection
     const conn = await getConnection(hospital.trimmedName);
+    const PatientModel = getPatientModel(conn);
     const FilledFormsModel = getFilledFormsModel(conn);
-    const DoctorModel = getDoctorModel(conn);
-    const DepartmentModel = getDepartmentModel(conn);
-    const PatientModel = getPatientModel(conn)
-    // Base match
-    let match = {
-      isDeleted: false,
-      "formData.patientDetails": patientId,
-    };
+    const DoctorModel = getDoctorModel(conn)
+    const DepartmentModel = getDepartmentModel(conn)
 
-    //  DATE FILTER (FIXED)
-    if (startDate || endDate) {
-      match.createdAt = {};
 
-      if (startDate) {
-        match.createdAt.$gte = new Date(startDate);
-      }
 
-      if (endDate) {
-        // include full day end
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        match.createdAt.$lte = end;
-      }
-    }
-
-    //  SEARCH FILTER (example: patient name / mobile inside formData)
-    if (searchInput && searchInput.trim()) {
-      match.$or = [
-        { "purpose": { $regex: searchInput, $options: "i" } },
-        // { "formData.patientMobile": { $regex: searchInput, $options: "i" } },
-      ];
-    }
-
-    // Fetch data
-    const [forms, totalDocument] = await Promise.all([
-      FilledFormsModel.find(match)
-        .populate({
-          path: "department",
-          model: DepartmentModel,
-          select: "name",
-        })
-        .populate({
-          path: "doctor",
-          model: DoctorModel,
-          select: "name",
-        })
-        .populate({
-          path: "formData.patientDetails",
-          model: PatientModel,
-          select: "patientName patientMobile",
-        })
-        .sort({ createdAt: -1 })
-        .skip(isExportMode ? 0 : skip)
-        .limit(isExportMode ? 0 : PAGE_LIMIT)
-        .lean(),
-
-      FilledFormsModel.countDocuments(match),
+    const [patient, patients] = await Promise.all([
+      PatientModel.findById(selctedPatientId).select("patientName patientMobile status patientAge gender alternateMobile location category").lean(),
+      PatientModel.find({ patientMobile }).select("_id").lean()
     ]);
+
+
+    const patientIds = patients.map(p => p._id);
+
+    if (!patients.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Patient not found",
+      });
+    }
+    const latestVisits = await FilledFormsModel.find({
+      "formData.patientDetails": { $in: patientIds },
+      isDeleted: false,
+    }).select("formType purpose")
+      .populate(pop("doctor", DoctorModel, "name"))
+      .populate(pop("department", DepartmentModel, "name"))
+      // .populate(pop("formData.patientDetails", PatientModel, "patientName patientMobileNo patientStatus patientAge patientCategory patientlocation patientGender"))
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean();
 
     return res.status(200).json({
       success: true,
-      pagination: {
-        totalDocument,
-        page: pageNum,
-        totalPages: Math.ceil(totalDocument / PAGE_LIMIT),
-      },
-      data: forms,
+      message: "Patient fetched successfully",
+      data: patient,
+      latestVisits: latestVisits || []
+
+
     });
+
   } catch (error) {
-    console.error("Error fetching patients:", error);
+    console.error("Get Patient Error:", error);
 
     return res.status(500).json({
       success: false,
-      message: error.message || "Internal Server Error",
+      message: "Internal server error",
+      error: error.message,
     });
   }
 };
 
-
-export const getPatientByNumber = async (req, res) => {
+export const getPatientCallHistoryByNumber = async (req, res) => {
   try {
     const { hospitalId, branchId, patientMobile } = req.query;
 
     if (!patientMobile) {
       return res.status(400).json({
         success: false,
-        message: "Patient mobile number is required",
+        message: "Patient Mobile Number is required",
       });
     }
 
@@ -8748,34 +8877,32 @@ export const getPatientByNumber = async (req, res) => {
     const DoctorModel = getDoctorModel(conn)
     const DepartmentModel = getDepartmentModel(conn)
 
+    const patients = await PatientModel.find({ patientMobile }).select("_id").lean();
+    const patientIds = patients.map(p => p._id);
 
-    const patient = await PatientModel.findOne({
-      patientMobile,
-      isDeleted: false,
-    }).select("-lastVisit").lean();
-
-    if (!patient) {
+    if (!patients.length) {
       return res.status(404).json({
         success: false,
         message: "Patient not found",
-      });
+      })
+
+
     }
     const latestVisits = await FilledFormsModel.find({
-      "formData.patientDetails": patient._id,
+      "formData.patientDetails": { $in: patientIds },
       isDeleted: false,
-    }).select("formType doctor department purpose formData.remarks createdAt")
+    }).select("agentName formType gender callStatus purpose formData.appointmentSlot  followupStatus createdAt formData.patientDetails formData.patientArrivalTime formData.remarks formData.surgeryName formData.healthPackageName formData.healthSchemeName formData.govertHealthSchemeName formData.nonGovtHealthSchemeName formData.reportName formData.referenceFrom formData.feedbackType formData.feedback")
       .populate(pop("doctor", DoctorModel, "name"))
       .populate(pop("department", DepartmentModel, "name"))
+      // .populate(pop("formData.patientDetails", PatientModel, "patientName patientMobileNo patientStatus patientAge patientCategory patientlocation patientGender"))
       .sort({ createdAt: -1 })
-      .limit(5)
+      .limit(10)
       .lean();
-
 
     return res.status(200).json({
       success: true,
       message: "Patient fetched successfully",
-      data: patient,
-      latestVisits: latestVisits || []
+      data: latestVisits || []
 
 
     });
@@ -8790,7 +8917,78 @@ export const getPatientByNumber = async (req, res) => {
     });
   }
 };
+export const getRegisteredPatientsByNumber = async (req, res) => {
+  try {
+    const { hospitalId, branchId, patientMobile } = req.query;
 
+    // Validate patientMobile
+    if (!patientMobile) {
+      return res.status(400).json({
+        success: false,
+        message: "Patient mobile number is required",
+      });
+    }
+
+    // Validate hospitalId and branchId
+    if (
+      !hospitalId ||
+      !branchId ||
+      !mongoose.isValidObjectId(hospitalId) ||
+      !mongoose.isValidObjectId(branchId)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid Hospital Id and Branch Id are required",
+      });
+    }
+
+    // Get hospital details
+    const hospital = await HospitalModel.findById(hospitalId)
+      .select("trimmedName")
+      .lean();
+
+    if (!hospital) {
+      return res.status(404).json({
+        success: false,
+        message: "Hospital not found",
+      });
+    }
+
+    // Establish multi-tenant database connection
+    const conn = await getConnection(hospital.trimmedName);
+    const PatientModel = getPatientModel(conn);
+
+    // Query single patient by mobile number
+    const patient = await PatientModel.find({
+      patientMobile,
+      branchId: new mongoose.Types.ObjectId(branchId),
+      isDeleted: false,
+    })
+      .select("patientName")
+      .lean();
+
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: "Patient not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Patient fetched successfully",
+      data: patient,
+    });
+  } catch (error) {
+    console.error("Get Patient Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
 export const getDoctorAppointment = async (req, res) => {
   try {
     const {
@@ -9285,5 +9483,65 @@ export const getDoctorDashboardStats = async (req, res) => {
       message: "Internal server error",
       error: error.message,
     });
+  }
+};
+
+export const addHospitalIPs = async (req, res) => {
+  try {
+    const { hospitalId } = req.params;
+    const { ips } = req.body;
+
+    if (!Array.isArray(ips) || ips.length === 0) {
+      return res.status(400).json({ message: "Provide an array of IPs to add." });
+    }
+
+    const hospital = await HospitalModel.findByIdAndUpdate(
+      hospitalId,
+      {
+        $push: { ipAddresses: { $each: ips } },
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!hospital) {
+      return res.status(404).json({ message: "Hospital not found." });
+    }
+
+    return res.status(200).json({
+      message: "IP address(es) added successfully",
+      ipAddresses: hospital.ipAddresses,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+export const removeHospitalIP = async (req, res) => {
+  try {
+    const { hospitalId } = req.params;
+    const { ipId, ipAddress } = req.body;
+
+    const query = ipId
+      ? { _id: ipId }
+      : { ip: ipAddress };
+
+    const hospital = await HospitalModel.findByIdAndUpdate(
+      hospitalId,
+      {
+        $pull: { ipAddresses: query },
+      },
+      { new: true }
+    );
+
+    if (!hospital) {
+      return res.status(404).json({ message: "Hospital not found." });
+    }
+
+    return res.status(200).json({
+      message: "IP removed successfully",
+      ipAddresses: hospital.ipAddresses,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
   }
 };

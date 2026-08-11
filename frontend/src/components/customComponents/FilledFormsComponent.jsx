@@ -45,6 +45,7 @@ import { commonRoutes } from "../../api/apiService";
 import { toast } from "react-toastify";
 import HospitalContext from "../../contexts/HospitalContexts";
 import { FORMS_AVAILABLE_COLUMNS, FORMS_TEMPLATE, getNestedValue } from "../../utils/exportUtils";
+import { PatientHistoryTableBody } from "./PatientHistoryTableBody";
 
 
 const searchOptions = [
@@ -713,10 +714,9 @@ const FilledFormsComponent = ({
   );
   const exportFormsToSheet = async () => {
 
-    let exportdateFrom = dateFilterFrom
-    let exportdateTo = dateFilterTo
+    let exportdateFrom = dateFilterFrom;
+    let exportdateTo = dateFilterTo;
     if (!exportdateFrom || !exportdateTo) {
-
       exportdateFrom = dateRange.startDate;
       exportdateTo = dateRange.endDate;
     }
@@ -778,9 +778,25 @@ const FilledFormsComponent = ({
               val = moment(val).format("DD MMM YYYY hh:mm A");
             }
 
+
+            if (val && Array.isArray(val)) {
+              val = val
+                .map((q) => {
+                  if (q && typeof q === "object" && q.questionText) {
+                    return `${q.questionId || ""}: ${q.questionText} -> Rating: ${q.rating ?? "-"}`;
+                  }
+                  return JSON.stringify(q);
+                })
+                .join("\n"); // Multi-line string inside single cell
+            }
+            // =========================================================================================
+
             if (val && typeof val === "object" && !Array.isArray(val)) {
               val = val.name || JSON.stringify(val);
             }
+
+            // Null/Undefined values safe check
+            val = val ?? "";
 
             return `"${String(val).replace(/"/g, '""')}"`;
           })
@@ -1110,65 +1126,12 @@ const FilledFormsComponent = ({
                     ))}
                   </tr>
                 </thead>
-                <tbody>
-                  {
-                    filterForm?.map((row) => (
-                      <tr key={row._id}>
-                        {visibleFormColumns.map((col) => {
-                          let val = getNestedValue(row, col.key);
+                <PatientHistoryTableBody
+                  columns={visibleFormColumns}
+                  filteredLatestVisits={filterForm}
+                  isLoading={getFilledFormsLoading}
+                />
 
-                          // Handle appointmentSlot object
-                          if (col.key === "appointmentSlot") {
-                            if (val !== "-") {
-                              const formattedDate = val?.date
-                                ? moment(val.date).format("dddd, DD MMM YYYY")
-                                : null;
-
-                              val = formattedDate
-                                ? `${formattedDate} | ${val.start || "N/A"} to ${val.end || "N/A"
-                                }`
-                                : `${val.start || "N/A"} to ${val.end || "N/A"}`;
-                            } else if (col.value === "Appointment") {
-                              const formattedDate = row?.dateTime
-                                ? moment(row.dateTime).format("dddd, DD MMM YYYY")
-                                : null;
-
-                              val = formattedDate
-                                ? `${formattedDate} | Arrival Time: ${row?.patientArrivalTime || "-"
-                                }`
-                                : `Arrival Time: ${row?.patientArrivalTime || "-"}`;
-                            }
-                          }
-
-                          // Handle createdAt
-                          if (
-                            col.key === "createdAt" &&
-                            val !== "-" &&
-                            moment(val).isValid()
-                          ) {
-                            val = moment(val).format("DD MMM YYYY, hh:mm A");
-                          }
-
-                          // Handle Date objects
-                          if (val instanceof Date) {
-                            val = moment(val).format("DD/MM/YYYY hh:mm A");
-                          }
-
-                          // Handle objects
-                          if (
-                            val &&
-                            typeof val === "object" &&
-                            !Array.isArray(val)
-                          ) {
-                            val = val.name || JSON.stringify(val);
-                          }
-
-                          return <td key={col.key}>{val}</td>;
-                        })}
-                      </tr>
-                    ))
-                  }
-                </tbody>
               </table>
             )}
           </div>
@@ -1238,7 +1201,7 @@ const FilledFormsComponent = ({
               {/* </Paper> */}
             </Box>
 
-            {console.log("uploadFormsCSVApiError", uploadFormsCSVApiError)}
+
 
             {csvValidationErrors?.errors?.length > 0 && (
               <Box sx={{ mt: 3 }}>

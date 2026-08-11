@@ -189,53 +189,12 @@ const AddIpdDetailsModal = ({ open, onClose, onSave, ipdData = null, departments
     (item) => item?.type === "bedCategory"
   ) || [];
 
-  const FormContainer = ({ children }) => {
-    if (isInline) {
-      if (!open) return null;
-      return (
-        <Box
-          sx={{
-            width: "100%",
-            borderRadius: 3,
-            border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
-            background:
-              theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
-                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
-            overflow: "hidden",
-            mb: 3,
-          }}
-        >
-          {children}
-        </Box>
-      );
-    }
-    return (
-      <Dialog
-        open={open}
-        onClose={onClose}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            background: theme.palette.mode === "dark"
-              ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
-              : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
-          }
-        }}
-      >
-        {children}
-      </Dialog>
-    );
-  };
-
   const FormHeader = isInline ? Box : DialogTitle;
   const FormContent = isInline ? Box : DialogContent;
   const FormActions = isInline ? Box : DialogActions;
 
-  return (
-    <FormContainer>
+  const formContent = (
+    <>
       <FormHeader
         sx={{
           background: theme.palette.mode === "dark"
@@ -615,7 +574,47 @@ const AddIpdDetailsModal = ({ open, onClose, onSave, ipdData = null, departments
               : "Add IPD Details"}
         </Button>
       </FormActions>
-    </FormContainer>
+    </>
+  );
+
+  if (isInline) {
+    if (!open) return null;
+    return (
+      <Box
+        sx={{
+          width: "100%",
+          borderRadius: 3,
+          border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+          background:
+            theme.palette.mode === "dark"
+              ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+              : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+          overflow: "hidden",
+          mb: 3,
+        }}
+      >
+        {formContent}
+      </Box>
+    );
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          background: theme.palette.mode === "dark"
+            ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+            : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+        }
+      }}
+    >
+      {formContent}
+    </Dialog>
   );
 };
 

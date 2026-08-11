@@ -9,11 +9,23 @@ const attendantSchema = new mongoose.Schema(
   { _id: false }
 );
 
-// Feedback Question
+// Dynamic Feedback Question Response Schema
 const feedbackQuestionSchema = new mongoose.Schema(
   {
-    question: String,
-    rating: Number,
+    questionId: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    questionText: {
+      type: String,
+      required: true,
+    },
+    rating: {
+      type: Number, // Use Number since ratings are numeric (1, 2, 3, 4, 5)
+      min: 1,
+      max: 5,
+    },
   },
   { _id: false }
 );
@@ -22,15 +34,10 @@ export const FilledFormSchema = new mongoose.Schema(
   {
     formType: {
       type: String,
-      enum: ["inbound", "outbound"],
-      required: true,
-      index: true
+      // enum: ["inbound", "outbound"],
+      // required: true,
+      index: true,
     },
-
-    // hospitalId: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "Hospital",
-    // },
 
     branchId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -41,58 +48,60 @@ export const FilledFormSchema = new mongoose.Schema(
     agentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "AdminAgentSchema",
-      // required: true,
     },
 
     doctor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Doctor",
-      index: true
+      index: true,
     },
 
     department: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Department",
     },
+
     agentName: String,
     purpose: { type: String, index: true },
     callStatus: {
       type: String,
       trim: true,
-      lowercase: true
+      lowercase: true,
     },
     useForFollowup: {
       type: Boolean,
-      default: false
+      default: false,
     },
     appointmentStatus: {
       type: String,
-      default: ""
+      default: "",
     },
     followupStatus: {
       type: String,
       lowercase: true,
       enum: ["pending", "completed"],
-      default: null
+      default: null,
     },
+
     formData: {
+      typeOfDisease: String,
       callerType: String,
       referenceFrom: String,
       refDoctorName: String,
       refHospitalName: String,
       refHospitalLocation: String,
       location: String,
+
       bookSlot: {
         type: Object,
         default: null,
       },
       patientDetails: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Patient", // same connection me resolve hoga
+        ref: "Patient",
       },
 
       attendantDetails: attendantSchema,
-
       missedConnectionStatus: String,
 
       informativeTopic: String,
@@ -103,7 +112,6 @@ export const FilledFormSchema = new mongoose.Schema(
       notConnectedRemarks: String,
 
       opdNumber: String,
-
       marketingCampaignName: String,
       marketingDetailsShared: String,
 
@@ -134,51 +142,42 @@ export const FilledFormSchema = new mongoose.Schema(
       // Lead / Source tracking
       source: String,
       lead: String,
-
       connectionStatus: String,
 
-      // Detailed Feedback
+      // Dynamic Feedback Block
       feedback: {
         feedbackType: String,
         ipdNumber: String,
         opdNumber: String,
-        questions: [feedbackQuestionSchema],
+        questions: [feedbackQuestionSchema], // Dynamic array of question responses
       },
-      patientArrivalTime: { type: String, default: "" },
+
       appointmentSlot: {
         date: {
           type: Date,
           index: true,
         },
-
         slotId: {
           type: mongoose.Schema.Types.ObjectId,
         },
-
         start: String,
-
         end: String,
       },
       patientArrivalTime: {
         type: String,
+        default: "",
       },
 
-      status: String,
       isCancelApp: {
         type: Boolean,
       },
       cancelReason: String,
     },
+
     isDeleted: { type: Boolean, index: true, default: false },
-    createdAt: Date,
-    updatedAt: Date,
   },
   {
     timestamps: true,
-    versionKey: false
+    versionKey: false,
   }
 );
-
-// const FilledFormsModel = mongoose.model("filledForms", filledFormSchema);
-
-// export default FilledFormsModel;

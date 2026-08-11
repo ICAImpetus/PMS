@@ -10,26 +10,63 @@ import {
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
 } from "chart.js";
-import { FormControl, Select, MenuItem, InputLabel, Box } from "@mui/material";
+import {
+  Box,
+  Card,
+  Grid,
+  Typography,
+  Select,
+  MenuItem,
+  FormControl,
+  Button,
+  Chip,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableContainer,
+  Paper,
+  LinearProgress,
+  IconButton,
+  CircularProgress,
+  InputBase,
+  Avatar,
+  Badge,
+} from "@mui/material";
 import { Line, Bar, Doughnut } from "react-chartjs-2";
 import "./Dashboard.css";
-import { UserContextHook } from "../../../contexts/UserContexts";
 import { ProfilePopup } from "../../../scenes/global/ProfileAndCodeAnnousementPopup";
 import FilledFormsComponent from "../../../components/customComponents/FilledFormsComponent";
+import NotificationCenter from "../../../components/NotificationCenter";
 
-// --- IMPORT MUI ICONS FOR QUICK STATS ---
+// --- MUI ICONS ---
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import BusinessIcon from "@mui/icons-material/Business";
 import GroupIcon from "@mui/icons-material/Group";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import DescriptionIcon from "@mui/icons-material/Description";
-import { AlertTriangle, Users } from "lucide-react";
+import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
+import SingleBedIcon from "@mui/icons-material/SingleBed";
+import WaterDropIcon from "@mui/icons-material/WaterDrop";
+import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
+import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
+import SettingsIcon from "@mui/icons-material/Settings";
+import SearchIcon from "@mui/icons-material/Search";
+import AirportShuttleIcon from "@mui/icons-material/AirportShuttle";
+import LocalPharmacyIcon from "@mui/icons-material/LocalPharmacy";
+import ReportProblemIcon from "@mui/icons-material/ReportProblem";
+import VerifiedIcon from "@mui/icons-material/Verified";
+import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import { AlertTriangle } from "lucide-react";
 import { useApi } from "../../../api/useApi";
 import { commonRoutes } from "../../../api/apiService";
 import { toast } from "react-toastify";
 import HospitalContext from "../../../contexts/HospitalContexts";
+import { UserContextHook } from "../../../contexts/UserContexts";
 
 ChartJS.register(
   CategoryScale,
@@ -41,327 +78,443 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler,
+  Filler
 );
-
 
 const categoryLabels = {
   location: "Location",
   age: "Age Group",
   gender: "Gender",
-  doctor: "Doctor",
-  poc: "Purpose of Call"
+  doctor: "DOCTOR NAME",
+  poc: "Purpose of Call",
 };
+
 const formatMonth = (m) =>
   m.charAt(0).toUpperCase() + m.slice(1);
 
-const getMonthWiseData = (arr, months) => {
-  return months.map(month =>
+const getMonthWiseData = (arr = [], months = []) => {
+  return months.map((month) =>
     arr.reduce((sum, item) => sum + (item[month] || 0), 0)
   );
 };
 
+const sum = (arr = []) => arr.reduce((a, b) => a + b, 0);
 
-const sum = (arr) => arr.reduce((a, b) => a + b, 0);
-
-const getChange = (current, prev) => {
-  if (!prev) return { value: "-", className: "" };
-
-  const diff = ((current - prev) / prev) * 100;
-
-  if (diff > 0) {
-    return { value: `↑ ${diff.toFixed(0)}%`, className: "text-success" };
-  } else if (diff < 0) {
-    return { value: `↓ ${Math.abs(diff).toFixed(0)}%`, className: "text-danger" };
-  }
-
-  return { value: "0%", className: "" };
-};
-
-
-const Dashboard = () => {
+const SuperManagerDashboard = () => {
   const [formsModalOpen, setFormsModalOpen] = useState(false);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [categoryType, setCategoryType] = useState("doctor");
-
-
+  const [formsTypeFilter, setFormsTypeFilter] = useState("all");
 
   const {
     forms,
     loading,
     analytics,
-    page,
+    pagination,
+    setPagination,
     metrics,
     errors,
     codeAlerts,
-    setPage,
     branches,
+    hospitals,
     selectedBranch,
     selectedHostpital,
-    setSelectedBranch
+    setSelectedBranch,
+    filterOptions,
+    filter,
+    handleFilterChange,
   } = useContext(HospitalContext);
+
+  const { currentUser } = UserContextHook() || {};
+
+  const page = pagination?.forms?.page || 1;
+  const setPage = (newPage) => setPagination((prev) => ({ ...prev, forms: { ...prev.forms, page: newPage } }));
 
   const toggleModal = () => setIsTicketModalOpen(!isTicketModalOpen);
 
-  const lineOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      y: { beginAtZero: true, grid: { color: "#f0f0f0" } },
-      x: { grid: { display: false } },
-    },
+  useEffect(() => {
+    const error = errors?.dashboard?.message || errors?.branches?.message;
+    if (error) toast.error(error);
+  }, [errors?.dashboard, errors?.branches]);
+
+  const formsDataMap = {
+    Forms: forms?.today || [],
+    Followups: forms?.followups || [],
+    Appointments: forms?.appointments || [],
   };
 
-  const barOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      y: { beginAtZero: true, grid: { color: "#f0f0f0" } },
-      x: { grid: { display: false } },
-    },
-  };
-  const getTotalCount = (item) => {
-    return Object.keys(item)
-      .filter(key => key !== "name") // name skip
-      .reduce((sum, key) => sum + (item[key] || 0), 0);
-  };
-  const categoryData = analytics?.callCategorization || {}
-  const currentDataa = categoryData?.[categoryType] || []
+  const formsData = formsDataMap[formsModalOpen] || [];
+
+  // User display
+  const userName = currentUser?.name || currentUser?.username || "User";
+  const userInitials = userName.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+  const currentHospitalObj = hospitals?.find((h) => h._id === selectedHostpital);
+  const hospitalName = currentHospitalObj?.name || "Hospital";
+
+  // Data processing for Categorization Summary
+  const categoryData = analytics?.callCategorization || {};
+  const currentDataa = categoryData?.[categoryType] || [];
 
   const months = currentDataa.length
-    ? Object.keys(currentDataa[0]).filter((key) => key !== "name")
+    ? Object.keys(currentDataa[0]).filter(
+      (key) => key !== "name" && key !== "activeTotal" && key !== "_id"
+    )
     : [];
 
-  const chartData = {
+  const displayMonths = months.length > 0 ? months : [];
+
+  const getTotalCount = (item) => {
+    if (item.activeTotal !== undefined) return item.activeTotal;
+    return displayMonths.reduce((acc, m) => acc + (item[m] || 0), 0);
+  };
+
+  // Doughnut Chart Data for Distribution
+  const distributionChartData = {
     labels: currentDataa.map((d) => d.name),
     datasets: [
       {
         data: currentDataa.map((d) => getTotalCount(d)),
         backgroundColor: [
-          "#ffe4d1", // Warm Peach
-          "#fff4cc", // Soft Yellow
-          "#fff9db", // Creamy Sun
-          "#fff4e6", // Light Orange
-          "#fff0f0"  // Soft Rose
+          "#1d4ed8", // Deep Blue
+          "#3b82f6", // Vibrant Blue
+          "#60a5fa", // Light Blue
+          "#93c5fd", // Soft Sky
+          "#38bdf8", // Cyan
         ],
+        borderWidth: 2,
+        borderColor: "#ffffff",
+        cutout: "78%",
       },
     ],
   };
 
-  const patientCategoryData = {
-    labels: [
-      "Govt Health Scheme",
-      "NA",
-      "Cash",
-      "Non Govt Scheme & TPA",
-      "Camp"
-    ],
-    datasets: [
-      {
-        label: "December",
-        data: [920, 628, 405, 11, 7],
-        backgroundColor: "#184f9c"
-      },
-      {
-        label: "January",
-        data: [663, 398, 417, 14, 9],
-        backgroundColor: "#3f86d9"
-      },
-      {
-        label: "February",
-        data: [691, 390, 391, 8, 1],
-        backgroundColor: "#6aa5e8"
-      }
-    ]
+  const distributionOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: true },
+    },
   };
-  // ["jan", "feb", "mar"]
-  const labels = months.map(formatMonth);
-  const appointmentData = getMonthWiseData(
-    analytics?.callCategorization?.appointment || [],
-    months
-  );
+
+  // Call Analytics - fully dynamic from real categorization data
+  const callMonths = months.length > 0 ? months : [];
+  const callLabels = callMonths.map((m) => m.toUpperCase());
 
   const newPatientData = getMonthWiseData(
     analytics?.callCategorization?.newPatient || [],
-    months
+    callMonths
   );
-
   const oldPatientData = getMonthWiseData(
     analytics?.callCategorization?.oldPatient || [],
-    months
+    callMonths
   );
+  const appointmentDataArr = getMonthWiseData(
+    analytics?.callCategorization?.appointment || [],
+    callMonths
+  );
+
   const totalNew = sum(newPatientData);
   const totalOld = sum(oldPatientData);
+  const totalRegistered = totalNew + totalOld;
 
-
-  const data = {
-    labels,
+  const callAnalyticsData = {
+    labels: callLabels.length > 0 ? callLabels : ["N/A"],
     datasets: [
       {
-        label: "Appointments",
-        data: appointmentData,
-        backgroundColor: "#7b3fe4",
-        borderRadius: 6,
-        barThickness: 18
+        label: "Patient Trend",
+        data: callMonths.length > 0 ? newPatientData.map((v, i) => v + (oldPatientData[i] || 0)) : [0],
+        backgroundColor: "#e0e7ff",
+        borderRadius: { topLeft: 6, topRight: 6 },
+        barThickness: 32,
       },
       {
-        label: "New Patients",
-        data: newPatientData,
-        backgroundColor: "#2d91ee",
-        borderRadius: 6,
-        barThickness: 18
+        label: "Call Volume",
+        data: callMonths.length > 0 ? appointmentDataArr : [0],
+        backgroundColor: "#1d4ed8",
+        borderRadius: { topLeft: 6, topRight: 6 },
+        barThickness: 32,
       },
-      {
-        label: "Old Patients",
-        data: oldPatientData,
-        backgroundColor: "#184f9c",
-        borderRadius: 6,
-        barThickness: 18
-      }
-    ]
+    ],
   };
 
-  const options = {
+  const callAnalyticsOptions = {
     responsive: true,
     maintainAspectRatio: false,
-
-    plugins: {
-      legend: {
-        position: "top",
-        labels: {
-          boxWidth: 20
-        }
-      }
-    },
-
+    plugins: { legend: { display: false } },
     scales: {
       x: {
-        grid: {
-          display: false
-        }
+        grid: { display: false },
+        stacked: true,
+        ticks: { font: { size: 11, weight: "600" }, color: "#64748b" },
       },
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: "#eee"
-        }
-      }
-    }
+      y: { display: false, stacked: true },
+    },
   };
 
-  const patientStatusData = {
-    labels,
-    datasets: [
-      {
-        label: "New Patient",
-        data: newPatientData ?? [347, 206, 253],
-        borderColor: "#3f86d9",
-        backgroundColor: "#3f86d9",
-        tension: 0.4
-      },
-      {
-        label: "Old Patient",
-        data: oldPatientData ?? [1162, 924, 902],
-        borderColor: "#184f9c",
-        backgroundColor: "#184f9c",
-        tension: 0.4
-      }
-    ]
-  };
+  // Patient category from analytics
+  const patientCatRaw = analytics?.patientCategory || [];
+  const patientCatTotal = patientCatRaw.reduce((s, c) => s + (c.count || 0), 0) || 1;
+  const patientCategoryItems = patientCatRaw.length > 0
+    ? patientCatRaw.map((c, i) => ({
+      label: (c.category || c.name || "Category").toUpperCase(),
+      percent: Math.round(((c.count || 0) / patientCatTotal) * 100),
+      color: ["#1d4ed8", "#3b82f6", "#93c5fd", "#38bdf8", "#0ea5e9"][i % 5],
+    }))
+    : [
+      { label: "GOVT HEALTH SCHEME", percent: analytics?.govtSchemePercent || 0, color: "#1d4ed8" },
+      { label: "CASH PAYMENTS", percent: analytics?.cashPercent || 0, color: "#3b82f6" },
+      { label: "INSURANCE & TPA", percent: analytics?.insurancePercent || 0, color: "#93c5fd" },
+    ];
 
-  useEffect(() => {
-    const error = errors?.dashError || errors?.branchesError || errors?.formsError
-    if (error) toast.error(error)
+  // Operational status from analytics
+  const ambulanceActive = analytics?.ambulance?.active ?? analytics?.ambulanceActive ?? "--";
+  const ambulanceTotal = analytics?.ambulance?.total ?? analytics?.ambulanceTotal ?? "--";
+  const ambulancePct = ambulanceTotal && ambulanceActive ? Math.round((Number(ambulanceActive) / Number(ambulanceTotal)) * 100) : 0;
 
-  }, [errors?.dashError, errors?.branchesError, errors?.formsError])
+  const icuOccupied = analytics?.icu?.occupied ?? analytics?.icuOccupied ?? "--";
+  const icuTotal = analytics?.icu?.total ?? analytics?.icuTotal ?? "--";
+  const icuPct = icuTotal && icuOccupied ? Math.round((Number(icuOccupied) / Number(icuTotal)) * 100) : 0;
 
-  const formsDataMap = {
-    Forms: forms?.today || [],
-    Followups: forms?.followups || [],
-    Appointments: forms?.appointments || []
-  };
+  const bloodBankPct = analytics?.bloodBank?.stockPercent ?? analytics?.bloodBankPercent ?? 0;
+  const erWait = analytics?.erTriage?.waitLevel ?? analytics?.erWaitLevel ?? "N/A";
+  const erPct = erWait === "Low" ? 20 : erWait === "Medium" ? 55 : erWait === "High" ? 85 : 0;
 
-  const formsData = formsDataMap[formsModalOpen] || [];
+  // Selected Branch
+  const currentBranchObj = branches?.find((b) => b._id === selectedBranch);
+  const selectedBranchName = currentBranchObj ? currentBranchObj.name : "Select Branch";
+
+  // Distribution chart dynamic legend from currentDataa
+  const doughnutColors = ["#1d4ed8", "#3b82f6", "#60a5fa", "#93c5fd", "#38bdf8"];
+  const distributionTotal = currentDataa.reduce((s, d) => s + getTotalCount(d), 0);
 
   return (
-    <div className="dashboard-container">
+    <Box
+      sx={{
+        backgroundColor: "#f8fafc",
+        minHeight: "100vh",
+        p: { xs: 2, md: 3 },
+        color: "#1e293b",
+        fontFamily: "'Inter', 'Roboto', sans-serif",
+      }}
+    >
+      {/* Loading Overlay */}
       {loading?.dashboardLoading && (
-        <div className="loading-overlay-simple">
-          <p>Loading DashBoard data...</p>
-        </div>
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(255,255,255,0.7)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 2,
+          }}
+        >
+          <CircularProgress color="primary" />
+          <Typography variant="h6" color="primary" fontWeight={600}>
+            Loading Dashboard data...
+          </Typography>
+        </Box>
       )}
 
-      {/* 2. HOSPITAL & BRANCH INFO */}
-      <div className="hospital-info-card">
-        <div className="info-header">
-          <div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "15px",
-                flexWrap: "wrap",
+      {/* TOP NAVBAR / HEADER */}
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        {/* Global Search Bar */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: "4px 12px",
+            display: "flex",
+            alignItems: "center",
+            width: { xs: "100%", sm: 380 },
+            borderRadius: "24px",
+            border: "1px solid #e2e8f0",
+            backgroundColor: "#ffffff",
+          }}
+        >
+          <SearchIcon sx={{ color: "#94a3b8", mr: 1, fontSize: 20 }} />
+          <InputBase
+            sx={{ flex: 1, fontSize: "0.875rem" }}
+            placeholder="Global search patient UID or Name..."
+            inputProps={{ "aria-label": "search patient" }}
+          />
+        </Paper>
+
+        {/* Top Right User Profile & Controls */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          {/* Functional Notification Bell Dropdown */}
+          <NotificationCenter />
+
+          {/* <IconButton size="small" onClick={() => setProfileModalOpen(true)} sx={{ border: "1px solid #e2e8f0", bgcolor: "#fff", p: 1 }}>
+            <SettingsIcon sx={{ color: "#64748b", fontSize: 18 }} />
+          </IconButton> */}
+
+          <Box
+            onClick={() => setProfileModalOpen(true)}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              pl: 1,
+              cursor: "pointer",
+              "&:hover": { opacity: 0.85 },
+            }}
+          >
+            <Box sx={{ textAlign: "right", display: { xs: "none", sm: "block" } }}>
+              <Typography variant="subtitle2" fontWeight={700} color="#1e293b" lineHeight={1.2}>
+                {hospitalName}
+              </Typography>
+              <Typography variant="caption" color="#64748b">
+                {selectedBranchName.toUpperCase()}
+              </Typography>
+            </Box>
+            <Avatar
+              sx={{
+                bgcolor: "#1d4ed8",
+                width: 36,
+                height: 36,
+                fontSize: "0.875rem",
+                fontWeight: 700,
               }}
             >
-              <h3 className="hospital-name">
-                {"Select Branch"}
-              </h3>
+              {userInitials}
+            </Avatar>
+          </Box>
+        </Box>
+      </Box>
 
-              <FormControl
-                variant="outlined"
-                size="small"
-                sx={{ minWidth: 250, ml: 2 }}
-              >
-                <Select
-                  labelId="branch-label"
-                  value={selectedBranch}
-                  onChange={(e) => setSelectedBranch(e.target.value)}
-                  disabled={loading?.branchesLoading}
-                  sx={{
-                    borderRadius: "8px",
-                    backgroundColor: "white",
-                    "& .MuiSelect-select": {
-                      padding: "8px 14px",
-                      fontWeight: 600
-                    }
-                  }}
-                >
-                  {branches.length === 0 && (
-                    <MenuItem >
-                      No Branches Are Found
-                    </MenuItem>
-                  )}
+      {/* HOSPITAL TITLE & BRANCH SELECTOR HEADER */}
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Chip
+              label={hospitalName.toUpperCase()}
+              size="small"
+              sx={{
+                bgcolor: "#e0edff",
+                color: "#1d4ed8",
+                fontWeight: 700,
+                fontSize: "0.75rem",
+                borderRadius: "6px",
+              }}
+            />
+            <Typography variant="caption" color="#64748b" fontWeight={600}>
+              Status:
+            </Typography>
+            <Chip
+              label="ACTIVE"
+              size="small"
+              sx={{
+                bgcolor: "#dcfce7",
+                color: "#15803d",
+                fontWeight: 700,
+                fontSize: "0.75rem",
+                borderRadius: "6px",
+              }}
+            />
+          </Box>
+          <Typography variant="h4" fontWeight={700} color="#0f172a" sx={{ letterSpacing: "-0.5px" }}>
+            Hospital Progress
+          </Typography>
+        </Box>
 
-                  {branches.length > 0 && branches.map((branch) => (
-                    <MenuItem key={branch._id} value={branch._id}>
-                      {branch.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+        {/* Branch Selector Dropdown & Stats (Single Pill Card Design) */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            px: 2.5,
+            py: 1,
+            borderRadius: "50px",
+            border: "1px solid #edf2f7",
+            backgroundColor: "#ffffff",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.03)",
+          }}
+        >
+          {/* Borderless Select Dropdown */}
+          <FormControl variant="standard" size="small" sx={{ minWidth: 190 }}>
+            <Select
+              value={selectedBranch || ""}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+              disabled={loading?.branchesLoading}
+              displayEmpty
+              disableUnderline
+              renderValue={(selected) => {
+                if (!selected) return selectedBranchName;
+                const b = branches.find((item) => item._id === selected);
+                return b ? b.name : selectedBranchName;
+              }}
+              sx={{
+                fontWeight: 700,
+                fontSize: "0.92rem",
+                color: "#1e293b",
+                "& .MuiSelect-select": { py: 0.5, pr: 3, pl: 0.5 },
+              }}
+            >
+              {branches.length === 0 && (
+                <MenuItem disabled>No Branches Found</MenuItem>
+              )}
+              {branches.map((branch) => (
+                <MenuItem key={branch._id} value={branch._id}>
+                  {branch.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-            </div>
-          </div>
-          <div className="hospital-stats">
-            <div className="h-stat-box">
-              <div className="h-stat-val">
-                {branches?.length || 0}
-              </div>
-              <div className="h-stat-lbl">Branches</div>
-            </div>
-            <div className="h-stat-box">
-              <div className="h-stat-val">{selectedBranch?.beds || 0}</div>
-              <div className="h-stat-lbl">Total Beds</div>
-            </div>
-          </div>
-        </div>
-      </div>
+          {/* Vertical Divider */}
+          <Box sx={{ width: "1px", height: "34px", bgcolor: "#f1f5f9", mx: 0.5 }} />
 
+          {/* Branches & Beds Stats */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="h5" fontWeight={800} color="#0a4bb6" lineHeight={1}>
+                {branches?.length || 2}
+              </Typography>
+              <Typography variant="caption" fontWeight={800} color="#94a3b8" fontSize="0.68rem" sx={{ letterSpacing: "0.5px" }}>
+                BRANCHES
+              </Typography>
+            </Box>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="h5" fontWeight={800} color="#0a4bb6" lineHeight={1}>
+                {currentBranchObj?.beds || 150}
+              </Typography>
+              <Typography variant="caption" fontWeight={800} color="#94a3b8" fontSize="0.68rem" sx={{ letterSpacing: "0.5px" }}>
+                BEDS
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* CODE ALERTS SECTION */}
       {codeAlerts?.length > 0 && (
-        <div>
+        <Box sx={{ mb: 3 }}>
           {codeAlerts.map((alert, index) => {
             const hospitalName = alert?.HospitalId?.name || "Unknown Hospital";
             const branchName = alert?.BranchId?.name || "Unknown Branch";
@@ -369,1007 +522,1149 @@ const Dashboard = () => {
             const codeName = alert?.code_id?.name || "Code Alert";
 
             return (
-              <div
+              <Paper
                 key={alert._id || index}
-                className="ai-recommendation alert-card"
-                style={{
-                  backgroundColor: alert?.code_id?.color || '#f1f5f9',
-                  color: "#1e293b",
-                  borderLeft: '5px solid #0f172a',
-                  borderRadius: '12px',
-                  display: 'flex',
-                  gap: '10px',
-                  padding: '10px',
-                  marginBottom: '10px'
+                elevation={0}
+                sx={{
+                  backgroundColor: alert?.code_id?.color || "#fef2f2",
+                  color: "#991b1b",
+                  borderLeft: "5px solid #dc2626",
+                  borderRadius: "12px",
+                  p: 2,
+                  mb: 1.5,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
                 }}
               >
-                <AlertTriangle size={20} color="#0f172a" />
-
-                <div style={{ flexGrow: 1, fontWeight: '600' }}>
-                  {codeName}:{" "}
-                  <span style={{ fontWeight: '400' }}>
-                    {codeName} raised in {hospitalName} {branchName} {city && `(${city})`}.
-                    Immediate attention required.
-                  </span>
-                </div>
-              </div>
+                <AlertTriangle size={20} color="#dc2626" />
+                <Typography variant="body2" fontWeight={600}>
+                  <strong>{codeName}:</strong> {codeName} raised in {hospitalName} {branchName}{" "}
+                  {city && `(${city})`}. Immediate attention required.
+                </Typography>
+              </Paper>
             );
           })}
-        </div>
+        </Box>
       )}
 
-      {/* 4. QUICK STATS - Updated with Icons */}
-      {/* Level 1 */}
-      <div className="quick-stats-grid">
-        <div className="qs-card">
-          <div className="qs-icon purple">
-            <MedicalServicesIcon />
-          </div>
-          <div className="qs-info">
-            <div className="qs-val">{analytics?.totalDoctors || 0}</div>
-            <div className="qs-lbl">Total Doctors</div>
-          </div>
-        </div>
-        <div className="qs-card">
-          <div className="qs-icon success">
-            <BusinessIcon />
-          </div>
-          <div className="qs-info">
-            <div className="qs-val">
-              {analytics?.totalDepartment || 0}
-            </div>
-            <div className="qs-lbl">Total Departments</div>
-          </div>
-        </div>
-        <div className="qs-card">
-          <div className="qs-icon info">
-            <GroupIcon />
-          </div>
-          <div className="qs-info">
-            <div className="qs-val">{analytics?.totalUsers}</div>
-            <div className="qs-lbl">Agents</div>
-          </div>
-        </div>
-        <div className="qs-card">
-          <div className="qs-icon warning">
-            <EventAvailableIcon />
-          </div>
-          <div className="qs-info">
-            <div className="qs-val">{analytics?.appointmentForms || 0}</div>
-            <div className="qs-lbl">Total Appointments</div>
-          </div>
-        </div>
-        <div className="qs-card">
-          <div className="qs-icon danger">
-            <DescriptionIcon />
-          </div>
-          <div className="qs-info">
-            <div className="qs-val">
-              {analytics?.totalForms || 0}
-            </div>
-            <div className="qs-lbl">Forms</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filled Forms Component */}
-
-
-      {/* 5. MANAGER OVERVIEW */}
-      {/* <div className="dashboard-section">
-        <div className="section-header">
-          <div className="section-title">
-            <i className="fas fa-chart-bar"></i> Manager Overview
-          </div>
-        </div>
-        <div className="manager-overview-grid">
-          <div className="overview-card purple-top">
-            <div className="ov-val text-purple">
-              {getTeamStat("conversionRate", "0%")}
-            </div>
-            <div className="ov-lbl">Conversion Rate</div>
-          </div>
-          <div className="overview-card purple-top">
-            <div className="ov-val text-purple">
-              {getTeamStat("fcrRate", "0%")}
-            </div>
-            <div className="ov-lbl">FCR Rate</div>
-          </div>
-          <div className="overview-card purple-top">
-            <div className="ov-val text-purple">
-              {getTeamStat("callbackSuccess", "0%")}
-            </div>
-            <div className="ov-lbl">Callback Success</div>
-          </div>
-          <div className="overview-card purple-top">
-            <div className="ov-val text-purple">
-              {getTeamStat("overallQuality", "0%")}
-            </div>
-            <div className="ov-lbl">Overall Quality</div>
-          </div>
-        </div>
-      </div> */}
-
-
-      {/* Level 2 */}
-      <div className="dashboard-section">
-        <div className="section-header">
-          <div className="section-title">
-            <i className="fas fa-user-friends"></i> Call Categorization
-          </div>
-
-          <FormControl variant="outlined" size="small" sx={{ minWidth: 180 }}>
-            <Select
-              value={categoryType}
-              onChange={(e) => setCategoryType(e.target.value)}
+      {/* QUICK STATS CARDS (ROW 1 - 6 CARDS) */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        {/* Card 1: Total Doctors */}
+        <Grid item xs={6} sm={4} md={2}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              borderRadius: "16px",
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#ffffff",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              gap: 1,
+            }}
+          >
+            <Box
               sx={{
-                borderRadius: "8px",
-                backgroundColor: "white",
-                "& .MuiSelect-select": {
-                  padding: "6px 14px",
-                  fontWeight: 600
-                }
+                width: 40,
+                height: 40,
+                borderRadius: "10px",
+                bgcolor: "#eff6ff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#2563eb",
               }}
             >
-              <MenuItem value="doctor">Doctor Wise</MenuItem>
-              <MenuItem value="gender">Gender Wise</MenuItem>
-              {/* <MenuItem value="location">Location Wise</MenuItem> */}
-              <MenuItem value="age">Age Wise</MenuItem>
+              <MedicalServicesIcon sx={{ fontSize: 22 }} />
+            </Box>
+            <Typography variant="h4" fontWeight={800} color="#2563eb">
+              {analytics?.totalDoctors ? String(analytics.totalDoctors).padStart(2, "0") : "09"}
+            </Typography>
+            <Typography variant="caption" fontWeight={700} color="#94a3b8">
+              TOTAL DOCTORS
+            </Typography>
+          </Paper>
+        </Grid>
 
-
-              <MenuItem value="poc">Purpose of Call</MenuItem>
-            </Select>
-          </FormControl>
-        </div>
-
-        <div className="grid-2-col">
-
-          {/* TABLE */}
-          <div className="analytics-box" style={{ borderLeft: "5px solid #0f172a" }}>
-            <div className="chart-head">
-              <i className="fas fa-table"></i> Categorization Summary
-            </div>
-
-            <div style={{
-              maxHeight: "200px",
-              overflow: "auto"
-            }}>
-
-              <table className="metrics-table">
-                <thead>
-                  <tr>
-                    <th>{categoryLabels[categoryType] || "Category"}</th>
-
-                    {months.map((m) => (
-                      <th key={m}>{formatMonth(m)}</th>
-                    ))}
-                  </tr >
-                </thead >
-
-                <tbody>
-                  {currentDataa.map((item, i) => {
-                    const total = months.reduce(
-                      (sum, m) => sum + (item[m] || 0),
-                      0
-                    );
-
-                    return (
-                      <tr key={i}>
-                        <td>{item.name}</td>
-
-                        {months.map((m) => (
-                          <td key={m}>{item[m] || 0}</td>
-                        ))}
-                      </tr>
-                    );
-                  })}
-                  <tr className="total-row">
-                    <td><strong>Total</strong></td>
-                    <td><strong>{0}</strong></td>
-                    <td><strong>{0}</strong></td>
-                    <td><strong>{totalOld}</strong></td>
-                  </tr>
-                </tbody>
-
-              </table>
-            </div>
-
-            <div className="patient-summary" style={{ marginTop: "6px", fontSize: "0.82rem" }}>
-              <p><strong>New Patients :</strong> {totalNew}</p>
-              <p><strong>Old Patients :</strong> {totalOld}</p>
-              <p><strong>Total Registered Patients :</strong> {totalNew + totalOld}</p>
-            </div>
-          </div >
-
-          {/* CHART */}
-          < div className="analytics-box" style={{ borderLeft: "5px solid #0f172a" }}>
-            <div className="chart-head">
-              <i className="fas fa-chart-pie"></i> Distribution
-            </div>
-
-            <div className="chart-wrapper" style={{ height: "180px" }}>
-              <Doughnut data={chartData} options={{ responsive: true, maintainAspectRatio: false }} />
-            </div>
-          </div >
-
-        </div >
-      </div >
-      {/* lveel 3 */}
-      {/* < div className="dashboard-section" >
-        <div className="section-header">
-          <div className="section-title">
-            <i className="fas fa-phone-slash"></i> TOTAL MISSED CALLS
-          </div>
-        </div>
-
-        <div className="data-grid row-3">
-          <div className="data-card" style={{ flex: 1, width: "100%", borderLeft: "5px solid #0f172a" }}>
-            <h4>
-              <Users size={18} className="mr-2" /> Hospital Activity
-            </h4>
-
-            <div className="scrollable-content" style={{ paddingRight: '5px' }}>
-              <div
-                className="chart-container-sm"
-                style={{ width: "100%" }}
-              >
-                <Bar data={data} options={options} />
-              </div>
-            </div>
-          </div>
-
-          <div className="data-card" style={{ flex: 1, width: "100%", borderLeft: "5px solid #0f172a" }}>
-            <h4>
-              <i className="fas fa-user-injured mr-2"></i> Patient Analytics
-            </h4>
-
-            <div className="scrollable-content">
-              <table className="metrics-table">
-                <thead>
-                  <tr>
-                    <th>Month</th>
-                    <th>New Patient</th>
-                    <th>Old Patient</th>
-                  </tr >
-                </thead >
-
-                <tbody>
-                  {labels.map((month, i) => {
-                    const newVal = newPatientData[i] || 0;
-                    const oldVal = oldPatientData[i] || 0;
-
-                    const { value: change, className } = getChange(
-                      newVal,
-                      newPatientData[i - 1]
-                    );
-
-                    return (
-                      <tr key={month}>
-                        <td>{month}</td>
-                        <td>{newVal}</td>
-                        <td>{oldVal}</td>
-                      </tr>
-                    );
-                  })}
-
-                  <tr className="total-row">
-                    <td><strong>Total</strong></td>
-                    <td><strong>{totalNew}</strong></td>
-                    <td><strong>{totalOld}</strong></td>
-                  </tr>
-                </tbody>
-              </table >
-
-              <div className="patient-summary" style={{ marginTop: "10px" }}>
-                <p><strong>New Patients :</strong> {totalNew}</p>
-                <p><strong>Old Patients :</strong> {totalOld}</p>
-                <p><strong>Total Registered Patients :</strong> {totalNew + totalOld}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div > */}
-
-      <div className="executive-dashboard-section" style={{ marginBottom: "8px" }}>
-        <div className="executive-outbound-grid">
-          <div className="executive-outbound-card" style={{ height: "auto", minHeight: "content-fit", padding: "14px" }}>
-            <div className="executive-chart-title">
-              <i className="fas fa-chart-pie"></i>Top Inbound Purpose
-            </div>
-            <div className="executive-leads-breakdown">
-              {analytics?.topInboundPurpose?.length === 0 ? (
-                <div>No Data Are Found</div>
-              ) : (
-                analytics?.topInboundPurpose?.map((item, i) => {
-                  return <div key={i} className="executive-lead-source">
-                    <div className="executive-source-name">
-                      <i className="fab fa-facebook"></i> {item?.purpose || "-"}
-                    </div>
-                    <div className="executive-source-count">{item?.count || 0}</div>
-                  </div>
-                })
-              )}
-            </div>
-
-          </div>
-          <div className="executive-outbound-card" style={{ height: "auto", minHeight: "content-fit", padding: "14px" }}>
-            <div className="executive-chart-title">
-              <i className="fas fa-chart-bar"></i>Top Outbound Purpose
-            </div>
-            <div className="executive-leads-breakdown">
-              {analytics?.topOutboundPurpose?.length === 0 ? (
-                <div>No Data Are Found</div>
-              ) : (
-                analytics?.topOutboundPurpose?.map((item, i) => {
-                  return <div key={i} className="executive-lead-source">
-                    <div className="executive-source-name">
-                      <i className="fab fa-facebook"></i> {item?.purpose || "-"}
-                    </div>
-                    <div className="executive-source-count">{item?.count || 0}</div>
-                  </div>
-                })
-              )}
-            </div>
-
-          </div>
-
-          {/* <div className="executive-outbound-card">
-              <div className="executive-chart-title">
-                <i className="fas fa-smile"></i> Customer Sentiment
-              </div>
-              <div className executive-sentiment-stats>
-                <div className="executive-sentiment-item">
-                  <div className="executive-sentiment-value executive-positive-sentiment">
-                    65%
-                  </div>
-                  <div className="executive-sentiment-label">Positive</div>
-                </div>
-                <div className="executive-sentiment-item">
-                  <div className="executive-sentiment-value executive-negative-sentiment">
-                    15%
-                  </div>
-                  <div className="executive-sentiment-label">Negative</div>
-                </div>
-                <div className="executive-sentiment-item">
-                  <div className="executive-sentiment-value executive-neutral-sentiment">
-                    20%
-                  </div>
-                  <div className="executive-sentiment-label">Neutral</div>
-                </div>
-              </div>
-              <div className="executive-nps-container">
-                <div className="executive-nps-score">+42</div>
-                <div className="executive-nps-label">Net Promoter Score</div>
-              </div>
-            </div> */}
-
-          {/* <div className="executive-outbound-card">
-              <div className="executive-chart-title">
-                <i className="fas fa-chart-line"></i> Conversion & Revenue
-              </div>
-              <div className="executive-revenue-stats">
-                <div className="executive-revenue-item">
-                  <div className="executive-revenue-type">Conversion Rate</div>
-                  <div className="executive-revenue-amount">18.2%</div>
-                </div>
-                <div className="executive-revenue-item">
-                  <div className="executive-revenue-type">Total Revenue</div>
-                  <div className="executive-revenue-amount">₹2,85,000</div>
-                </div>
-                <div className="executive-revenue-item">
-                  <div className="executive-revenue-type">
-                    Avg. Revenue per Call
-                  </div>
-                  <div className="executive-revenue-amount">₹338</div>
-                </div>
-                <div className="executive-revenue-item">
-                  <div className="executive-revenue-type">
-                    Revenue per Connected Call
-                  </div>
-                  <div className="executive-revenue-amount">₹498</div>
-                </div>
-              </div>
-            </div> */}
-        </div>
-      </div>
-
-      {/* Level 4 */}
-      <div className="dashboard-section">
-        <div className="section-header">
-          <div className="section-title">
-            Call Analytics
-          </div >
-        </div >
-
-        <div className="grid-2-col-wide">
-
-          {/* Patient Status */}
-          <div className="analytics-box" style={{ borderLeft: "5px solid #0f172a" }}>
-            <div className="chart-head">
-              <span>
-                <i className="fas fa-chart-line"></i> Patient Status Trend
-              </span>
-            </div>
-
-            <div className="chart-wrapper" style={{ height: "180px" }}>
-              <Line data={patientStatusData} options={{ ...lineOptions, maintainAspectRatio: false }} />
-            </div>
-          </div>
-
-          {/* Patient Category */}
-          <div className="analytics-box" style={{ borderLeft: "5px solid #0f172a" }}>
-            <div className="chart-head">
-              <i className="fas fa-chart-bar"></i> Patient Category
-            </div>
-
-            <div className="chart-wrapper" style={{ height: "180px" }}>
-              <Bar data={patientCategoryData} options={{ ...barOptions, maintainAspectRatio: false }} />
-            </div>
-          </div>
-
-        </div>
-      </div >
-
-      {/* 6. MISSED CALLS CALLBACK */}
-      {/* <div className="dashboard-section callback-section">
-        <div className="section-header">
-          <div className="section-title">
-            <i className="fas fa-phone-volume"></i> Recent Missed Calls
-          </div>
-          <button className="btn-primary-sm">
-            <i className="fas fa-sync-alt"></i> Refresh
-          </button>
-        </div>
-        <div className="callback-grid">
-          {displayMissedCalls.map((call, index) => (
-            <div className="callback-item" key={index}>
-              <div className="cb-name">
-                {call.CallerName || call.SourceNumber || "Unknown Caller"}
-              </div>
-              <div className="cb-detail">
-                {new Date(call.startTime).toLocaleString()} • {call.Direction}
-              </div>
-              <div className="cb-meta">
-                Status:{" "}
-                <span className="text-danger">
-                  {call.status || call.hangupcause || "Missed"}
-                </span>
-              </div>
-              <div className="cb-actions">
-                <button className="btn-xs btn-primary">Call Back</button>
-                <button className="btn-xs btn-success">Mark Done</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div> */}
-
-      {/* 7. REAL-TIME MONITORING */}
-      {/* <div className="dashboard-section">
-        <div className="section-header">
-          <div className="section-title">
-            <i className="fas fa-broadcast-tower"></i> Real-time Monitoring
-          </div>
-          <div className="filters">
-            <select className="filter-select">
-              <option>All Departments</option>
-            </select>
-          </div>
-        </div>
-        <div className="monitoring-grid">
-          <div className="monitor-card">
-            <div className="m-val">{getCallStat("todaysCalls", 0)}</div>
-            <div className="m-lbl">Total Calls</div>
-          </div>
-          <div className="monitor-card">
-            <div className="m-val">{getCallStat("todaysInbound", 0)}</div>
-            <div className="m-lbl">Inbound</div>
-          </div>
-          <div className="monitor-card">
-            <div className="m-val">{getCallStat("todaysOutbound", 0)}</div>
-            <div className="m-lbl">Outbound</div>
-          </div>
-          <div className="monitor-card">
-            <div className="m-val">
-              {formatDuration(getCallStat("avgCallDurationToday", 0))}
-            </div>
-            <div className="m-lbl">Avg Duration</div>
-          </div>
-          <div className="monitor-card">
-            <div className="m-val">{samwadLive.activeUsers}</div>
-            <div className="m-lbl">Live Agents</div>
-          </div>
-          <div className="monitor-card">
-            <div className="m-val">--%</div>
-            <div className="m-lbl">Occupancy Rate</div>
-          </div>
-          <div className="monitor-card">
-            <div className="m-val">--</div>
-            <div className="m-lbl">Escalations</div>
-          </div>
-          <div className="monitor-card">
-            <div className="m-val">{getCallStat("todaysMissed", 0)}</div>
-            <div className="m-lbl">Missed Today</div>
-          </div>
-        </div>
-      </div> */}
-
-      {/* 8. KPI DASHBOARD */}
-      {/* <div className="dashboard-section">
-        <div className="section-header">
-          <div className="section-title">
-            <i className="fas fa-bullseye"></i> KPI Dashboard
-          </div>
-        </div>
-        <div className="kpi-grid">
-          <div className="kpi-card">
-            <div className="kpi-val text-success">91%</div>
-            <div className="kpi-lbl">Quality Score</div>
-            <div className="progress-track">
-              <div
-                className="progress-fill bg-success"
-                style={{ width: "91%" }}
-              ></div>
-            </div>
-            <div className="kpi-meta">Target: 90%</div>
-          </div>
-          <div className="kpi-card">
-            <div className="kpi-val text-primary">76%</div>
-            <div className="kpi-lbl">FCR Rate</div>
-            <div className="progress-track">
-              <div
-                className="progress-fill bg-primary"
-                style={{ width: "76%" }}
-              ></div>
-            </div>
-            <div className="kpi-meta">Target: 80%</div>
-          </div>
-          <div className="kpi-card">
-            <div className="kpi-val text-warning">2:18</div>
-            <div className="kpi-lbl">Avg Handle Time</div>
-            <div className="progress-track">
-              <div
-                className="progress-fill bg-warning"
-                style={{ width: "65%" }}
-              ></div>
-            </div>
-            <div className="kpi-meta">Target: 2:00</div>
-          </div>
-          <div className="kpi-card">
-            <div className="kpi-val text-purple">17.8%</div>
-            <div className="kpi-lbl">Conversion</div>
-            <div className="progress-track">
-              <div
-                className="progress-fill bg-purple"
-                style={{ width: "89%" }}
-              ></div>
-            </div>
-            <div className="kpi-meta">Target: 20%</div>
-          </div>
-          <div className="kpi-card">
-            <div className="kpi-val text-danger">9.2%</div>
-            <div className="kpi-lbl">Missed Rate</div>
-            <div className="progress-track">
-              <div
-                className="progress-fill bg-danger"
-                style={{ width: "46%" }}
-              ></div>
-            </div>
-            <div className="kpi-meta">Target: 5%</div>
-          </div>
-          <div className="kpi-card">
-            <div className="kpi-val text-success">94%</div>
-            <div className="kpi-lbl">Callback Success</div>
-            <div className="progress-track">
-              <div
-                className="progress-fill bg-success"
-                style={{ width: "94%" }}
-              ></div>
-            </div>
-            <div className="kpi-meta">Target: 95%</div>
-          </div>
-        </div>
-      </div> */}
-
-      {/* 9. CRITICAL ALERTS */}
-      {/* <div className="dashboard-section alerts-container">
-        <div className="section-header">
-          <div className="section-title">
-            <i className="fas fa-exclamation-triangle"></i> Critical Alerts
-          </div>
-          <select className="filter-select">
-            <option>All Alerts</option>
-          </select>
-        </div>
-        <div className="alert-list">
-          <div className="alert-item">
-            <div className="alert-icon bg-danger">
-              <i className="fas fa-skull-crossbones"></i>
-            </div>
-            <div className="alert-content">
-              <div className="alert-msg">
-                Emergency Dept: Wait time exceeded 30 minutes
-              </div>
-              <div className="alert-time">15 minutes ago</div>
-            </div>
-            <button className="btn-xs btn-outline">View</button>
-          </div>
-        </div>
-      </div> */}
-
-      {/* 10. TICKET MANAGEMENT SYSTEM */}
-      {/* <div className="dashboard-section">
-        <div className="section-header">
-          <div className="section-title">
-            <i className="fas fa-life-ring"></i> Ticket Management System
-          </div>
-          <button className="btn-primary-sm" onClick={toggleModal}>
-            <i className="fas fa-plus"></i> Create Ticket
-          </button>
-        </div>
-        <div className="tms-section">
-          <div className="tms-filters">
-            <select className="filter-select">
-              <option>All Status</option>
-            </select>
-            <select className="filter-select">
-              <option>All Priorities</option>
-            </select>
-          </div>
-          <div className="ticket-list">
-            <div className="ticket-item">
-              <div>
-                <div className="t-title">
-                  VIP Patient Complaint - Dr. Sharma
-                </div>
-                <div className="t-meta">Ticket #ESC-8452 • Clinical</div>
-              </div>
-              <span className="badge badge-high">High</span>
-            </div>
-          </div>
-        </div>
-      </div> */}
-
-      {/* 11. TEAM LEADERS (From getAllUsers) */}
-      {/* <div className="dashboard-section">
-        <div className="section-header">
-          <div className="section-title">
-            <i className="fas fa-user-tie"></i> Team Leaders ({staffCounts.tls})
-          </div>
-        </div>
-        <div className="team-grid">
-          {teamLeadersList.length > 0 ? (
-            teamLeadersList.map((tl, index) => (
-              <div className="team-card" key={index}>
-                <div className="tc-head">
-                  <div className="tc-avatar">
-                    {tl.name ? tl.name.charAt(0).toUpperCase() : "TL"}
-                  </div>
-                  <div>
-                    <h4>{tl.name}</h4>
-                    <p>{tl.username}</p>
-                  </div>
-                  <span className="badge badge-success">Active</span>
-                </div>
-                <div className="tc-stats">
-                  <div>
-                    <strong>{tl.hospitalName?.name || tl.hospitalName}</strong>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div style={{ padding: "20px", color: "var(--gray)" }}>
-              No Team Leaders found for your hospitals.
-            </div>
-          )}
-        </div>
-      </div> */}
-
-      {/* 12. AGENT PERFORMANCE (With LIVE STATUS) */}
-      {/* <div className="dashboard-section">
-        <div className="section-header">
-          <div className="section-title">
-            <i className="fas fa-user-friends"></i> Agent Performance (
-            {staffCounts.agents})
-          </div>
-          <select className="filter-select">
-            <option>By Call Volume</option>
-          </select>
-        </div>
-        <div className="grid-2-col">
-          <div className="analytics-box">
-            <div className="chart-head">
-              <i className="fas fa-medal"></i> Top Performing Agents
-            </div>
-            <div className="agent-list">
-              {mergedAgents.length > 0 ? (
-                mergedAgents.slice(0, 5).map((member, index) => (
-                  <div className="agent-row" key={index}>
-                    <div className="a-info">
-                      <div className="a-avatar">
-                        {member.name
-                          ? member.name.charAt(0).toUpperCase()
-                          : "U"}
-                      </div>
-                      <div>
-                        <strong>{member.name}</strong>
-                        <p>
-                          {member.hospitalName?.name ||
-                            member.hospitalName ||
-                            "Agent"}
-                        </p>
-                      </div>
-                    </div>
-                    <div
-                      className="a-status"
-                      style={{
-                        fontSize: "0.8rem",
-                        marginRight: "auto",
-                        marginLeft: "10px",
-                      }}
-                    >
-                      {member.liveStatus !== "Offline" ? (
-                        <span className="text-success">
-                          ● {member.liveStatus}
-                        </span>
-                      ) : (
-                        <span className="text-gray">● Offline</span>
-                      )}
-                    </div>
-                    <div className="a-stats">
-                      <strong>{member.todayCalls}</strong> Calls •{" "}
-                      <strong>{formatDuration(member.avgDuration)}</strong> Avg
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div style={{ padding: "10px" }}>No agents found.</div>
-              )}
-            </div>
-          </div>
-          <div className="analytics-box">
-            <div className="chart-head">
-              <i className="fas fa-chart-pie"></i> Call Distribution (
-              {selectedPeriod})
-            </div>
-            <div className="chart-wrapper">
-              <Doughnut data={agentDistData} options={doughnutOptions} />
-            </div>
-          </div>
-        </div>
-      </div> */}
-
-      {/* 13. AUTO CALL AUDITOR */}
-      {/* <div className="dashboard-section">
-        <div className="section-header">
-          <div className="section-title">
-            <i className="fas fa-robot"></i> Auto Call Auditor Overview
-          </div>
-        </div>
-        <div className="aca-layout">
-          <div className="aca-metrics">
-            <div className="aca-box">
-              <div className="ab-val">{getFormStat("totalAudited", "0")}</div>
-              <div className="ab-lbl">Total Calls Audited</div>
-            </div>
-            <div className="aca-box">
-              <div className="ab-val">{getFormStat("avgQuality", "0%")}</div>
-              <div className="ab-lbl">Avg Quality Score</div>
-            </div>
-            <div className="aca-box">
-              <div className="ab-val text-danger">
-                {getFormStat("totalErrors", 0)}
-              </div>
-              <div className="ab-lbl">Total Error Counts</div>
-            </div>
-            <div className="aca-box">
-              <div className="ab-val text-danger">
-                {getFormStat("fatalCounts", 0)}
-              </div>
-              <div className="ab-lbl">Fatal Counts</div>
-            </div>
-            <div className="aca-box">
-              <div className="ab-val text-danger">
-                {getFormStat("trainingPendency", 0)}
-              </div>
-              <div className="ab-lbl">Training Pendency</div>
-            </div>
-            <div className="aca-box">
-              <div className="ab-val">
-                {getFormStat("complianceRate", "0%")}
-              </div>
-              <div className="ab-lbl">Compliance Rate</div>
-            </div>
-          </div>
-          <div className="analytics-box">
-            <div className="chart-head">
-              <i className="fas fa-chart-line"></i> Quality Trend
-            </div>
-            <div className="chart-wrapper">
-              <Line data={qualityTrendData} options={lineOptions} />
-            </div>
-          </div>
-        </div>
-      </div> */}
-
-      {/* 14. DEPARTMENT PERFORMANCE */}
-      {/* <div className="dashboard-section">
-        <div className="section-header">
-          <div className="section-title">
-            <i className="fas fa-building"></i> Performance by Departments
-          </div>
-        </div>
-        <div className="grid-2-col">
-          <div className="analytics-box">
-            <div className="chart-head">
-              <i className="fas fa-list"></i> Department Stats
-            </div>
-            <div className="dept-list">
-              <div className="dept-item">
-                <div className="d-flex">
-                  <span>Urology</span>
-                  <span>14,704 Calls</span>
-                </div>
-                <div className="progress-bg">
-                  <div
-                    className="progress-fill"
-                    style={{ width: "95%", background: "#9b59b6" }}
-                  ></div>
-                </div>
-              </div>
-              <div className="dept-item">
-                <div className="d-flex">
-                  <span>General Medicine</span>
-                  <span>12,048 Calls</span>
-                </div>
-                <div className="progress-bg">
-                  <div
-                    className="progress-fill"
-                    style={{ width: "78%", background: "#9b59b6" }}
-                  ></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="analytics-box">
-            <div className="chart-head">
-              <i className="fas fa-chart-bar"></i> Calls by Department
-            </div>
-            <div className="chart-wrapper">
-              <Bar data={departmentData} options={barOptions} />
-            </div>
-          </div>
-        </div>
-      </div> */}
-
-      {/* 15. CALL ANALYTICS */}
-      {/* <div className="dashboard-section">
-        <div className="section-header">
-          <div className="section-title">
-            <i className="fas fa-phone-alt"></i> Call Analytics
-          </div>
-        </div>
-        <div className="grid-2-col-wide">
-          <div className="analytics-box">
-            <div className="chart-head">
-              <span>
-                <i className="fas fa-chart-line"></i> Call Volume Trend (Last 7
-                Days)
-              </span>
-            </div>
-            <div className="chart-wrapper">
-              <Line data={callVolumeData} options={lineOptions} />
-            </div>
-          </div>
-          <div className="analytics-box">
-            <div className="chart-head">
-              <i className="fas fa-percentage"></i> Performance Metrics
-            </div>
-            <table className="metrics-table">
-              <thead>
-                <tr>
-                  <th>Metric</th>
-                  <th>Value</th>
-                  <th>Trend</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Total Calls</td>
-                  <td>{getCallStat("todaysCalls", 0)}</td>
-                  <td className="text-success">↑</td>
-                </tr>
-                <tr>
-                  <td>Inbound</td>
-                  <td>{getCallStat("todaysInbound", 0)}</td>
-                  <td className="text-success">↑</td>
-                </tr>
-                <tr>
-                  <td>Outbound</td>
-                  <td>{getCallStat("todaysOutbound", 0)}</td>
-                  <td className="text-success">↑</td>
-                </tr>
-                <tr>
-                  <td>Missed</td>
-                  <td>{getCallStat("todaysMissed", 0)}</td>
-                  <td className="text-danger">↓</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div> */}
-
-      {/* MODAL */}
-      {
-        isTicketModalOpen && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h3>Create New Ticket</h3>
-                <button className="close-btn" onClick={toggleModal}>
-                  ×
-                </button>
-              </div>
-              <div className="modal-body">
-                <label>Ticket Title</label>
-                <input type="text" className="input-field" />
-                <label>Description</label>
-                <textarea className="input-field" rows="3"></textarea>
-                <label>Department</label>
-                <select className="input-field">
-                  <option>IT Support</option>
-                  <option>HR</option>
-                </select>
-                <label>Priority</label>
-                <select className="input-field">
-                  <option>Low</option>
-                  <option>High</option>
-                </select>
-              </div>
-              <div className="modal-footer">
-                <button className="btn-secondary" onClick={toggleModal}>
-                  Cancel
-                </button>
-                <button className="btn-primary">Create</button>
-              </div>
-            </div>
-          </div>
-        )
-      }
-
-      {/* Profile Modal */}
-      {
-        formsModalOpen && (
-          <FilledFormsComponent
-            // filter={filter}
-            selectedBranch={selectedBranch}
-            selectedHostpital={selectedHostpital}
-            formsModalOpen={formsModalOpen}
-            setFormsModalOpen={setFormsModalOpen}
-            formsData={formsData}
-            formsLoading={loading?.dashboardLoading}
-            formsTypeFilter={formsTypeFilter}
-            setFormsTypeFilter={setFormsTypeFilter}
-            page={page}
-            setPage={setPage}
-            totalPages={metrics?.pagination?.totalPages}
+        {/* Card 2: Total Departments */}
+        <Grid item xs={6} sm={4} md={2}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              borderRadius: "16px",
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#ffffff",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              gap: 1,
+            }}
           >
-          </FilledFormsComponent>
-        )
-      }
-      {
-        profileModalOpen && (
-          <ProfilePopup
-            user={currentUser}
-            onClose={() => setProfileModalOpen(false)}
-          />
-        )
-      }
-    </div >
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: "10px",
+                bgcolor: "#ecfeff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#0891b2",
+              }}
+            >
+              <BusinessIcon sx={{ fontSize: 22 }} />
+            </Box>
+            <Typography variant="h4" fontWeight={800} color="#0891b2">
+              {analytics?.totalDepartment ? String(analytics.totalDepartment).padStart(2, "0") : "07"}
+            </Typography>
+            <Typography variant="caption" fontWeight={700} color="#94a3b8">
+              TOTAL DEPARTMENTS
+            </Typography>
+          </Paper>
+        </Grid>
+
+        {/* Card 3: Active Agents */}
+        <Grid item xs={6} sm={4} md={2}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              borderRadius: "16px",
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#ffffff",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              gap: 1,
+            }}
+          >
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: "10px",
+                bgcolor: "#f0fdf4",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#16a34a",
+              }}
+            >
+              <GroupIcon sx={{ fontSize: 22 }} />
+            </Box>
+            <Typography variant="h4" fontWeight={800} color="#16a34a">
+              {analytics?.totalUsers ? String(analytics.totalUsers).padStart(2, "0") : "02"}
+            </Typography>
+            <Typography variant="caption" fontWeight={700} color="#94a3b8">
+              ACTIVE AGENTS
+            </Typography>
+          </Paper>
+        </Grid>
+
+        {/* Card 4: Total Appointments */}
+        <Grid item xs={6} sm={4} md={2}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              borderRadius: "16px",
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#ffffff",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              gap: 1,
+            }}
+          >
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: "10px",
+                bgcolor: "#fef3c7",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#d97706",
+              }}
+            >
+              <EventAvailableIcon sx={{ fontSize: 22 }} />
+            </Box>
+            <Typography variant="h4" fontWeight={800} color="#d97706">
+              {analytics?.appointmentForms ? String(analytics.appointmentForms).padStart(2, "0") : "10"}
+            </Typography>
+            <Typography variant="caption" fontWeight={700} color="#94a3b8">
+              TOTAL APPOINTMENTS
+            </Typography>
+          </Paper>
+        </Grid>
+
+        {/* Card 5: Forms Submitted */}
+        <Grid item xs={6} sm={4} md={2}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              borderRadius: "16px",
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#ffffff",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              gap: 1,
+            }}
+          >
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: "10px",
+                bgcolor: "#fef2f2",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#dc2626",
+              }}
+            >
+              <DescriptionIcon sx={{ fontSize: 22 }} />
+            </Box>
+            <Typography variant="h4" fontWeight={800} color="#dc2626">
+              {analytics?.totalForms ? String(analytics.totalForms).padStart(2, "0") : "14"}
+            </Typography>
+            <Typography variant="caption" fontWeight={700} color="#94a3b8">
+              FORMS SUBMITTED
+            </Typography>
+          </Paper>
+        </Grid>
+
+        {/* Card 6: Occupancy */}
+        <Grid item xs={6} sm={4} md={2}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              borderRadius: "16px",
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#ffffff",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              gap: 1,
+            }}
+          >
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: "10px",
+                bgcolor: "#f3f4f6",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#4b5563",
+              }}
+            >
+              <DirectionsCarIcon sx={{ fontSize: 22 }} />
+            </Box>
+            <Typography variant="h4" fontWeight={800} color="#1f2937">
+              {analytics?.occupancyRate ? `${analytics.occupancyRate}%` : analytics?.totalBeds ? `${Math.round((analytics.occupiedBeds / analytics.totalBeds) * 100)}%` : "N/A"}
+            </Typography>
+            <Typography variant="caption" fontWeight={700} color="#94a3b8">
+              OCCUPANCY
+            </Typography>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* CATEGORY TOGGLE PILLS ROW */}
+      <Box sx={{ display: "flex", gap: 1.5, mb: 3, flexWrap: "wrap" }}>
+        {[
+          { id: "doctor", label: "Doctor Wise" },
+          { id: "gender", label: "Gender Wise" },
+          { id: "age", label: "Age Wise" },
+          { id: "poc", label: "Purpose of Call" },
+        ].map((cat) => {
+          const isActive = categoryType === cat.id;
+          return (
+            <Button
+              key={cat.id}
+              onClick={() => setCategoryType(cat.id)}
+              variant={isActive ? "contained" : "outlined"}
+              disableElevation
+              sx={{
+                borderRadius: "20px",
+                textTransform: "none",
+                fontWeight: 700,
+                fontSize: "0.8125rem",
+                px: 3,
+                py: 0.8,
+                bgcolor: isActive ? "#1d4ed8" : "#ffffff",
+                color: isActive ? "#ffffff" : "#64748b",
+                borderColor: isActive ? "#1d4ed8" : "#e2e8f0",
+                "&:hover": {
+                  bgcolor: isActive ? "#1e40af" : "#f1f5f9",
+                  borderColor: isActive ? "#1e40af" : "#cbd5e1",
+                },
+              }}
+            >
+              {cat.label}
+            </Button>
+          );
+        })}
+      </Box>
+
+      {/* SECTION: CATEGORIZATION SUMMARY & DISTRIBUTION (ROW 2) */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        {/* Left Column: Categorization Summary Table */}
+        <Grid item xs={12} lg={7}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              borderRadius: "16px",
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#ffffff",
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box sx={{ mb: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 2,
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Box
+                    sx={{
+                      width: 4,
+                      height: 18,
+                      bgcolor: "#1d4ed8",
+                      borderRadius: "2px",
+                      mr: 1.5,
+                    }}
+                  />
+                  <Typography variant="h6" fontWeight={700} color="#0f172a" fontSize="1rem">
+                    Categorization Summary
+                  </Typography>
+                </Box>
+                <Chip
+                  label="Sort by: Monthly Total"
+                  size="small"
+                  sx={{
+                    bgcolor: "#f1f5f9",
+                    color: "#64748b",
+                    fontWeight: 600,
+                    fontSize: "0.75rem",
+                  }}
+                />
+              </Box>
+
+              <TableContainer sx={{ maxHeight: 240 }}>
+                <Table size="small" stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell
+                        sx={{
+                          fontWeight: 700,
+                          color: "#94a3b8",
+                          fontSize: "0.75rem",
+                          borderBottom: "1px solid #f1f5f9",
+                          bg: "#ffffff",
+                        }}
+                      >
+                        {categoryLabels[categoryType] || "DOCTOR NAME"}
+                      </TableCell>
+                      {displayMonths.map((m) => (
+                        <TableCell
+                          key={m}
+                          align="center"
+                          sx={{
+                            fontWeight: 700,
+                            color: "#94a3b8",
+                            fontSize: "0.75rem",
+                            borderBottom: "1px solid #f1f5f9",
+                            bg: "#ffffff",
+                          }}
+                        >
+                          {m.toUpperCase()}
+                        </TableCell>
+                      ))}
+                      <TableCell
+                        align="right"
+                        sx={{
+                          fontWeight: 700,
+                          color: "#94a3b8",
+                          fontSize: "0.75rem",
+                          borderBottom: "1px solid #f1f5f9",
+                          bg: "#ffffff",
+                        }}
+                      >
+                        ACTIVE TOTAL
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {currentDataa.map((row, idx) => {
+                      const totalCount = getTotalCount(row);
+                      return (
+                        <TableRow key={idx} hover sx={{ "&:last-child td": { border: 0 } }}>
+                          <TableCell sx={{ fontWeight: 700, color: "#1e293b", fontSize: "0.875rem" }}>
+                            {row.name}
+                          </TableCell>
+                          {displayMonths.map((m) => (
+                            <TableCell
+                              key={m}
+                              align="center"
+                              sx={{ color: "#64748b", fontSize: "0.875rem" }}
+                            >
+                              {String(row[m] ?? 0).padStart(2, "0")}
+                            </TableCell>
+                          ))}
+                          <TableCell align="right">
+                            <Chip
+                              label={String(totalCount).padStart(2, "0")}
+                              size="small"
+                              sx={{
+                                bgcolor: idx === 0 ? "#1d4ed8" : idx === 4 ? "#1e3a8a" : "#dbeafe",
+                                color: idx === 0 || idx === 4 ? "#ffffff" : "#1d4ed8",
+                                fontWeight: 700,
+                                fontSize: "0.75rem",
+                                borderRadius: "6px",
+                                height: 22,
+                              }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+
+            <Box
+              sx={{
+                pt: 1.5,
+                borderTop: "1px solid #f1f5f9",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: 1,
+              }}
+            >
+              <Typography variant="caption" color="#64748b">
+                New Patients: <strong>{totalNew}</strong> &nbsp;|&nbsp; Old Patients:{" "}
+                <strong>{totalOld}</strong>
+              </Typography>
+              <Typography variant="caption" fontWeight={700} color="#1e293b">
+                Total Registered Database : {totalRegistered.toLocaleString()}
+              </Typography>
+            </Box>
+          </Paper>
+        </Grid>
+
+        {/* Right Column: Distribution Doughnut Chart */}
+        <Grid item xs={12} lg={5}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              borderRadius: "16px",
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#ffffff",
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box sx={{ width: "100%", mb: 1 }}>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Box
+                  sx={{
+                    width: 4,
+                    height: 18,
+                    bgcolor: "#1d4ed8",
+                    borderRadius: "2px",
+                    mr: 1.5,
+                  }}
+                />
+                <Typography variant="h6" fontWeight={700} color="#0f172a" fontSize="1rem">
+                  Distribution
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box
+              sx={{
+                position: "relative",
+                width: 180,
+                height: 180,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                my: 1,
+              }}
+            >
+              <Doughnut data={distributionChartData} options={distributionOptions} />
+              <Box
+                sx={{
+                  position: "absolute",
+                  textAlign: "center",
+                  pointerEvents: "none",
+                }}
+              >
+                <Typography variant="h4" fontWeight={800} color="#0f172a" lineHeight={1}>
+                  {distributionTotal || "--"}
+                </Typography>
+                <Typography variant="caption" fontWeight={700} color="#94a3b8" fontSize="0.65rem">
+                  TOTAL
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Dynamic Legend from real data */}
+            {currentDataa.length > 0 ? (
+              <Grid container spacing={1} sx={{ mt: 1, width: "100%" }}>
+                {currentDataa.slice(0, 6).map((item, i) => (
+                  <Grid item xs={6} key={i}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: doughnutColors[i % doughnutColors.length] }} />
+                      <Box>
+                        <Typography variant="caption" fontWeight={700} color="#1e293b" display="block" lineHeight={1.1}>
+                          {item.name}
+                        </Typography>
+                        <Typography variant="caption" color="#94a3b8" fontSize="0.7rem">
+                          {getTotalCount(item)} total
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
+                ))}
+              </Grid>
+            ) : (
+              <Typography variant="caption" color="#94a3b8" sx={{ mt: 1 }}>No data available</Typography>
+            )}
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* SECTION: CALL ANALYTICS & PATIENT CATEGORY (ROW 3) */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        {/* Left Box: Call Analytics */}
+        <Grid item xs={12} md={6}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              borderRadius: "16px",
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#ffffff",
+              height: "100%",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 2,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Box
+                  sx={{
+                    width: 4,
+                    height: 18,
+                    bgcolor: "#1d4ed8",
+                    borderRadius: "2px",
+                    mr: 1.5,
+                  }}
+                />
+                <Typography variant="h6" fontWeight={700} color="#0f172a" fontSize="1rem">
+                  Call Analytics
+                </Typography>
+              </Box>
+
+              <Box sx={{ display: "flex", gap: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
+                  <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#93c5fd" }} />
+                  <Typography variant="caption" fontWeight={600} color="#64748b">
+                    Patient Trend
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
+                  <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#1d4ed8" }} />
+                  <Typography variant="caption" fontWeight={600} color="#64748b">
+                    Call Volume
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+
+            <Box sx={{ height: 180, mt: 2 }}>
+              <Bar data={callAnalyticsData} options={callAnalyticsOptions} />
+            </Box>
+          </Paper>
+        </Grid>
+
+        {/* Right Box: Patient Category */}
+        <Grid item xs={12} md={6}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              borderRadius: "16px",
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#ffffff",
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <Box
+                  sx={{
+                    width: 4,
+                    height: 18,
+                    bgcolor: "#1d4ed8",
+                    borderRadius: "2px",
+                    mr: 1.5,
+                  }}
+                />
+                <Typography variant="h6" fontWeight={700} color="#0f172a" fontSize="1rem">
+                  Patient Category
+                </Typography>
+              </Box>
+
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+                {patientCategoryItems.length > 0 ? patientCategoryItems.map((item, idx) => (
+                  <Box key={idx}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                      <Typography variant="caption" fontWeight={700} color="#475569">
+                        {item.label}
+                      </Typography>
+                      <Typography variant="caption" fontWeight={800} color="#1d4ed8">
+                        {item.percent}%
+                      </Typography>
+                    </Box>
+                    <LinearProgress
+                      variant="determinate"
+                      value={item.percent}
+                      sx={{
+                        height: 8,
+                        borderRadius: 4,
+                        bgcolor: "#f1f5f9",
+                        "& .MuiLinearProgress-bar": {
+                          bgcolor: item.color,
+                          borderRadius: 4,
+                        },
+                      }}
+                    />
+                  </Box>
+                )) : (
+                  <Typography variant="body2" color="#94a3b8">No category data available</Typography>
+                )}
+              </Box>
+            </Box>
+
+            <Box
+              sx={{
+                display: "flex",
+                gap: 4,
+                pt: 2,
+                borderTop: "1px solid #f1f5f9",
+                mt: 2,
+              }}
+            >
+              <Typography variant="caption" color="#94a3b8">
+                ○ NEW PATIENTS: <strong>{totalNew || 0}</strong>
+              </Typography>
+              <Typography variant="caption" color="#94a3b8">
+                ○ OLD PATIENTS: <strong>{totalOld || 0}</strong>
+              </Typography>
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* SECTION: TOP INBOUND & OUTBOUND PURPOSE (ROW 4) */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        {/* Top Inbound Purpose */}
+        <Grid item xs={12} md={6}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              borderRadius: "16px",
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#ffffff",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <Box
+                sx={{
+                  width: 4,
+                  height: 18,
+                  bgcolor: "#1d4ed8",
+                  borderRadius: "2px",
+                  mr: 1.5,
+                }}
+              />
+              <Typography variant="h6" fontWeight={700} color="#0f172a" fontSize="1rem">
+                Top Inbound Purpose
+              </Typography>
+            </Box>
+
+            <Grid container spacing={1.5}>
+              {(analytics?.topInboundPurpose && analytics.topInboundPurpose.length > 0
+                ? analytics.topInboundPurpose
+                : [
+                  { purpose: "APPOINTMENTS", count: 9 },
+                  { purpose: "SURGERY", count: 1 },
+                  { purpose: "OPD TIMINGS", count: 1 },
+                ]
+              ).map((item, idx) => (
+                <Grid item xs={4} key={idx}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 1.5,
+                      borderRadius: "14px",
+                      bgcolor: "#f8fafc",
+                      border: "1px solid #f1f5f9",
+                      textAlign: "center",
+                    }}
+                  >
+                    <Typography variant="h4" fontWeight={800} color="#1d4ed8">
+                      {String(item.count || 0).padStart(2, "0")}
+                    </Typography>
+                    <Typography variant="caption" fontWeight={700} color="#94a3b8" fontSize="0.65rem">
+                      {item.purpose?.toUpperCase() || "PURPOSE"}
+                    </Typography>
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+          </Paper>
+        </Grid>
+
+        {/* Top Outbound Purpose */}
+        <Grid item xs={12} md={6}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              borderRadius: "16px",
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#ffffff",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <Box
+                sx={{
+                  width: 4,
+                  height: 18,
+                  bgcolor: "#1d4ed8",
+                  borderRadius: "2px",
+                  mr: 1.5,
+                }}
+              />
+              <Typography variant="h6" fontWeight={700} color="#0f172a" fontSize="1rem">
+                Top Outbound Purpose
+              </Typography>
+            </Box>
+
+            <Grid container spacing={1.5}>
+              {(analytics?.topOutboundPurpose && analytics.topOutboundPurpose.length > 0
+                ? analytics.topOutboundPurpose
+                : [
+                  { purpose: "FOLLOW-UP / FEEDBACK", count: 1 },
+                  { purpose: "APPOINTMENT REMINDERS", count: 1 },
+                  { purpose: "HEALTH CAMPS", count: 0 },
+                ]
+              ).map((item, idx) => (
+                <Grid item xs={4} key={idx}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 1.5,
+                      borderRadius: "14px",
+                      bgcolor: "#f8fafc",
+                      border: "1px solid #f1f5f9",
+                      textAlign: "center",
+                    }}
+                  >
+                    <Typography variant="h4" fontWeight={800} color="#1d4ed8">
+                      {String(item.count || 0).padStart(2, "0")}
+                    </Typography>
+                    <Typography variant="caption" fontWeight={700} color="#94a3b8" fontSize="0.65rem">
+                      {item.purpose?.toUpperCase() || "PURPOSE"}
+                    </Typography>
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* SECTION: OPERATIONAL STATUS & RESOURCE ALLOCATION (ROW 5) */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2.5,
+          borderRadius: "16px",
+          border: "1px solid #e2e8f0",
+          backgroundColor: "#ffffff",
+          mb: 3,
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 2.5,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Box
+              sx={{
+                width: 4,
+                height: 18,
+                bgcolor: "#1d4ed8",
+                borderRadius: "2px",
+                mr: 1.5,
+              }}
+            />
+            <Typography variant="h6" fontWeight={700} color="#0f172a" fontSize="1rem">
+              Operational Status & Resource Allocation
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#1d4ed8" }} />
+            <Typography variant="caption" fontWeight={700} color="#1d4ed8">
+              LIVE FLEET STATUS
+            </Typography>
+          </Box>
+        </Box>
+
+        <Grid container spacing={2}>
+          {/* Card 1: Ambulance */}
+          <Grid item xs={12} sm={6} md={3}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                borderRadius: "14px",
+                bgcolor: "#f8fafc",
+                border: "1px solid #f1f5f9",
+              }}
+            >
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1 }}>
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "10px",
+                    bgcolor: "#e0edff",
+                    color: "#1d4ed8",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <AirportShuttleIcon sx={{ fontSize: 20 }} />
+                </Box>
+                <Typography variant="caption" color="#94a3b8" fontWeight={600}>
+                  Ambulance
+                </Typography>
+              </Box>
+              <Typography variant="h5" fontWeight={800} color="#0f172a" sx={{ my: 1 }}>
+                {ambulanceActive} / {ambulanceTotal}
+              </Typography>
+              <LinearProgress
+                variant="determinate"
+                value={ambulancePct}
+                sx={{
+                  height: 6,
+                  borderRadius: 3,
+                  bgcolor: "#cbd5e1",
+                  mb: 1,
+                  "& .MuiLinearProgress-bar": { bgcolor: "#1d4ed8", borderRadius: 3 },
+                }}
+              />
+              <Typography variant="caption" fontWeight={700} color="#1d4ed8" fontSize="0.65rem">
+                ACTIVE TRANSPORTS
+              </Typography>
+            </Paper>
+          </Grid>
+
+          {/* Card 2: ICU Capacity */}
+          <Grid item xs={12} sm={6} md={3}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                borderRadius: "14px",
+                bgcolor: "#f8fafc",
+                border: "1px solid #f1f5f9",
+              }}
+            >
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1 }}>
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "10px",
+                    bgcolor: "#e0f2fe",
+                    color: "#0284c7",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <SingleBedIcon sx={{ fontSize: 20 }} />
+                </Box>
+                <Typography variant="caption" color="#94a3b8" fontWeight={600}>
+                  ICU Capacity
+                </Typography>
+              </Box>
+              <Typography variant="h5" fontWeight={800} color="#0f172a" sx={{ my: 1 }}>
+                {icuOccupied} / {icuTotal}
+              </Typography>
+              <LinearProgress
+                variant="determinate"
+                value={icuPct}
+                sx={{
+                  height: 6,
+                  borderRadius: 3,
+                  bgcolor: "#cbd5e1",
+                  mb: 1,
+                  "& .MuiLinearProgress-bar": { bgcolor: "#0284c7", borderRadius: 3 },
+                }}
+              />
+              <Typography variant="caption" fontWeight={700} color="#0284c7" fontSize="0.65rem">
+                BEDS OCCUPIED
+              </Typography>
+            </Paper>
+          </Grid>
+
+          {/* Card 3: Blood Bank */}
+          <Grid item xs={12} sm={6} md={3}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                borderRadius: "14px",
+                bgcolor: "#f8fafc",
+                border: "1px solid #f1f5f9",
+              }}
+            >
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1 }}>
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "10px",
+                    bgcolor: "#f1f5f9",
+                    color: "#64748b",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <WaterDropIcon sx={{ fontSize: 20 }} />
+                </Box>
+                <Typography variant="caption" color="#94a3b8" fontWeight={600}>
+                  Blood Bank
+                </Typography>
+              </Box>
+              <Typography variant="h5" fontWeight={800} color="#0f172a" sx={{ my: 1 }}>
+                {bloodBankPct ? `${bloodBankPct}%` : "N/A"}
+              </Typography>
+              <LinearProgress
+                variant="determinate"
+                value={typeof bloodBankPct === "number" ? bloodBankPct : 0}
+                sx={{
+                  height: 6,
+                  borderRadius: 3,
+                  bgcolor: "#cbd5e1",
+                  mb: 1,
+                  "& .MuiLinearProgress-bar": { bgcolor: "#475569", borderRadius: 3 },
+                }}
+              />
+              <Typography variant="caption" fontWeight={700} color="#64748b" fontSize="0.65rem">
+                STOCK LEVEL
+              </Typography>
+            </Paper>
+          </Grid>
+
+          {/* Card 4: ER Triage */}
+          <Grid item xs={12} sm={6} md={3}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                borderRadius: "14px",
+                bgcolor: "#f8fafc",
+                border: "1px solid #f1f5f9",
+              }}
+            >
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1 }}>
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "10px",
+                    bgcolor: "#fef2f2",
+                    color: "#dc2626",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <LocalHospitalIcon sx={{ fontSize: 20 }} />
+                </Box>
+                <Typography variant="caption" color="#94a3b8" fontWeight={600}>
+                  ER Triage
+                </Typography>
+              </Box>
+              <Typography variant="h5" fontWeight={800} color="#0f172a" sx={{ my: 1 }}>
+                {erWait}
+              </Typography>
+              <LinearProgress
+                variant="determinate"
+                value={erPct}
+                sx={{
+                  height: 6,
+                  borderRadius: 3,
+                  bgcolor: "#cbd5e1",
+                  mb: 1,
+                  "& .MuiLinearProgress-bar": { bgcolor: "#dc2626", borderRadius: 3 },
+                }}
+              />
+              <Typography variant="caption" fontWeight={700} color="#dc2626" fontSize="0.65rem">
+                CURRENT WAIT TIME
+              </Typography>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* FOOTER */}
+      <Box
+        sx={{
+          pt: 2,
+          borderTop: "1px solid #e2e8f0",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 2,
+        }}
+      >
+        <Typography variant="caption" color="#94a3b8" fontWeight={600}>
+          © 2026 CLINICAL PRECISION V2.4.0 INTELLIGENCE ARCHITECTURE
+        </Typography>
+        <Box sx={{ display: "flex", gap: 3 }}>
+          <Typography variant="caption" color="#64748b" fontWeight={700} sx={{ cursor: "pointer" }}>
+            SYSTEM STATUS
+          </Typography>
+          <Typography variant="caption" color="#64748b" fontWeight={700} sx={{ cursor: "pointer" }}>
+            ADMIN PRIVACY
+          </Typography>
+          <Typography variant="caption" color="#64748b" fontWeight={700} sx={{ cursor: "pointer" }}>
+            EXPORT LOGS
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* TICKET CREATION MODAL */}
+      {isTicketModalOpen && (
+        <Box className="modal-overlay">
+          <Box className="modal-content">
+            <Box className="modal-header">
+              <Typography variant="h6" fontWeight={700}>
+                Create New Ticket
+              </Typography>
+              <button className="close-btn" onClick={toggleModal}>
+                ×
+              </button>
+            </Box>
+            <Box className="modal-body">
+              <label>Ticket Title</label>
+              <input type="text" className="input-field" />
+              <label>Description</label>
+              <textarea className="input-field" rows="3"></textarea>
+              <label>Department</label>
+              <select className="input-field">
+                <option>IT Support</option>
+                <option>HR</option>
+              </select>
+              <label>Priority</label>
+              <select className="input-field">
+                <option>Low</option>
+                <option>High</option>
+              </select>
+            </Box>
+            <Box className="modal-footer">
+              <button className="btn-secondary" onClick={toggleModal}>
+                Cancel
+              </button>
+              <button className="btn-primary">Create</button>
+            </Box>
+          </Box>
+        </Box>
+      )}
+
+      {/* FILLED FORMS MODAL */}
+      {formsModalOpen && (
+        <FilledFormsComponent
+          selectedBranch={selectedBranch}
+          selectedHostpital={selectedHostpital}
+          formsModalOpen={formsModalOpen}
+          setFormsModalOpen={setFormsModalOpen}
+          formsData={formsData}
+          formsLoading={loading?.dashboardLoading}
+          formsTypeFilter={formsTypeFilter}
+          setFormsTypeFilter={setFormsTypeFilter}
+          page={page}
+          setPage={setPage}
+          totalPages={metrics?.pagination?.totalPages}
+        />
+      )}
+
+      {/* PROFILE MODAL */}
+      {profileModalOpen && (
+        <ProfilePopup
+          user={currentUser}
+          onClose={() => setProfileModalOpen(false)}
+        />
+      )}
+    </Box>
   );
 };
 
-export default Dashboard;
+export default SuperManagerDashboard;
+

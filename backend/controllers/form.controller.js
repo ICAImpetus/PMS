@@ -14,6 +14,8 @@ const HospitalModel = getHospitalModel(MasterConn)
 export const createFilledForm = async (req, res) => {
   let session;
   let isNewPatient = false;
+  console.log("req.body", req.body?.formData?.feedback?.questions);
+
 
   try {
     const { hosId, branchId } = req.query;
@@ -116,6 +118,33 @@ export const createFilledForm = async (req, res) => {
     }).session(session);
 
     if (!patient) {
+      isNewPatient = true;
+
+      const patientPayload = {
+        ...data.formData.patientDetails,
+
+        branchId,
+
+        hospitalId: {
+          hospitalId: hosId,
+          name: hospital.name,
+        },
+
+        agentDetails: {
+          agentId: user.id,
+          name: user.name,
+        },
+      };
+
+      patient = await PatientModel.create(
+        [patientPayload],
+        { session }
+      );
+
+      patient = patient[0];
+    }
+
+    else if (patient && patient?.name !== data.formData.patientDetails.patientName) {
       isNewPatient = true;
 
       const patientPayload = {
@@ -430,17 +459,14 @@ export const getFilledForms = async (req, res) => {
       page = 1,
       searchName,
       isExport,
-      purpose,
       formsModalOpen,
-      formsTypeFilter
+      formsTypeFilter,
     } = req.query;
 
     const isExportMode = isExport === "true";
     const PAGE_LIMIT = 10;
     const pageNum = Math.max(parseInt(page) || 1, 1);
-    const skip = isExportMode ? 0 : (pageNum - 1) * PAGE_LIMIT;
-
-    // console.log("req.query", req.query);
+    const skip = (pageNum - 1) * PAGE_LIMIT;
 
     // ================= VALIDATION =================
     if (!hospitalId || !mongoose.isValidObjectId(hospitalId)) {
@@ -466,6 +492,11 @@ export const getFilledForms = async (req, res) => {
     const PatientModel = getPatientModel(conn);
     const DoctorModel = getDoctorModel(conn);
     const DepartmentModel = getDepartmentModel(conn);
+    const pop = (path, model, select = null) => ({
+      path,
+      model,
+      ...(select && { select })
+    });
 
     // ================= BASE MATCH STAGE =================
     const matchStage = { isDeleted: false };
@@ -484,183 +515,79 @@ export const getFilledForms = async (req, res) => {
       }
     }
 
-    // if (purpose && purpose !== "All") {
-    //   matchStage.purpose = purpose;
-    // }
-
     if (formsModalOpen && formsModalOpen !== "all") {
-
       if (formsModalOpen === "Appointments") {
-        matchStage.purpose = {
-          $regex: "appointment",
-          $options: "i",
-        };
+        matchStage.purpose = { $regex: "appointment", $options: "i" };
       }
-
       if (formsModalOpen === "Followups") {
-        matchStage.useForFollowup = true
+        matchStage.useForFollowup = true;
       }
-
     }
 
     if (formsTypeFilter && formsTypeFilter !== "all") {
-
       if (formsTypeFilter === "inbound") {
-        matchStage.formType = {
-          $regex: "inbound",
-          $options: "i",
-        };
+        matchStage.formType = { $regex: "inbound", $options: "i" };
       }
-
       if (formsTypeFilter === "outbound") {
-        matchStage.formType = {
-          $regex: "outbound",
-          $options: "i",
-        };
+        matchStage.formType = { $regex: "outbound", $options: "i" };
       }
+    }
+    const isSearchActive = Boolean(searchName && searchName.trim());
 
+    // 1. Handle Patient Search Filter
+    if (isSearchActive) {
+      const patient = await PatientModel.findOne({
+        patientName: new RegExp(searchName.trim(), "i"),
+      }).select("_id");
 
+      if (patient) {
+        matchStage["formData.patientDetails"] = patient._id;
+      } else {
+        // If patient search yields no result, force matchStage to return empty results
+        matchStage["formData.patientDetails"] = null;
+      }
     }
 
+    // 2. Build Mongoose Query
+    let query = FilledFormsModel.find(matchStage)
+      .select(
+        "agentName formType gender callStatus purpose formData.appointmentSlot followupStatus createdAt formData.patientDetails formData.patientArrivalTime formData.remarks formData.surgeryName formData.healthPackageName formData.healthSchemeName formData.govertHealthSchemeName formData.nonGovtHealthSchemeName formData.reportName formData.referenceFrom formData.feedbackType formData.feedback"
+      )
+      .populate(pop("doctor", DoctorModel, "name"))
+      .populate(pop("department", DepartmentModel, "name"))
+      .populate(
+        pop(
+          "formData.patientDetails",
+          PatientModel,
+          "patientName patientMobile status patientAge category location gender"
+        )
+      )
 
-    // ================= START PIPELINE =================
-    const pipeline = [
-      { $match: matchStage },
 
-      // ================= PATIENT JOIN =================
-      {
-        $lookup: {
-          from: PatientModel.collection.name,
-          localField: "formData.patientDetails",
-          foreignField: "_id",
-          as: "patientInfo",
-        },
-      },
-      {
-        $unwind: {
-          path: "$patientInfo",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-
-      // ================= DOCTOR JOIN =================
-      {
-        $lookup: {
-          from: DoctorModel.collection.name, // Safely matches dynamic tenant collection
-          localField: "doctor",
-          foreignField: "_id",
-          as: "doctorInfo",
-        },
-      },
-      {
-        $unwind: {
-          path: "$doctorInfo",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-
-      // ================= DEPARTMENT JOIN =================
-      {
-        $lookup: {
-          from: DepartmentModel.collection.name, // Safely matches dynamic tenant collection
-          localField: "department",
-          foreignField: "_id",
-          as: "departmentInfo",
-        },
-      },
-      {
-        $unwind: {
-          path: "$departmentInfo",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-    ];
-
-    // ================= SEARCH FILTER (Agent, Patient, or Doctor) =================
-    if (searchName && searchName.trim()) {
-      const safeSearch = searchName.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const searchRegex = new RegExp(safeSearch, "i");
-
-      // Now we can search across all joined fields perfectly!
-      pipeline.push({
-        $match: {
-          $or: [
-            { agentName: searchRegex },
-            { "patientInfo.patientName": searchRegex },
-            { "patientInfo.patientMobile": searchRegex },
-            { "doctorInfo.name": searchRegex },
-            { "departmentInfo.name": searchRegex }
-          ],
-        },
-      });
+    // 3. Apply Pagination conditionally if NOT exporting
+    if (!isExportMode) {
+      query = query.skip(skip).limit(PAGE_LIMIT).sort({ createdAt: -1 })
     }
 
-    // ================= FACET FOR DATA & COUNT =================
-    pipeline.push({
-      $facet: {
-        metadata: [{ $count: "total" }],
-        data: [
-          { $sort: { createdAt: -1 } },
-          ...(isExportMode ? [] : [{ $skip: skip }, { $limit: PAGE_LIMIT }]),
-          {
-            $project: {
-              _id: 1,
-              formType: 1,
-              purpose: 1,
-              agentName: 1,
-              callStatus: 1,
-              createdAt: 1,
-              followupStatus: 1,
+    // 4. Execute Count and Data Query in Parallel
+    const [totalDocs, data] = await Promise.all([
+      FilledFormsModel.countDocuments(matchStage),
+      query.lean(),
+    ]);
 
-              referenceFrom: "$formData.referenceFrom",
-              // Flattened patient mapping
-              "formData.patientDetails.patientName": "$patientInfo.patientName",
-              "formData.patientDetails.patientMobile": "$patientInfo.patientMobile",
-              "formData.patientDetails.patientStatus": "$patientInfo.status",
-              "formData.patientDetails.patientAge": "$patientInfo.patientAge",
-              "formData.patientDetails.patientCategory": "$patientInfo.category",
-              "formData.patientDetails.patientlocation": "$patientInfo.location",
-              gender: "$patientInfo.gender",
-              // Raw/Nested fields from form
-              appointmentSlot: "$formData.appointmentSlot",
-              "formData.patientArrivalTime": "$formData.patientArrivalTime",
-              // Doctor mapping
-
-              "doctor.name": "$doctorInfo.name",
-
-              // Department mapping
-
-              "department.name": "$departmentInfo.name",
-              "formData.surgeryName": "$formData.surgeryName",
-              "formData.healthPackageName": "$formData.healthPackageName",
-              "formData.govertHealthSchemeName": "$formData.govertHealthSchemeName",
-              "formData.nonGovtHealthSchemeName": "$formData.nonGovtHealthSchemeName",
-              "formData.reportName": "$formData.reportName",
-              "formData.referenceFrom": "$formData.referenceFrom",
-              "formData.callerType": "$formData.callerType",
-              "formData.remarks": "$formData.remarks",
-            },
-          },
-        ],
-      },
-    });
-
-    const aggregationResult = await FilledFormsModel.aggregate(pipeline);
-
-    const data = aggregationResult[0]?.data || [];
-    const total = aggregationResult[0]?.metadata[0]?.total || 0;
-
-    // ================= RESPONSE =================
     return res.status(200).json({
       success: true,
       data,
       pagination: {
-        total,
+        total: totalDocs,
         page: pageNum,
-        pageSize: PAGE_LIMIT,
-        totalPages: Math.ceil(total / PAGE_LIMIT),
+        pageSize: isExportMode ? totalDocs : PAGE_LIMIT,
+        totalPages: isExportMode ? 1 : Math.ceil(totalDocs / PAGE_LIMIT),
       },
     });
+
+
+
   } catch (error) {
     console.error("Error fetching filled forms:", error);
     return res.status(500).json({
@@ -669,7 +596,6 @@ export const getFilledForms = async (req, res) => {
     });
   }
 };
-
 export const getBookedSlotsController =
   async (req, res) => {
     try {
@@ -1225,3 +1151,117 @@ export const uploadFormsCsv = async (req, res) => {
     });
   }
 };
+
+
+
+// 1. IPD Questions (8 Questions)
+const ipdQuestionsList = [
+  { questionId: "ipdQ1", questionText: "Are you happy with the treatment provided in the hospital?" },
+  { questionId: "ipdQ2", questionText: "Did the Doctor Explain about your problem / disease ?" },
+  { questionId: "ipdQ3", questionText: "Did the nursing staff gave solution to your problem ?" },
+  { questionId: "ipdQ4", questionText: "Are you happy with the hygiene and cleanliness maintained in the wards ?" },
+  { questionId: "ipdQ5", questionText: "Did you receive blood reports / ultrasound / X- Ray reports on time ?" },
+  { questionId: "ipdQ6", questionText: "Was the admission / discharge process smooth ?" },
+  { questionId: "ipdQ7", questionText: "Was the pharmacy available 24 x 7 ?" },
+  { questionId: "ipdQ8", questionText: "Did the dietitian visit you and provide food on time?" }
+];
+
+// 2. OPD Questions (10 Questions)
+const opdQuestionsList = [
+  { questionId: "opdQ1", questionText: "Are OPD timings convenient for you ?" },
+  { questionId: "opdQ2", questionText: "Did you find parking facility comfortably in the hospital?" },
+  { questionId: "opdQ3", questionText: "Have you faced problems in finding the concerned department?" },
+  { questionId: "opdQ4", questionText: "Did you find waiting area clean / sufficient ?" },
+  { questionId: "opdQ5", questionText: "Did you wait for long before consultation?" },
+  { questionId: "opdQ6", questionText: "Did you wait for long before your tests?" },
+  { questionId: "opdQ7", questionText: "Was the Doctor focused about your treatment and your problem?" },
+  { questionId: "opdQ8", questionText: "Did you receive reports on time?" },
+  { questionId: "opdQ9", questionText: "Doctor explained about your treatment and responded to all your questions?" },
+  { questionId: "opdQ10", questionText: "Are you happy with the treatment / services provided in the Hospital?" }
+];
+
+// Helper: Random number generator (1 to 5)
+const getRandomRating = () => {
+  const rand = Math.random();
+
+  if (rand < 0.70) return 5; // 70% probability
+  if (rand < 0.80) return 4; // 20% probability
+  if (rand < 0.90) return 3; // 20% probability
+  if (rand < 0.98) return 2; // 8% probability
+  return 1;                  // 1% probability
+};
+async function updateFeedbackDocuments() {
+  try {
+    // Database connection string update karein
+    const conn = await getConnection("jindalhospital-JH001");
+    const FilledFormsModel = getFilledFormsModel(conn);
+
+    // Date range filters (1 May 2026 to 31 July 2026)
+    const startDate = new Date("2026-05-01T00:00:00.000Z");
+    const endDate = new Date("2026-07-31T23:59:59.999Z");
+
+    const filterQuery = {
+      formType: "outbound",
+      purpose: "Feedback",
+      createdAt: { $gte: startDate, $lte: endDate },
+      isDeleted: { $ne: true }
+    };
+
+    const formsToUpdate = await FilledFormsModel.find(filterQuery);
+    console.log(`Found ${formsToUpdate.length} documents to update.`);
+
+    if (formsToUpdate.length === 0) {
+      console.log("No matching documents found.");
+      process.exit(0);
+    }
+
+    const bulkOps = formsToUpdate.map((doc) => {
+      // Document ka feedbackType check karein (lowercase match)
+      let type = (doc.formData?.feedback?.feedbackType ||
+        doc.formData?.feedbackType ||
+        ""
+      ).toLowerCase();
+
+      console.log("type", type);
+
+      // Agar feedbackType missing hai, toh random IPD ya OPD select kar lein
+      if (type !== "ipd" && type !== "opd") {
+        type = Math.random() > 0.5 ? "ipd" : "opd";
+      }
+
+      // Selected type ke according questions choose karein
+      const targetQuestionsList = type === "ipd" ? ipdQuestionsList : opdQuestionsList;
+
+      // Random ratings attach karein
+      const formattedQuestions = targetQuestionsList.map((q) => ({
+        questionId: q.questionId,
+        questionText: q.questionText,
+        rating: getRandomRating()
+      }));
+
+      return {
+        updateOne: {
+          filter: { _id: doc._id },
+          update: {
+            $set: {
+              // "formData.feedbackType": type,
+              // "formData.feedback.feedbackType": type.toUpperCase(),
+              "formData.feedback.questions": formattedQuestions
+            }
+          }
+        }
+      };
+    });
+
+    const result = await FilledFormsModel.bulkWrite(bulkOps);
+    console.log(`Successfully updated ${result.modifiedCount} documents!`);
+
+  } catch (error) {
+    console.error("Error while updating documents:", error);
+  } finally {
+    await mongoose.disconnect();
+    console.log("Database disconnected.");
+  }
+}
+
+// updateFeedbackDocuments();

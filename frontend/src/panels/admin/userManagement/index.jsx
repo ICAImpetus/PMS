@@ -43,10 +43,22 @@ const ScrollableForm = styled(Box)({
   padding: "2px 20px 10px 20px", // Top, Right, Bottom, Left
 });
 
+const StyledIconButton = styled(IconButton)(({ bgColor, color, hoverBgColor }) => ({
+  transition: "background-color 0.3s",
+  backgroundColor: bgColor,
+  color,
+  "&:hover": {
+    backgroundColor: hoverBgColor,
+    color,
+    animation: "oscillate 0.5s ease-in-out infinite",
+  },
+  "@keyframes oscillate": oscillateRotation,
+}));
+
 function UserManagentAdmin() {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const { currentUser } = UserContextHook()
+  const { currentUser } = UserContextHook();
   const canDelete = currentUser?.canDelete;
   const [userUpdateData, setUserUpdateData] = React.useState(null);
   const [open, setOpen] = React.useState(false);
@@ -66,7 +78,6 @@ function UserManagentAdmin() {
   const [searchTerm, setSearchTerm] = React.useState("");
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
-
   const {
     hospitals,
     loading,
@@ -77,15 +88,14 @@ function UserManagentAdmin() {
     refetchUsers
   } = useContext(HospitalContext);
 
-
   useEffect(() => {
     if (userData.length > 0) {
       const superManager = userData.find(user => user.type === "supermanager");
       setIsSuperManager(superManager || null);
     } else {
-      setIsSuperManager(null)
+      setIsSuperManager(null);
     }
-  }, [userData])
+  }, [userData]);
 
   useEffect(() => {
     const error = errors?.usersError;
@@ -93,17 +103,6 @@ function UserManagentAdmin() {
       toast.error(error || "Internal Server Error");
     }
   }, [errors?.usersError]);
-  const StyledIconButton = styled(IconButton)(({ bgColor, color }) => ({
-    transition: "background-color 0.3s",
-    backgroundColor: bgColor, // Initial background color
-    color,
-    "&:hover": {
-      backgroundColor: colors.primary[900], // Background color on hover
-      color, // Icon color on hover
-      animation: "oscillate 0.5s ease-in-out infinite", // Apply oscillation animation
-    },
-    "@keyframes oscillate": oscillateRotation,
-  }));
 
   const handleOpenUpdateModel = (row) => {
     const { id, ...rest } = row;

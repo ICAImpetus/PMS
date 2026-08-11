@@ -1,71 +1,199 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import {
-  Modal,
   Box,
-  Divider,
-  CircularProgress,
+  Typography,
   TextField,
   InputAdornment,
   Button,
+  Avatar,
+  Chip,
+  IconButton,
+  CircularProgress,
+  Grid,
+  Paper,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-// import { tokens } from "../../../../theme";
 import { styled } from "@mui/material/styles";
-import Header from "../../../../components/HeaderNew";
-import AddHeader from "../../../../components/AddHeader";
-import BreadcrumbNav from "../../../../components/BroadcrumNav";
-// import { nanoid } from "@reduxjs/toolkit";
-import { toast } from "react-toastify";
-import AddHospitalData1 from "./index2";
-import HospitalCards from "../../../../components/CardsUICom"; //  Ensure this path points to your CardsUICom
-// import AssignAdminModal from "./AssignAdminModel"; //  Import the Modal
-// import { getDataFunc } from "../../../../utils/services";
-// import { UserContextHook } from "../../../../contexts/UserContexts";
-import { useNavigate } from "react-router-dom";
-// import { useApi } from "../../../../api/useApi";
-// import { superAdminRoutes } from "../../../../api/apiService";
 import SearchIcon from "@mui/icons-material/Search";
-import HospitalContext from "../../../../contexts/HospitalContexts";
+import AddIcon from "@mui/icons-material/Add";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import AccountTreeOutlinedIcon from "@mui/icons-material/AccountTreeOutlined";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import LocalHospitalOutlinedIcon from "@mui/icons-material/LocalHospitalOutlined";
 
-const ScrollableForm = styled(Box)(({ theme }) => ({
-  width: "100%",
-  height: "calc(100vh - 180px)",
-  overflowY: "auto",
+import { useNavigate } from "react-router-dom";
+import HospitalContext from "../../../../contexts/HospitalContexts";
+import AddHospitalData1 from "./index2";
+
+// --- Styled Components ---
+const RootContainer = styled(Box)(({ theme }) => ({
+  backgroundColor: "#F8FAFC",
+  minHeight: "100vh",
+  padding: theme.spacing(3, 4),
+  fontFamily: "'Inter', sans-serif",
+}));
+
+const HospitalCard = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
-  "&::-webkit-scrollbar": { width: "6px" },
-  "&::-webkit-scrollbar-track": {
-    background: "#f4f6fb",
-    borderRadius: "10px",
-  },
-  "&::-webkit-scrollbar-thumb": {
-    background: theme.palette.primary.main,
-    borderRadius: "10px",
+  borderRadius: "20px",
+  border: "1px solid #E2E8F0",
+  boxShadow: "0px 1px 3px rgba(0, 0, 0, 0.02)",
+  backgroundColor: "#FFFFFF",
+  height: "100%",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "space-between",
+  position: "relative",
+  transition: "all 0.2s ease-in-out",
+  "&:hover": {
+    boxShadow: "0px 10px 25px rgba(0, 0, 0, 0.05)",
+    borderColor: "#CBD5E1",
   },
 }));
 
-const modalStyle = (theme) => ({
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: "90%",
-  maxWidth: "900px",
-  maxHeight: "90vh",
-  bgcolor: "background.paper",
-  borderRadius: theme.shape.borderRadius * 2,
-  boxShadow: theme.shadows[5],
-  p: 0,
+const CreateNewCard = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  borderRadius: "20px",
+  border: "2px dashed #CBD5E1",
+  backgroundColor: "#FFFFFF",
+  height: "100%",
+  minHeight: "160px",
   display: "flex",
   flexDirection: "column",
-  overflow: "hidden",
-  "&:focus-visible": { outline: "none" },
-});
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  transition: "all 0.2s ease-in-out",
+  "&:hover": {
+    borderColor: "#0256E8",
+    backgroundColor: "#EFF6FF",
+  },
+}));
+
+// Single Card Component with Context Menu
+const CustomHospitalCard = ({ hospital, role, onEdit, onManageBranches }) => {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const openMenu = Boolean(anchorEl);
+
+  const handleMenuClick = (event) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = (event) => {
+    if (event) event.stopPropagation();
+    setAnchorEl(null);
+  };
+
+  return (
+    <HospitalCard>
+      <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+        <Box display="flex" gap={2} alignItems="center">
+          <Avatar
+            src={hospital?.hospitallogo}
+            variant="rounded"
+            sx={{
+              width: 52,
+              height: 52,
+              borderRadius: "14px",
+              bgcolor: "#EFF6FF",
+              color: "#0256E8",
+              fontWeight: 700,
+            }}
+          >
+            {!hospital?.hospitallogo && <LocalHospitalOutlinedIcon />}
+          </Avatar>
+          <Box>
+            <Typography variant="subtitle1" fontWeight={800} color="#0F172A">
+              {hospital?.name}
+            </Typography>
+            <Box display="flex" alignItems="center" gap={0.5} mt={0.25}>
+              <LocationOnIcon sx={{ fontSize: 14, color: "#94A3B8" }} />
+              <Typography variant="caption" color="#64748B" fontWeight={500}>
+                {hospital?.contact?.city || hospital?.city || "Location N/A"}
+                {hospital?.contact?.state ? `, ${hospital.contact.state}` : ""}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        <IconButton size="small" onClick={handleMenuClick} sx={{ color: "#94A3B8" }}>
+          <MoreVertIcon fontSize="small" />
+        </IconButton>
+      </Box>
+
+      {/* Action Popover Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={openMenu}
+        onClose={handleMenuClose}
+        PaperProps={{
+          elevation: 0,
+          sx: {
+            borderRadius: "14px",
+            border: "1px solid #E2E8F0",
+            boxShadow: "0px 10px 25px rgba(0, 0, 0, 0.08)",
+            mt: 1,
+            minWidth: "160px",
+          },
+        }}
+      >
+        {
+
+          ["superadmin", "admin"].includes(role) && (
+            <MenuItem
+              onClick={(e) => {
+                handleMenuClose(e);
+                onEdit(hospital);
+              }}
+              sx={{ py: 1, px: 2 }}
+            >
+              <ListItemIcon sx={{ color: "#475569" }}>
+                <EditOutlinedIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary="Edit Hospital"
+                primaryTypographyProps={{ fontSize: "12px", fontWeight: 700, color: "#334155" }}
+              />
+            </MenuItem>
+          )
+        }
+
+
+
+
+        <MenuItem
+          onClick={(e) => {
+            handleMenuClose(e);
+            onManageBranches(hospital);
+          }}
+          sx={{ py: 1, px: 2 }}
+        >
+          <ListItemIcon sx={{ color: "#475569" }}>
+            <AccountTreeOutlinedIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText
+            primary="Manage Branches"
+            primaryTypographyProps={{ fontSize: "12px", fontWeight: 700, color: "#334155" }}
+          />
+        </MenuItem>
+      </Menu>
+    </HospitalCard>
+  );
+};
 
 const HospitalCreationNew = () => {
-  const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedHospital, setSelectedHospital] = useState(null)
+  const [selectedHospital, setSelectedHospital] = useState(null);
+
   const navigate = useNavigate();
 
   const {
@@ -73,182 +201,206 @@ const HospitalCreationNew = () => {
     hospitals,
     isSuperAdmin,
     role,
-    setHospitals,
-    errors,
-    selectedHostpital,
-    pagination,
-    setPagination,
-    refetchHospital
+    refetchHospital,
   } = useContext(HospitalContext);
 
   const handleOpenAdd = () => {
     setSelectedHospital(null);
     setOpen(true);
   };
+
   const handleEditHospital = (hospital) => {
     setSelectedHospital(hospital);
     setOpen(true);
   };
+
   const handleClose = () => {
     setOpen(false);
     setSelectedHospital(null);
   };
 
+  const handleManageBranches = (hospital) => {
+    navigate(`/hospital-management/edit-branches/${hospital._id}`, {
+      state: {
+        hospital: {
+          name: hospital?.name,
+          hospitalCode: hospital?.hospitalCode,
+          contact: hospital?.contact,
+          hospitallogo: hospital?.hospitallogo,
+        },
+      },
+    });
+  };
 
   // Filter hospitals based on search term
   const filteredHospitals = hospitals?.filter((hospital) =>
-    hospital?.name?.toLowerCase().includes(searchTerm.toLowerCase()),
+    hospital?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading?.hospitalLoading) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        height="80vh"
-      >
-        <CircularProgress color="secondary" />
+      <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
+        <CircularProgress sx={{ color: "#0256E8" }} />
       </Box>
     );
   }
 
   if (open) {
     return (
-      <ScrollableForm>
-
-        <Box display="flex" alignItems="center" gap={2} mb={2}>
+      <RootContainer>
+        <Box display="flex" alignItems="center" gap={2} mb={3}>
           <Button
             variant="outlined"
+            startIcon={<ArrowBackIcon />}
             onClick={handleClose}
-            size="small"
             sx={{
-              color: "#212f3d",
-              borderColor: "#212f3d",
-              height: 32,
+              borderRadius: "12px",
+              borderColor: "#CBD5E1",
+              color: "#334155",
               textTransform: "none",
-              "&:hover": {
-                backgroundColor: "#f0f0f0",
-                borderColor: "#212f3d",
-              },
+              fontWeight: 700,
+              fontSize: "12px",
             }}
           >
             Back
           </Button>
-          <Header
-            title={selectedHospital ? "Edit" : "Create"}
-            subtitle="Hospital Details"
-          />
+          <Typography variant="h5" fontWeight={800} color="#0F172A">
+            {selectedHospital ? "Edit Hospital Details" : "Create Hospital Unit"}
+          </Typography>
         </Box>
-        <Divider sx={{ borderBottomWidth: 2, my: 2 }} />
-        <BreadcrumbNav />
-        <Divider sx={{ borderBottomWidth: 2, my: 2 }} />
 
-        <Box sx={{ mt: 2 }}>
+        <Paper sx={{ p: 4, borderRadius: "20px", border: "1px solid #E2E8F0" }}>
           <AddHospitalData1
             initialState={selectedHospital}
             refetchHospital={refetchHospital}
             handleClose={handleClose}
             isInline={true}
           />
-        </Box>
-      </ScrollableForm>
+        </Paper>
+      </RootContainer>
     );
   }
 
   return (
-    <ScrollableForm>
-
-      <Box
-        display="flex"
-        alignItems={{ xs: "flex-start", sm: "center" }}
-        justifyContent="space-between"
-        flexDirection={{ xs: "column", md: "row" }}
-        gap={2}
-      >
-        <Header
-          title={isSuperAdmin ? "Create" : "Manage"}
-          subtitle="Hospitals"
+    <RootContainer>
+      {/* 1. TOP NAVBAR */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+        <TextField
+          placeholder="Search by hospital name..."
+          variant="outlined"
+          size="small"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: "#94A3B8" }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            width: "380px",
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "24px",
+              backgroundColor: "#FFFFFF",
+              fontSize: "13px",
+              "& fieldset": { borderColor: "#E2E8F0" },
+            },
+          }}
         />
-        {isSuperAdmin && (
-          <Box
-            display="flex"
-            gap={2}
-            alignItems="center"
-            width={{ xs: "100%", md: "auto" }}
-            flexDirection={{ xs: "column", sm: "row" }}
-          >
-            <TextField
-              placeholder="Search by hospital name..."
-              variant="outlined"
-              size="small"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ width: { xs: "100%", sm: "250px" } }}
-            />
-            <Box
+
+        <Box display="flex" alignItems="center" gap={1.5}>
+          {isSuperAdmin && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpenAdd}
               sx={{
-                width: { xs: "100%", sm: "auto" },
-                transition: "all 0.1s ease",
-                boxShadow: "0 4px 0 rgba(0,0,0,0.2)",
-
-                "&:hover": {
-                  boxShadow: "0 6px 0 rgba(0,0,0,0.2)",
-                },
-
-                "&:active": {
-                  transform: "translateY(3px)",
-                  boxShadow: "0 2px 0 rgba(0,0,0,0.2)",
-                }
+                borderRadius: "20px",
+                backgroundColor: "#0256E8",
+                textTransform: "uppercase",
+                fontWeight: 800,
+                fontSize: "11px",
+                px: 3,
+                py: 1,
+                boxShadow: "none",
+                "&:hover": { backgroundColor: "#0143B8", boxShadow: "none" },
               }}
             >
-              <AddHeader text="Add Hospital" onClick={handleOpenAdd} />
-            </Box>
-          </Box>
-        )}
+              ADD HOSPITAL
+            </Button>
+          )}
+
+          <IconButton sx={{ bgcolor: "#FFFFFF", border: "1px solid #E2E8F0" }}>
+            <HelpOutlineIcon fontSize="small" sx={{ color: "#64748B" }} />
+          </IconButton>
+          <IconButton sx={{ bgcolor: "#FFFFFF", border: "1px solid #E2E8F0" }}>
+            <SettingsOutlinedIcon fontSize="small" sx={{ color: "#64748B" }} />
+          </IconButton>
+        </Box>
       </Box>
-      <Divider sx={{ borderBottomWidth: 2, my: 2 }} />
-      <BreadcrumbNav />
-      <Divider sx={{ borderBottomWidth: 2, my: 2 }} />
 
-      {/*  Hospital Cards with Assign Logic */}
-      <HospitalCards
-        hospitals={filteredHospitals}
-        userRole={role}
-        onEdit={handleEditHospital}
-        onManageBranches={(hospital) =>
-          navigate(`/hospital-management/edit-branches/${hospital._id}`, {
-            state: {
-              hospital: {
-                name: hospital?.name,
-                hospitalCode: hospital?.hospitalCode,
-                contact: hospital?.contact,
-                hospitallogo: hospital?.hospitallogo
+      {/* 2. HEADER TITLE SECTION */}
+      <Box mb={4}>
+        {/* <Chip
+          label="SUPER ADMIN CONSOLE"
+          size="small"
+          sx={{
+            bgcolor: "#EFF6FF",
+            color: "#1D4ED8",
+            fontWeight: 800,
+            fontSize: "10px",
+            mb: 1,
+            borderRadius: "4px",
+          }}
+        /> */}
+        <Typography variant="h3" component="h1" fontWeight={800} color="#0F172A">
+          Hospital <span style={{ color: "#0256E8" }}>Creation</span>
+        </Typography>
+        <Typography variant="body2" color="#64748B" mt={0.5} fontWeight={500}>
+          Manage and onboard new hospital units into the centralized network.
+        </Typography>
+      </Box>
 
+      {/* 3. HOSPITAL CARDS GRID */}
+      <Grid container spacing={3}>
+        {filteredHospitals?.map((hospital) => (
+          <Grid item xs={12} sm={6} md={4} key={hospital._id || hospital.id}>
+            <CustomHospitalCard
+              hospital={hospital}
+              role={role}
+              onEdit={handleEditHospital}
+              onManageBranches={handleManageBranches}
+            />
+          </Grid>
+        ))}
 
-              }
-            }
-          })
-        }
-      // onAssignUser={handleOpenAssign} // Pass function to open modal
-      // onRemoveUser={handleRemoveUser}
-      />
-
-      {/*  Assign Admin Popup Modal */}
-      {/* <AssignAdminModal
-        open={assignModalOpen}
-        onClose={() => setAssignModalOpen(false)}
-        onAssign={handleAssignAdmins}
-        hospitalName={targetHospital?.name || ""}
-      /> */}
-    </ScrollableForm >
+        {/* Add New Unit Card */}
+        {isSuperAdmin && (
+          <Grid item xs={12} sm={6} md={4}>
+            <CreateNewCard onClick={handleOpenAdd}>
+              <Avatar
+                sx={{
+                  bgcolor: "#EFF6FF",
+                  color: "#0256E8",
+                  width: 44,
+                  height: 44,
+                  mb: 1.5,
+                }}
+              >
+                <AddIcon />
+              </Avatar>
+              <Typography variant="subtitle2" fontWeight={800} color="#0F172A">
+                Create New Hospital
+              </Typography>
+              <Typography variant="caption" color="#94A3B8" fontWeight={500}>
+                Add a new unit to the network
+              </Typography>
+            </CreateNewCard>
+          </Grid>
+        )}
+      </Grid>
+    </RootContainer>
   );
 };
 

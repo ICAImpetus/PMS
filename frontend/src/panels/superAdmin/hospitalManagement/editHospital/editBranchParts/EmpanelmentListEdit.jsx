@@ -144,6 +144,7 @@ const AddEmpanelmentListModal = ({
   // --- Effects ---
 
   useEffect(() => {
+    console.log('effect fired');
     if (open) {
       if (empanelmentData) {
         // Edit Mode
@@ -330,54 +331,12 @@ const AddEmpanelmentListModal = ({
   ) || [];
 
 
-  const FormContainer = ({ children }) => {
-    if (isInline) {
-      if (!open) return null;
-      return (
-        <Box
-          sx={{
-            width: "100%",
-            borderRadius: 3,
-            border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
-            background:
-              theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
-                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
-            overflow: "hidden",
-            mb: 3,
-          }}
-        >
-          {children}
-        </Box>
-      );
-    }
-    return (
-      <Dialog
-        open={open}
-        onClose={!loading ? onClose : undefined}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            background:
-              theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
-                : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
-          },
-        }}
-      >
-        {children}
-      </Dialog>
-    );
-  };
-
   const FormHeader = isInline ? Box : DialogTitle;
   const FormContent = isInline ? Box : DialogContent;
   const FormActions = isInline ? Box : DialogActions;
 
-  return (
-    <FormContainer>
+  const formContent = (
+    <>
       {/* Header */}
       <FormHeader
         sx={{
@@ -557,31 +516,10 @@ const AddEmpanelmentListModal = ({
                       <InputLabel>Types of Services</InputLabel>
                       <Select
                         label="Types of Services"
-                        multiple
                         value={selectedService}
                         onChange={(e) => {
                           setSelectedService(e.target.value);
                         }}
-                        renderValue={(selected) => (
-                          <Box
-                            sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}
-                          >
-                            {selected.map((value) => (
-                              <Chip
-                                key={value}
-                                label={
-                                  services.find((s) => s._id === value)?.name ||
-                                  value
-                                }
-                                size="small"
-                                sx={{
-                                  bgcolor: colors.blueAccent[100],
-                                  color: colors.blueAccent[800],
-                                }}
-                              />
-                            ))}
-                          </Box>
-                        )}
                         sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
                       >
                         {services.map((service) => (
@@ -847,7 +785,7 @@ const AddEmpanelmentListModal = ({
 
                             <Typography variant="body2" sx={{ mb: 1 }}>
                               <strong>Services:</strong>{" "}
-                              {coverage?.service?.join(",") || "No services"}
+                              {coverage?.service || "No services"}
                             </Typography>
                             <Typography variant="body2" sx={{ mb: 1 }}>
                               <strong>Doctors:</strong> {coverage?.doctor?.name}
@@ -974,7 +912,48 @@ const AddEmpanelmentListModal = ({
               : "Add Policy"}
         </Button>
       </FormActions>
-    </FormContainer>
+    </>
+  );
+
+  if (isInline) {
+    if (!open) return null;
+    return (
+      <Box
+        sx={{
+          width: "100%",
+          borderRadius: 3,
+          border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+          background:
+            theme.palette.mode === "dark"
+              ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+              : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+          overflow: "hidden",
+          mb: 3,
+        }}
+      >
+        {formContent}
+      </Box>
+    );
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={!loading ? onClose : undefined}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          background:
+            theme.palette.mode === "dark"
+              ? `linear-gradient(135deg, ${colors.primary[800]} 0%, ${colors.primary[900]} 100%)`
+              : `linear-gradient(135deg, ${colors.grey[50]} 0%, ${colors.primary[900]} 100%)`,
+        },
+      }}
+    >
+      {formContent}
+    </Dialog>
   );
 };
 

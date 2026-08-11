@@ -1210,6 +1210,7 @@ const initialPatientDetails = {
 };
 
 export const initialFormData = {
+  typeOfDisease: "",
   callerType: "",
   referenceFrom: "",
   refDoctorName: "",
@@ -1226,6 +1227,12 @@ export const initialFormData = {
   informativeTopic: "",
   informativeDetailsShared: "",
   feedbackType: "",
+  feedback: {
+    feedbackType: "",
+    ipdNumber: "",
+    opdNumber: "",
+    questions: []
+  },
   noFeedbackRemarks: "",
   notConnectedRemarks: "",
   opdNumber: "",

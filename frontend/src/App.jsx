@@ -57,6 +57,8 @@ import { PatientHistory } from "./scenes/global/Patient_Management/PatientHistor
 import { PatientHistory as PatientHistoryForNonAdmins } from "./scenes/global/Patient_Management/PatientHistoryForNonAdmins";
 import { SInglePatientDetails } from "./scenes/global/Patient_Management/SInglePatientDetails";
 import Subscription from "./panels/superManager/subscription_plan/Subscription";
+import WhatsAppConversations from "./components/WhatsAppAutomation/WhatsAppConversations";
+import WhatsAppFlowBuilder from "./components/WhatsAppAutomation/WhatsAppFlowBuilder";
 
 
 const HospitalManagementLayout = () => {
@@ -89,21 +91,33 @@ function App() {
     <>
       {userRole === "superadmin" && (
         <>
+          <Route path="/" element={<SuperAdminDashboard />} />
           <Route path="/admin-management" element={<AdminManagement />} />
           <Route path="/patient-history" element={<PatientHistory />} />
           <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
           <Route path="/user-management" element={<UserManagement />} />
           <Route path="/admin-audit-logs" element={<AuditLog />} />
+          <Route
+            path="/whatsapp-conversations"
+            element={<WhatsAppConversations />}
+          />
+          <Route
+            path="/whatsapp-flow-builder"
+            element={<WhatsAppFlowBuilder />}
+          />
+
         </>
       )}
       {userRole === "admin" && (
         <>
-          <Route path="/" element={<AdminDashboard />} />
+          {/* <Route path="/" element={<AdminDashboard />} /> */}
+          <Route path="/" element={<SuperAdminDashboard />} />
           <Route path="/patient-history" element={<PatientHistory />} />
           <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
-          <Route path="/user-management" element={<UserManagementAdmin />} />
+          <Route path="/user-management" element={<UserManagement />} />
           <Route path="/roles-permissions" element={<RolesPermissions />} />
-          <Route path="/admin-user-management" element={<AdminUserManagement />} />
+          {/* <Route path="/admin-user-management" element={<AdminUserManagement />} /> */}
+          <Route path="/admin-audit-logs" element={<AuditLog />} />
         </>
       )}
 
@@ -114,7 +128,7 @@ function App() {
           <Route path="/executive-forms" element={<ExecutiveForms />} />
           <Route path="/patient-history" element={<PatientHistory />} />
           <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
-          <Route path="/user-management" element={<UserManagementTeamLeader />} />
+          <Route path="/user-management" element={<UserManagement />} />
         </>
       )}
 
@@ -123,23 +137,11 @@ function App() {
           <Route path="/" element={<SuperManagerDashboard />} />
           <Route path="/patient-history" element={<PatientHistory />} />
           <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
-          <Route path="/user-management" element={<UserManagementSuperManager />} />
+          <Route path="/user-management" element={<UserManagement />} />
           {/* <Route path="/Plans" element={<Subscription />} /> */}
         </>
       )}
 
-      {(userRole === "superadmin" || userRole === "admin") && (
-        <>
-          {userRole === "superadmin" && (
-            <Route path="/" element={<SuperAdminDashboard />} />
-          )}
-          {userRole === "admin" && (
-            <Route path="/" element={<AdminDashboard />} />
-          )}
-          <Route path="/audit-logs" element={<AuditLogs />} />
-          <Route path="/admin-audit-logs" element={<AuditLog />} />
-        </>
-      )}
 
       {hasAdminPrivileges && (
         <Route path="/hospital-management" element={<HospitalManagementLayout />}>
@@ -195,14 +197,14 @@ function App() {
             <CssBaseline />
             <GlobalLoader />
             <div className="app-container">
-              <div className="topbar-wrapper">
+              {/* <div className="topbar-wrapper">
                 <Topbar
                   setIsSidebar={setIsSidebar}
                   setIsToggled={setIsToggled}
                   toggled={toggled}
                   setRefresh={setRefresh}
                 />
-              </div>
+              </div> */}
 
               <div className="main-layout">
                 <Sidebar
