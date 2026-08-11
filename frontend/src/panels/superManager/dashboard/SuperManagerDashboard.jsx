@@ -40,6 +40,7 @@ import { Line, Bar, Doughnut } from "react-chartjs-2";
 import "./Dashboard.css";
 import { ProfilePopup } from "../../../scenes/global/ProfileAndCodeAnnousementPopup";
 import FilledFormsComponent from "../../../components/customComponents/FilledFormsComponent";
+import NotificationCenter from "../../../components/NotificationCenter";
 
 // --- MUI ICONS ---
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
@@ -157,8 +158,8 @@ const SuperManagerDashboard = () => {
 
   const months = currentDataa.length
     ? Object.keys(currentDataa[0]).filter(
-        (key) => key !== "name" && key !== "activeTotal" && key !== "_id"
-      )
+      (key) => key !== "name" && key !== "activeTotal" && key !== "_id"
+    )
     : [];
 
   const displayMonths = months.length > 0 ? months : [];
@@ -257,15 +258,15 @@ const SuperManagerDashboard = () => {
   const patientCatTotal = patientCatRaw.reduce((s, c) => s + (c.count || 0), 0) || 1;
   const patientCategoryItems = patientCatRaw.length > 0
     ? patientCatRaw.map((c, i) => ({
-        label: (c.category || c.name || "Category").toUpperCase(),
-        percent: Math.round(((c.count || 0) / patientCatTotal) * 100),
-        color: ["#1d4ed8", "#3b82f6", "#93c5fd", "#38bdf8", "#0ea5e9"][i % 5],
-      }))
+      label: (c.category || c.name || "Category").toUpperCase(),
+      percent: Math.round(((c.count || 0) / patientCatTotal) * 100),
+      color: ["#1d4ed8", "#3b82f6", "#93c5fd", "#38bdf8", "#0ea5e9"][i % 5],
+    }))
     : [
-        { label: "GOVT HEALTH SCHEME", percent: analytics?.govtSchemePercent || 0, color: "#1d4ed8" },
-        { label: "CASH PAYMENTS", percent: analytics?.cashPercent || 0, color: "#3b82f6" },
-        { label: "INSURANCE & TPA", percent: analytics?.insurancePercent || 0, color: "#93c5fd" },
-      ];
+      { label: "GOVT HEALTH SCHEME", percent: analytics?.govtSchemePercent || 0, color: "#1d4ed8" },
+      { label: "CASH PAYMENTS", percent: analytics?.cashPercent || 0, color: "#3b82f6" },
+      { label: "INSURANCE & TPA", percent: analytics?.insurancePercent || 0, color: "#93c5fd" },
+    ];
 
   // Operational status from analytics
   const ambulanceActive = analytics?.ambulance?.active ?? analytics?.ambulanceActive ?? "--";
@@ -355,20 +356,23 @@ const SuperManagerDashboard = () => {
         </Paper>
 
         {/* Top Right User Profile & Controls */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <IconButton size="small" sx={{ border: "1px solid #e2e8f0", bg: "#fff" }}>
-            <NotificationsNoneIcon sx={{ color: "#64748b", fontSize: 20 }} />
-          </IconButton>
-          <IconButton size="small" sx={{ border: "1px solid #e2e8f0", bg: "#fff" }}>
-            <SettingsIcon sx={{ color: "#64748b", fontSize: 20 }} />
-          </IconButton>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          {/* Functional Notification Bell Dropdown */}
+          <NotificationCenter />
+
+          {/* <IconButton size="small" onClick={() => setProfileModalOpen(true)} sx={{ border: "1px solid #e2e8f0", bgcolor: "#fff", p: 1 }}>
+            <SettingsIcon sx={{ color: "#64748b", fontSize: 18 }} />
+          </IconButton> */}
 
           <Box
+            onClick={() => setProfileModalOpen(true)}
             sx={{
               display: "flex",
               alignItems: "center",
               gap: 1.5,
               pl: 1,
+              cursor: "pointer",
+              "&:hover": { opacity: 0.85 },
             }}
           >
             <Box sx={{ textAlign: "right", display: { xs: "none", sm: "block" } }}>
@@ -380,14 +384,12 @@ const SuperManagerDashboard = () => {
               </Typography>
             </Box>
             <Avatar
-              onClick={() => setProfileModalOpen(true)}
               sx={{
                 bgcolor: "#1d4ed8",
                 width: 36,
                 height: 36,
                 fontSize: "0.875rem",
                 fontWeight: 700,
-                cursor: "pointer",
               }}
             >
               {userInitials}
@@ -440,28 +442,38 @@ const SuperManagerDashboard = () => {
           </Typography>
         </Box>
 
-        {/* Branch Selector Dropdown & Stats */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 3, flexWrap: "wrap" }}>
-          <FormControl variant="outlined" size="small" sx={{ minWidth: 220 }}>
+        {/* Branch Selector Dropdown & Stats (Single Pill Card Design) */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            px: 2.5,
+            py: 1,
+            borderRadius: "50px",
+            border: "1px solid #edf2f7",
+            backgroundColor: "#ffffff",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.03)",
+          }}
+        >
+          {/* Borderless Select Dropdown */}
+          <FormControl variant="standard" size="small" sx={{ minWidth: 190 }}>
             <Select
               value={selectedBranch || ""}
               onChange={(e) => setSelectedBranch(e.target.value)}
               disabled={loading?.branchesLoading}
               displayEmpty
+              disableUnderline
               renderValue={(selected) => {
                 if (!selected) return selectedBranchName;
                 const b = branches.find((item) => item._id === selected);
                 return b ? b.name : selectedBranchName;
               }}
               sx={{
-                borderRadius: "10px",
-                backgroundColor: "#ffffff",
-                fontWeight: 600,
-                fontSize: "0.875rem",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                "& .MuiOutlinedInput-notchedOutline": {
-                  borderColor: "#e2e8f0",
-                },
+                fontWeight: 700,
+                fontSize: "0.92rem",
+                color: "#1e293b",
+                "& .MuiSelect-select": { py: 0.5, pr: 3, pl: 0.5 },
               }}
             >
               {branches.length === 0 && (
@@ -475,21 +487,24 @@ const SuperManagerDashboard = () => {
             </Select>
           </FormControl>
 
+          {/* Vertical Divider */}
+          <Box sx={{ width: "1px", height: "34px", bgcolor: "#f1f5f9", mx: 0.5 }} />
+
+          {/* Branches & Beds Stats */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
             <Box sx={{ textAlign: "center" }}>
-              <Typography variant="h5" fontWeight={800} color="#1d4ed8" lineHeight={1}>
+              <Typography variant="h5" fontWeight={800} color="#0a4bb6" lineHeight={1}>
                 {branches?.length || 2}
               </Typography>
-              <Typography variant="caption" fontWeight={700} color="#94a3b8" sx={{ letterSpacing: "0.5px" }}>
+              <Typography variant="caption" fontWeight={800} color="#94a3b8" fontSize="0.68rem" sx={{ letterSpacing: "0.5px" }}>
                 BRANCHES
               </Typography>
             </Box>
-            <Box sx={{ width: "1px", height: "28px", bgcolor: "#cbd5e1" }} />
             <Box sx={{ textAlign: "center" }}>
-              <Typography variant="h5" fontWeight={800} color="#1d4ed8" lineHeight={1}>
+              <Typography variant="h5" fontWeight={800} color="#0a4bb6" lineHeight={1}>
                 {currentBranchObj?.beds || 150}
               </Typography>
-              <Typography variant="caption" fontWeight={700} color="#94a3b8" sx={{ letterSpacing: "0.5px" }}>
+              <Typography variant="caption" fontWeight={800} color="#94a3b8" fontSize="0.68rem" sx={{ letterSpacing: "0.5px" }}>
                 BEDS
               </Typography>
             </Box>
@@ -1224,10 +1239,10 @@ const SuperManagerDashboard = () => {
               {(analytics?.topInboundPurpose && analytics.topInboundPurpose.length > 0
                 ? analytics.topInboundPurpose
                 : [
-                    { purpose: "APPOINTMENTS", count: 9 },
-                    { purpose: "SURGERY", count: 1 },
-                    { purpose: "OPD TIMINGS", count: 1 },
-                  ]
+                  { purpose: "APPOINTMENTS", count: 9 },
+                  { purpose: "SURGERY", count: 1 },
+                  { purpose: "OPD TIMINGS", count: 1 },
+                ]
               ).map((item, idx) => (
                 <Grid item xs={4} key={idx}>
                   <Paper
@@ -1283,10 +1298,10 @@ const SuperManagerDashboard = () => {
               {(analytics?.topOutboundPurpose && analytics.topOutboundPurpose.length > 0
                 ? analytics.topOutboundPurpose
                 : [
-                    { purpose: "FOLLOW-UP / FEEDBACK", count: 1 },
-                    { purpose: "APPOINTMENT REMINDERS", count: 1 },
-                    { purpose: "HEALTH CAMPS", count: 0 },
-                  ]
+                  { purpose: "FOLLOW-UP / FEEDBACK", count: 1 },
+                  { purpose: "APPOINTMENT REMINDERS", count: 1 },
+                  { purpose: "HEALTH CAMPS", count: 0 },
+                ]
               ).map((item, idx) => (
                 <Grid item xs={4} key={idx}>
                   <Paper

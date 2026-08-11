@@ -241,9 +241,9 @@ const TeamDashboard = () => {
               {/* Functional Notification Bell */}
               <NotificationCenter />
 
-              <IconButton size="small" onClick={() => setProfileModalOpen(true)} sx={{ bgcolor: "#fff", border: "1px solid #e2e8f0", p: 1 }}>
+              {/* <IconButton size="small" onClick={() => setProfileModalOpen(true)} sx={{ bgcolor: "#fff", border: "1px solid #e2e8f0", p: 1 }}>
                 <SettingsIcon sx={{ fontSize: 18, color: "#475569" }} />
-              </IconButton>
+              </IconButton> */}
 
               {/* Profile Box - Clicking triggers Profile Dialog */}
               <Box onClick={() => setProfileModalOpen(true)} sx={{ display: "flex", alignItems: "center", gap: 1, ml: 1, bgcolor: "#fff", border: "1px solid #e2e8f0", borderRadius: "50px", py: 0.5, px: 2, cursor: "pointer", "&:hover": { bgcolor: "#f8fafc" } }}>

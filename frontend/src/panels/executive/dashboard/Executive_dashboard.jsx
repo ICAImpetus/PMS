@@ -234,12 +234,12 @@ const ExecutiveDashboard = () => {
             </Box>
           )}
 
-          {/* ── TOP NAVBAR ── */}
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1.5, mb: 3 }}>
+          {/* ── TOP NAVBAR (FITS IN 1 LINE AT 100% ZOOM) ── */}
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: { xs: "wrap", xl: "nowrap" }, gap: 1, mb: 3 }}>
             {/* Left Controls (Branch + Filter + Date + Refresh) */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "nowrap", overflowX: "auto" }}>
               {/* Branch Select */}
-              <FormControl size="small" sx={{ minWidth: 200 }}>
+              <FormControl size="small" sx={{ minWidth: { xs: 130, xl: 160 } }}>
                 <Select
                   value={selectedBranch || ""}
                   onChange={(e) => setSelectedBranch(e.target.value)}
@@ -249,9 +249,10 @@ const ExecutiveDashboard = () => {
                     borderRadius: "50px",
                     bgcolor: "#fff",
                     fontWeight: 700,
-                    fontSize: "0.85rem",
+                    fontSize: "0.8rem",
                     color: "#1e293b",
                     boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                    "& .MuiSelect-select": { py: 0.7, px: 1.5 },
                     "& .MuiOutlinedInput-notchedOutline": { borderColor: "#e2e8f0" },
                   }}
                 >
@@ -266,7 +267,7 @@ const ExecutiveDashboard = () => {
               </FormControl>
 
               {/* Filter Select */}
-              <FormControl size="small" sx={{ minWidth: 140 }}>
+              <FormControl size="small" sx={{ minWidth: { xs: 110, xl: 130 } }}>
                 <Select
                   value={filter || ""}
                   onChange={(e) => handleFilterChange(e.target.value)}
@@ -275,9 +276,10 @@ const ExecutiveDashboard = () => {
                     borderRadius: "50px",
                     bgcolor: "#fff",
                     fontWeight: 700,
-                    fontSize: "0.85rem",
+                    fontSize: "0.8rem",
                     color: "#1e293b",
                     boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                    "& .MuiSelect-select": { py: 0.7, px: 1.5 },
                     "& .MuiOutlinedInput-notchedOutline": { borderColor: "#e2e8f0" },
                   }}
                 >
@@ -297,23 +299,24 @@ const ExecutiveDashboard = () => {
               <Box sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
+                gap: 0.8,
                 bgcolor: "#fff",
-                px: 2.5,
-                py: 0.9,
+                px: 1.8,
+                py: 0.6,
                 borderRadius: "50px",
                 border: "1px solid #e2e8f0",
                 boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                whiteSpace: "nowrap"
               }}>
-                <CalendarTodayIcon sx={{ fontSize: 16, color: "#0a4bb6" }} />
-                <Typography variant="body2" fontWeight={700} color="#334155">{todayStr}</Typography>
+                <CalendarTodayIcon sx={{ fontSize: 14, color: "#0a4bb6" }} />
+                <Typography variant="body2" fontWeight={700} color="#334155" fontSize="0.78rem">{todayStr}</Typography>
               </Box>
 
               {/* Refresh Button */}
               <Button
                 size="small"
                 onClick={async () => { await refetchDashboard(); }}
-                startIcon={<RefreshIcon sx={{ fontSize: 18 }} />}
+                startIcon={<RefreshIcon sx={{ fontSize: 16 }} />}
                 sx={{
                   borderRadius: "50px",
                   bgcolor: "#fff",
@@ -321,8 +324,10 @@ const ExecutiveDashboard = () => {
                   border: "1px solid #e2e8f0",
                   textTransform: "none",
                   fontWeight: 700,
-                  px: 2.5,
-                  py: 0.9,
+                  fontSize: "0.78rem",
+                  px: 1.8,
+                  py: 0.6,
+                  whiteSpace: "nowrap",
                   boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
                   "&:hover": { bgcolor: "#f8fafc" },
                 }}
@@ -332,19 +337,21 @@ const ExecutiveDashboard = () => {
             </Box>
 
             {/* Right Action Buttons */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "nowrap" }}>
               <Button
                 size="small"
                 onClick={() => navigate("/executive-forms", { state: { branch: { branchId: selectedBranch } } })}
-                startIcon={<ArticleOutlinedIcon sx={{ fontSize: 18 }} />}
+                startIcon={<ArticleOutlinedIcon sx={{ fontSize: 16 }} />}
                 sx={{
                   borderRadius: "50px",
                   bgcolor: "#0a4bb6",
                   color: "#fff",
                   textTransform: "none",
                   fontWeight: 700,
-                  px: 3,
-                  py: 1,
+                  fontSize: "0.78rem",
+                  px: 2,
+                  py: 0.7,
+                  whiteSpace: "nowrap",
                   boxShadow: "0 4px 14px rgba(10,75,182,0.3)",
                   "&:hover": { bgcolor: "#003aa3" },
                 }}
@@ -355,7 +362,7 @@ const ExecutiveDashboard = () => {
               <Button
                 size="small"
                 onClick={() => setNotesModalOpen(true)}
-                startIcon={<StickyNote2Icon sx={{ fontSize: 18 }} />}
+                startIcon={<StickyNote2Icon sx={{ fontSize: 16 }} />}
                 sx={{
                   borderRadius: "50px",
                   bgcolor: "#f1f5f9",
@@ -363,8 +370,10 @@ const ExecutiveDashboard = () => {
                   border: "1px solid #e2e8f0",
                   textTransform: "none",
                   fontWeight: 700,
-                  px: 2.5,
-                  py: 0.9,
+                  fontSize: "0.78rem",
+                  px: 1.8,
+                  py: 0.6,
+                  whiteSpace: "nowrap",
                   "&:hover": { bgcolor: "#e2e8f0" },
                 }}
               >
@@ -374,15 +383,17 @@ const ExecutiveDashboard = () => {
               <Button
                 size="small"
                 onClick={() => setModalOpen("announcement")}
-                startIcon={<CampaignIcon sx={{ fontSize: 18 }} />}
+                startIcon={<CampaignIcon sx={{ fontSize: 16 }} />}
                 sx={{
                   borderRadius: "50px",
                   bgcolor: "#e2e8f0",
                   color: "#334155",
                   textTransform: "none",
                   fontWeight: 700,
-                  px: 2.5,
-                  py: 0.9,
+                  fontSize: "0.78rem",
+                  px: 1.8,
+                  py: 0.6,
+                  whiteSpace: "nowrap",
                   "&:hover": { bgcolor: "#cbd5e1" },
                 }}
               >
@@ -391,22 +402,22 @@ const ExecutiveDashboard = () => {
 
               {/* Working Notification Bell Center */}
               <NotificationCenter />
-
-              <IconButton size="small" onClick={() => setModalOpen("profile")} sx={{ bgcolor: "#fff", border: "1px solid #e2e8f0", p: 1 }}>
-                <SettingsIcon sx={{ fontSize: 18, color: "#475569" }} />
-              </IconButton>
+              {/* 
+              <IconButton size="small" onClick={() => setModalOpen("profile")} sx={{ bgcolor: "#fff", border: "1px solid #e2e8f0", p: 0.8 }}>
+                <SettingsIcon sx={{ fontSize: 16, color: "#475569" }} />
+              </IconButton> */}
 
               {/* Profile Avatar Box - Click opens Profile Popup */}
-              <Box onClick={() => setModalOpen("profile")} sx={{ display: "flex", alignItems: "center", gap: 1, ml: 1, bgcolor: "#fff", border: "1px solid #e2e8f0", borderRadius: "50px", py: 0.5, px: 2, cursor: "pointer" }}>
+              <Box onClick={() => setModalOpen("profile")} sx={{ display: "flex", alignItems: "center", gap: 0.8, ml: 0.5, bgcolor: "#fff", border: "1px solid #e2e8f0", borderRadius: "50px", py: 0.4, px: 1.5, cursor: "pointer", whiteSpace: "nowrap" }}>
                 <Box sx={{ textAlign: "right" }}>
-                  <Typography variant="body2" fontWeight={800} color="#0f172a" fontSize="0.8rem">
+                  <Typography variant="body2" fontWeight={800} color="#0f172a" fontSize="0.75rem" lineHeight={1.1}>
                     {hospitalName}
                   </Typography>
-                  <Typography variant="caption" fontWeight={700} color="#94a3b8" fontSize="0.65rem">
+                  <Typography variant="caption" fontWeight={700} color="#94a3b8" fontSize="0.6rem" display="block">
                     {branchLabel.toUpperCase()}
                   </Typography>
                 </Box>
-                <Avatar sx={{ width: 32, height: 32, bgcolor: "#0a4bb6", fontSize: "0.8rem", fontWeight: 800 }}>
+                <Avatar sx={{ width: 28, height: 28, bgcolor: "#0a4bb6", fontSize: "0.75rem", fontWeight: 800 }}>
                   {currentUser?.name ? currentUser.name.slice(0, 2).toUpperCase() : "EX"}
                 </Avatar>
               </Box>
@@ -612,13 +623,26 @@ const ExecutiveDashboard = () => {
                 </Box>
 
                 {analytics?.topInboundPurpose && analytics.topInboundPurpose.length > 0 ? (
-                  <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-                    {analytics.topInboundPurpose.slice(0, 6).map((item, i) => (
-                      <Box key={i} sx={{ bgcolor: "#f8fafc", borderRadius: "20px", py: 2, px: 2, textAlign: "center", flex: "1 1 calc(33.333% - 12px)", minWidth: 100 }}>
-                        <Typography variant="caption" fontWeight={800} color="#94a3b8" letterSpacing={0.5} display="block" mb={0.5}>
+                  <Box sx={{ display: "flex", gap: 1.2, alignItems: "center", width: "100%", overflowX: "auto" }}>
+                    {analytics.topInboundPurpose.slice(0, 5).map((item, i) => (
+                      <Box key={i} sx={{
+                        flex: "1 1 0px",
+                        maxWidth: 160,
+                        minWidth: 0,
+                        bgcolor: "#f8fafc",
+                        borderRadius: "18px",
+                        py: 2,
+                        px: 1,
+                        textAlign: "center",
+                        display: "flex",
+                        flexDirection: "column",
+                        justify: "center",
+                        alignItems: "center"
+                      }}>
+                        <Typography variant="caption" fontWeight={800} color="#94a3b8" letterSpacing={0.5} display="block" mb={0.5} noWrap sx={{ fontSize: "0.68rem", maxWidth: "100%" }}>
                           {(item.purpose || "-").toUpperCase()}
                         </Typography>
-                        <Typography variant="h3" fontWeight={800} color="#0a4bb6">
+                        <Typography variant="h3" fontWeight={800} color="#0a4bb6" sx={{ fontSize: "1.4rem", lineHeight: 1 }}>
                           {String(item.count || 0).padStart(2, "0")}
                         </Typography>
                       </Box>
@@ -644,13 +668,26 @@ const ExecutiveDashboard = () => {
                 </Box>
 
                 {analytics?.topOutboundPurpose && analytics.topOutboundPurpose.length > 0 ? (
-                  <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-                    {analytics.topOutboundPurpose.slice(0, 6).map((item, i) => (
-                      <Box key={i} sx={{ bgcolor: "#f8fafc", borderRadius: "20px", py: 2, px: 2, textAlign: "center", flex: "1 1 calc(33.333% - 12px)", minWidth: 100 }}>
-                        <Typography variant="caption" fontWeight={800} color="#94a3b8" letterSpacing={0.5} display="block" mb={0.5}>
+                  <Box sx={{ display: "flex", gap: 1.2, alignItems: "center", width: "100%", overflowX: "auto" }}>
+                    {analytics.topOutboundPurpose.slice(0, 5).map((item, i) => (
+                      <Box key={i} sx={{
+                        flex: "1 1 0px",
+                        maxWidth: 160,
+                        minWidth: 0,
+                        bgcolor: "#f8fafc",
+                        borderRadius: "18px",
+                        py: 2,
+                        px: 1,
+                        textAlign: "center",
+                        display: "flex",
+                        flexDirection: "column",
+                        justify: "center",
+                        alignItems: "center"
+                      }}>
+                        <Typography variant="caption" fontWeight={800} color="#94a3b8" letterSpacing={0.5} display="block" mb={0.5} noWrap sx={{ fontSize: "0.68rem", maxWidth: "100%" }}>
                           {(item.purpose || "-").toUpperCase()}
                         </Typography>
-                        <Typography variant="h3" fontWeight={800} color="#0a4bb6">
+                        <Typography variant="h3" fontWeight={800} color="#0a4bb6" sx={{ fontSize: "1.4rem", lineHeight: 1 }}>
                           {String(item.count || 0).padStart(2, "0")}
                         </Typography>
                       </Box>
@@ -663,10 +700,10 @@ const ExecutiveDashboard = () => {
             </Grid>
           </Grid>
 
-          {/* ── ROW 3: REAL-TIME HOURLY CHART & LATEST APPOINTMENTS ── */}
+          {/* ── ROW 3: REAL-TIME HOURLY CHART & LATEST APPOINTMENTS (EQUAL 50/50 GRID ALIGNMENT) ── */}
           <Grid container spacing={2.5} sx={{ mb: 3 }}>
             {/* Real Call Volume by Hour (Stacked Bar Chart) */}
-            <Grid item xs={12} md={7} sx={{ display: "flex" }}>
+            <Grid item xs={12} md={6} sx={{ display: "flex" }}>
               <Paper elevation={0} sx={{ p: 3, width: "100%", height: "100%", borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", boxShadow: "0 2px 12px rgba(0,0,0,0.03)" }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -692,8 +729,8 @@ const ExecutiveDashboard = () => {
               </Paper>
             </Grid>
 
-            {/* Real Latest Appointments (JUSTIFY BETWEEN RIGHT ALIGNED TIME SCHEDULE) */}
-            <Grid item xs={12} md={5} sx={{ display: "flex" }}>
+            {/* Real Latest Appointments */}
+            <Grid item xs={12} md={6} sx={{ display: "flex" }}>
               <Paper elevation={0} sx={{ p: 3, width: "100%", height: "100%", borderRadius: "20px", bgcolor: "#fff", border: "1px solid #edf2f7", boxShadow: "0 2px 12px rgba(0,0,0,0.03)" }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2.5 }}>
                   <Box sx={{ width: 4, height: 20, bgcolor: "#0a4bb6", borderRadius: "2px" }} />
