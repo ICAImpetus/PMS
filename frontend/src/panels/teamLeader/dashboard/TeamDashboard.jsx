@@ -67,21 +67,25 @@ const TeamDashboard = () => {
   };
 
   const currentBranch = branches?.find((b) => b._id === selectedBranch);
-  const branchLabel = currentBranch?.name || "Main Branch";
-  const hospitalName = selectedHostpital?.name || "Mahatma Gandhi";
+  const branchLabel = currentBranch?.name || (branches?.[0]?.name ?? "Branch");
+  const hospitalName = currentUser?.hospitals?.[0]?.hospitalId?.name || selectedHostpital?.name || "Hospital";
 
-  // ── PREPARE PRODUCTIVITY BAR DATA ──
+  // ── PREPARE PRODUCTIVITY BAR DATA (STRICTLY REAL DYNAMIC DATA) ──
   const productivityBarData = useMemo(() => {
     const hourly = analytics?.hourlyStats || [];
-    const labels = hourly.length > 0
-      ? hourly.map(h => `${String(h.hour).padStart(2, "0")}:00`)
+    const hasData = hourly.length > 0;
+
+    const labels = hasData
+      ? hourly.map((h) => `${String(h.hour).padStart(2, "0")}:00`)
       : ["09:00", "11:00", "13:00", "15:00", "17:00", "19:00"];
 
-    const actualData = hourly.length > 0
-      ? hourly.map(h => (h.inbound || 0) + (h.outbound || 0))
-      : [12, 19, 15, 22, 18, 25];
+    const actualData = hasData
+      ? hourly.map((h) => (h.inbound || 0) + (h.outbound || 0))
+      : [0, 0, 0, 0, 0, 0];
 
-    const targetData = actualData.map(v => Math.round(v * 1.2) || 20);
+    const targetData = hasData
+      ? hourly.map((h) => h.target ?? Math.round(((h.inbound || 0) + (h.outbound || 0)) * 1.2))
+      : [0, 0, 0, 0, 0, 0];
 
     return {
       labels,
@@ -296,6 +300,8 @@ const TeamDashboard = () => {
                         fontSize: "0.85rem",
                         color: "#1e293b",
                         "& .MuiOutlinedInput-notchedOutline": { borderColor: "#e2e8f0" },
+                        "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#cbd5e1" },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#0a4bb6", borderWidth: "1.5px" },
                       }}
                     >
                       {filterOptions.map((opt) => (
@@ -322,6 +328,8 @@ const TeamDashboard = () => {
                         fontSize: "0.85rem",
                         color: "#1e293b",
                         "& .MuiOutlinedInput-notchedOutline": { borderColor: "#e2e8f0" },
+                        "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#cbd5e1" },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#0a4bb6", borderWidth: "1.5px" },
                       }}
                     >
                       <MenuItem value="" disabled>
