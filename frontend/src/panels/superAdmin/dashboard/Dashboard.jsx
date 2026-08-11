@@ -38,6 +38,8 @@ import { toast } from "react-toastify";
 import SectionLoader from "../../../components/SectionLoader";
 import { UserContextHook } from "../../../contexts/UserContexts";
 import HospitalContext from "../../../contexts/HospitalContexts";
+import { ProfilePopup } from "../../../scenes/global/ProfileAndCodeAnnousementPopup";
+import NotificationCenter from "../../../components/NotificationCenter";
 
 // Register ChartJS components
 ChartJS.register(
@@ -84,6 +86,7 @@ const SuperAdminDashboard = () => {
   const { currentUser } = UserContextHook();
   const [formsModalOpen, setFormsModalOpen] = useState(false);
   const [formsTypeFilter, setFormsTypeFilter] = useState("all");
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
 
   const {
     hospitals,
@@ -263,7 +266,7 @@ const SuperAdminDashboard = () => {
                 </Select>
               </FormControl>
 
-              <FormControl size="small">
+              <FormControl size="small" sx={{ minWidth: 180 }}>
                 <Select
                   value={selectedHostpital || ""}
                   onChange={(e) => setSelectedHostpital(e.target.value)}
@@ -274,14 +277,60 @@ const SuperAdminDashboard = () => {
                     bgcolor: "#FFFFFF",
                     fontSize: "12px",
                     fontWeight: 700,
-                    color: "#64748B",
-                    boxShadow: "0px 1px 2px rgba(0,0,0,0.05)",
-                    "& .MuiOutlinedInput-notchedOutline": { border: "1px solid #E2E8F0" },
+                    color: "#0F172A",
+                    boxShadow: "0px 1px 2px rgba(0,0,0,0.04)",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#E2E8F0",
+                    },
+                    "&:hover .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#CBD5E1",
+                    },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#0256E8",
+                    },
+                    "& .MuiSelect-select": {
+                      py: 1,
+                      px: 2,
+                      display: "flex",
+                      alignItems: "center",
+                    },
+                  }}
+                  MenuProps={{
+                    PaperProps: {
+                      elevation: 0,
+                      sx: {
+                        borderRadius: "16px",
+                        border: "1px solid #E2E8F0",
+                        boxShadow: "0px 10px 25px rgba(0, 0, 0, 0.08)",
+                        mt: 1,
+                        maxHeight: 260,
+                        "& .MuiMenuItem-root": {
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          color: "#334155",
+                          borderRadius: "8px",
+                          mx: 0.8,
+                          my: 0.3,
+                          py: 1,
+                          "&.Mui-selected": {
+                            bgcolor: "#EFF6FF !important",
+                            color: "#0256E8",
+                            fontWeight: 800,
+                          },
+                          "&:hover": {
+                            bgcolor: "#F8FAFC",
+                          },
+                        },
+                      },
+                    },
                   }}
                 >
                   {loading?.hospitalsLoading ? (
-                    <MenuItem value="">
-                      <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
+                    <MenuItem value="" disabled>
+                      <CircularProgress size={16} sx={{ mr: 1, color: "#0256E8" }} />
+                      <Typography variant="caption" fontWeight={700} color="#64748B">
+                        Loading facilities...
+                      </Typography>
                     </MenuItem>
                   ) : hospitals?.length > 0 ? (
                     hospitals.map((hospital) => (
@@ -290,7 +339,11 @@ const SuperAdminDashboard = () => {
                       </MenuItem>
                     ))
                   ) : (
-                    <MenuItem value="">No hospitals Assigned</MenuItem>
+                    <MenuItem value="" disabled>
+                      <Typography variant="caption" color="#94A3B8" fontWeight={600}>
+                        No Hospitals Assigned
+                      </Typography>
+                    </MenuItem>
                   )}
                 </Select>
               </FormControl>
@@ -325,13 +378,20 @@ const SuperAdminDashboard = () => {
                   boxShadow: "0px 1px 2px rgba(0,0,0,0.05)",
                 }}
               >
-                <NotificationsNoneOutlinedIcon sx={{ color: "#64748B", fontSize: 20 }} />
-              </IconButton>
+                <NotificationCenter />
+              </IconButton>   <Box onClick={() => setProfileModalOpen(true)} sx={{ display: "flex", alignItems: "center", gap: 1, ml: 1, bgcolor: "#fff", border: "1px solid #e2e8f0", borderRadius: "50px", py: 0.5, px: 2, cursor: "pointer", "&:hover": { bgcolor: "#f8fafc" } }}>
+                <Avatar sx={{ width: 32, height: 32, bgcolor: "#0a4bb6", fontSize: "0.8rem", fontWeight: 800 }}>
+                  {currentUser?.name ? currentUser.name.slice(0, 2).toUpperCase() : "TL"}
+                </Avatar>
+              </Box>
+
+
             </Stack>
           </Box>
 
           {/* --- GREETING TITLE --- */}
           <Box sx={{ mb: 4 }}>
+
             <Typography variant="h4" fontWeight={900} color="#0F172A" sx={{ letterSpacing: "-0.5px" }}>
               Good Morning{" "}
               <span style={{ color: "#0256E8" }}>
@@ -379,8 +439,9 @@ const SuperAdminDashboard = () => {
           )}
 
           {/* --- KPI METRIC STRIP --- */}
-          <Grid container spacing={2.5} sx={{ mb: 3 }}>
-            <Grid item xs={12} sm={6} md={3}>
+          {/* --- KPI METRIC STRIP --- */}
+          <Grid container spacing={2.5} alignItems="stretch" sx={{ mb: 3 }}>
+            <Grid item xs={12} sm={6} md={3} sx={{ display: "flex" }}>
               <UsersCard
                 label="USERS"
                 count={analytics?.totalUsers ?? 0}
@@ -392,7 +453,8 @@ const SuperAdminDashboard = () => {
                 }
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+
+            <Grid item xs={12} sm={6} md={3} sx={{ display: "flex" }}>
               <UsersCard
                 label="BRANCHES"
                 count={analytics?.totalBranches ?? 0}
@@ -417,7 +479,8 @@ const SuperAdminDashboard = () => {
                 }}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+
+            <Grid item xs={12} sm={6} md={3} sx={{ display: "flex" }}>
               <UsersCard
                 label="APPOINTMENTS FLOW"
                 count={analytics?.appointments?.total ?? 0}
@@ -431,7 +494,8 @@ const SuperAdminDashboard = () => {
                 }}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+
+            <Grid item xs={12} sm={6} md={3} sx={{ display: "flex" }}>
               <UsersCard
                 label="FORMS"
                 count={analytics?.forms?.total ?? 0}
@@ -953,6 +1017,13 @@ const SuperAdminDashboard = () => {
             </Grid>
           </Grid>
         </Box>
+      )}
+
+      {profileModalOpen && (
+        <ProfilePopup
+          user={currentUser}
+          onClose={() => setProfileModalOpen(false)}
+        />
       )}
     </>
   );
