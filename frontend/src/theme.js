@@ -851,8 +851,13 @@ export const ProjectThemeSettings = {
   },
 
   titleTextColor: {
-    one: "#0052CC",
-
+    lightest: "#E6F0FF",
+    lighter: "#B8D4FF",
+    light: "#94A3B8",
+    one: "#0052CC", // base
+    dark: "#0041A3",
+    darker: "#003080",
+    darkest: "#001F5C",
   },
 
   regularTextColor: {

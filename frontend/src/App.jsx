@@ -89,6 +89,7 @@ function App() {
     <>
       {userRole === "superadmin" && (
         <>
+          <Route path="/" element={<SuperAdminDashboard />} />
           <Route path="/admin-management" element={<AdminManagement />} />
           <Route path="/patient-history" element={<PatientHistory />} />
           <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
@@ -98,12 +99,14 @@ function App() {
       )}
       {userRole === "admin" && (
         <>
-          <Route path="/" element={<AdminDashboard />} />
+          {/* <Route path="/" element={<AdminDashboard />} /> */}
+          <Route path="/" element={<SuperAdminDashboard />} />
           <Route path="/patient-history" element={<PatientHistory />} />
           <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
-          <Route path="/user-management" element={<UserManagementAdmin />} />
+          <Route path="/user-management" element={<UserManagement />} />
           <Route path="/roles-permissions" element={<RolesPermissions />} />
-          <Route path="/admin-user-management" element={<AdminUserManagement />} />
+          {/* <Route path="/admin-user-management" element={<AdminUserManagement />} /> */}
+          <Route path="/admin-audit-logs" element={<AuditLog />} />
         </>
       )}
 
@@ -114,7 +117,7 @@ function App() {
           <Route path="/executive-forms" element={<ExecutiveForms />} />
           <Route path="/patient-history" element={<PatientHistory />} />
           <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
-          <Route path="/user-management" element={<UserManagementTeamLeader />} />
+          <Route path="/user-management" element={<UserManagement />} />
         </>
       )}
 
@@ -123,23 +126,11 @@ function App() {
           <Route path="/" element={<SuperManagerDashboard />} />
           <Route path="/patient-history" element={<PatientHistory />} />
           <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
-          <Route path="/user-management" element={<UserManagementSuperManager />} />
+          <Route path="/user-management" element={<UserManagement />} />
           {/* <Route path="/Plans" element={<Subscription />} /> */}
         </>
       )}
 
-      {(userRole === "superadmin" || userRole === "admin") && (
-        <>
-          {userRole === "superadmin" && (
-            <Route path="/" element={<SuperAdminDashboard />} />
-          )}
-          {userRole === "admin" && (
-            <Route path="/" element={<AdminDashboard />} />
-          )}
-          <Route path="/audit-logs" element={<AuditLogs />} />
-          <Route path="/admin-audit-logs" element={<AuditLog />} />
-        </>
-      )}
 
       {hasAdminPrivileges && (
         <Route path="/hospital-management" element={<HospitalManagementLayout />}>

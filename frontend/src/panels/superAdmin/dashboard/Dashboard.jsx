@@ -97,6 +97,7 @@ const SuperAdminDashboard = () => {
     handleFilterChange,
     setSelectedHostpital,
     dateRange,
+
   } = useContext(HospitalContext);
 
   const navigate = useNavigate();
@@ -106,7 +107,7 @@ const SuperAdminDashboard = () => {
 
   const labels = newPatientData.length
     ? newPatientData.map((item) => item.month)
-    : ["JAN", "FEB", "MAR", "APR"];
+    : [];
 
   const appointmentChartData = appointmentData.map(
     (item) => item.appointment || 0
@@ -122,14 +123,14 @@ const SuperAdminDashboard = () => {
     datasets: [
       {
         label: "Appointments",
-        data: appointmentChartData.length ? appointmentChartData : [80, 75, 95, 110],
+        data: appointmentChartData,
         backgroundColor: "#0256E8",
         borderRadius: 4,
         barThickness: 24,
       },
       {
         label: "New Patients",
-        data: newPatientChartData.length ? newPatientChartData : [45, 50, 55, 65],
+        data: newPatientChartData,
         backgroundColor: "#93C5FD",
         borderRadius: 4,
         barThickness: 24,
@@ -137,26 +138,31 @@ const SuperAdminDashboard = () => {
     ],
   };
 
+  const patientTrendLabels = analytics?.patientStatusTrends?.labels || [];
+  const activeTrendData = analytics?.patientStatusTrends?.active || [];
+  const pendingTrendData = analytics?.patientStatusTrends?.pending || [];
+  const closedTrendData = analytics?.patientStatusTrends?.closed || [];
+
   const patientTrendData = {
-    labels: ["SEP", "OCT", "NOV"],
+    labels: patientTrendLabels,
     datasets: [
       {
         label: "Active",
-        data: [40, 55, 65],
+        data: activeTrendData,
         backgroundColor: "#0256E8",
         borderRadius: 4,
         barThickness: 32,
       },
       {
         label: "Pending",
-        data: [20, 25, 20],
+        data: pendingTrendData,
         backgroundColor: "#93C5FD",
         borderRadius: 4,
         barThickness: 32,
       },
       {
         label: "Closed",
-        data: [15, 10, 15],
+        data: closedTrendData,
         backgroundColor: "#E2E8F0",
         borderRadius: 4,
         barThickness: 32,
@@ -193,6 +199,10 @@ const SuperAdminDashboard = () => {
     );
   }
 
+  // Get name of currently selected hospital for the operational chip
+  const currentHospitalObj = hospitals?.find((h) => h._id === selectedHostpital);
+  const currentHospitalName = currentHospitalObj?.name || "N/A";
+
   return (
     <>
       {formsModalOpen ? (
@@ -217,10 +227,10 @@ const SuperAdminDashboard = () => {
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Chip
-                label="CURRENTLY OPERATING: GINNI DEVI HOSPITAL"
+                label={`CURRENTLY OPERATING: ${currentHospitalName.toUpperCase()}`}
                 size="small"
                 sx={{
-                  bgcolor: "#EFF6FF",
+                  // bgcolor: "#EFF6FF",
                   color: "#0256E8",
                   fontWeight: 800,
                   fontSize: "10px",
@@ -255,7 +265,7 @@ const SuperAdminDashboard = () => {
 
               <FormControl size="small">
                 <Select
-                  value={selectedHostpital}
+                  value={selectedHostpital || ""}
                   onChange={(e) => setSelectedHostpital(e.target.value)}
                   disabled={loading?.hospitalsLoading}
                   displayEmpty
@@ -273,7 +283,7 @@ const SuperAdminDashboard = () => {
                     <MenuItem value="">
                       <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
                     </MenuItem>
-                  ) : hospitals.length > 0 ? (
+                  ) : hospitals?.length > 0 ? (
                     hospitals.map((hospital) => (
                       <MenuItem key={hospital._id} value={hospital._id}>
                         {hospital.name}
@@ -302,7 +312,7 @@ const SuperAdminDashboard = () => {
                   ACTIVE HOSPITALS
                 </Typography>
                 <Typography variant="body2" sx={{ fontSize: "13px", fontWeight: 900, color: "#0256E8" }}>
-                  {hospitals.length || 12} <span style={{ color: "#0256E8" }}>•</span>
+                  {hospitals?.length ?? 0} <span style={{ color: "#0256E8" }}>•</span>
                 </Typography>
               </Box>
 
@@ -325,7 +335,7 @@ const SuperAdminDashboard = () => {
             <Typography variant="h4" fontWeight={900} color="#0F172A" sx={{ letterSpacing: "-0.5px" }}>
               Good Morning{" "}
               <span style={{ color: "#0256E8" }}>
-                {currentUser?.name || "Ayuksha"}
+                {currentUser?.name || "User"}
               </span>
             </Typography>
             <Typography variant="body2" color="#64748B" fontWeight={500} sx={{ mt: 0.5 }}>
@@ -373,7 +383,7 @@ const SuperAdminDashboard = () => {
             <Grid item xs={12} sm={6} md={3}>
               <UsersCard
                 label="USERS"
-                count={analytics?.totalUsers || "1,284"}
+                count={analytics?.totalUsers ?? 0}
                 onClick={() =>
                   navigate("/user-management", {
                     replace: true,
@@ -385,7 +395,7 @@ const SuperAdminDashboard = () => {
             <Grid item xs={12} sm={6} md={3}>
               <UsersCard
                 label="BRANCHES"
-                count={analytics?.totalBranches || "13"}
+                count={analytics?.totalBranches ?? 0}
                 onClick={() => {
                   const selectedHospitalData = hospitals.find(
                     (h) => h._id === selectedHostpital
@@ -410,28 +420,28 @@ const SuperAdminDashboard = () => {
             <Grid item xs={12} sm={6} md={3}>
               <UsersCard
                 label="APPOINTMENTS FLOW"
-                count={analytics?.appointments?.total || "462"}
+                count={analytics?.appointments?.total ?? 0}
                 onClick={() => {
                   setFormsTypeFilter("all");
                   setFormsModalOpen("Appointments");
                 }}
                 option={{
-                  inbound: analytics?.appointments?.inbound || 289,
-                  outbound: analytics?.appointments?.outbound || 173,
+                  inbound: analytics?.appointments?.inbound ?? 0,
+                  outbound: analytics?.appointments?.outbound ?? 0,
                 }}
               />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <UsersCard
                 label="FORMS"
-                count={analytics?.forms?.total || "1,024"}
+                count={analytics?.forms?.total ?? 0}
                 onClick={() => {
                   setFormsTypeFilter("all");
                   setFormsModalOpen("Forms");
                 }}
                 option={{
-                  inbound: analytics?.forms?.inbound || 842,
-                  outbound: analytics?.forms?.outbound || 182,
+                  inbound: analytics?.forms?.inbound ?? 0,
+                  outbound: analytics?.forms?.outbound ?? 0,
                 }}
               />
             </Grid>
@@ -485,8 +495,14 @@ const SuperAdminDashboard = () => {
                   </Stack>
                 </Box>
 
-                <Box sx={{ width: "100%", height: "240px", pt: 1 }}>
-                  <Bar data={data} options={chartOptions} />
+                <Box sx={{ width: "100%", height: "240px", pt: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {labels.length > 0 ? (
+                    <Bar data={data} options={chartOptions} />
+                  ) : (
+                    <Typography variant="body2" color="#94A3B8" fontWeight={600}>
+                      No Activity Data Available
+                    </Typography>
+                  )}
                 </Box>
               </Card>
             </Grid>
@@ -515,44 +531,46 @@ const SuperAdminDashboard = () => {
                       TOP INBOUND PURPOSE
                     </Typography>
                     <Typography variant="h6" fontWeight={900} color="#0F172A">
-                      {analytics?.appointments?.inbound || "1,482"}
+                      {analytics?.appointments?.inbound ?? 0}
                     </Typography>
                   </Box>
 
                   <Stack spacing={1.5}>
-                    {(analytics?.topInboundPurpose?.length
-                      ? analytics.topInboundPurpose
-                      : [
-                        { purpose: "General Query", count: 542 },
-                        { purpose: "OPD Timings", count: 380 },
-                        { purpose: "Surgery", count: 215 },
-                        { purpose: "Diagnosis or Test Price", count: 145 },
-                      ]
-                    ).map((item, i) => (
-                      <Box key={i}>
-                        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                          <Typography variant="caption" fontWeight={600} color="#334155">
-                            {item?.purpose}
-                          </Typography>
-                          <Typography variant="caption" fontWeight={800} color="#0256E8">
-                            {item?.count} Calls
-                          </Typography>
-                        </Box>
-                        <LinearProgress
-                          variant="determinate"
-                          value={Math.min((item?.count / 600) * 100, 100)}
-                          sx={{
-                            height: 4,
-                            borderRadius: 2,
-                            bgcolor: "#F1F5F9",
-                            "& .MuiLinearProgress-bar": {
-                              bgcolor: "#0256E8",
-                              borderRadius: 2,
-                            },
-                          }}
-                        />
-                      </Box>
-                    ))}
+                    {analytics?.topInboundPurpose?.length > 0 ? (
+                      analytics.topInboundPurpose.map((item, i) => {
+                        const totalInbound = analytics?.appointments?.inbound || 1;
+                        const percentage = Math.min(((item?.count || 0) / totalInbound) * 100, 100);
+                        return (
+                          <Box key={i}>
+                            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                              <Typography variant="caption" fontWeight={600} color="#334155">
+                                {item?.purpose || "N/A"}
+                              </Typography>
+                              <Typography variant="caption" fontWeight={800} color="#0256E8">
+                                {item?.count ?? 0} Calls
+                              </Typography>
+                            </Box>
+                            <LinearProgress
+                              variant="determinate"
+                              value={percentage}
+                              sx={{
+                                height: 4,
+                                borderRadius: 2,
+                                bgcolor: "#F1F5F9",
+                                "& .MuiLinearProgress-bar": {
+                                  bgcolor: "#0256E8",
+                                  borderRadius: 2,
+                                },
+                              }}
+                            />
+                          </Box>
+                        );
+                      })
+                    ) : (
+                      <Typography variant="caption" color="#94A3B8" fontWeight={600} align="center" py={2}>
+                        No Inbound Data Available
+                      </Typography>
+                    )}
                   </Stack>
                 </Card>
 
@@ -577,42 +595,46 @@ const SuperAdminDashboard = () => {
                       TOP OUTBOUND PURPOSE
                     </Typography>
                     <Typography variant="h6" fontWeight={900} color="#0F172A">
-                      {analytics?.appointments?.outbound || "1,240"}
+                      {analytics?.appointments?.outbound ?? 0}
                     </Typography>
                   </Box>
 
                   <Stack spacing={1.5}>
-                    {(analytics?.topOutboundPurpose?.length
-                      ? analytics.topOutboundPurpose
-                      : [
-                        { purpose: "Feedback", count: 428 },
-                        { purpose: "Follow-up", count: 311 },
-                      ]
-                    ).map((item, i) => (
-                      <Box key={i}>
-                        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                          <Typography variant="caption" fontWeight={600} color="#334155">
-                            {item?.purpose}
-                          </Typography>
-                          <Typography variant="caption" fontWeight={800} color="#0256E8">
-                            {item?.count} Calls
-                          </Typography>
-                        </Box>
-                        <LinearProgress
-                          variant="determinate"
-                          value={Math.min((item?.count / 500) * 100, 100)}
-                          sx={{
-                            height: 4,
-                            borderRadius: 2,
-                            bgcolor: "#F1F5F9",
-                            "& .MuiLinearProgress-bar": {
-                              bgcolor: "#0256E8",
-                              borderRadius: 2,
-                            },
-                          }}
-                        />
-                      </Box>
-                    ))}
+                    {analytics?.topOutboundPurpose?.length > 0 ? (
+                      analytics.topOutboundPurpose.map((item, i) => {
+                        const totalOutbound = analytics?.appointments?.outbound || 1;
+                        const percentage = Math.min(((item?.count || 0) / totalOutbound) * 100, 100);
+                        return (
+                          <Box key={i}>
+                            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                              <Typography variant="caption" fontWeight={600} color="#334155">
+                                {item?.purpose || "N/A"}
+                              </Typography>
+                              <Typography variant="caption" fontWeight={800} color="#0256E8">
+                                {item?.count ?? 0} Calls
+                              </Typography>
+                            </Box>
+                            <LinearProgress
+                              variant="determinate"
+                              value={percentage}
+                              sx={{
+                                height: 4,
+                                borderRadius: 2,
+                                bgcolor: "#F1F5F9",
+                                "& .MuiLinearProgress-bar": {
+                                  bgcolor: "#0256E8",
+                                  borderRadius: 2,
+                                },
+                              }}
+                            />
+                          </Box>
+                        );
+                      })
+                    ) : (
+                      <Typography variant="caption" color="#94A3B8" fontWeight={600} align="center" py={2}>
+                        No Outbound Data Available
+                      </Typography>
+                    )}
                   </Stack>
                 </Card>
               </Stack>
@@ -662,7 +684,7 @@ const SuperAdminDashboard = () => {
                     TOTAL REGISTERED PATIENTS
                   </Typography>
                   <Typography variant="h6" fontWeight={900} color="#0F172A">
-                    {totalNew || "4,200"}
+                    {analytics?.totalRegisteredPatients ?? totalNew ?? 0}
                   </Typography>
                 </Box>
                 <Box
@@ -678,7 +700,7 @@ const SuperAdminDashboard = () => {
                     NEW PATIENTS TOTAL COUNT
                   </Typography>
                   <Typography variant="h6" fontWeight={900} color="#0F172A">
-                    {totalNew || "2,650"}
+                    {totalNew ?? 0}
                   </Typography>
                 </Box>
               </Stack>
@@ -702,39 +724,42 @@ const SuperAdminDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {(newPatientData.length
-                  ? newPatientData
-                  : [
-                    { month: "July 2026", newPatients: 950, totalPatients: 4200, momentum: "15%" },
-                    { month: "June 2026", newPatients: 860, totalPatients: 3950, momentum: "12%" },
-                    { month: "May 2026", newPatients: 820, totalPatients: 3700, momentum: "10%" },
-                  ]
-                ).map((item, i) => (
-                  <tr key={i} style={{ borderBottom: "1px solid #F8FAFC" }}>
-                    <td style={{ padding: "16px 0", fontSize: "12px", fontWeight: "800", color: "#0F172A" }}>
-                      {item.month}
-                    </td>
-                    <td style={{ padding: "16px 0", fontSize: "12px", color: "#475569", textAlign: "center", fontWeight: "600" }}>
-                      {item.newPatients}
-                    </td>
-                    <td style={{ padding: "16px 0", fontSize: "12px", color: "#475569", textAlign: "center", fontWeight: "600" }}>
-                      {item.totalPatients || item.newPatients}
-                    </td>
-                    <td style={{ padding: "16px 0", textAlign: "right" }}>
-                      <Chip
-                        label={`📈 ${item.momentum || "12%"}`}
-                        size="small"
-                        sx={{
-                          bgcolor: "#EFF6FF",
-                          color: "#0256E8",
-                          fontWeight: 800,
-                          fontSize: "11px",
-                          borderRadius: "12px",
-                        }}
-                      />
+                {newPatientData.length > 0 ? (
+                  newPatientData.map((item, i) => (
+                    <tr key={i} style={{ borderBottom: "1px solid #F8FAFC" }}>
+                      <td style={{ padding: "16px 0", fontSize: "12px", fontWeight: "800", color: "#0F172A" }}>
+                        {item.month || "N/A"}
+                      </td>
+                      <td style={{ padding: "16px 0", fontSize: "12px", color: "#475569", textAlign: "center", fontWeight: "600" }}>
+                        {item.newPatients ?? 0}
+                      </td>
+                      <td style={{ padding: "16px 0", fontSize: "12px", color: "#475569", textAlign: "center", fontWeight: "600" }}>
+                        {item.totalPatients ?? item.newPatients ?? 0}
+                      </td>
+                      <td style={{ padding: "16px 0", textAlign: "right" }}>
+                        <Chip
+                          label={`📈 ${item.momentum || "0%"}`}
+                          size="small"
+                          sx={{
+                            bgcolor: "#EFF6FF",
+                            color: "#0256E8",
+                            fontWeight: 800,
+                            fontSize: "11px",
+                            borderRadius: "12px",
+                          }}
+                        />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} style={{ textAlign: "center", padding: "24px 0" }}>
+                      <Typography variant="caption" color="#94A3B8" fontWeight={600}>
+                        No Patient Analytics Found
+                      </Typography>
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </Card>
@@ -766,35 +791,34 @@ const SuperAdminDashboard = () => {
                 </Typography>
 
                 <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
-                  <Stack spacing={2}>
-                    {(analytics?.recentActivity?.length
-                      ? analytics.recentActivity
-                      : [
-                        { name: "Sandeep", customMessage: 'Executive "Sandeep" created a new INBOUND form.', createdAt: new Date() },
-                        { name: "Dr. Sarah Vance", customMessage: "Dr. Sarah Vance triggered a Hospital Sync.", createdAt: new Date() },
-                        { name: "System", customMessage: "System Automated generated a new Report Batch.", createdAt: new Date() },
-                        { name: "System Core", customMessage: "System Core updated Security Protocols.", createdAt: new Date() },
-                        { name: "Rahul", customMessage: 'Executive "Rahul" submitted an OUTBOUND follow-up.', createdAt: new Date() },
-                      ]
-                    ).map((item, i) => (
-                      <Box key={i} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
-                        <Avatar
-                          src={item?.userAvatar || ""}
-                          sx={{ width: 32, height: 32, bgcolor: "#F1F5F9", fontSize: "12px", color: "#475569" }}
-                        >
-                          {item?.name?.charAt(0) || "U"}
-                        </Avatar>
-                        <Box sx={{ flexGrow: 1 }}>
-                          <Typography variant="body2" sx={{ fontSize: "11px", fontWeight: 700, color: "#0F172A", lineHeight: 1.4 }}>
-                            {item?.customMessage}
-                          </Typography>
-                          <Typography variant="caption" sx={{ fontSize: "9px", color: "#94A3B8", fontWeight: 700 }}>
-                            {item?.name || "SYSTEM"} • {moment(item?.createdAt).format("hh:mm A")}
-                          </Typography>
+                  {analytics?.recentActivity?.length > 0 ? (
+                    <Stack spacing={2}>
+                      {analytics.recentActivity.map((item, i) => (
+                        <Box key={i} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+                          <Avatar
+                            src={item?.userAvatar || ""}
+                            sx={{ width: 32, height: 32, bgcolor: "#F1F5F9", fontSize: "12px", color: "#475569" }}
+                          >
+                            {item?.name?.charAt(0) || "U"}
+                          </Avatar>
+                          <Box sx={{ flexGrow: 1 }}>
+                            <Typography variant="body2" sx={{ fontSize: "11px", fontWeight: 700, color: "#0F172A", lineHeight: 1.4 }}>
+                              {item?.customMessage || "Activity recorded"}
+                            </Typography>
+                            <Typography variant="caption" sx={{ fontSize: "9px", color: "#94A3B8", fontWeight: 700 }}>
+                              {item?.name || "SYSTEM"} • {item?.createdAt ? moment(item.createdAt).format("hh:mm A") : "N/A"}
+                            </Typography>
+                          </Box>
                         </Box>
-                      </Box>
-                    ))}
-                  </Stack>
+                      ))}
+                    </Stack>
+                  ) : (
+                    <Box display="flex" height="100%" alignItems="center" justifyContent="center">
+                      <Typography variant="caption" color="#94A3B8" fontWeight={600}>
+                        No Recent Activity
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
               </Card>
             </Grid>
@@ -808,6 +832,8 @@ const SuperAdminDashboard = () => {
                   p: 3,
                   border: "1px solid #E2E8F0",
                   height: "360px",
+                  display: "flex",
+                  flexDirection: "column",
                   bgcolor: "#FFFFFF",
                   boxShadow: "0px 1px 3px rgba(0,0,0,0.02)",
                 }}
@@ -821,43 +847,48 @@ const SuperAdminDashboard = () => {
                   AGENT PRODUCTIVITY
                 </Typography>
 
-                <Stack spacing={2} sx={{ mt: 1 }}>
-                  {[
-                    { name: "Agent Rahul", count: "188 Forms" },
-                    { name: "Agent Priya", count: "162 Forms" },
-                    { name: "Agent Sameer", count: "139 Forms" },
-                    { name: "Agent Sarah", count: "115 Forms" },
-                  ].map((agent, i) => (
-                    <Box
-                      key={i}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                        <Avatar sx={{ width: 32, height: 32, bgcolor: "#F1F5F9", fontSize: "12px" }}>
-                          {agent.name.split(" ")[1]?.[0]}
-                        </Avatar>
-                        <Typography variant="body2" fontWeight={700} color="#0F172A" fontSize="12px">
-                          {agent.name}
-                        </Typography>
-                      </Box>
-                      <Chip
-                        label={agent.count}
-                        size="small"
-                        sx={{
-                          bgcolor: "#0256E8",
-                          color: "#FFFFFF",
-                          fontWeight: 800,
-                          fontSize: "10px",
-                          borderRadius: "12px",
-                        }}
-                      />
+                <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
+                  {analytics?.agentProductivity?.length > 0 ? (
+                    <Stack spacing={2} sx={{ mt: 1 }}>
+                      {analytics.agentProductivity.map((agent, i) => (
+                        <Box
+                          key={i}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                            <Avatar src={agent?.avatar || ""} sx={{ width: 32, height: 32, bgcolor: "#F1F5F9", fontSize: "12px", color: "#475569" }}>
+                              {agent?.name ? agent.name.charAt(0) : "A"}
+                            </Avatar>
+                            <Typography variant="body2" fontWeight={700} color="#0F172A" fontSize="12px">
+                              {agent?.name || "Unknown Agent"}
+                            </Typography>
+                          </Box>
+                          <Chip
+                            label={`${agent?.count ?? 0} Forms`}
+                            size="small"
+                            sx={{
+                              bgcolor: "#0256E8",
+                              color: "#FFFFFF",
+                              fontWeight: 800,
+                              fontSize: "10px",
+                              borderRadius: "12px",
+                            }}
+                          />
+                        </Box>
+                      ))}
+                    </Stack>
+                  ) : (
+                    <Box display="flex" height="100%" alignItems="center" justifyContent="center">
+                      <Typography variant="caption" color="#94A3B8" fontWeight={600}>
+                        No Agent Data Available
+                      </Typography>
                     </Box>
-                  ))}
-                </Stack>
+                  )}
+                </Box>
               </Card>
             </Grid>
 
@@ -888,8 +919,14 @@ const SuperAdminDashboard = () => {
                   Temporal classification mapping
                 </Typography>
 
-                <Box sx={{ flexGrow: 1, width: "100%", height: "180px" }}>
-                  <Bar data={patientTrendData} options={patientTrendOptions} />
+                <Box sx={{ flexGrow: 1, width: "100%", height: "180px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {patientTrendLabels.length > 0 ? (
+                    <Bar data={patientTrendData} options={patientTrendOptions} />
+                  ) : (
+                    <Typography variant="caption" color="#94A3B8" fontWeight={600}>
+                      No Patient Status Trends
+                    </Typography>
+                  )}
                 </Box>
 
                 <Stack direction="row" spacing={2} justifyContent="center" sx={{ pt: 1 }}>

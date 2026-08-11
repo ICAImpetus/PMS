@@ -34,16 +34,25 @@ import { commonRoutes, superAdminRoutes } from "../../../api/apiService";
 import MultiSelectDropdown from "../userManagement/components/MultiSelectDropdown";
 import { getValidationSchema } from "../../Schemas/validation";
 
+const roles = {
+  "superadmin": ["admin", "supermanager", "teamleader", "executive"],
+  "admin": ["supermanager", "teamleader", "executive"],
+  "supermanager": ["teamleader", "executive"],
+  "teamleader": ["executive"],
+}
 const UserForm = ({
   initialState = null,
   onClose,
   hospitalId,
   allUsers = [],
-  refetchAdmins,
+  refetchUsers,
   isInline = false,
+  isSuperManager = false,
+  role = ''
 }) => {
   const { currentUser } = UserContextHook();
   const [showPassword, setShowPassword] = useState(false);
+  const [branchOptions, setBranchOptions] = useState([]);
 
   const isUpdateComp = !!initialState;
 
@@ -88,11 +97,14 @@ const UserForm = ({
     error: branchError,
   } = useApi(commonRoutes.getSelectedBranches);
 
+
   const {
     request: allHospital,
     loading: hosApiLoading,
     error: hosApiError,
   } = useApi(superAdminRoutes.getAllHospital);
+
+
 
   const handleSubmitForm = async (values, { setSubmitting }) => {
     try {
@@ -269,10 +281,34 @@ const UserForm = ({
             }
           }, [initialState]);
 
+          useEffect(() => {
+            const fetchBranches = async () => {
+              // If not teamleader or executive → clear branches
+              if (values.type !== "teamleader" && values.type !== "executive") {
+                setBranchOptions([]);
+                setFieldValue("selectedBranch", []);
+                return;
+              }
+
+              try {
+                const response = await getBranches(hospitalId);
+
+                setBranchOptions(response?.data || []);
+              } catch (error) {
+                console.error("Branch fetch error:", error);
+              }
+            };
+
+            if (hospitalId) {
+              fetchBranches();
+            }
+
+          }, [hospitalId, values.type]);
+
           return (
             <Form>
               {/* PERMISSION BAR */}
-              <Box
+              {/* <Box
                 sx={{
                   display: "flex",
                   justifyContent: "space-between",
@@ -322,7 +358,7 @@ const UserForm = ({
                     </Typography>
                   }
                 />
-              </Box>
+              </Box> */}
 
               <Grid container spacing={2.5}>
                 {/* Full Name */}
@@ -500,7 +536,18 @@ const UserForm = ({
                       "& .MuiInputLabel-root": { fontSize: "13px", color: "#64748B" },
                     }}
                   >
-                    <MenuItem value="admin">Admin</MenuItem>
+                    {roles[role] && roles[role].length > 0 ? (
+                      roles[role].map((item) => (
+                        <MenuItem key={item} value={item}>
+                          {/* Capitalizes the first letter for display (e.g. "teamleader" -> "Teamleader") */}
+                          {item.charAt(0).toUpperCase() + item.slice(1)}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem value="" disabled>
+                        No roles found
+                      </MenuItem>
+                    )}
                   </TextField>
                 </Grid>
 
@@ -515,17 +562,28 @@ const UserForm = ({
                     label="Select Hospital(s)"
                     role={values.type}
                     currentId={initialState?._id}
+                    error={touched.hospitalName && Boolean(errors.hospitalName)}
+                    helperText={touched.hospitalName && errors.hospitalName}
                   />
-                  {touched.hospitalName && errors.hospitalName && (
-                    <Typography
-                      variant="caption"
-                      color="#EF4444"
-                      sx={{ mt: 0.5, ml: 1.5, display: "block" }}
-                    >
-                      {errors.hospitalName}
-                    </Typography>
-                  )}
                 </Grid>
+
+                {/* MultiSelect Branches for Team Leaders and Executives */}
+                {(values.type === "teamleader" || values.type === "executive") && (
+                  <Grid item xs={12}>
+                    <MultiSelectDropdown
+                      options={branchOptions}
+                      selectedOptions={values.selectedBranch}
+                      setSelectedOptions={(val) => setFieldValue("selectedBranch", val)}
+                      label="Select Branch(s)"
+                      role={values.type}
+                      currentId={initialState?._id}
+                      isSingleSelect={values.type === "executive"}
+                      error={touched.selectedBranch && Boolean(errors.selectedBranch)}
+                      helperText={touched.selectedBranch && errors.selectedBranch}
+                    />
+                  </Grid>
+                )}
+
 
                 {/* Submit & Cancel Buttons */}
                 <Grid item xs={12} pt={2}>
