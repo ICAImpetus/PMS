@@ -254,6 +254,8 @@ const ExecutiveDashboard = () => {
                     boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
                     "& .MuiSelect-select": { py: 0.7, px: 1.5 },
                     "& .MuiOutlinedInput-notchedOutline": { borderColor: "#e2e8f0" },
+                    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#cbd5e1" },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#0a4bb6", borderWidth: "1.5px" },
                   }}
                 >
                   {loading?.branchesLoading ? (
@@ -281,6 +283,8 @@ const ExecutiveDashboard = () => {
                     boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
                     "& .MuiSelect-select": { py: 0.7, px: 1.5 },
                     "& .MuiOutlinedInput-notchedOutline": { borderColor: "#e2e8f0" },
+                    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#cbd5e1" },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#0a4bb6", borderWidth: "1.5px" },
                   }}
                 >
                   {filterOptions?.length > 0 ? (
