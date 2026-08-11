@@ -116,6 +116,7 @@ function UserManagement() {
     userData,
     setSelectedHostpital,
     refetchUsers,
+    role
   } = useContext(HospitalContext);
 
   useEffect(() => {
@@ -351,6 +352,8 @@ function UserManagement() {
               hospitalId={selectedHostpital}
               setError={toast.error}
               isInline={true}
+              isSuperManager={isSuperManager}
+              role={role}
             />
           ) : (
             <UserForm
@@ -361,6 +364,8 @@ function UserManagement() {
               hospitalId={selectedHostpital}
               setError={toast.error}
               isInline={true}
+              isSuperManager={isSuperManager}
+              role={role}
             />
           )}
         </Paper>
@@ -434,7 +439,7 @@ function UserManagement() {
             variant="contained"
             startIcon={<PersonAddAlt1Icon />}
             onClick={handleAddUserModel}
-            disabled={!selectedHostpital || isSuperManager !== null}
+            disabled={!selectedHostpital}
             sx={{
               borderRadius: "20px",
               backgroundColor: "#003896",

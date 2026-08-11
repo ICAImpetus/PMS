@@ -310,7 +310,7 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
               )}
 
               {/* SUPER MANAGER SPECIFIC */}
-              {isSuperManager && (
+              {/* {isSuperManager && (
                 <CustomMenuItem
                   title="Subscription Plans"
                   to="/Plans"
@@ -319,7 +319,7 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                   setSelected={setSelected}
                   isCollapsed={isCollapsed}
                 />
-              )}
+              )} */}
 
               {/* HOSPITAL SPECIFIC */}
               {isHospital && (

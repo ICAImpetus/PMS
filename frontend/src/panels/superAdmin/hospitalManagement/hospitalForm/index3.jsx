@@ -78,7 +78,7 @@ const CreateNewCard = styled(Paper)(({ theme }) => ({
 }));
 
 // Single Card Component with Context Menu
-const CustomHospitalCard = ({ hospital, onEdit, onManageBranches }) => {
+const CustomHospitalCard = ({ hospital, role, onEdit, onManageBranches }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const openMenu = Boolean(anchorEl);
 
@@ -145,21 +145,29 @@ const CustomHospitalCard = ({ hospital, onEdit, onManageBranches }) => {
           },
         }}
       >
-        <MenuItem
-          onClick={(e) => {
-            handleMenuClose(e);
-            onEdit(hospital);
-          }}
-          sx={{ py: 1, px: 2 }}
-        >
-          <ListItemIcon sx={{ color: "#475569" }}>
-            <EditOutlinedIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText
-            primary="Edit Hospital"
-            primaryTypographyProps={{ fontSize: "12px", fontWeight: 700, color: "#334155" }}
-          />
-        </MenuItem>
+        {
+
+          ["superadmin", "admin"].includes(role) && (
+            <MenuItem
+              onClick={(e) => {
+                handleMenuClose(e);
+                onEdit(hospital);
+              }}
+              sx={{ py: 1, px: 2 }}
+            >
+              <ListItemIcon sx={{ color: "#475569" }}>
+                <EditOutlinedIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary="Edit Hospital"
+                primaryTypographyProps={{ fontSize: "12px", fontWeight: 700, color: "#334155" }}
+              />
+            </MenuItem>
+          )
+        }
+
+
+
 
         <MenuItem
           onClick={(e) => {
@@ -360,6 +368,7 @@ const HospitalCreationNew = () => {
           <Grid item xs={12} sm={6} md={4} key={hospital._id || hospital.id}>
             <CustomHospitalCard
               hospital={hospital}
+              role={role}
               onEdit={handleEditHospital}
               onManageBranches={handleManageBranches}
             />
