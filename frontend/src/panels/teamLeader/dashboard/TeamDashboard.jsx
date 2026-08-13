@@ -28,6 +28,7 @@ import FilledFormsComponent from "../../../components/customComponents/FilledFor
 import NotificationCenter from "../../../components/NotificationCenter";
 import { ProfilePopup } from "../../../scenes/global/ProfileAndCodeAnnousementPopup";
 import { toast } from "react-toastify";
+import FloatingNewsNotifications from "../../executive/dashboard/FloatingNewsNotifications";
 
 const chartColors = ["#0a4bb6", "#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe", "#dbeafe"];
 
@@ -857,6 +858,8 @@ const TeamDashboard = () => {
           onClose={() => setProfileModalOpen(false)}
         />
       )}
+
+      <FloatingNewsNotifications />
     </>
   );
 };

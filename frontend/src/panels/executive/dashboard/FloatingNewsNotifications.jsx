@@ -32,7 +32,7 @@ const isToday = (dateVal) => {
 };
 
 /**
- * Returns true if the given date string / Date was 3 days ago (local time).
+ * Returns true if the given date string / Date was 3 or more days ago (local time).
  */
 const is3DaysAgo = (dateVal) => {
   if (!dateVal) return false;
@@ -41,7 +41,9 @@ const is3DaysAgo = (dateVal) => {
   }
   if (!dateVal) return false;
   const m = moment(dateVal);
-  return m.isValid() && m.isSame(moment().subtract(3, "days"), "day");
+  if (!m.isValid()) return false;
+  const diffDays = moment().startOf("day").diff(m.clone().startOf("day"), "days");
+  return diffDays >= 3;
 };
 
 /**
@@ -85,7 +87,7 @@ const FloatingNewsNotifications = ({
   duration   = DISPLAY_DURATION_MS,
   maxVisible = MAX_VISIBLE,
 }) => {
-  const { selectedHostpital, selectedBranch, analytics } = useContext(HospitalContext);
+  const { selectedHostpital, selectedBranch, branches, analytics } = useContext(HospitalContext);
 
   const { request: getFilledForms } = useApi(commonRoutes.getFilledForms);
 
@@ -102,30 +104,55 @@ const FloatingNewsNotifications = ({
   const fetchNotifications = useCallback(async () => {
     let rawForms = [];
 
-    // 1. Attempt API fetch with broad parameters so no forms are filtered out by backend query mismatches
-    if (selectedHostpital || selectedBranch) {
-      try {
-        const res = await getFilledForms(
-          1,
-          selectedHostpital || null,
-          selectedBranch || null,
-          null, // null date to avoid ISO string format filtering mismatch
-          null,
-          "",   // searchName
-          "All",// purpose
-          null, // formsModalOpen
-          "all",// formsTypeFilter
-          false // isExport
-        );
+    // Determine target branches (all assigned branches if available, else selected branch)
+    const targetBranches =
+      Array.isArray(branches) && branches.length > 0
+        ? branches.map((b) => b._id || b)
+        : [selectedBranch].filter(Boolean);
 
-        if (Array.isArray(res?.data)) {
-          rawForms = res.data;
-        } else if (Array.isArray(res?.forms)) {
-          rawForms = res.forms;
-        } else if (Array.isArray(res)) {
-          rawForms = res;
-        } else if (Array.isArray(res?.data?.data)) {
-          rawForms = res.data.data;
+    if (selectedHostpital || targetBranches.length > 0) {
+      try {
+        if (targetBranches.length > 0) {
+          const fetchPromises = targetBranches.map((bId) =>
+            getFilledForms(
+              1,
+              selectedHostpital || null,
+              bId,
+              null,
+              null,
+              "",
+              "All",
+              null,
+              "all",
+              false
+            )
+          );
+          const results = await Promise.all(fetchPromises);
+          results.forEach((res) => {
+            let list = [];
+            if (Array.isArray(res?.data)) list = res.data;
+            else if (Array.isArray(res?.forms)) list = res.forms;
+            else if (Array.isArray(res)) list = res;
+            else if (Array.isArray(res?.data?.data)) list = res.data.data;
+            rawForms.push(...list);
+          });
+        } else {
+          const res = await getFilledForms(
+            1,
+            selectedHostpital || null,
+            null,
+            null,
+            null,
+            "",
+            "All",
+            null,
+            "all",
+            false
+          );
+          if (Array.isArray(res?.data)) rawForms = res.data;
+          else if (Array.isArray(res?.forms)) rawForms = res.forms;
+          else if (Array.isArray(res)) rawForms = res;
+          else if (Array.isArray(res?.data?.data)) rawForms = res.data.data;
         }
       } catch (err) {
         console.error("FloatingNewsNotifications fetch error:", err);
@@ -157,6 +184,8 @@ const FloatingNewsNotifications = ({
       const isAppointmentForm =
         purpose.includes("appointment") ||
         purpose === "" ||
+        Boolean(form?.useForFollowup) ||
+        Boolean(form?.formData?.useForFollowup) ||
         Boolean(form?.appointmentSlot || form?.formData?.appointmentSlot);
 
       const rawDate =
@@ -185,6 +214,14 @@ const FloatingNewsNotifications = ({
         form?.formData?.doctorName ||
         (typeof form?.doctor === "string" ? form.doctor : "");
 
+      const agentName =
+        form?.agentName ||
+        form?.agentId?.name ||
+        form?.agent?.name ||
+        form?.formData?.agentName ||
+        form?.formData?.agentDetails?.agentName ||
+        "";
+
       const department =
         form?.department?.name ||
         form?.departmentName ||
@@ -200,20 +237,27 @@ const FloatingNewsNotifications = ({
 
       const timeStr = fmtTime(rawDate, slotStr);
 
+      const agentTag = agentName ? ` (${agentName})` : "";
+
       // Rule 1: Today's Appointment
       if (isAppointmentForm && isToday(rawDate)) {
         pushNotification(
           APPOINTMENT_CONFIG,
-          `${patientName}${doctorName ? ` → Dr. ${doctorName}` : ""}${timeStr ? ` at ${timeStr}` : ""}`,
+          `${patientName}${doctorName ? ` → Dr. ${doctorName}` : ""}${agentTag}${timeStr ? ` at ${timeStr}` : ""}`,
           `apt-${patientName}-${rawDate}`
         );
       }
 
-      // Rule 2: Today's Follow-up (Appointment was 3 days ago & followup is pending)
-      if (isAppointmentForm && is3DaysAgo(rawDate) && followupSt === "pending") {
+      // Rule 2: Today's Follow-up (Appointment was 3 or more days ago & followup is NOT completed)
+      const isPendingFollowup =
+        followupSt !== "completed" &&
+        followupSt !== "done" &&
+        followupSt !== "closed";
+
+      if (isAppointmentForm && is3DaysAgo(rawDate) && isPendingFollowup) {
         pushNotification(
           FOLLOWUP_CONFIG,
-          `Follow-up due for ${patientName}${department ? ` (${department})` : ""}`,
+          `Follow-up due for ${patientName}${department ? ` (${department})` : ""}${agentTag}`,
           `fol-${patientName}-${rawDate}`
         );
       }
@@ -225,15 +269,17 @@ const FloatingNewsNotifications = ({
         const rawDate = apt?.dateTime || apt?.appointmentSlot?.date || apt?.createdAt;
         const patientName = apt?.patientName || apt?.patientDetails?.patientName || "Patient";
         const doctorName = apt?.doctorName || apt?.doctor?.name || "";
+        const agentName = apt?.agentName || apt?.agentId?.name || apt?.agent?.name || "";
         const slotStr = apt?.appointmentSlot
           ? `${apt.appointmentSlot.start} - ${apt.appointmentSlot.end}`
           : "";
         const timeStr = fmtTime(rawDate, slotStr);
+        const agentTag = agentName ? ` (${agentName})` : "";
 
         if (isToday(rawDate)) {
           pushNotification(
             APPOINTMENT_CONFIG,
-            `${patientName}${doctorName ? ` → Dr. ${doctorName}` : ""}${timeStr ? ` at ${timeStr}` : ""}`,
+            `${patientName}${doctorName ? ` → Dr. ${doctorName}` : ""}${agentTag}${timeStr ? ` at ${timeStr}` : ""}`,
             `apt-${patientName}-${rawDate}`
           );
         }
@@ -242,7 +288,7 @@ const FloatingNewsNotifications = ({
 
     setAllNotifications(notifications);
     nextIndexRef.current = 0;
-  }, [selectedHostpital, selectedBranch, analytics, getFilledForms]);
+  }, [selectedHostpital, selectedBranch, branches, analytics, getFilledForms]);
 
   // Initial fetch + periodic re-fetch
   useEffect(() => {
@@ -251,11 +297,28 @@ const FloatingNewsNotifications = ({
     return () => clearInterval(id);
   }, [fetchNotifications]);
 
+  // Hover pause state
+  const [isHovered, setIsHovered] = useState(false);
+  const isHoveredRef = useRef(false);
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    isHoveredRef.current = true;
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    isHoveredRef.current = false;
+  };
+
   // ── cycle through notifications and show them one-by-one ─────────────────
   useEffect(() => {
     if (!allNotifications || allNotifications.length === 0) return;
 
     const addNotification = () => {
+      // Pause adding new notifications while user is hovering to read
+      if (isHoveredRef.current) return;
+
       const source =
         allNotifications[nextIndexRef.current % allNotifications.length];
       nextIndexRef.current += 1;
@@ -270,13 +333,32 @@ const FloatingNewsNotifications = ({
         return updated.slice(-maxVisible);
       });
 
-      const timer = setTimeout(() => {
-        setQueue((prev) =>
-          prev.filter((item) => item.id !== newNotification.id)
-        );
+      const scheduleRemove = () => {
+        const timer = setTimeout(() => {
+          if (isHoveredRef.current) {
+            // Delay removal if user is currently hovering
+            scheduleRemove();
+          } else {
+            setQueue((prev) =>
+              prev.filter((item) => item.id !== newNotification.id)
+            );
+          }
+        }, 1000); // Check again after 1s if hovered
+        removeTimersRef.current.push(timer);
+      };
+
+      // Initial removal timer after duration
+      const initialTimer = setTimeout(() => {
+        if (isHoveredRef.current) {
+          scheduleRemove();
+        } else {
+          setQueue((prev) =>
+            prev.filter((item) => item.id !== newNotification.id)
+          );
+        }
       }, duration);
 
-      removeTimersRef.current.push(timer);
+      removeTimersRef.current.push(initialTimer);
     };
 
     // Show first notification immediately
@@ -346,6 +428,8 @@ const FloatingNewsNotifications = ({
           <Paper
             key={item.id}
             elevation={10}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
             sx={{
               position: "fixed",
               right: 24,
@@ -369,6 +453,14 @@ const FloatingNewsNotifications = ({
               overflow: "hidden",
               pointerEvents: "auto",
               animation: `floatingNewsNotification ${duration}ms linear forwards`,
+              animationPlayState: isHovered ? "paused" : "running",
+              transition: "box-shadow 0.2s ease, border-color 0.2s ease",
+              "&:hover": {
+                animationPlayState: "paused",
+                boxShadow: "0 22px 50px rgba(15,23,42,0.28)",
+                borderColor: "rgba(10, 75, 182, 0.35)",
+                cursor: "pointer",
+              },
               zIndex: 99999 + index,
             }}
           >
