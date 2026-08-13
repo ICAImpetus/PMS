@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { styled } from "@mui/material/styles";
-
+import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import {
     CircularProgress,
     Box,
@@ -347,23 +347,32 @@ function AdminManagement() {
 
                     <Button
                         variant="contained"
-                        startIcon={<AddIcon />}
+                        startIcon={<PersonAddAlt1Icon />}
                         onClick={handleAddUserModel}
+                        // disabled={!selectedHostpital}
                         sx={{
                             borderRadius: "20px",
-                            backgroundColor: "#003896",
-                            textTransform: "uppercase",
+                            backgroundColor: "#0256E8",
+                            color: "#FFFFFF",
+                            textTransform: "none",
                             fontWeight: 700,
                             px: 3,
                             py: 1,
-                            fontSize: "11px",
-                            letterSpacing: "0.5px",
-                            boxShadow: "none",
-                            "&:hover": { backgroundColor: "#00286B", boxShadow: "none" },
+                            fontSize: "12px",
+                            boxShadow: "0px 2px 4px rgba(2, 86, 232, 0.2)",
+                            "&:hover": {
+                                backgroundColor: "#0143B8",
+                                boxShadow: "0px 4px 8px rgba(1, 67, 184, 0.3)"
+                            },
+                            "&.Mui-disabled": {
+                                backgroundColor: "#CBD5E1",
+                                color: "#94A3B8"
+                            },
                         }}
                     >
-                        ADD USER
+                        ADD ADMIN
                     </Button>
+
                 </Box>
             </Box>
 

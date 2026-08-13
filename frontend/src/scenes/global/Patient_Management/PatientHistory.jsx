@@ -403,15 +403,26 @@ export const PatientHistory = () => {
                             sx={{
                                 borderRadius: "20px",
                                 backgroundColor: "#0256E8",
+                                color: "#FFFFFF",
                                 textTransform: "none",
                                 fontWeight: 700,
                                 px: 3,
+                                py: 1,
                                 fontSize: "12px",
-                                "&:hover": { backgroundColor: "#0143B8" },
+                                boxShadow: "0px 2px 4px rgba(2, 86, 232, 0.2)",
+                                "&:hover": {
+                                    backgroundColor: "#0143B8",
+                                    boxShadow: "0px 4px 8px rgba(1, 67, 184, 0.3)"
+                                },
+                                "&.Mui-disabled": {
+                                    backgroundColor: "#CBD5E1",
+                                    color: "#94A3B8"
+                                },
                             }}
                         >
                             EXPORT DATA
                         </Button>
+
                     </Box>
                 </Box>
             </Box>

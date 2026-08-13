@@ -1,7 +1,18 @@
 import "./ProfilePopup.css";
 import { useEffect, useState } from "react";
-import { TextField, MenuItem, Button, Dialog, DialogTitle, DialogContent, DialogActions, Grid, IconButton, CircularProgress } from "@mui/material";
+import {
+  TextField, MenuItem, Button, Dialog, DialogTitle, DialogContent, DialogActions, Grid, IconButton,
+  Box,
+  Paper,
+  Avatar,
+  Typography,
+  CircularProgress,
+  Divider
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import CampaignIcon from "@mui/icons-material/Campaign";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import LockResetIcon from "@mui/icons-material/LockReset";
 
 import LogoutIcon from "@mui/icons-material/Logout";
 import { commonRoutes } from "../../api/apiService";
@@ -9,15 +20,18 @@ import { useApi } from "../../api/useApi";
 import { toast } from "react-toastify";
 import { UserContextHook } from "../../contexts/UserContexts";
 import LogoutModal from "../../components/LogoutModal";
+import { logoutApi } from "../../utils/services";
 
-export const ProfilePopup = ({ onClose, handleLogout }) => {
+export const ProfilePopup = ({ onClose }) => {
+
   const { currentUser, setCurrentUser } = UserContextHook();
   const userType = currentUser?.type;
   const isSuperAdmin = userType === "superadmin";
 
-  // State for modal
+  // State for modals
   const [openProfileModal, setOpenProfileModal] = useState(false);
   const [openPasswordModal, setOpenPasswordModal] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   // Profile update state
   const [profileForm, setProfileForm] = useState({
@@ -25,16 +39,22 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
     email: currentUser?.email || "",
     username: currentUser?.username || "",
     type: currentUser?.type || "",
-    mongoId: currentUser?.mongoId
+    mongoId: currentUser?.mongoId || currentUser?._id,
   });
-  const { request: updateUser, loading: updateLoading } = useApi(commonRoutes.updateUser);
+
+  const { request: updateUser, loading: updateLoading } = useApi(
+    commonRoutes.updateUser
+  );
 
   // Password change state
   const [passwordForm, setPasswordForm] = useState({
     newPassword: "",
     confirmPassword: "",
   });
-  const { request: updateUserPassword, loading: passwordLoading } = useApi(commonRoutes.updateUserPassword);
+
+  const { request: updateUserPassword, loading: passwordLoading } = useApi(
+    commonRoutes.updateUserPassword
+  );
 
   // Handlers
   const handleProfileChange = (e) => {
@@ -45,36 +65,31 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
     setPasswordForm({ ...passwordForm, [e.target.name]: e.target.value });
   };
 
+  // Profile Update Submit
   const handleProfileSubmit = async () => {
     try {
       if (!profileForm?.mongoId) {
-        toast.error("User Not Found")
-        return
+        toast.error("User Not Found");
+        return;
       }
 
       const res = await updateUser(profileForm?.mongoId, profileForm);
 
       if (res?.success && res?.data) {
-        localStorage.setItem(
-          "current_user",
-          JSON.stringify(res.data)
-        );
-
+        localStorage.setItem("current_user", JSON.stringify(res.data));
         setCurrentUser(res.data);
-
         toast.success("Profile updated successfully");
         setOpenProfileModal(false);
-
       } else {
         toast.error(res?.message || "Failed to update profile");
       }
     } catch (err) {
-      console.log("EEro", err);
-
+      console.error("Profile update error:", err);
       toast.error("Error updating profile");
     }
   };
 
+  // Password Change Submit
   const handlePasswordSubmit = async () => {
     if (passwordForm.newPassword.length < 6) {
       toast.error("Password must be at least 6 characters");
@@ -85,7 +100,10 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
       return;
     }
     try {
-      const res = await updateUserPassword(profileForm?.username, passwordForm.newPassword);
+      const res = await updateUserPassword(
+        profileForm?.username,
+        passwordForm.newPassword
+      );
       if (res?.success) {
         toast.success("Password changed successfully");
         setOpenPasswordModal(false);
@@ -98,62 +116,202 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
     }
   };
 
+  // --- LOGOUT HANDLERS ---
+  const handleLogout = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const handleLogoutConfirm = async () => {
+    try {
+      await logoutApi();
+      return Promise.resolve();
+    } catch (error) {
+      console.error("Error during logout API call:", error);
+      return Promise.reject(error);
+
+    }
+    // } finally {
+    //   localStorage.clear();
+    //   window.location.href = "/login";
+    // }
+  };
+
+  const handleCloseLogoutModal = () => {
+    setIsLogoutModalOpen(false);
+  };
+
   return (
-    <div className="modal-overlay">
-      <div className="profile-annoucement-card ">
-        <button className="close-btn" onClick={onClose}>
-          &times;
-        </button>
+    <>
+      <Box
+        sx={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          bgcolor: "rgba(15, 23, 42, 0.4)",
+          backdropFilter: "blur(4px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1300,
+        }}
+      >
+        <Paper
+          elevation={0}
+          sx={{
+            width: "90%",
+            maxWidth: 420,
+            bgcolor: "#FFFFFF",
+            borderRadius: "24px",
+            p: 3.5,
+            border: "1px solid #E2E8F0",
+            position: "relative",
+            boxShadow: "0px 20px 25px -5px rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          {/* Close Button */}
+          <IconButton
+            onClick={onClose}
+            size="small"
+            sx={{
+              position: "absolute",
+              top: 16,
+              right: 16,
+              color: "#94A3B8",
+              bgcolor: "#F8FAFC",
+              border: "1px solid #E2E8F0",
+              "&:hover": { bgcolor: "#EFF6FF", color: "#0256E8" },
+            }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
 
-        <div className="profile-header">
-          <div className="avatar">{profileForm.name.charAt(0)}</div>
-          <h2>User Profile</h2>
-        </div>
+          {/* Profile Header */}
+          <Box display="flex" flexDirection="column" alignItems="center" mb={3}>
+            <Avatar
+              sx={{
+                width: 64,
+                height: 64,
+                bgcolor: "#DBEAFE",
+                color: "#0256E8",
+                fontWeight: 800,
+                fontSize: "24px",
+                mb: 1.5,
+              }}
+            >
+              {profileForm.name ? profileForm.name.charAt(0).toUpperCase() : "U"}
+            </Avatar>
+            <Typography variant="h6" fontWeight={800} color="#0F172A">
+              {profileForm?.name || "User Profile"}
+            </Typography>
+            <Typography variant="caption" fontWeight={700} color="#0256E8">
+              @{profileForm?.username || "username"}
+            </Typography>
+          </Box>
 
-        <div className="profile-body">
-          <div className="info-group">
-            <label>Name</label>
-            <p>{profileForm?.name}</p>
-          </div>
-          <div className="info-group">
-            <label>Username</label>
-            <p>{profileForm?.username}</p>
-          </div>
-          <div className="info-group">
-            <label>Email</label>
-            <p>{profileForm?.email}</p>
-          </div>
-        </div>
+          <Divider sx={{ mb: 2.5, borderColor: "#F1F5F9" }} />
 
-        <div className="profile-actions">
-          {isSuperAdmin && (
-            <>
-              <button className="btn-update" onClick={() => setOpenProfileModal(true)}>Update Profile</button>
-              <button className="btn-password" onClick={() => setOpenPasswordModal(true)}>
-                {profileForm.type === "supermanager" ||
-                  profileForm.type === "admin" ||
-                  profileForm.type === "superAdmin" ||
-                  profileForm.type === "superadmin" ||
-                  profileForm.type === "SuperAdmin"
-                  ? "Change Password"
-                  : "Request Password Change"}
-              </button>
-            </>
-          )}
+          {/* Profile Info Details */}
+          <Box display="flex" flexDirection="column" gap={2} mb={3}>
+            <Box bgcolor="#F8FAFC" p={1.5} borderRadius="12px" border="1px solid #E2E8F0">
+              <Typography variant="caption" color="#94A3B8" fontWeight={700} fontSize="10px">
+                EMAIL ADDRESS
+              </Typography>
+              <Typography variant="body2" color="#0F172A" fontWeight={600}>
+                {profileForm?.email || "N/A"}
+              </Typography>
+            </Box>
 
-          <button className="btn-update" style={{ padding: '0 0 0 0', background: '#f44336' }} color="error" onClick={handleLogout}>
-            <IconButton>
-              <LogoutIcon sx={{ color: "white" }} />
-            </IconButton>
-            Logout
-          </button>
-        </div>
-      </div>
+            <Box bgcolor="#F8FAFC" p={1.5} borderRadius="12px" border="1px solid #E2E8F0">
+              <Typography variant="caption" color="#94A3B8" fontWeight={700} fontSize="10px">
+                ACCOUNT ROLE
+              </Typography>
+              <Typography variant="body2" color="#0F172A" fontWeight={600} sx={{ textTransform: "uppercase" }}>
+                {profileForm?.type || "USER"}
+              </Typography>
+            </Box>
+          </Box>
 
+          {/* Actions */}
+          <Box display="flex" flexDirection="column" gap={1.5}>
+            {isSuperAdmin && (
+              <>
+                <Button
+                  variant="outlined"
+                  startIcon={<EditOutlinedIcon />}
+                  onClick={() => setOpenProfileModal(true)}
+                  sx={{
+                    borderRadius: "14px",
+                    borderColor: "#CBD5E1",
+                    color: "#334155",
+                    textTransform: "none",
+                    fontWeight: 700,
+                    fontSize: "12px",
+                    py: 1,
+                    "&:hover": { borderColor: "#0256E8", bgcolor: "#EFF6FF" },
+                  }}
+                >
+                  Update Profile
+                </Button>
 
-      {/* Update Profile Modal */}
-      <Dialog open={openProfileModal} onClose={() => setOpenProfileModal(false)}>
-        <DialogTitle>Update Profile</DialogTitle>
+                <Button
+                  variant="outlined"
+                  startIcon={<LockResetIcon />}
+                  onClick={() => setOpenPasswordModal(true)}
+                  sx={{
+                    borderRadius: "14px",
+                    borderColor: "#CBD5E1",
+                    color: "#334155",
+                    textTransform: "none",
+                    fontWeight: 700,
+                    fontSize: "12px",
+                    py: 1,
+                    "&:hover": { borderColor: "#0256E8", bgcolor: "#EFF6FF" },
+                  }}
+                >
+                  {["supermanager", "admin", "superadmin"].includes(
+                    profileForm.type?.toLowerCase()
+                  )
+                    ? "Change Password"
+                    : "Request Password Change"}
+                </Button>
+              </>
+            )}
+
+            {/* Logout Button */}
+            <Button
+              variant="contained"
+              startIcon={<LogoutIcon />}
+              onClick={handleLogout}
+              sx={{
+                borderRadius: "14px",
+                bgcolor: "#EF4444",
+                color: "#FFFFFF",
+                textTransform: "none",
+                fontWeight: 800,
+                fontSize: "12px",
+                py: 1.2,
+                boxShadow: "0px 2px 6px rgba(239, 68, 68, 0.25)",
+                "&:hover": {
+                  bgcolor: "#DC2626",
+                  boxShadow: "0px 4px 12px rgba(220, 38, 38, 0.35)",
+                },
+              }}
+            >
+              Logout Account
+            </Button>
+          </Box>
+        </Paper>
+      </Box>
+
+      {/* Update Profile Dialog */}
+      <Dialog
+        open={openProfileModal}
+        onClose={() => setOpenProfileModal(false)}
+        PaperProps={{ sx: { borderRadius: "20px", p: 1 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 800 }}>Update Profile</DialogTitle>
         <DialogContent>
           <TextField
             margin="dense"
@@ -162,6 +320,7 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
             value={profileForm.name}
             onChange={handleProfileChange}
             fullWidth
+            size="small"
           />
           <TextField
             margin="dense"
@@ -170,6 +329,7 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
             value={profileForm.email}
             onChange={handleProfileChange}
             fullWidth
+            size="small"
           />
           <TextField
             margin="dense"
@@ -179,19 +339,35 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
             onChange={handleProfileChange}
             fullWidth
             disabled
+            size="small"
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenProfileModal(false)} disabled={updateLoading}>Cancel</Button>
-          <Button onClick={handleProfileSubmit} disabled={updateLoading} variant="contained" color="primary">
-            {updateLoading ? <CircularProgress size={22} /> : "Save"}
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={() => setOpenProfileModal(false)}
+            disabled={updateLoading}
+            sx={{ color: "#64748B" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleProfileSubmit}
+            disabled={updateLoading}
+            variant="contained"
+            sx={{ bgcolor: "#0256E8", borderRadius: "12px" }}
+          >
+            {updateLoading ? <CircularProgress size={20} color="inherit" /> : "Save"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Change Password Modal */}
-      <Dialog open={openPasswordModal} onClose={() => setOpenPasswordModal(false)}>
-        <DialogTitle>Change Password</DialogTitle>
+      {/* Change Password Dialog */}
+      <Dialog
+        open={openPasswordModal}
+        onClose={() => setOpenPasswordModal(false)}
+        PaperProps={{ sx: { borderRadius: "20px", p: 1 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 800 }}>Change Password</DialogTitle>
         <DialogContent>
           <TextField
             margin="dense"
@@ -201,6 +377,7 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
             value={passwordForm.newPassword}
             onChange={handlePasswordChange}
             fullWidth
+            size="small"
           />
           <TextField
             margin="dense"
@@ -210,16 +387,39 @@ export const ProfilePopup = ({ onClose, handleLogout }) => {
             value={passwordForm.confirmPassword}
             onChange={handlePasswordChange}
             fullWidth
+            size="small"
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenPasswordModal(false)} disabled={passwordLoading}>Cancel</Button>
-          <Button onClick={handlePasswordSubmit} disabled={passwordLoading} variant="contained" color="primary">
-            {passwordLoading ? <CircularProgress size={22} /> : "Change"}
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={() => setOpenPasswordModal(false)}
+            disabled={passwordLoading}
+            sx={{ color: "#64748B" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handlePasswordSubmit}
+            disabled={passwordLoading}
+            variant="contained"
+            sx={{ bgcolor: "#0256E8", borderRadius: "12px" }}
+          >
+            {passwordLoading ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              "Change"
+            )}
           </Button>
         </DialogActions>
       </Dialog>
-    </div>
+
+      {/* Logout Confirmation Modal */}
+      <LogoutModal
+        open={isLogoutModalOpen}
+        onClose={handleCloseLogoutModal}
+        onLogout={handleLogoutConfirm}
+      />
+    </>
   );
 };
 

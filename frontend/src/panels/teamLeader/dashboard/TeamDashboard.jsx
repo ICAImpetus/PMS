@@ -854,7 +854,7 @@ const TeamDashboard = () => {
 
       {profileModalOpen && (
         <ProfilePopup
-          user={currentUser}
+          // user={currentUser}
           onClose={() => setProfileModalOpen(false)}
         />
       )}

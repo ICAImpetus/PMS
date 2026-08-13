@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
-import { Box, Button, Typography, Avatar, IconButton, useTheme } from "@mui/material";
+import { Box, Button, Typography, Avatar, IconButton, Divider } from "@mui/material";
 import { Link, useLocation } from "react-router-dom";
 import "react-pro-sidebar/dist/css/styles.css";
 import LogoutModal from "../../components/LogoutModal";
@@ -16,9 +16,9 @@ import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettin
 import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import AssignmentIndOutlinedIcon from "@mui/icons-material/AssignmentIndOutlined";
-import PaymentIcon from "@mui/icons-material/Payment";
 import HealingOutlinedIcon from "@mui/icons-material/HealingOutlined";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 // --- CUSTOM ITEM COMPONENT ---
 const CustomMenuItem = ({ title, to, icon, selected, setSelected, isCollapsed, testId }) => {
@@ -142,7 +142,6 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
           },
           "& .pro-menu": {
             padding: 0,
-            flex: 1,
             display: "flex",
             flexDirection: "column",
             overflowY: "auto",
@@ -203,7 +202,7 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
           </Box>
 
           <Menu iconShape="square">
-            <Box flex={1}>
+            <Box>
               {/* DASHBOARD (Visible to All) */}
               <CustomMenuItem
                 title="Dashboard"
@@ -309,18 +308,6 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                 />
               )}
 
-              {/* SUPER MANAGER SPECIFIC */}
-              {/* {isSuperManager && (
-                <CustomMenuItem
-                  title="Subscription Plans"
-                  to="/Plans"
-                  icon={<PaymentIcon fontSize="small" />}
-                  selected={selected}
-                  setSelected={setSelected}
-                  isCollapsed={isCollapsed}
-                />
-              )} */}
-
               {/* HOSPITAL SPECIFIC */}
               {isHospital && (
                 <CustomMenuItem
@@ -335,27 +322,37 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
             </Box>
           </Menu>
 
-          {/* FOOTER - LOGOUT & USER PROFILE */}
-          <Box px={isCollapsed ? 1 : 2.5} pt={2}>
+          {/* DIVIDER DIRECTLY BELOW NAVIGATION TABS */}
+          <Box px={2} my={2}>
+            <Divider sx={{ borderColor: "#E2E8F0" }} />
+          </Box>
+
+          {/* LOGOUT & USER PROFILE SECTION (MOVED UP) */}
+          <Box px={isCollapsed ? 1 : 2.5}>
             <Button
               fullWidth
               variant="contained"
+              startIcon={!isCollapsed && <LogoutIcon sx={{ fontSize: "16px !important" }} />}
               onClick={handleLogout}
               sx={{
-                bgcolor: "#0256E8",
-                borderRadius: "20px",
+                bgcolor: "#EF4444", // Distinct bold red background
+                color: "#FFFFFF",
+                borderRadius: "16px",
                 py: 1.2,
                 px: isCollapsed ? 0 : 2,
                 fontWeight: 800,
                 fontSize: "11px",
                 letterSpacing: "0.5px",
                 textTransform: "uppercase",
-                boxShadow: "none",
+                boxShadow: "0px 2px 6px rgba(239, 68, 68, 0.25)",
                 minWidth: "auto",
-                "&:hover": { bgcolor: "#0143B8", boxShadow: "none" },
+                "&:hover": {
+                  bgcolor: "#DC2626", // Darker red on hover
+                  boxShadow: "0px 4px 12px rgba(220, 38, 38, 0.35)",
+                },
               }}
             >
-              {isCollapsed ? "OUT" : "LOG OUT"}
+              {isCollapsed ? <LogoutIcon fontSize="small" /> : "LOG OUT"}
             </Button>
 
             <Box
@@ -363,9 +360,7 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
               alignItems="center"
               justifyContent={isCollapsed ? "center" : "flex-start"}
               gap={1.5}
-              mt={2.5}
-              pt={2}
-              borderTop="1px solid #F1F5F9"
+              mt={2}
             >
               <Avatar
                 src={currentUser?.avatarUrl}

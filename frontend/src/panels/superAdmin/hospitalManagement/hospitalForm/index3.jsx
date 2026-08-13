@@ -318,13 +318,21 @@ const HospitalCreationNew = () => {
               sx={{
                 borderRadius: "20px",
                 backgroundColor: "#0256E8",
-                textTransform: "uppercase",
-                fontWeight: 800,
-                fontSize: "11px",
+                color: "#FFFFFF",
+                textTransform: "none",
+                fontWeight: 700,
                 px: 3,
                 py: 1,
-                boxShadow: "none",
-                "&:hover": { backgroundColor: "#0143B8", boxShadow: "none" },
+                fontSize: "12px",
+                boxShadow: "0px 2px 4px rgba(2, 86, 232, 0.2)",
+                "&:hover": {
+                  backgroundColor: "#0143B8",
+                  boxShadow: "0px 4px 8px rgba(1, 67, 184, 0.3)"
+                },
+                "&.Mui-disabled": {
+                  backgroundColor: "#CBD5E1",
+                  color: "#94A3B8"
+                },
               }}
             >
               ADD HOSPITAL
