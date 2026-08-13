@@ -29,6 +29,7 @@ import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import WatchLaterOutlinedIcon from "@mui/icons-material/WatchLaterOutlined";
 import ScheduleIcon from "@mui/icons-material/Schedule";
+import FloatingNewsNotifications from "./FloatingNewsNotifications";
 
 const ExecutiveDashboard = () => {
   const navigate = useNavigate();
@@ -213,6 +214,7 @@ const ExecutiveDashboard = () => {
 
   return (
     <>
+      < FloatingNewsNotifications />
       {formsModalOpen ? (
         <FilledFormsComponent
           selectedBranch={selectedBranch}
