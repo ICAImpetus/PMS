@@ -380,7 +380,7 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                     fontSize="9px"
                     sx={{ textTransform: "uppercase" }}
                   >
-                    {currentUser?.role || "CHIEF OPS"}
+                    {currentUser?.type || "CHIEF OPS"}
                   </Typography>
                 </Box>
               )}

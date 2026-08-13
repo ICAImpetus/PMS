@@ -18,6 +18,31 @@ const auth = (req, res, next) => {
     }
 };
 
+
+export const checkAdmin = (req, res, next) => {
+    // Ensure verifyToken middleware ran first
+    if (!req.user) {
+        return res.status(401).json({
+            success: false,
+            message: "Authentication required. Please authenticate first.",
+        });
+    }
+
+    // Define allowed roles (Normalize case to avoid comparison bugs)
+    const allowedRoles = ["superadmin", "admin", "superadmin"];
+    const userRole = req.user?.type
+
+    if (userRole && allowedRoles.includes(userRole)) {
+        return next(); // Authorization passed
+    }
+
+    // Access denied for unauthorized roles
+    return res.status(403).json({
+        success: false,
+        message: "Forbidden: You do not have permission to perform this action.",
+    });
+};
+
 const normalizeRole = (role) => {
     if (role == null) return '';
     return String(role).trim().toLowerCase();

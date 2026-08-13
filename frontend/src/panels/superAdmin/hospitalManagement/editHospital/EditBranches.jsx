@@ -46,6 +46,7 @@ import hospitalIcon from "../../../../assets/hospitalIcon.png";
 import { useApi } from "../../../../api/useApi";
 import { commonRoutes } from "../../../../api/apiService";
 import { UserContextHook } from "../../../../contexts/UserContexts";
+import AddIpModal from "../../../../components/customComponents/AddIpModal";
 
 // Styled Components
 const RootContainer = styled(Box)(({ theme }) => ({
@@ -293,6 +294,7 @@ const EditBranches = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [branchToDelete, setBranchToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [openIpModal, setOpenIpModal] = useState(false);
 
   const { currentUser } = UserContextHook();
   const userType = (currentUser?.userType || currentUser?.type || "").toLowerCase();
@@ -305,7 +307,18 @@ const EditBranches = () => {
     error: branchesError,
     loading: branchesLoading,
   } = useApi(commonRoutes.getSelectedBranches);
+  const {
+    request: addHospitalIpAddresses,
+    error: addIpError,
+    loading: addIpLoading,
+  } = useApi(commonRoutes.addHospitalIpAddresses);
 
+  // 3. Remove IP Address Hook
+  const {
+    request: removeHospitalIpAddress,
+    error: removeIpError,
+    loading: removeIpLoading,
+  } = useApi(commonRoutes.removeHospitalIpAddress);
   const fetchHospitalData = async () => {
     const res = await getHospitalBranches(id);
     setHospitalBranches(res?.data || []);
@@ -318,6 +331,21 @@ const EditBranches = () => {
   const handleOpen = () => setOpenModal(true);
   const handleClose = () => setOpenModal(false);
 
+  const handleAddIpSubmit = async (newIpAddresses) => {
+    try {
+      // Pass hospitalId (or selected branch ID) along with the IP payload
+      const response = await addHospitalIpAddresses(id, newIpAddresses);
+
+      if (response.success) {
+        toast.success("IP addresses added successfully!");
+      }
+      else {
+        toast.error("Error adding IP addresses");
+      }
+    } catch (error) {
+      toast.error(addIpError || "Error adding IP addresses");
+    }
+  };
   const handleOpenEditModal = (branch) => {
     setSelectedBranch(branch);
     setOpenEditModal(true);
@@ -413,24 +441,62 @@ const EditBranches = () => {
 
         <Box display="flex" alignItems="center" gap={1.5}>
           {(isSuperAdmin || isAdmin) && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleOpen}
-              sx={{
-                borderRadius: "20px",
-                backgroundColor: "#0256E8",
-                textTransform: "uppercase",
-                fontWeight: 800,
-                fontSize: "11px",
-                px: 3,
-                py: 1,
-                boxShadow: "none",
-                "&:hover": { backgroundColor: "#0143B8", boxShadow: "none" },
-              }}
-            >
-              ADD BRANCH
-            </Button>
+            <>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => setOpenIpModal(true)} // Opens IP Modal
+                sx={{
+                  borderRadius: "20px",
+                  backgroundColor: "#0256E8",
+                  color: "#FFFFFF",
+                  textTransform: "none",
+                  fontWeight: 700,
+                  px: 3,
+                  py: 1,
+                  fontSize: "12px",
+                  boxShadow: "0px 2px 4px rgba(2, 86, 232, 0.2)",
+                  "&:hover": {
+                    backgroundColor: "#0143B8",
+                    boxShadow: "0px 4px 8px rgba(1, 67, 184, 0.3)",
+                  },
+                  "&.Mui-disabled": {
+                    backgroundColor: "#CBD5E1",
+                    color: "#94A3B8",
+                  },
+                }}
+              >
+                Add System Ip
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleOpen}
+                sx={{
+                  borderRadius: "20px",
+                  backgroundColor: "#0256E8",
+                  color: "#FFFFFF",
+                  textTransform: "none",
+                  fontWeight: 700,
+                  px: 3,
+                  py: 1,
+                  fontSize: "12px",
+                  boxShadow: "0px 2px 4px rgba(2, 86, 232, 0.2)",
+                  "&:hover": {
+                    backgroundColor: "#0143B8",
+                    boxShadow: "0px 4px 8px rgba(1, 67, 184, 0.3)"
+                  },
+                  "&.Mui-disabled": {
+                    backgroundColor: "#CBD5E1",
+                    color: "#94A3B8"
+                  },
+                }}
+              >
+                ADD BRANCH
+              </Button>
+            </>
+
+
           )}
 
           <IconButton sx={{ bgcolor: "#FFFFFF", border: "1px solid #E2E8F0" }}>
@@ -638,6 +704,13 @@ const EditBranches = () => {
           </Stack>
         </Box>
       </Modal>
+      <AddIpModal
+        open={openIpModal}
+        onClose={() => setOpenIpModal(false)}
+        onSubmit={handleAddIpSubmit}
+        hospitalName={hospital?.name || "Hospital Name"}// Optional
+        loading={addIpLoading}
+      />
     </RootContainer>
   );
 };

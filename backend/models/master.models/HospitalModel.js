@@ -58,7 +58,6 @@ export const HospitalSchema = new mongoose.Schema(
     email: { type: String, trim: true, lowercase: true },
     website: { type: String, trim: true },
 
-    // ===== IP ADDRESSES WHITELIST =====
     ipAddresses: [
       {
         ip: {
@@ -83,7 +82,7 @@ export const HospitalSchema = new mongoose.Schema(
       },
     ],
 
-    // ===== STATUS =====
+
     isActive: { type: Boolean },
     isDeleted: { type: Boolean, default: false },
   },

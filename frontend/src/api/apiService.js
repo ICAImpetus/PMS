@@ -320,9 +320,22 @@ export const commonRoutes = {
     }),
 
 
+  addHospitalIpAddresses: (hospitalId, ipPayload) =>
+    API.post(`api/ip-addresses`, { ipAddresses: ipPayload }, {
+      params: {
+        hospitalId
+      }
+    }),
 
-  getSuggestions: (hosId) =>
-    API.get(`api/getSuggestions/${hosId}`),
+  removeHospitalIpAddress: (hospitalId, ipId) =>
+    API.delete(`api/ip-addresses/${ipId}`, {
+      params: {
+        hospitalId
+      }
+    }),
+
+  getSuggestions: (hospitalId) =>
+    API.get(`api/getSuggestions/${hospitalId}`),
 
   getCodeAlerts: (hospitalId, branchId) => {
 

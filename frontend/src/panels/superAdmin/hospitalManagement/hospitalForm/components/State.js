@@ -1075,7 +1075,7 @@ export const INBOUND_PURPOSE_OPTIONS = [
     label: "Diagnose or Test Price",
     value: "Diagnose or Test Price",
   },
-  { label: "Reports", value: "Reports" },
+  { label: "Test Reports", value: "Test_Reports" },
   {
     label: "Government Health Schemes",
     value: "Government Health Schemes",

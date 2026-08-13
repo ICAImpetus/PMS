@@ -1,6 +1,6 @@
 import express from 'express';
 import * as hospitalController from '../controllers/hospitalController.js';
-import auth, { preventAdminDelete, restrictTo } from '../middlewares/auth.js';
+import auth, { checkAdmin, preventAdminDelete, restrictTo } from '../middlewares/auth.js';
 import { uploadDoctorAssets } from '../utils/multer.js';
 import { dbMiddleware } from '../middlewares/db.middleware.js';
 
@@ -188,6 +188,20 @@ router.put("/mark-notifications-read", auth, hospitalController.markNotification
 router.delete("/clear-notifications", auth, hospitalController.clearNotifications);
 
 
+router.post(
+    "/ip-addresses",
+    auth,
+    checkAdmin,
+    hospitalController.addHospitalIpAddresses
+);
+
+router.delete(
+    "/ip-addresses/:ipId",
+    auth,
+    checkAdmin,
+    hospitalController.removeHospitalIpAddress
+);
+
 // patient
 router.get("/get-patients", auth, hospitalController.getPatientByRole);
 router.get("/getpatientByMobile", hospitalController.getPatientByNumber);
@@ -198,8 +212,10 @@ router.get("/single-patient-history", auth, hospitalController.singlePatientHist
 
 // doctor routes 
 
-router.get("/doctor-appointments", auth, hospitalController.getDoctorAppointment);
-router.get("/doctor-past-appointments", auth, hospitalController.getPastDoctorAppointments);
-router.get("/doctor-dashboard-stats", auth, hospitalController.getDoctorDashboardStats);
+router.get("/doctor-appointments", auth, checkAdmin, hospitalController.getDoctorAppointment);
+router.get("/doctor-past-appointments", auth, checkAdmin, hospitalController.getPastDoctorAppointments);
+router.get("/doctor-dashboard-stats", auth, checkAdmin, hospitalController.getDoctorDashboardStats);
+
+
 
 export default router;

@@ -252,6 +252,9 @@ export const PatientHistory = () => {
 
     const onExport = async () => {
         try {
+            if (filteredPatients.length <= 0) {
+                toast.warn("No data found")
+            }
             handleExport({
                 format: exportFormat,
                 data: filteredPatients,
@@ -400,6 +403,8 @@ export const PatientHistory = () => {
                             variant="contained"
                             startIcon={<DownloadIcon />}
                             onClick={() => setExportDialogOpen(true)}
+
+                            disabled={filteredPatients.length === 0}
                             sx={{
                                 borderRadius: "20px",
                                 backgroundColor: "#0256E8",
@@ -931,7 +936,7 @@ export const PatientHistory = () => {
                     <Button onClick={() => setExportDialogOpen(false)} sx={{ color: "#64748B" }}>
                         Cancel
                     </Button>
-                    <Button onClick={onExport} variant="contained" sx={{ bgcolor: "#0256E8" }}>
+                    <Button onClick={onExport} disabled={filteredPatients.length === 0} variant="contained" sx={{ bgcolor: "#0256E8" }}>
                         Download
                     </Button>
                 </DialogActions>

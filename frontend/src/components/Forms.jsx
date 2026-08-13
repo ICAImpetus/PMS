@@ -2465,14 +2465,14 @@ function Forms() {
           </div>
         );
 
-      case "Reports":
+      case "Test_Reports":
         return (
           <div className="sub-section">
-            <h3>Reports Details</h3>
+            <h3>Test Reports Details</h3>
 
             <div className="input-row">
               <div className="input-group">
-                <label className="required">Report Name</label>
+                <label className="required">Test Report Name</label>
 
                 <input
                   type="text"

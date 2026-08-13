@@ -9485,63 +9485,136 @@ export const getDoctorDashboardStats = async (req, res) => {
     });
   }
 };
-
-export const addHospitalIPs = async (req, res) => {
+export const addHospitalIpAddresses = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
-    const { ips } = req.body;
+    const { hospitalId } = req.query;
+    const { ipAddresses } = req.body; // Expects array of [{ ip, type, description }]
 
-    if (!Array.isArray(ips) || ips.length === 0) {
-      return res.status(400).json({ message: "Provide an array of IPs to add." });
+
+    if (
+      !hospitalId ||
+      !mongoose.isValidObjectId(hospitalId)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid Hospital Id are required",
+      });
     }
 
-    const hospital = await HospitalModel.findByIdAndUpdate(
+
+    // 1. Validation for payload structure
+    if (!Array.isArray(ipAddresses) || ipAddresses.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid non-empty array of IP addresses.",
+      });
+    }
+
+    // 2. Fetch hospital
+    const hospital = await HospitalModel({ _id: hospitalId, isDeleted: false });
+
+    if (!hospital) {
+      return res.status(404).json({
+        success: false,
+        message: "Hospital not found",
+      });
+    }
+
+    // 3. Extract existing IPs to prevent duplicates
+    const existingIps = new Set(hospital.ipAddresses.map((item) => item.ip));
+    const duplicates = [];
+    const newIpsToPush = [];
+
+    for (const item of ipAddresses) {
+      if (!item.ip) {
+        return res.status(400).json({
+          success: false,
+          message: "Each IP entry must contain an 'ip' field.",
+        });
+      }
+
+      const cleanIp = item.ip.trim();
+
+      if (existingIps.has(cleanIp)) {
+        duplicates.push(cleanIp);
+      } else {
+        existingIps.add(cleanIp); // Avoid duplicates within the same batch payload
+        newIpsToPush.push({
+          ip: cleanIp,
+          type: item.type || "PUBLIC",
+          description: item.description?.trim() || "",
+          addedAt: new Date(),
+        });
+      }
+    }
+
+    // If all submitted IPs were already present
+    if (newIpsToPush.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: `IP address(es) already exist for this hospital: ${duplicates.join(", ")}`,
+      });
+    }
+
+    // 4. Update Database
+    const updatedHospital = await HospitalModel.findByIdAndUpdate(
       hospitalId,
-      {
-        $push: { ipAddresses: { $each: ips } },
-      },
+      { $push: { ipAddresses: { $each: newIpsToPush } } },
       { new: true, runValidators: true }
     );
 
-    if (!hospital) {
-      return res.status(404).json({ message: "Hospital not found." });
-    }
-
     return res.status(200).json({
-      message: "IP address(es) added successfully",
-      ipAddresses: hospital.ipAddresses,
+      success: true,
+      message: `${newIpsToPush.length} IP address(es) added successfully.`,
+      warning: duplicates.length > 0 ? `Skipped duplicates: ${duplicates.join(", ")}` : undefined,
+      data: updatedHospital,
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    console.error("Error adding IP address:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while adding IP address",
+      error: error.message,
+    });
   }
 };
-
-export const removeHospitalIP = async (req, res) => {
+export const removeHospitalIpAddress = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
-    const { ipId, ipAddress } = req.body;
+    const { hospitalId, ipId } = req.query;
 
-    const query = ipId
-      ? { _id: ipId }
-      : { ip: ipAddress };
 
+    if (
+      !hospitalId ||
+      !mongoose.isValidObjectId(hospitalId)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid Hospital Id are required",
+      });
+    }
     const hospital = await HospitalModel.findByIdAndUpdate(
       hospitalId,
-      {
-        $pull: { ipAddresses: query },
-      },
+      { $pull: { ipAddresses: { _id: ipId } } },
       { new: true }
     );
 
     if (!hospital) {
-      return res.status(404).json({ message: "Hospital not found." });
+      return res.status(404).json({
+        success: false,
+        message: "Hospital not found",
+      });
     }
 
     return res.status(200).json({
-      message: "IP removed successfully",
-      ipAddresses: hospital.ipAddresses,
+      success: true,
+      message: "IP address removed successfully",
+      data: hospital.ipAddresses,
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({
+      success: false,
+      message: "Error deleting IP address",
+      error: error.message,
+    });
   }
 };
