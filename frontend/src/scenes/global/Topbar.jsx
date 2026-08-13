@@ -80,9 +80,9 @@ const Topbar = ({ setRefresh, handleModelOpen, setIsToggled, toggled }) => {
       {profileModalOpen && (
         <Box>
           <ProfilePopup
-            user={currentUser}
+            // user={currentUser}
             onClose={() => setProfileModalOpen(false)}
-            handleLogout={handleLogout}
+          // handleLogout={handleLogout}
           />
         </Box>
       )}

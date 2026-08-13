@@ -1021,7 +1021,7 @@ const SuperAdminDashboard = () => {
 
       {profileModalOpen && (
         <ProfilePopup
-          user={currentUser}
+          // user={currentUser}
           onClose={() => setProfileModalOpen(false)}
         />
       )}

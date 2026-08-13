@@ -809,7 +809,7 @@ const ExecutiveDashboard = () => {
       {/* Profile Modal */}
       {modalOpen === "profile" && (
         <ProfilePopup
-          user={currentUser}
+          // user={currentUser}
           onClose={() => setModalOpen(null)}
         />
       )}

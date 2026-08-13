@@ -1272,6 +1272,55 @@ function Forms() {
                 </Box>
               </div>
             )}
+
+            <Box sx={{ width: "100%", my: 2 }}>
+              {/* Required Header Label */}
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 600,
+                  mb: 1.5,
+                  "&::after": {
+                    content: '" *"',
+                    color: "error.main",
+                  },
+                }}
+              >
+                Patient Specific Disease
+              </Typography>
+
+              <Grid container spacing={2}>
+                {/* Type of Disease Card (Optional Field) */}
+                <Grid item xs={12} sm={6} md={4}>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      height: "100%",
+                      borderRadius: 2,
+                      boxShadow: "none",
+                      transform: "none",
+                      "&:hover": {
+                        transform: "none",
+                        boxShadow: "none",
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+                      <TextField
+                        fullWidth
+                        label="Type of Disease"
+                        placeholder="e.g. Diabetes, Hypertension"
+                        size="small"
+                        value={form.formData.typeOfDisease || ""}
+                        onChange={(e) =>
+                          handleChange("formData.typeOfDisease", e.target.value)
+                        }
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            </Box>
             <Box sx={{ width: "100%", my: 2 }}>
               {/* Required Header Label */}
               <Typography
@@ -1381,36 +1430,6 @@ function Forms() {
                           {form.formData.appointmentSlot.start})
                         </FormHelperText>
                       )}
-                    </CardContent>
-                  </Card>
-                </Grid>
-
-                {/* Type of Disease Card (Optional Field) */}
-                <Grid item xs={12} sm={6} md={4}>
-                  <Card
-                    variant="outlined"
-                    sx={{
-                      height: "100%",
-                      borderRadius: 2,
-                      boxShadow: "none",
-                      transform: "none",
-                      "&:hover": {
-                        transform: "none",
-                        boxShadow: "none",
-                      },
-                    }}
-                  >
-                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
-                      <TextField
-                        fullWidth
-                        label="Type of Disease"
-                        placeholder="e.g. Diabetes, Hypertension"
-                        size="small"
-                        value={form.formData.typeOfDisease || ""}
-                        onChange={(e) =>
-                          handleChange("formData.typeOfDisease", e.target.value)
-                        }
-                      />
                     </CardContent>
                   </Card>
                 </Grid>
