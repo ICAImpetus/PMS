@@ -63,6 +63,7 @@ export const FORMS_TEMPLATE = [
 
 export const FORMS_AVAILABLE_COLUMNS = [
     { key: "agentName", label: "Agent Name" },
+    { key: "branchId.name", label: "Branch Name" },
     { key: "formType", label: "Form Type" },
     { key: "formData.patientDetails.patientName", label: "Patient Name" },
     { key: "formData.patientDetails.patientMobile", label: "Patient Mobile No" },

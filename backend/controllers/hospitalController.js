@@ -8496,6 +8496,7 @@ export const getPatientByRole = async (req, res) => {
 
     // 3. Setup Multi-tenant Database Connections
     const conn = await getConnection(hospital.trimmedName);
+    const BranchModel = getBranchModel(conn);
     const FilledFormsModel = getFilledFormsModel(conn);
     const PatientModel = getPatientModel(conn);
     const DoctorModel = getDoctorModel(conn);
@@ -8551,6 +8552,7 @@ export const getPatientByRole = async (req, res) => {
 
     // 6. Build Query Pipeline
     let patientQuery = PatientModel.find(match)
+      .populate({ path: "branchId", model: BranchModel, select: "name" })
       .populate({
         path: "lastVisit",
         model: FilledFormsModel,
@@ -8644,6 +8646,7 @@ export const singlePatientHistory = async (req, res) => {
 
     // 3. Multi-tenant Connections
     const conn = await getConnection(hospital.trimmedName);
+    const BranchModel = getBranchModel(conn);
     const FilledFormsModel = getFilledFormsModel(conn);
     const DoctorModel = getDoctorModel(conn);
     const DepartmentModel = getDepartmentModel(conn);
@@ -8699,6 +8702,11 @@ export const singlePatientHistory = async (req, res) => {
       .select(
         "agentName formType gender callStatus purpose formData.appointmentSlot followupStatus createdAt formData.patientDetails formData.patientArrivalTime formData.remarks formData.surgeryName formData.healthPackageName formData.healthSchemeName formData.govertHealthSchemeName formData.nonGovtHealthSchemeName formData.reportName formData.referenceFrom formData.feedbackType formData.feedback"
       )
+      .populate({
+        path: "branchId",
+        model: BranchModel,
+        select: "name",
+      })
       .populate({
         path: "doctor",
         model: DoctorModel,

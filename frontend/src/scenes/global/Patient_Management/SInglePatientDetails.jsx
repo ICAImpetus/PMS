@@ -81,6 +81,7 @@ export const SInglePatientDetails = () => {
     const [filteredVisits, setFilteredVisits] = useState([]);
     const [dateFilterAnchorEl, setDateFilterAnchorEl] = useState(null);
     const [selectedFormColumns, setSelectedFormColumns] = useState([
+        "branchId.name",
         "patientName",
         "patientMobile",
         "doctor.name",

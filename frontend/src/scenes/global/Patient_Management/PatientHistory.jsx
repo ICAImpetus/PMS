@@ -661,6 +661,7 @@ export const PatientHistory = () => {
                             <TableHead sx={{ bgcolor: "#FFFFFF" }}>
                                 <TableRow>
                                     <TableCell sx={{ fontSize: "10px", fontWeight: 800, color: "#64748B" }}>ID</TableCell>
+                                    <TableCell sx={{ fontSize: "10px", fontWeight: 800, color: "#64748B" }}>BRANCH NAME</TableCell>
                                     <TableCell sx={{ fontSize: "10px", fontWeight: 800, color: "#64748B" }}>
                                         PATIENT PROFILE
                                     </TableCell>
@@ -694,7 +695,9 @@ export const PatientHistory = () => {
                                             <TableCell sx={{ fontSize: "12px", color: "#94A3B8" }}>
                                                 #{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
                                             </TableCell>
-
+                                            <TableCell variant="caption" sx={{ fontSize: "12px" }}>
+                                                {patient?.branchId?.name || "-"}
+                                            </TableCell>
                                             <TableCell>
                                                 <Box display="flex" alignItems="center" gap={1.5}>
                                                     <Avatar

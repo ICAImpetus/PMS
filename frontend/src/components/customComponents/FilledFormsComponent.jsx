@@ -102,6 +102,7 @@ const FilledFormsComponent = ({
 
   const [selectedFormColumns, setSelectedFormColumns] = useState([
     "agentName",
+    "branchId.name",
     "formType",
     "callStatus",
     "formData.patientDetails.patientName",

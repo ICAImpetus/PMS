@@ -488,6 +488,7 @@ export const getFilledForms = async (req, res) => {
     }
 
     const conn = await getConnection(hospital.trimmedName);
+    const BranchModel = getBranchModel(conn);
     const FilledFormsModel = getFilledFormsModel(conn);
     const PatientModel = getPatientModel(conn);
     const DoctorModel = getDoctorModel(conn);
@@ -553,6 +554,7 @@ export const getFilledForms = async (req, res) => {
       .select(
         "agentName formType gender callStatus purpose formData.appointmentSlot followupStatus createdAt formData.patientDetails formData.patientArrivalTime formData.remarks formData.surgeryName formData.healthPackageName formData.healthSchemeName formData.govertHealthSchemeName formData.nonGovtHealthSchemeName formData.reportName formData.referenceFrom formData.feedbackType formData.feedback"
       )
+      .populate(pop("branchId", BranchModel, "name"))
       .populate(pop("doctor", DoctorModel, "name"))
       .populate(pop("department", DepartmentModel, "name"))
       .populate(
