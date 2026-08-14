@@ -1076,14 +1076,14 @@ export const INBOUND_PURPOSE_OPTIONS = [
     value: "Diagnose or Test Price",
   },
   { label: "Test Reports", value: "Test_Reports" },
-  {
-    label: "Government Health Schemes",
-    value: "Government Health Schemes",
-  },
-  {
-    label: "Non-Government Schemes",
-    value: "Non-Government Schemes",
-  },
+  // {
+  //   label: "Government Health Schemes",
+  //   value: "Government Health Schemes",
+  // },
+  // {
+  //   label: "Non-Government Schemes",
+  //   value: "Non-Government Schemes",
+  // },
   { label: "Ambulance", value: "Ambulance" },
   { label: "Junk", value: "Junk" },
   { label: "Job Related", value: "Job Related" },

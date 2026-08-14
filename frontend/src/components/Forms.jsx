@@ -1286,7 +1286,7 @@ function Forms() {
                   },
                 }}
               >
-                Patient Specific Disease
+                Patient Disease
               </Typography>
 
               <Grid container spacing={2}>
@@ -1540,6 +1540,55 @@ function Forms() {
 
             {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
+            <Box sx={{ width: "100%", my: 2 }}>
+              {/* Required Header Label */}
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 600,
+                  mb: 1.5,
+                  "&::after": {
+                    content: '" *"',
+                    color: "error.main",
+                  },
+                }}
+              >
+                Patient Disease
+              </Typography>
+
+              <Grid container spacing={2}>
+                {/* Type of Disease Card (Optional Field) */}
+                <Grid item xs={12} sm={6} md={4}>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      height: "100%",
+                      borderRadius: 2,
+                      boxShadow: "none",
+                      transform: "none",
+                      "&:hover": {
+                        transform: "none",
+                        boxShadow: "none",
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+                      <TextField
+                        fullWidth
+                        label="Type of Disease"
+                        placeholder="e.g. Diabetes, Hypertension"
+                        size="small"
+                        value={form.formData.typeOfDisease || ""}
+                        onChange={(e) =>
+                          handleChange("formData.typeOfDisease", e.target.value)
+                        }
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            </Box>
+
             <div className="input-row">
               <div className="input-group">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1555,6 +1604,7 @@ function Forms() {
                 </label>
               </div>
             </div>
+
 
             <div className="input-row">
               <div className="input-group textarea-field-container">
@@ -1668,6 +1718,54 @@ function Forms() {
             </div>
             {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
+            <Box sx={{ width: "100%", my: 2 }}>
+              {/* Required Header Label */}
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 600,
+                  mb: 1.5,
+                  "&::after": {
+                    content: '" *"',
+                    color: "error.main",
+                  },
+                }}
+              >
+                Patient Disease
+              </Typography>
+
+              <Grid container spacing={2}>
+                {/* Type of Disease Card (Optional Field) */}
+                <Grid item xs={12} sm={6} md={4}>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      height: "100%",
+                      borderRadius: 2,
+                      boxShadow: "none",
+                      transform: "none",
+                      "&:hover": {
+                        transform: "none",
+                        boxShadow: "none",
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+                      <TextField
+                        fullWidth
+                        label="Type of Disease"
+                        placeholder="e.g. Diabetes, Hypertension"
+                        size="small"
+                        value={form.formData.typeOfDisease || ""}
+                        onChange={(e) =>
+                          handleChange("formData.typeOfDisease", e.target.value)
+                        }
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            </Box>
             <div className="input-row">
               <div className="input-group">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1803,7 +1901,54 @@ function Forms() {
             </div>
             {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
+            <Box sx={{ width: "100%", my: 2 }}>
+              {/* Required Header Label */}
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 600,
+                  mb: 1.5,
+                  "&::after": {
+                    content: '" *"',
+                    color: "error.main",
+                  },
+                }}
+              >
+                Patient Disease
+              </Typography>
 
+              <Grid container spacing={2}>
+                {/* Type of Disease Card (Optional Field) */}
+                <Grid item xs={12} sm={6} md={4}>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      height: "100%",
+                      borderRadius: 2,
+                      boxShadow: "none",
+                      transform: "none",
+                      "&:hover": {
+                        transform: "none",
+                        boxShadow: "none",
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+                      <TextField
+                        fullWidth
+                        label="Type of Disease"
+                        placeholder="e.g. Diabetes, Hypertension"
+                        size="small"
+                        value={form.formData.typeOfDisease || ""}
+                        onChange={(e) =>
+                          handleChange("formData.typeOfDisease", e.target.value)
+                        }
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            </Box>
             <div className="input-row">
               <div className="input-group">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1934,6 +2079,54 @@ function Forms() {
               </div>
             </div>
 
+            <Box sx={{ width: "100%", my: 2 }}>
+              {/* Required Header Label */}
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 600,
+                  mb: 1.5,
+                  "&::after": {
+                    content: '" *"',
+                    color: "error.main",
+                  },
+                }}
+              >
+                Patient Disease
+              </Typography>
+
+              <Grid container spacing={2}>
+                {/* Type of Disease Card (Optional Field) */}
+                <Grid item xs={12} sm={6} md={4}>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      height: "100%",
+                      borderRadius: 2,
+                      boxShadow: "none",
+                      transform: "none",
+                      "&:hover": {
+                        transform: "none",
+                        boxShadow: "none",
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+                      <TextField
+                        fullWidth
+                        label="Type of Disease"
+                        placeholder="e.g. Diabetes, Hypertension"
+                        size="small"
+                        value={form.formData.typeOfDisease || ""}
+                        onChange={(e) =>
+                          handleChange("formData.typeOfDisease", e.target.value)
+                        }
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            </Box>
             <div className="input-row">
               <div className="input-group">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -2186,6 +2379,54 @@ function Forms() {
               </div>
             </div>
             {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
+            <Box sx={{ width: "100%", my: 2 }}>
+              {/* Required Header Label */}
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 600,
+                  mb: 1.5,
+                  "&::after": {
+                    content: '" *"',
+                    color: "error.main",
+                  },
+                }}
+              >
+                Patient Disease
+              </Typography>
+
+              <Grid container spacing={2}>
+                {/* Type of Disease Card (Optional Field) */}
+                <Grid item xs={12} sm={6} md={4}>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      height: "100%",
+                      borderRadius: 2,
+                      boxShadow: "none",
+                      transform: "none",
+                      "&:hover": {
+                        transform: "none",
+                        boxShadow: "none",
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+                      <TextField
+                        fullWidth
+                        label="Type of Disease"
+                        placeholder="e.g. Diabetes, Hypertension"
+                        size="small"
+                        value={form.formData.typeOfDisease || ""}
+                        onChange={(e) =>
+                          handleChange("formData.typeOfDisease", e.target.value)
+                        }
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            </Box>
 
             <div className="input-row">
               <div className="input-group">
@@ -2300,6 +2541,54 @@ function Forms() {
             </div>
             {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
+            <Box sx={{ width: "100%", my: 2 }}>
+              {/* Required Header Label */}
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 600,
+                  mb: 1.5,
+                  "&::after": {
+                    content: '" *"',
+                    color: "error.main",
+                  },
+                }}
+              >
+                Patient Disease
+              </Typography>
+
+              <Grid container spacing={2}>
+                {/* Type of Disease Card (Optional Field) */}
+                <Grid item xs={12} sm={6} md={4}>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      height: "100%",
+                      borderRadius: 2,
+                      boxShadow: "none",
+                      transform: "none",
+                      "&:hover": {
+                        transform: "none",
+                        boxShadow: "none",
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+                      <TextField
+                        fullWidth
+                        label="Type of Disease"
+                        placeholder="e.g. Diabetes, Hypertension"
+                        size="small"
+                        value={form.formData.typeOfDisease || ""}
+                        onChange={(e) =>
+                          handleChange("formData.typeOfDisease", e.target.value)
+                        }
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            </Box>
             <div className="input-row">
               <div className="input-group">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -2431,6 +2720,54 @@ function Forms() {
             </div>
             {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
+            <Box sx={{ width: "100%", my: 2 }}>
+              {/* Required Header Label */}
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 600,
+                  mb: 1.5,
+                  "&::after": {
+                    content: '" *"',
+                    color: "error.main",
+                  },
+                }}
+              >
+                Patient Disease
+              </Typography>
+
+              <Grid container spacing={2}>
+                {/* Type of Disease Card (Optional Field) */}
+                <Grid item xs={12} sm={6} md={4}>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      height: "100%",
+                      borderRadius: 2,
+                      boxShadow: "none",
+                      transform: "none",
+                      "&:hover": {
+                        transform: "none",
+                        boxShadow: "none",
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+                      <TextField
+                        fullWidth
+                        label="Type of Disease"
+                        placeholder="e.g. Diabetes, Hypertension"
+                        size="small"
+                        value={form.formData.typeOfDisease || ""}
+                        onChange={(e) =>
+                          handleChange("formData.typeOfDisease", e.target.value)
+                        }
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            </Box>
             <div className="input-row">
               <div className="input-group">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
