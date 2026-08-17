@@ -136,7 +136,7 @@ export const GlobalUserContextProvider = ({ children }) => {
 
       navigate("/login", { replace: true });
 
-      toast.success("Logout Success");
+      // toast.success("Logout Success");
     } catch (error) {
       console.log("Logout Error:", error);
     }

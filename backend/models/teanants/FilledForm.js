@@ -32,6 +32,9 @@ const feedbackQuestionSchema = new mongoose.Schema(
 
 export const FilledFormSchema = new mongoose.Schema(
   {
+    formStatus: String,
+    errorCount: Number,
+
     formType: {
       type: String,
       // enum: ["inbound", "outbound"],

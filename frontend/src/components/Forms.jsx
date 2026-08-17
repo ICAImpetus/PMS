@@ -46,6 +46,7 @@ import {
 } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
 import { FORMS_AVAILABLE_COLUMNS, getNestedValue, PatientCallHistory } from "../utils/exportUtils";
 import { PatientHistoryTableBody } from "./customComponents/PatientHistoryTableBody";
+import { useNavigate } from "react-router-dom";
 
 const getPatientArrivalDateTime = (
   appointmentSlot,
@@ -224,6 +225,8 @@ const maxDate = nextWeek.toISOString().slice(0, 16);
 
 
 function Forms() {
+  const location = useLocation()
+  const editFormId = location.state?.formid || null
   const [form, setForm] = useState(initialFormState);
   const [patientLatest, setPatientLatest] = useState(initialFormState);
   const [branchData, setBranchData] = useState(null);
@@ -299,7 +302,32 @@ function Forms() {
     selectedHostpital,
     branches,
     errors,
+    role
   } = useContext(HospitalContext);
+
+  useEffect(() => {
+    if (!editFormId) return
+
+    // 2. Mark the internal function as async
+    const fetchFormDetails = async () => {
+      setLoading(true)
+      try {
+        // 3. Use editFormId instead of formId
+        const res = await getFormById(selectedHospital, selectedBranch, editFormId)
+
+        if (res.sucess) {
+          // 4. Update form state with fetched data
+          setFormData(res.data)
+        }
+      } catch (error) {
+        console.error('Error fetching form details:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchFormDetails()
+  }, [editFormId, selectedHospital, selectedBranch])
 
   useEffect(() => {
     console.log("selectedHostpital", selectedHostpital);
@@ -5188,6 +5216,9 @@ function Forms() {
               <table className="patient-details-table" style={{ minWidth: 900 }}>
                 <thead>
                   <tr>
+                    {role && role === "teamleader" && (
+                      <th key="action">Actions</th>
+                    )}
                     {FORMS_AVAILABLE_COLUMNS.map(col => (
                       <th key={col.key}>{col.label}</th>
                     ))}
@@ -5198,6 +5229,7 @@ function Forms() {
                   filteredLatestVisits={filteredLatestVisits}
                   patientProfile={patientProfile}
                   isLoading={patientCallHistoryApiLoading}
+                  showAction={Boolean(role && role === "teamleader")}
                 />
               </table>
             </Box>

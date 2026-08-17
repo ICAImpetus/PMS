@@ -448,6 +448,161 @@ export const createFilledForm = async (req, res) => {
   }
 };
 
+export const updateFilledForm = async (req, res) => {
+  let session;
+
+  try {
+    const { formId } = req.params; // Passed in URL e.g., PUT /api/forms/:formId
+    const { hosId, branchId } = req.query;
+    const user = req.user;
+    const data = req.body;
+
+    // 1. Validation
+    if (
+      !formId ||
+      !hosId ||
+      !branchId ||
+      !mongoose.isValidObjectId(formId) ||
+      !mongoose.isValidObjectId(hosId) ||
+      !mongoose.isValidObjectId(branchId)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid formId, hospitalId, and branchId are required.",
+      });
+    }
+
+    const hospital = await HospitalModel.findById(hosId)
+      .select("trimmedName name")
+      .lean();
+
+    if (!hospital) {
+      return res.status(404).json({
+        success: false,
+        message: "Hospital not found.",
+      });
+    }
+
+    // 2. Establish multi-tenant dynamic connection
+    const conn = await getConnection(hospital.trimmedName);
+    const FilledFormsModel = getFilledFormsModel(conn);
+    const PatientModel = getPatientModel(conn);
+
+    // 3. Fetch existing form to compare previous state
+    const existingForm = await FilledFormsModel.findById(formId).lean();
+    if (!existingForm) {
+      return res.status(404).json({
+        success: false,
+        message: "Form record not found.",
+      });
+    }
+
+    session = await conn.startSession();
+    session.startTransaction();
+
+    // 4. Data Type Conversions
+    if (data?.formData?.dateTime) {
+      data.formData.dateTime = new Date(data.formData.dateTime);
+    }
+
+    if (data?.formData?.patientDetails?.patientAge) {
+      data.formData.patientDetails.patientAge = Number(
+        data.formData.patientDetails.patientAge
+      );
+    }
+
+    // 5. Update Associated Patient Details (if patient info modified)
+    if (existingForm.formData?.patientDetails && data?.formData?.patientDetails) {
+      await PatientModel.findByIdAndUpdate(
+        existingForm.formData.patientDetails,
+        {
+          $set: {
+            patientName: data.formData.patientDetails.patientName,
+            patientAge: data.formData.patientDetails.patientAge,
+            gender: data.formData.patientDetails.gender,
+            patientMobile: data.formData.patientDetails.patientMobile,
+          },
+        },
+        { session }
+      );
+    }
+
+    // 6. Build Update Payload
+    const updatePayload = {
+      ...(data.callStatus && { callStatus: data.callStatus }),
+      ...(data.doctor && { doctor: data.doctor }),
+      ...(data.department && { department: data.department }),
+      ...(data.purpose && { purpose: data.purpose }),
+      ...(typeof data.useForFollowup === "boolean" && {
+        useForFollowup: data.useForFollowup,
+        followupStatus: data.useForFollowup ? "pending" : null,
+      }),
+      updatedBy: {
+        agentId: user.id,
+        agentName: user.name,
+        updatedAt: new Date(),
+      },
+      formData: {
+        ...existingForm.formData,
+        ...data.formData,
+        patientDetails: existingForm.formData.patientDetails, // Maintain reference ID
+        appointmentSlot: data.formData?.appointmentSlot
+          ? {
+            ...data.formData.appointmentSlot,
+            date: new Date(data.formData.appointmentSlot.date),
+          }
+          : existingForm.formData?.appointmentSlot,
+      },
+    };
+
+    // 7. Update Form Document
+    const updatedForm = await FilledFormsModel.findByIdAndUpdate(
+      formId,
+      { $set: updatePayload },
+      { new: true, session }
+    );
+
+    // Commit Transaction
+    await session.commitTransaction();
+    await session.endSession();
+
+    // 8. Non-blocking Audit Logging
+    setImmediate(() => {
+      auditLog({
+        action: `UPDATE_${existingForm.formType.toUpperCase()}_FORM`,
+        event: "EDIT",
+        module: "FORM_SUBMISSION",
+        role: user?.type || "Unknown",
+        customMessage: `${user?.type || "User"} "${user?.name}" updated form ID ${formId}.`,
+        name: user?.name,
+        userId: user?.id,
+        oldData: existingForm,
+        newData: updatedForm,
+        ip: req.userIp,
+        userAgent: req.headers["user-agent"],
+      });
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Form updated successfully.",
+      data: updatedForm,
+    });
+  } catch (error) {
+    console.error("Error updating filled form:", error);
+
+    if (session) {
+      await session.abortTransaction();
+      await session.endSession();
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error.",
+      error: error.message,
+    });
+  }
+};
 
 export const getFilledForms = async (req, res) => {
   try {

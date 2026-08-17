@@ -17,8 +17,12 @@ import {
     Box,
     Divider,
     CircularProgress,
+    IconButton,
+
 } from "@mui/material";
 import { getNestedValue } from "../../utils/exportUtils";
+import EditIcon from "@mui/icons-material/Edit";
+import { useNavigate } from "react-router-dom";
 
 
 
@@ -77,13 +81,100 @@ const TableMessageRow = React.memo(({ colSpan, children }) => (
         </td>
     </tr>
 ));
-// --- Component 2: Individual Row Renderer ---
+
+{
+    showAction && (
+        <TableCell align="center">
+            <IconButton size="small" onClick={() => handleEditForm?.(row)}>
+                <EditIcon fontSize="small" />
+            </IconButton>
+        </TableCell>
+    )
+}
+{
+    columns.map((col, colIndex) => {
+        const key = col?.key;
+
+        // 1. Feedback Questions Rating Link
+        if (key === "formData.feedback.questions") {
+            const questions = getNestedValue(row, key) || [];
+            if (Array.isArray(questions) && questions.length > 0) {
+                return (
+                    <TableCell key={col?.id || colIndex}>
+                        <Link
+                            component="button"
+                            variant="body2"
+                            underline="hover"
+                            sx={{ fontWeight: "medium", cursor: "pointer" }}
+                            onClick={() => onViewRatings(questions)}
+                        >
+                            View Rating
+                        </Link>
+                    </TableCell>
+                );
+            }
+        }
+
+        // 2. Resolve field value
+        const rawValue = fieldMap[key] ?? getNestedValue(row, key);
+        let displayValue = rawValue;
+
+        // 3. Format Appointment Slot
+        if (key === "formData.appointmentSlot") {
+            if (displayValue && typeof displayValue === "object") {
+                const formattedDate = displayValue?.date
+                    ? moment(displayValue.date).format("dddd, DD MMM YYYY")
+                    : null;
+
+                const timeRange = `${displayValue?.start || "N/A"} to ${displayValue?.end || "N/A"}`;
+                displayValue = formattedDate ? `${formattedDate} | ${timeRange}` : timeRange;
+            } else if (col?.value === "Appointment") {
+                const formattedDate = row?.dateTime
+                    ? moment(row.dateTime).format("dddd, DD MMM YYYY")
+                    : null;
+
+                const arrival = `Arrival Time: ${row?.patientArrivalTime || "-"}`;
+                displayValue = formattedDate ? `${formattedDate} | ${arrival}` : arrival;
+            } else {
+                displayValue = "-";
+            }
+        }
+        // 4. Format Created At Date
+        else if (key === "createdAt" && displayValue && moment(displayValue).isValid()) {
+            displayValue = moment(displayValue).format("DD MMM YYYY, hh:mm A");
+        }
+        // 5. Format Date Objects
+        else if (displayValue instanceof Date) {
+            displayValue = moment(displayValue).format("DD/MM/YYYY hh:mm A");
+        }
+        // 6. Object & Nullish fallbacks
+        else if (typeof displayValue === "object" && displayValue !== null) {
+            displayValue = "-";
+        } else {
+            displayValue = displayValue ?? "-";
+        }
+
+        return (
+            <TableCell key={col?.id || colIndex}>
+                {displayValue}
+            </TableCell>
+        );
+    })
+}
+
+
+
+
 export const PatientHistoryRow = ({
     row,
     columns,
     patientProfile,
     onViewRatings,
+    showAction = false,
+    editRowId
+
 }) => {
+
     const fieldMap = {
         "formData.patientDetails.patientName": patientProfile?.patientName,
         "formData.patientDetails.patientMobile": patientProfile?.patientMobile,
@@ -94,8 +185,19 @@ export const PatientHistoryRow = ({
         "formData.patientDetails.gender": patientProfile?.gender,
     };
 
+
+
     return (
+
         <TableRow>
+
+            {showAction && (
+                <TableCell align="center">
+                    <IconButton size="small" onClick={() => editRowId?.(row)}>
+                        <EditIcon fontSize="small" />
+                    </IconButton>
+                </TableCell>
+            )}
             {columns.map((col, colIndex) => {
                 const key = col?.key;
 
@@ -174,6 +276,8 @@ export function PatientHistoryTableBody({
     filteredLatestVisits = [],
     patientProfile = {},
     isLoading = false,
+    showAction = false,
+    editRowId
 }) {
     const [selectedQuestions, setSelectedQuestions] = useState(null);
     const colSpan = columns.length;
@@ -205,7 +309,9 @@ export function PatientHistoryTableBody({
                     key={lv?._id ?? `row-${rowIndex}`}
                     row={lv}
                     columns={columns}
+                    showAction={showAction}
                     patientProfile={patientProfile}
+                    editRowId={editRowId}
                     onViewRatings={(questions) => setSelectedQuestions(questions)}
                 />
             ))}

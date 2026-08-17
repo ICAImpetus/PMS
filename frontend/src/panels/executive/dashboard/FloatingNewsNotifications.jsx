@@ -77,14 +77,14 @@ const FETCH_INTERVAL_MS = 60 * 1000; // re-fetch every 1 min
 
 // ─── display timings ────────────────────────────────────────────────────────
 const DISPLAY_INTERVAL_MS = 2200;   // gap between each popup
-const DISPLAY_DURATION_MS  = 6500;  // how long each popup stays visible
-const MAX_VISIBLE           = 4;
+const DISPLAY_DURATION_MS = 6500;  // how long each popup stays visible
+const MAX_VISIBLE = 4;
 
 // ────────────────────────────────────────────────────────────────────────────
 
 const FloatingNewsNotifications = ({
-  interval   = DISPLAY_INTERVAL_MS,
-  duration   = DISPLAY_DURATION_MS,
+  interval = DISPLAY_INTERVAL_MS,
+  duration = DISPLAY_DURATION_MS,
   maxVisible = MAX_VISIBLE,
 }) => {
   const { selectedHostpital, selectedBranch, branches, analytics } = useContext(HospitalContext);
@@ -97,7 +97,7 @@ const FloatingNewsNotifications = ({
   // Currently shown queue
   const [queue, setQueue] = useState([]);
 
-  const nextIndexRef    = useRef(0);
+  const nextIndexRef = useRef(0);
   const removeTimersRef = useRef([]);
 
   // ── fetch & build notifications ──────────────────────────────────────────
@@ -232,8 +232,8 @@ const FloatingNewsNotifications = ({
         form?.appointmentSlot?.start && form?.appointmentSlot?.end
           ? `${form.appointmentSlot.start} - ${form.appointmentSlot.end}`
           : form?.formData?.appointmentSlot?.start && form?.formData?.appointmentSlot?.end
-          ? `${form.formData.appointmentSlot.start} - ${form.formData.appointmentSlot.end}`
-          : "";
+            ? `${form.formData.appointmentSlot.start} - ${form.formData.appointmentSlot.end}`
+            : "";
 
       const timeStr = fmtTime(rawDate, slotStr);
 
@@ -293,9 +293,10 @@ const FloatingNewsNotifications = ({
   // Initial fetch + periodic re-fetch
   useEffect(() => {
     fetchNotifications();
-    const id = setInterval(fetchNotifications, FETCH_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [fetchNotifications]);
+    // vishal ne cooment kiya isko 
+    // const id = setInterval(fetchNotifications, FETCH_INTERVAL_MS);
+    // return () => clearInterval(id);
+  }, []);
 
   // Hover pause state
   const [isHovered, setIsHovered] = useState(false);

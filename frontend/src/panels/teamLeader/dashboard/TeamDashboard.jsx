@@ -56,6 +56,7 @@ const TeamDashboard = () => {
     refetchUsers,
     dateRange,
     handleFilterChange,
+    role
   } = useContext(HospitalContext);
 
   const openAssignModal = () => setIsModalOpen(true);
@@ -204,6 +205,7 @@ const TeamDashboard = () => {
           formsTypeFilter={formsTypeFilter}
           setFormsTypeFilter={setFormsTypeFilter}
           dateRange={dateRange}
+          role={role}
         />
       ) : (
         <Box sx={{ bgcolor: "#f5f7fb", minHeight: "100vh", p: { xs: 2, md: 3 }, fontFamily: "'Inter', sans-serif" }}>

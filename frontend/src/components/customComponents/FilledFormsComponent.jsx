@@ -63,7 +63,8 @@ const FilledFormsComponent = ({
   setFormsModalOpen,
   formsTypeFilter,
   setFormsTypeFilter,
-  dateRange
+  dateRange,
+  role = ''
 }) => {
   const [formsColumnFilterOpen, setFormsColumnFilterOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("")
@@ -92,6 +93,9 @@ const FilledFormsComponent = ({
   const [searchInput, setSearchInput] = useState("");
   const [filterForm, setFilterForm] = useState([])
   const [form, setForm] = useState([])
+  const navigate = useNavigate();
+  const [selectedRow, setSelectedRow] = useState(null); // Holds the row object to edit
+  const [openModal, setOpenModal] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -117,14 +121,10 @@ const FilledFormsComponent = ({
       ? ["appointmentSlot", "department.name", "doctor.name"]
       : []),
     "createdAt"
-
-
   ]);
   // const { request } = useApi(commonRoutes.getFilledForms);
   const formsColumnFilterRef = useRef(null);
   const csvFileInputRef = useRef(null);
-
-  console.log("selectedHostpital-forms", selectedHostpital)
 
 
   const { request: getFilledForms, loading: getFilledFormsLoading, error: getFilledformError } = useApi(commonRoutes.getFilledForms)
@@ -471,6 +471,7 @@ const FilledFormsComponent = ({
       console.error("Upload error details:", error);
     }
   };
+
 
   const handleSearchApply = async () => {
     try {
@@ -840,6 +841,26 @@ const FilledFormsComponent = ({
     }));
   };
 
+  // Callback passed down to child rows
+  const handleEditRowSelect = (row) => {
+    setSelectedRow(row);
+    setOpenModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setSelectedRow(null);
+  };
+
+  const handleConfirmNavigate = () => {
+    if (!selectedRow?._id) return;
+    setOpenModal(false);
+
+    // Navigate with state payload
+    navigate("/executive-forms", {
+      state: { formid: selectedRow._id },
+    });
+  };
   return (
     <div
 
@@ -1122,6 +1143,9 @@ const FilledFormsComponent = ({
               <table className="ff-table">
                 <thead>
                   <tr>
+                    {role && role === "teamleader" && (
+                      <th key="action">Actions</th>
+                    )}
                     {visibleFormColumns.map((col) => (
                       <th key={col.key}>{col.label}</th>
                     ))}
@@ -1131,6 +1155,7 @@ const FilledFormsComponent = ({
                   columns={visibleFormColumns}
                   filteredLatestVisits={filterForm}
                   isLoading={getFilledFormsLoading}
+                  showAction={Boolean(role && role === "teamleader")}
                 />
 
               </table>
@@ -1281,6 +1306,23 @@ const FilledFormsComponent = ({
           // disabled={csvStatus === "processing"}
           >
             Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={openConfirm} onClose={handleCloseConfirm}>
+        <DialogTitle>Confirm Edit</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1">
+            Are you sure you want to edit this form record?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseConfirm} color="inherit">
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmEdit} variant="contained" color="primary" autoFocus>
+            Proceed to Edit
           </Button>
         </DialogActions>
       </Dialog>
