@@ -46,6 +46,7 @@ import { toast } from "react-toastify";
 import HospitalContext from "../../contexts/HospitalContexts";
 import { FORMS_AVAILABLE_COLUMNS, FORMS_TEMPLATE, getNestedValue } from "../../utils/exportUtils";
 import { PatientHistoryTableBody } from "./PatientHistoryTableBody";
+import { useNavigate } from "react-router-dom";
 
 
 const searchOptions = [
@@ -94,8 +95,8 @@ const FilledFormsComponent = ({
   const [filterForm, setFilterForm] = useState([])
   const [form, setForm] = useState([])
   const navigate = useNavigate();
-  const [selectedRow, setSelectedRow] = useState(null); // Holds the row object to edit
-  const [openModal, setOpenModal] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [openConfirm, setOpenConfirm] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -840,27 +841,32 @@ const FilledFormsComponent = ({
       page: Number(newPage || 1),
     }));
   };
+  const handleOpenConfirm = (record) => {
+    console.log("record", record);
 
-  // Callback passed down to child rows
-  const handleEditRowSelect = (row) => {
-    setSelectedRow(row);
-    setOpenModal(true);
+    setSelectedRecord(record);
+    setOpenConfirm(true);
   };
 
-  const handleCloseModal = () => {
-    setOpenModal(false);
-    setSelectedRow(null);
+  // Triggered when user cancels
+  const handleCloseConfirm = () => {
+    setOpenConfirm(false);
+    setSelectedRecord(null);
   };
 
-  const handleConfirmNavigate = () => {
-    if (!selectedRow?._id) return;
-    setOpenModal(false);
+  // Triggered when user confirms the edit action
+  const handleConfirmEdit = () => {
+
+    if (!selectedRecord?._id) return;
+    setOpenConfirm(false);
 
     // Navigate with state payload
     navigate("/executive-forms", {
-      state: { formid: selectedRow._id },
+      state: { formid: selectedRecord._id },
     });
+    handleCloseConfirm();
   };
+
   return (
     <div
 
@@ -1155,6 +1161,7 @@ const FilledFormsComponent = ({
                   columns={visibleFormColumns}
                   filteredLatestVisits={filterForm}
                   isLoading={getFilledFormsLoading}
+                  editRowId={handleOpenConfirm}
                   showAction={Boolean(role && role === "teamleader")}
                 />
 

@@ -1197,7 +1197,7 @@ export const getCurrentDateTime = () => {
 };
 
 
-const initialPatientDetails = {
+export const initialPatientDetails = {
   patientName: "",
   patientMobile: "",
   alternateMobile: "",

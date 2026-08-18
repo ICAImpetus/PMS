@@ -319,6 +319,26 @@ export const commonRoutes = {
       }
     }),
 
+  updateFilledForm: (hosId, branchId, formId) =>
+
+    API.put(`api/forms/${formId}`, {
+      params: {
+        hosId,
+        branchId
+      }
+    }),
+
+
+  getFormById: (hosId, branchId, formId) =>
+
+    API.get(`api/forms/${formId}`, {
+      params: {
+        hosId,
+        branchId
+      }
+    }),
+
+
 
   addHospitalIpAddresses: (hospitalId, ipPayload) =>
     API.post(`api/ip-addresses`, { ipAddresses: ipPayload }, {

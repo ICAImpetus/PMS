@@ -36,17 +36,121 @@ import {
   TableCell,
   Link,
   Rating,
+  ToggleButton, ToggleButtonGroup
 } from "@mui/material";
 import DoctorProfileCard from "./DoctorCard";
 import HospitalContext from "../contexts/HospitalContexts";
 import {
   CATEGORY, INBOUND_PURPOSE_OPTIONS, getCurrentDateTime,
   IndianStatesWithDistricts, initialFormState, OUTBOUND_PURPOSE_OPTIONS,
-  REFERENCE_OPTIONS, initialFormData
+  REFERENCE_OPTIONS, initialFormData,
+  initialPatientDetails
 } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
 import { FORMS_AVAILABLE_COLUMNS, getNestedValue, PatientCallHistory } from "../utils/exportUtils";
 import { PatientHistoryTableBody } from "./customComponents/PatientHistoryTableBody";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import CallReceivedIcon from "@mui/icons-material/CallReceived";
+import CallMadeIcon from "@mui/icons-material/CallMade";
+
+function FormTypeToggleGroup({
+  editMode,
+  form,
+  resetForm,
+  setPatient,
+  setLatestVisits,
+  handleChange,
+}) {
+  const handleTypeChange = (event, newType) => {
+    if (newType !== null) {
+      resetForm();
+      setPatient(null);
+      setLatestVisits([]);
+      handleChange("formType", newType);
+    }
+  };
+
+  return (
+    <Box>
+      <ToggleButtonGroup
+        value={form?.formType || "inbound"}
+        exclusive
+        onChange={handleTypeChange}
+        disabled={editMode}
+        sx={{
+          bgcolor: "#F8FAFC",
+          p: "4px",
+          borderRadius: "16px",
+          border: "1px solid #E2E8F0",
+          width: "100%",
+          maxWidth: "320px",
+          display: "flex",
+          gap: "4px",
+          "&.Mui-disabled": {
+            opacity: 0.6,
+            bgcolor: "#F1F5F9",
+          },
+          "& .MuiToggleButtonGroup-grouped": {
+            border: "none !important",
+            borderRadius: "12px !important",
+            flex: 1,
+            textTransform: "none",
+            py: 1,
+            px: 2,
+            transition: "all 0.2s ease-in-out",
+          },
+        }}
+      >
+        <ToggleButton
+          value="inbound"
+          sx={{
+            color: "#64748B",
+            fontWeight: 700,
+            fontSize: "12px",
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            "&.Mui-selected": {
+              bgcolor: "#FFFFFF !important",
+              color: "#0256E8 !important",
+              fontWeight: 800,
+              boxShadow: "0px 2px 6px rgba(2, 86, 232, 0.12)",
+            },
+            "&:hover": {
+              bgcolor: "rgba(255, 255, 255, 0.5)",
+            },
+          }}
+        >
+          <CallReceivedIcon sx={{ fontSize: 16 }} />
+          Inbound
+        </ToggleButton>
+
+        <ToggleButton
+          value="outbound"
+          sx={{
+            color: "#64748B",
+            fontWeight: 700,
+            fontSize: "12px",
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            "&.Mui-selected": {
+              bgcolor: "#FFFFFF !important",
+              color: "#0256E8 !important",
+              fontWeight: 800,
+              boxShadow: "0px 2px 6px rgba(2, 86, 232, 0.12)",
+            },
+            "&:hover": {
+              bgcolor: "rgba(255, 255, 255, 0.5)",
+            },
+          }}
+        >
+          <CallMadeIcon sx={{ fontSize: 16 }} />
+          Outbound
+        </ToggleButton>
+      </ToggleButtonGroup>
+    </Box>
+  );
+}
 
 const getPatientArrivalDateTime = (
   appointmentSlot,
@@ -226,7 +330,9 @@ const maxDate = nextWeek.toISOString().slice(0, 16);
 
 function Forms() {
   const location = useLocation()
-  const editFormId = location.state?.formid || null
+  const navigate = useNavigate()
+  const editFormId = "6a842b093d54f07d0a6dc04b" || location.state?.formid || null
+  const [editMode, setEditMode] = useState(Boolean(editFormId))
   const [form, setForm] = useState(initialFormState);
   const [patientLatest, setPatientLatest] = useState(initialFormState);
   const [branchData, setBranchData] = useState(null);
@@ -255,6 +361,7 @@ function Forms() {
   const [selectedQuestions, setSelectedQuestions] = useState(null);
   const { request: getSingleBranch, error: getSingleBranchError, loading: getSingleBranchLoading } = useApi(commonRoutes.getBranchByIdForForms)
   const { request: saveFilledForm, error: saveFilledFormError, loading: saveFilledFormLoading } = useApi(commonRoutes.saveFilledForm)
+  const { request: updateform, error: updateFormError, loading: updateFormLoading } = useApi(commonRoutes.updateFilledForm)
   const {
     request: getBookedSlotsApi,
     error: getBookedSlotsError,
@@ -296,6 +403,13 @@ function Forms() {
   );
 
   const {
+    request: getFormByIdApi,
+    error: getFormByIdError,
+    loading: getFormByIdLoading,
+  } = useApi(
+    commonRoutes.getFormById
+  );
+  const {
     loading,
     selectedBranch,
     setSelectedBranch,
@@ -310,29 +424,55 @@ function Forms() {
 
     // 2. Mark the internal function as async
     const fetchFormDetails = async () => {
-      setLoading(true)
+      // setLoading(true)
       try {
         // 3. Use editFormId instead of formId
-        const res = await getFormById(selectedHospital, selectedBranch, editFormId)
+        const res = await getFormByIdApi(selectedHostpital, selectedBranch, editFormId)
 
-        if (res.sucess) {
-          // 4. Update form state with fetched data
-          setFormData(res.data)
+        if (res.success || res.sucess) {
+          const fetchedData = res?.data;
+          setSelectedBranch(fetchedData?.branchId)
+          setSelectedDoctor(fetchedData?.doctor)
+          console.log("selected", fetchedData?.doctor);
+
+          setForm(() => ({
+            formType: fetchedData?.formType || initialFormState.formType,
+            purpose: fetchedData?.purpose || "",
+            doctor: fetchedData?.doctor || null,
+            department: fetchedData?.department || null,
+            branchId: fetchedData?.branchId || null,
+            hospitalId: fetchedData?.hospitalId || selectedHostpital || null,
+            callStatus: fetchedData?.callStatus ?? "",
+            useForFollowup: fetchedData?.useForFollowup ?? false,
+            formData: {
+              ...initialFormData,
+              ...fetchedData?.formData,
+              // If patientDetails comes back as an ID string from API, 
+              // retain initialPatientDetails structure or handle as object
+              patientDetails: typeof fetchedData?.formData?.patientDetails === 'object' && fetchedData?.formData?.patientDetails !== null
+                ? fetchedData.formData.patientDetails
+                : { ...initialPatientDetails, _id: fetchedData?.formData?.patientDetails || "" },
+              attendantDetails: {
+                ...initialFormData.attendantDetails,
+                ...fetchedData?.formData?.attendantDetails
+              },
+              feedback: {
+                ...initialFormData.feedback,
+                ...fetchedData?.formData?.feedback
+              }
+            }
+          }));
         }
+
       } catch (error) {
         console.error('Error fetching form details:', error)
-      } finally {
-        setLoading(false)
       }
     }
 
     fetchFormDetails()
-  }, [editFormId, selectedHospital, selectedBranch])
+  }, [editFormId, editMode, selectedHostpital, selectedBranch])
 
   useEffect(() => {
-    console.log("selectedHostpital", selectedHostpital);
-    console.log("selectedBranch", selectedBranch);
-
     const fetchBranchAndDetails = async () => {
       if (selectedHostpital) {
         const branchDetails = await getSingleBranch(selectedBranch, selectedHostpital);
@@ -530,7 +670,8 @@ function Forms() {
       }
     };
 
-    fetchRegisteredPatients();
+    if (!editMode) fetchRegisteredPatients();
+
   }, [
     form.formData.patientDetails.patientMobile,
     selectedHostpital,
@@ -711,6 +852,16 @@ function Forms() {
       return;
     }
     try {
+      if(editMode){
+      const res = await updateFormApi(selectedHostpital, selectedBranch, form);
+      if (res?.success) {
+        resetForm();
+        toast.success("Form update successfully!");
+      } else {
+        toast.error(res?.message || "Failed to update form. Please try again.");
+      }
+      }
+      else{
       const res = await saveFilledForm(selectedHostpital, selectedBranch, form);
       if (res?.success) {
         resetForm();
@@ -718,11 +869,14 @@ function Forms() {
       } else {
         toast.error(res?.message || "Failed to submit form. Please try again.");
       }
+      }
+
     } catch (error) {
       console.error("Form submission error:", error);
       toast.error("An error occurred while submitting the form.");
     }
   }
+
 
 
   useEffect(() => {
@@ -755,6 +909,7 @@ function Forms() {
 
 
   useEffect(() => {
+    if (editMode) return
     if (doctorDepartmentChangeFromSelect.current) {
       doctorDepartmentChangeFromSelect.current = false;
       return;
@@ -4651,16 +4806,16 @@ function Forms() {
                     <div className="connected-buttons">
                       <button
                         type="button"
-                        className={`connected-btn ${form.callStatus === "Connected" ? "active" : ""}`}
-                        onClick={() => handleChange("callStatus", "Connected")}
+                        className={`connected-btn ${form.callStatus === "connected" ? "active" : ""}`}
+                        onClick={() => handleChange("callStatus", "connected")}
                       >
                         Connected
                       </button>
                       <button
                         type="button"
-                        className={`connected-btn ${form?.callStatus === "Call-Drop" ? "active" : ""}`}
+                        className={`connected-btn ${form?.callStatus === "call-drop" ? "active" : ""}`}
                         onClick={() => {
-                          handleChange("callStatus", "Call-Drop")
+                          handleChange("callStatus", "call-drop")
 
                         }}
                       >
@@ -4730,7 +4885,7 @@ function Forms() {
       </div >
 
       {
-        form.callStatus === "Connected" && (
+        form.callStatus === "connected" && (
           <div className="section" data-section="call-purpose">
             <h3>Call Purpose</h3>
 
@@ -4769,7 +4924,7 @@ function Forms() {
       }
 
       {
-        form.callStatus === "Call-Drop" && (
+        form.callStatus === "call-drop" && (
           <div className="sub-section">
             <h3>Call Drop Details</h3>
 
@@ -4854,20 +5009,73 @@ function Forms() {
       }
 
       {
-        (form.callStatus === "Connected" && form.purpose !== "" || (form.callStatus === "Call-Drop")) && form.formType !== "outbound" && (
+        (form.callStatus === "connected" && form.purpose !== "" || (form.callStatus === "call-drop")) && form.formType !== "outbound" && (
           <div className="button-group">
-            <button
-              disabled={saveFilledFormLoading}
+            <Button
+              disabled={editMode ? updateFormApiLoading : saveFilledFormLoading}
               type="button"
-              className="btn btn-clear"
-              onClick={resetForm}
+              variant="outlined"
+              onClick={() => {
+                if (editMode) {
+                  navigate("/");
+                } else {
+                  resetForm();
+                }
+              }}
+              sx={{
+                borderRadius: "12px",
+                borderColor: "#CBD5E1",
+                color: "#475569",
+                textTransform: "none",
+                fontWeight: 700,
+                fontSize: "13px",
+                px: 3,
+                py: 1,
+                "&:hover": {
+                  borderColor: "#94A3B8",
+                  backgroundColor: "#F8FAFC",
+                },
+              }}
             >
-              Clear Form
-            </button>
+              {editMode ? "Cancel" : "Clear Form"}
+            </Button>
 
-            <button type="submit" disabled={saveFilledFormLoading} className="btn btn-submit">
-              {saveFilledFormLoading ? <CircularProgress size={20} color="inherit" /> : "Submit"}
-            </button>
+            <Button
+              type="submit"
+              disabled={editMode ? updateFormApiLoading : saveFilledFormLoading}
+              variant="contained"
+              sx={{
+                borderRadius: "12px",
+                backgroundColor: "#0256E8",
+                color: "#FFFFFF",
+                textTransform: "none",
+                fontWeight: 800,
+                fontSize: "13px",
+                px: 3.5,
+                py: 1,
+                boxShadow: "none",
+                "&:hover": {
+                  backgroundColor: "#0143B8",
+                  boxShadow: "none",
+                },
+                "&.Mui-disabled": {
+                  backgroundColor: "#CBD5E1",
+                  color: "#94A3B8",
+                },
+              }}
+            >
+              {editMode ? (
+                updateFormLoading ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  "Update Form"
+                )
+              ) : saveFilledFormLoading ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                "Submit"
+              )}
+            </Button>
           </div>
         )
       }
@@ -5083,6 +5291,72 @@ function Forms() {
           <button type="submit" disabled={saveFilledFormLoading || !form.purpose} className="btn btn-submit">
             {saveFilledFormLoading ? <CircularProgress size={20} color="inherit" /> : "Submit"}
           </button>
+
+          <Button
+            disabled={saveFilledFormLoading}
+            type="button"
+            variant="outlined"
+            onClick={() => {
+              if (editMode) {
+                navigate("/", { replace: true });
+              } else {
+                resetForm();
+              }
+            }}
+            sx={{
+              borderRadius: "12px",
+              borderColor: "#CBD5E1",
+              color: "#475569",
+              textTransform: "none",
+              fontWeight: 700,
+              fontSize: "13px",
+              px: 3,
+              py: 1,
+              "&:hover": {
+                borderColor: "#94A3B8",
+                backgroundColor: "#F8FAFC",
+              },
+            }}
+          >
+            {editMode ? "Cancel" : "Clear Form"}
+          </Button>
+
+          <Button
+            type="submit"
+            disabled={editMode ? updateFormLoading : (saveFilledFormLoading || !form.purpose)}
+            variant="contained"
+            sx={{
+              borderRadius: "12px",
+              backgroundColor: "#0256E8",
+              color: "#FFFFFF",
+              textTransform: "none",
+              fontWeight: 800,
+              fontSize: "13px",
+              px: 3.5,
+              py: 1,
+              boxShadow: "none",
+              "&:hover": {
+                backgroundColor: "#0143B8",
+                boxShadow: "none",
+              },
+              "&.Mui-disabled": {
+                backgroundColor: "#CBD5E1",
+                color: "#94A3B8",
+              },
+            }}
+          >
+            {editMode ? (
+              updateFormLoading ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                "Update Form"
+              )
+            ) : saveFilledFormLoading ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              "Submit"
+            )}
+          </Button>
         </div>
       )}
 
@@ -5134,9 +5408,17 @@ function Forms() {
               ))
             )}
           </select>
-
-          <button
-            className={`toggle-btn ${form?.formType === "inbound" ? "active" : ""}`}
+          <FormTypeToggleGroup
+            editMode={editMode}
+            form={form}
+            resetForm={resetForm}
+            setPatient={setPatient}
+            setLatestVisits={setLatestVisits}
+            handleChange={handleChange}
+          />
+          {/* <button
+            disabled={editMode}
+            className={`toggle-btn  ${form?.formType === "inbound" ? "active" : ""}`}
             onClick={() => {
 
               resetForm();
@@ -5149,6 +5431,7 @@ function Forms() {
           </button>
 
           <button
+            disabled={editMode}
             className={`toggle-btn ${form?.formType === "outbound" ? "active" : ""}`}
             onClick={() => {
               resetForm();
@@ -5158,7 +5441,7 @@ function Forms() {
             }}
           >
             Outbound
-          </button>
+          </button> */}
         </div>
       </div>
       <div className="form-container">

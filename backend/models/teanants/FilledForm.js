@@ -184,3 +184,9 @@ export const FilledFormSchema = new mongoose.Schema(
     versionKey: false,
   }
 );
+
+export const FormStatus = {
+  PENDING: "PENDING",
+  REJECTED: "REJECTED",
+  ERRORFORM: "ERRORFORM",
+}

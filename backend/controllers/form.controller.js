@@ -8,6 +8,7 @@ import csv from "csv-parser";
 import { Readable } from "stream";
 import { sendWhatsAppInBackground } from "../utils/notification.js";
 import moment from "moment";
+import { FormStatus } from "../models/teanants/FilledForm.js";
 
 const HospitalModel = getHospitalModel(MasterConn)
 
@@ -448,6 +449,75 @@ export const createFilledForm = async (req, res) => {
   }
 };
 
+export const getFormById = async (req, res) => {
+
+
+  try {
+    const { formId } = req.params; // Passed in URL e.g., PUT /api/forms/:formId
+    const { hosId, branchId } = req.query;
+    const user = req.user;
+    const data = req.body;
+
+    // 1. Validation
+    if (
+      !formId ||
+      !hosId ||
+      !branchId ||
+      !mongoose.isValidObjectId(formId) ||
+      !mongoose.isValidObjectId(hosId) ||
+      !mongoose.isValidObjectId(branchId)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid formId, hospitalId, and branchId are required.",
+      });
+    }
+
+    const hospital = await HospitalModel.findById(hosId)
+      .select("trimmedName name")
+      .lean();
+
+    if (!hospital) {
+      return res.status(404).json({
+        success: false,
+        message: "Hospital not found.",
+      });
+    }
+
+    // 2. Establish multi-tenant dynamic connection
+    const conn = await getConnection(hospital.trimmedName);
+    const FilledFormsModel = getFilledFormsModel(conn);
+    const PatientModel = getPatientModel(conn);
+    const DoctorModel = getDoctorModel(conn)
+
+    // 3. Fetch existing form to compare previous state
+    const existingForm = await FilledFormsModel.findById(formId)
+      .populate({ path: "formData.patientDetails", model: PatientModel })
+      .populate({ path: "doctor", model: DoctorModel })
+      .lean();
+    if (!existingForm) {
+      return res.status(404).json({
+        success: false,
+        message: "Form record not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Form fetch successfully.",
+      data: existingForm,
+    });
+  } catch (error) {
+    console.error("Error updating filled form:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error.",
+      error: error.message,
+    });
+  }
+};
+
 export const updateFilledForm = async (req, res) => {
   let session;
 
@@ -537,11 +607,7 @@ export const updateFilledForm = async (req, res) => {
         useForFollowup: data.useForFollowup,
         followupStatus: data.useForFollowup ? "pending" : null,
       }),
-      updatedBy: {
-        agentId: user.id,
-        agentName: user.name,
-        updatedAt: new Date(),
-      },
+      formStatus: FormStatus.PENDING,
       formData: {
         ...existingForm.formData,
         ...data.formData,
