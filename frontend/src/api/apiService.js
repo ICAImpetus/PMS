@@ -319,9 +319,9 @@ export const commonRoutes = {
       }
     }),
 
-  updateFilledForm: (hosId, branchId, formId) =>
+  updateFilledForm: (hosId, branchId, formId, data) =>
 
-    API.put(`api/forms/${formId}`, {
+    API.put(`api/forms/${formId}`, data, {
       params: {
         hosId,
         branchId

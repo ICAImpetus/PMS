@@ -35,7 +35,8 @@ export const GlobalUserContextProvider = ({ children }) => {
 
         const user = localStorage.getItem("current_user");
         const parseData = user ? JSON.parse(user) : null;
-        if (!parseData) return toast.error("Session Expired!")
+        if (!parseData)
+          return toast.error("Session Expired!")
         const res = await API.get("/api/getMe");
 
         const data = res.data;

@@ -26,6 +26,36 @@ import { useNavigate } from "react-router-dom";
 
 
 
+const ExpandableText = ({ text = "", limit = 60 }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    if (!text || text.length <= limit) {
+        return <Typography variant="body2">{text || "-"}</Typography>;
+    }
+
+    const truncatedText = text.substring(0, limit) + "...";
+
+    return (
+        <Typography variant="body2" component="span">
+            {isExpanded ? text : truncatedText}{" "}
+            <Button
+                size="small"
+                onClick={() => setIsExpanded(!isExpanded)}
+                sx={{
+                    padding: 0,
+                    minWidth: "auto",
+                    fontSize: "12px",
+                    textTransform: "none",
+                    fontWeight: "bold",
+                    marginLeft: "4px",
+                }}
+            >
+                {isExpanded ? "less" : "more"}
+            </Button>
+        </Typography>
+    );
+};
+
 // --- Component 1: Ratings Popup Modal ---
 export const RatingsDialog = ({ open, questions, onClose }) => {
     return (
@@ -138,9 +168,19 @@ export const PatientHistoryRow = ({
                     }
                 }
 
+
+
                 // 2. Resolve field value
                 const rawValue = fieldMap[key] ?? getNestedValue(row, key);
                 let displayValue = rawValue;
+
+                if (key === "formData.remarks") {
+                    return (
+                        <TableCell key={col?.id || colIndex} sx={{ maxWidth: 250 }}>
+                            <ExpandableText text={rawValue} limit={60} />
+                        </TableCell>
+                    );
+                }
 
                 // 3. Format Appointment Slot
                 if (key === "formData.appointmentSlot") {

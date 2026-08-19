@@ -1,0 +1,427 @@
+import pkg from 'whatsapp-web.js';
+const { Client, LocalAuth, MessageMedia } = pkg;
+import crypto from 'crypto';
+import cron from 'node-cron';
+import qrcode from 'qrcode-terminal';
+import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
+import pg from 'pg';
+
+const { Pool } = pg;
+
+// ====================== DATABASE ======================
+const db = new Pool({
+    user: 'postgres',
+    host: 'localhost',
+    database: 'attendance_new',
+    password: 'Live@940',
+    port: 5432,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000
+});
+
+(async () => {
+    try {
+        await db.query('SELECT NOW()');
+        console.log("✅ DB Connected");
+    } catch (err) {
+        console.error("❌ DB Error:", err.message);
+    }
+})();
+
+// ====================== CONFIG ======================
+const OPENCAGE_KEY = "b614c79c5dc34c8ca7686Efw";
+const LEADS_GROUP_NAME = "Leads management";
+const LEADS_GROUP_ID = "0011516429@g.us";
+const LEAD_SHORT_URL = "https://XYZ";
+const targetGroups = ["Office Attendance", "Attandance Bhopal"];
+
+// ====================== CLIENT ======================
+const client = new Client({
+    authStrategy: new LocalAuth(),
+    puppeteer: {
+        headless: false,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+    }
+});
+let waitingForLocation = new Set();
+const sessionMessages = {};
+const pendingLeadMessages = new Map(); // shortToken → leadId
+
+// ====================== UTILITIES ======================
+async function getAddress(lat, lng) {
+    try {
+        const url = `https://api.opencagedata.com/geocode/v1/json?key=${OPENCAGE_KEY}&q=${lat},${lng}&no_annotations=1`;
+        const res = await axios.get(url);
+        return res.data.results?.[0]?.formatted || "Address not found";
+    } catch (err) {
+        console.log("Geocode error:", err.message);
+        return "Error fetching address";
+    }
+}
+
+async function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371e3;
+    const toRad = x => x * Math.PI / 180;
+    const φ1 = toRad(lat1), φ2 = toRad(lat2);
+    const Δφ = toRad(lat2 - lat1), Δλ = toRad(lon2 - lon1);
+    const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+client.on('qr', qr => qrcode.generate(qr, { small: true }));
+
+client.on("ready", () => {
+    console.log('✅ WhatsApp connected!');
+    console.log("🔥 ADMIN ID:", client.info.wid._serialized);
+});
+client.on('message_create', async (message) => {
+    try {
+        // =====================================================
+        // 1. CAPTURE BOT'S OWN MESSAGES (for Lead Message ID)
+        // =====================================================
+        if (message.fromMe) {
+            if (message.from && message.from.endsWith('@g.us')) {
+                const body = message.body || '';
+
+                for (const [shortToken, leadId] of pendingLeadMessages.entries()) {
+                    if (body.includes(shortToken)) {
+                        const whatsappMessageId = message.id?._serialized || message.id?.id || null;
+
+                        console.log(`✅ Captured Message ID for lead ${leadId}: ${whatsappMessageId}`);
+
+                        await db.query(
+                            `UPDATE leads 
+                             SET whatsapp_message_id = $1, 
+                                 leads_group_id = $2,
+                                 group_message_deleted = FALSE
+                             WHERE id = $3`,
+                            [whatsappMessageId, message.from, leadId]
+                        );
+
+                        pendingLeadMessages.delete(shortToken);
+                        break;
+                    }
+                }
+            }
+            return; // Stop here for bot's own messages
+        }
+
+        // =====================================================
+        // 2. NORMAL MESSAGE HANDLING
+        // =====================================================
+        const msg = message.body?.toLowerCase().trim();
+        let chat = null;
+
+        try {
+            chat = await message.getChat();
+        } catch (e) {
+            console.log("Chat load skipped");
+        }
+
+      // =====================================================
+// LEAD LOOKUP BY PHONE NUMBER (only in Leads group)
+// Example: /918604300940
+// =====================================================
+// =====================================================
+// LEAD LOOKUP BY PHONE NUMBER (only in Leads group)
+// Example: /918604300940  or  /8604300940
+// =====================================================
+if (msg && /^\/\d+$/.test(msg)) {
+
+    // Detect if it's the Leads group
+    const isLeadsGroup = 
+        (chat && chat.isGroup && chat.name && chat.name.toLowerCase().includes("leads management")) ||
+        (message.from === LEADS_GROUP_ID);
+
+    if (!isLeadsGroup) {
+        return;
+    }
+
+    let phoneNumber = msg.substring(1).replace(/\D/g, '');
+
+    // If user entered only last 10 digits, keep it as is
+    // If user entered full number (with 91), also keep it
+    console.log("🔎 Lead lookup requested:", phoneNumber);
+
+    try {
+        const result = await db.query(
+            `
+            SELECT id, name, phone_number, message, created_at,
+                   assigned_to, lead_type, followup_at, remarks,
+                   short_token, manage_token, manage_completed
+            FROM leads
+            WHERE 
+                -- Match full number
+                regexp_replace(phone_number, '[^0-9]', '', 'g') = $1
+                OR
+                -- Match last 10 digits
+                RIGHT(regexp_replace(phone_number, '[^0-9]', '', 'g'), 10) = $1
+            ORDER BY created_at DESC
+            LIMIT 1
+            `,
+            [phoneNumber]
+        );
+
+        if (result.rows.length === 0) {
+            await message.reply(`❌ No lead found for:\n📱 ${phoneNumber}`);
+            return;
+        }
+
+        const lead = result.rows[0];
+        const manageUrl = `${LEAD_SHORT_URL}/${lead.short_token}`;
+        let followupText = 'Not set';
+
+        if (lead.followup_at) {
+            followupText = new Date(lead.followup_at).toLocaleString('en-IN');
+        }
+
+        const replyText =
+`🔎 *Lead Found*
+
+👤 *Name:* ${lead.name || 'Unknown'}
+📱 *Number:* ${lead.phone_number}
+📌 *Lead Type:* ${lead.lead_type || 'Not Updated'}
+👨‍💼 *Assigned To:* ${lead.assigned_to || 'Not Assigned'}
+🕐 *Follow-up:* ${followupText}
+
+💬 *Message:*
+${lead.message || '-'}
+
+👉 *Edit Lead*
+${manageUrl}`;
+
+        await message.reply(replyText);
+        console.log("✅ Lead lookup result sent");
+
+    } catch (lookupErr) {
+        console.error("❌ Lead lookup error:", lookupErr.message);
+        await message.reply("❌ Unable to search lead.");
+    }
+
+    return;
+}
+
+        // Only process attendance groups
+        if (chat && chat.isGroup && !targetGroups.includes(chat.name)) {
+            return;
+        }
+
+        const contact = await message.getContact();
+        const sender = message.author || message.from;
+
+        // ====================== LEAD TRACKING ======================
+        // Only personal chats
+        if (message.from && message.from.endsWith("@g.us")) return;
+
+        const msgText = message.body?.toLowerCase().trim();
+        if (!msgText) return;
+
+        const keywords = [
+            "i want to invest",
+            "interested in registration process",
+            "tell me about the project",
+            "inaugural discount",
+            "high footfall area"
+        ];
+
+        const isImportant = keywords.some(keyword => msgText.includes(keyword));
+        if (!isImportant) return;
+
+        console.log("📌 Lead Detected:", message.body);
+
+        const leadContact = await message.getContact();
+        const manageToken = crypto.randomBytes(32).toString('hex');
+        const shortToken = crypto.randomBytes(4).toString('hex');
+
+        console.log("🔑 Manage Token:", manageToken);
+        console.log("🔗 Short Token:", shortToken);
+
+        let leadId = null;
+
+        // Save Lead
+        try {
+            const leadResult = await db.query(
+                `
+                INSERT INTO leads
+                (name, phone_number, message, chat_name, created_at, status, manage_token, short_token)
+                VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7)
+                RETURNING id
+                `,
+                [
+                    leadContact.pushname || "Unknown",
+                    leadContact.number,
+                    message.body,
+                    "Personal Chat",
+                    "New",
+                    manageToken,
+                    shortToken
+                ]
+            );
+
+            if (leadResult.rows.length === 0) {
+                console.error("❌ Lead was not inserted");
+                return;
+            }
+
+            leadId = leadResult.rows[0].id;
+            console.log("✅ Lead saved in database");
+            console.log("🆔 Lead ID:", leadId);
+
+        } catch (dbErr) {
+            console.error("❌ Failed to save lead:", dbErr.message);
+            return;
+        }
+
+        // Auto Reply
+        try {
+            await message.reply(
+`Thank you for your interest! 🙏
+
+Our team will contact you shortly regarding this.`
+            );
+            console.log("✅ Auto-reply sent to customer");
+        } catch (replyErr) {
+            console.error("❌ Failed to send auto-reply:", replyErr.message);
+        }
+
+        // Forward to Leads Group
+        const manageUrl = `${LEAD_SHORT_URL}/${shortToken}`;
+        console.log("🔗 Manage URL:", manageUrl);
+
+        try {
+            const forwardText =
+`📌 *New Lead Tracked*
+
+👤 *From:* ${leadContact.pushname || leadContact.number}
+📱 *Number:* ${leadContact.number}
+🕐 *Time:* ${new Date().toLocaleString('en-IN')}
+
+👉 *Manage Lead*
+${manageUrl}`;
+
+            console.log("📤 Sending lead to management group...");
+
+            // Mark as pending so we can capture the Message ID
+            pendingLeadMessages.set(shortToken, leadId);
+
+            await client.sendMessage(LEADS_GROUP_ID, forwardText);
+
+            console.log("✅ Lead forwarded to Leads management group");
+            setTimeout(async () => {
+    try {
+        // If still pending, try to find the message manually
+        if (pendingLeadMessages.has(shortToken)) {
+            console.log(`⚠️ Message ID not captured yet for ${shortToken}. Trying fallback...`);
+
+            const group = await client.getChatById(LEADS_GROUP_ID);
+            const messages = await group.fetchMessages({ limit: 10 });
+
+            const found = messages.find(m => 
+                m.fromMe && 
+                m.body && 
+                m.body.includes(shortToken)
+            );
+
+            if (found) {
+                const whatsappMessageId = found.id?._serialized || found.id?.id || null;
+                console.log(`✅ Fallback captured Message ID: ${whatsappMessageId}`);
+
+                await db.query(
+                    `UPDATE leads 
+                     SET whatsapp_message_id = $1, 
+                         leads_group_id = $2,
+                         group_message_deleted = FALSE
+                     WHERE id = $3`,
+                    [whatsappMessageId, LEADS_GROUP_ID, leadId]
+                );
+
+                pendingLeadMessages.delete(shortToken);
+            } else {
+                console.log("❌ Fallback also could not find the message");
+            }
+        }
+    } catch (err) {
+        console.error("Fallback error:", err.message);
+    }
+}, 3000);
+            console.log("🔗 Short Manage URL:", manageUrl);
+
+        } catch (forwardErr) {
+            console.error("❌ Failed to forward lead:", forwardErr.message);
+            pendingLeadMessages.delete(shortToken);
+        }
+
+    } catch (err) {
+        console.error("Main Error:", err.message);
+    }
+});
+
+// ====================== DAILY REPORTS ======================
+cron.schedule('20 0 * * *', async () => {
+    try {
+        console.log("📤 Sending Daily Reports...");
+
+        const now = new Date();
+        now.setDate(now.getDate() - 1);
+
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+
+        const labourFile = `Attendance_${day}-${month}-${year}.pdf`;
+        const employeeFile = `Attendance_${day}-${month}-${year}.pdf`;
+
+        const labourPath = path.join('C:/attendance-automation/downloads/labour', labourFile);
+        const employeePath = path.join('C:/attendance-automation/downloads/employee', employeeFile);
+
+        const reportGroups = [
+            { name: "Attandance Bhopal", id: "120363424058544367@g.us" }
+        ];
+
+        if (fs.existsSync(labourPath)) {
+            for (const group of reportGroups) {
+                try {
+                    const media = MessageMedia.fromFilePath(labourPath);
+                    await client.sendMessage(group.id, media, {
+                        caption: "📊 Labour Daily Attendance Report"
+                    });
+                    console.log(`✅ Labour Report Sent to ${group.name}`);
+                } catch (err) {
+                    console.log(`❌ Failed to send Labour report to ${group.name}:`, err.message);
+                }
+            }
+        } else {
+            console.log("❌ Labour PDF not found");
+        }
+
+        console.log("⏳ Waiting 5 minutes...");
+        await new Promise(resolve => setTimeout(resolve, 5 * 60 * 1000));
+
+        if (fs.existsSync(employeePath)) {
+            for (const group of reportGroups) {
+                try {
+                    const media = MessageMedia.fromFilePath(employeePath);
+                    await client.sendMessage(group.id, media, {
+                        caption: "📊 Employee Daily Attendance Report"
+                    });
+                    console.log(`✅ Employee Report Sent to ${group.name}`);
+                } catch (err) {
+                    console.log(`❌ Failed to send Employee report to ${group.name}:`, err.message);
+                }
+            }
+        } else {
+            console.log("❌ Employee PDF not found");
+        }
+
+    } catch (err) {
+        console.log("❌ Auto Send Error:", err.message);
+    }
+});
+
+client.initialize();
+
+process.on('uncaughtException', e => console.error('Uncaught:', e));
+process.on('unhandledRejection', e => console.error('Rejection:', e));

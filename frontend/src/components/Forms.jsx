@@ -36,7 +36,10 @@ import {
   TableCell,
   Link,
   Rating,
-  ToggleButton, ToggleButtonGroup
+  ToggleButton, ToggleButtonGroup,
+  Chip,
+  Tooltip,
+  IconButton
 } from "@mui/material";
 import DoctorProfileCard from "./DoctorCard";
 import HospitalContext from "../contexts/HospitalContexts";
@@ -44,13 +47,16 @@ import {
   CATEGORY, INBOUND_PURPOSE_OPTIONS, getCurrentDateTime,
   IndianStatesWithDistricts, initialFormState, OUTBOUND_PURPOSE_OPTIONS,
   REFERENCE_OPTIONS, initialFormData,
-  initialPatientDetails
+  initialPatientDetails,
+  REMARK_INBOUND_TEMPLATES
 } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
 import { FORMS_AVAILABLE_COLUMNS, getNestedValue, PatientCallHistory } from "../utils/exportUtils";
 import { PatientHistoryTableBody } from "./customComponents/PatientHistoryTableBody";
 import { useLocation, useNavigate } from "react-router-dom";
 import CallReceivedIcon from "@mui/icons-material/CallReceived";
 import CallMadeIcon from "@mui/icons-material/CallMade";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 
 function FormTypeToggleGroup({
   editMode,
@@ -327,11 +333,326 @@ nextWeek.setDate(nextWeek.getDate() + 7);
 nextWeek.setMinutes(nextWeek.getMinutes() - nextWeek.getTimezoneOffset());
 const maxDate = nextWeek.toISOString().slice(0, 16);
 
+const AppointmentSlotsSelector = ({
+  selectedDoctor,
+  doctorSlots,
+  getSession,
+  form,
+  bookedSlotsSet,
+  isPastSlot,
+  handleChange,
+  setBookedSlotModal,
+  handleRemoveBookedSlot,
+}) => {
+  if (!selectedDoctor || !doctorSlots?.length) return null;
 
+  return (
+    <Box sx={{ my: 2 }}>
+      <Typography
+        variant="subtitle2"
+        sx={{ fontWeight: 600, mb: 1, color: "text.primary" }}
+      >
+        Select Appointment Slot <span style={{ color: "red" }}>*</span>
+      </Typography>
+
+      <Box
+        sx={{
+          width: "100%",
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
+          gap: 1.5,
+          py: 1,
+        }}
+      >
+        {doctorSlots?.map((slot) => {
+          const session = getSession(slot.start);
+          const isSelected =
+            String(form.formData.appointmentSlot?.slotId) === String(slot._id);
+          const isBooked = bookedSlotsSet.has(String(slot._id));
+          const isPast = isPastSlot(slot.start, form.formData.dateTime);
+
+          return (
+            <Button
+              key={slot._id}
+              variant={isSelected ? "contained" : "outlined"}
+              disabled={isPast}
+              onClick={() => {
+                if (isBooked) {
+                  setBookedSlotModal({
+                    open: true,
+                    slot,
+                  });
+                  return;
+                }
+
+                if (isPast) return;
+
+                handleChange("formData.appointmentSlot", {
+                  slotId: slot._id,
+                  start: slot.start,
+                  end: slot.end,
+                  date: form.formData.dateTime,
+                });
+              }}
+              color={
+                isBooked ? "error" : isSelected ? "primary" : "inherit"
+              }
+              sx={{
+                flexDirection: "column",
+                alignItems: "center",
+                padding: "8px 6px",
+                position: "relative",
+                textTransform: "none",
+                borderRadius: 2,
+                borderColor: isBooked
+                  ? "error.main"
+                  : isSelected
+                    ? "primary.main"
+                    : "divider",
+                backgroundColor: isBooked
+                  ? "error.lighter"
+                  : isPast
+                    ? "action.disabledBackground"
+                    : "background.paper",
+                "&:hover": {
+                  backgroundColor: isBooked ? "#ffebee" : undefined,
+                },
+              }}
+            >
+              {/* REMOVE BOOKED SLOT BUTTON */}
+              {isBooked && (
+                <Tooltip title="Remove/Cancel Booking">
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={(e) => {
+                      e.stopPropagation(); // स्लॉट सेलेक्ट होने से रोके
+                      if (handleRemoveBookedSlot) {
+                        handleRemoveBookedSlot(slot._id);
+                      }
+                    }}
+                    sx={{
+                      position: "absolute",
+                      top: 2,
+                      right: 2,
+                      padding: "2px",
+                      backgroundColor: "rgba(255, 255, 255, 0.8)",
+                      "&:hover": {
+                        backgroundColor: "#fff",
+                      },
+                    }}
+                  >
+                    <DeleteOutlineIcon sx={{ fontSize: "16px" }} />
+                  </IconButton>
+                </Tooltip>
+              )}
+
+              {/* SESSION */}
+              <Typography
+                variant="caption"
+                sx={{
+                  fontSize: "10px",
+                  color: isSelected ? "inherit" : "text.secondary",
+                  lineHeight: 1,
+                  mb: 0.5,
+                }}
+              >
+                {session}
+              </Typography>
+
+              {/* SLOT TIME */}
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: "12px",
+                  lineHeight: 1.2,
+                }}
+              >
+                {slot.start} - {slot.end}
+              </Typography>
+
+              {/* STATUS TAGS */}
+              {isBooked && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    mt: 0.5,
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    color: "error.main",
+                  }}
+                >
+                  Booked
+                </Typography>
+              )}
+
+              {isPast && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    mt: 0.5,
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    color: "text.disabled",
+                  }}
+                >
+                  Expired
+                </Typography>
+              )}
+            </Button>
+          );
+        })}
+      </Box>
+    </Box>
+  );
+};
+
+const RenderRemarksComponents = ({ form, handleChange }) => {
+  const [open, setOpen] = useState(false);
+
+  const handleInputChange = (event, newInputValue, reason) => {
+
+    if (reason === "reset") return;
+
+    handleChange("formData.remarks", newInputValue);
+
+    if (newInputValue.endsWith("/")) {
+      setOpen(true);
+    } else if (!newInputValue.includes("/")) {
+      setOpen(false);
+    }
+  };
+
+  const replaceDynamicFields = (rawText) => {
+    const data = form.formData || {};
+    return rawText
+      .replace(/\[DoctorName\]|\[Doctor\/Department\]|\[Doctor\]/gi, data.doctorName || data.doctor || "[Doctor Name]")
+      .replace(/\[Date\]|\[Date\/Time\]/gi, data.date || "[Date]")
+      .replace(/\[Time\]/gi, data.time || "[Time]")
+      .replace(/\[Reason\]/gi, data.reason || "[Reason]")
+      .replace(/\[Amount\]|\[Amount\/Range\]/gi, data.amount || "[Amount]");
+  };
+  const handleSelectTemplate = (event, selectedOption) => {
+    if (selectedOption && typeof selectedOption === "object") {
+      const currentText = form.formData.remarks || "";
+
+      // Dynamic replace चलाएं
+      const formattedContent = replaceDynamicFields(selectedOption.content);
+
+      // '/' हटाकर नया टेक्स्ट सेट करें
+      const updatedText = currentText.replace(/\/$/, "") + formattedContent;
+
+      handleChange("formData.remarks", updatedText);
+      setOpen(false);
+    }
+  };
+
+  return (
+    <Box sx={{ width: "100%", my: 2 }}>
+      <Autocomplete
+        open={open}
+        onOpen={() => {
+          if (form.formData.remarks?.includes("/")) setOpen(true);
+        }}
+        onClose={() => setOpen(false)}
+        options={REMARK_INBOUND_TEMPLATES}
+
+        // Fix 1: value को हमेशा null रखें क्योंकि आप नियंत्रित फ्री-टेक्स्ट (inputValue) का इस्तेमाल कर रहे हैं
+        value={null}
+
+        getOptionLabel={(option) =>
+          typeof option === "string" ? option : option.name
+        }
+        filterOptions={(options, state) => {
+          const query = state.inputValue.split("/").pop().toLowerCase();
+          return options.filter(
+            (opt) =>
+              opt.name.toLowerCase().includes(query) ||
+              opt.code.toLowerCase().includes(query) ||
+              opt.category.toLowerCase().includes(query)
+          );
+        }}
+        onChange={handleSelectTemplate}
+        onInputChange={handleInputChange}
+        inputValue={form.formData.remarks || ""}
+        freeSolo
+        renderOption={(props, option) => (
+          <Box
+            component="li"
+            {...props}
+            key={option.code}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              py: 1,
+              borderBottom: "1px solid #f0f0f0",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                width: "100%",
+                mb: 0.5,
+              }}
+            >
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: "bold", color: "primary.main" }}
+              >
+                {option.code}
+              </Typography>
+              <Chip
+                label={option.category}
+                size="small"
+                color="secondary"
+                variant="outlined"
+                sx={{ fontSize: "10px", height: "20px" }}
+              />
+            </Box>
+            <Typography
+              variant="body2"
+              sx={{ color: "text.primary", fontWeight: 500 }}
+            >
+              {option.name}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                color: "text.secondary",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {option.content}
+            </Typography>
+          </Box>
+        )}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label="Remarks"
+            required
+            multiline
+            rows={3}
+            placeholder="Type '/' to search and select template..."
+            variant="outlined"
+            fullWidth
+          />
+        )}
+      />
+    </Box>
+  );
+};
 function Forms() {
   const location = useLocation()
   const navigate = useNavigate()
-  const editFormId = "6a842b093d54f07d0a6dc04b" || location.state?.formid || null
+  // const editFormId = "6a842b093d54f07d0a6dc04b" || location.state?.formid || null
+  const editFormId = location.state?.formid || null
   const [editMode, setEditMode] = useState(Boolean(editFormId))
   const [form, setForm] = useState(initialFormState);
   const [patientLatest, setPatientLatest] = useState(initialFormState);
@@ -361,7 +682,7 @@ function Forms() {
   const [selectedQuestions, setSelectedQuestions] = useState(null);
   const { request: getSingleBranch, error: getSingleBranchError, loading: getSingleBranchLoading } = useApi(commonRoutes.getBranchByIdForForms)
   const { request: saveFilledForm, error: saveFilledFormError, loading: saveFilledFormLoading } = useApi(commonRoutes.saveFilledForm)
-  const { request: updateform, error: updateFormError, loading: updateFormLoading } = useApi(commonRoutes.updateFilledForm)
+  // const { request: updateform, error: updateFormError, loading: updateFormApiLoading } = useApi(commonRoutes.updateFilledForm)
   const {
     request: getBookedSlotsApi,
     error: getBookedSlotsError,
@@ -375,7 +696,7 @@ function Forms() {
     error: updateFormApiError,
     loading: updateFormApiLoading,
   } = useApi(
-    commonRoutes.updateFormApi
+    commonRoutes.updateFilledForm
   );
 
   const {
@@ -763,6 +1084,29 @@ function Forms() {
     });
   };
 
+  const handleRemoveBookedSlot = async (slotId) => {
+    try {
+      // (Optional) अगर बैकएंड API है, तो यहाँ API कॉल करें:
+      // await axios.post("/api/cancel-slot", { slotId });
+
+      // 1. UI State (bookedSlotsSet) से Slot Id हटाएँ
+      setBookedSlotsSet((prevSet) => {
+        const newSet = new Set(prevSet);
+        newSet.delete(String(slotId));
+        return newSet;
+      });
+
+      // 2. अगर यूज़र ने उसी स्लॉट को फ़ॉर्म में सेलेक्ट किया हुआ था, तो फ़ॉर्म से साफ़ करें
+      if (form.formData.appointmentSlot?.slotId === slotId) {
+        handleChange("formData.appointmentSlot", null);
+      }
+
+      console.log(` Slot ${slotId} removed successfully.`);
+    } catch (error) {
+      console.error(" Failed to remove booked slot:", error);
+    }
+  };
+
   const handleDepartmentChange = async (depId) => {
 
     handleChange("doctor", null);
@@ -852,23 +1196,23 @@ function Forms() {
       return;
     }
     try {
-      if(editMode){
-      const res = await updateFormApi(selectedHostpital, selectedBranch, form);
-      if (res?.success) {
-        resetForm();
-        toast.success("Form update successfully!");
-      } else {
-        toast.error(res?.message || "Failed to update form. Please try again.");
+      if (editMode) {
+        const res = await updateFormApi(selectedHostpital, selectedBranch, editFormId, form);
+        if (res?.success) {
+          resetForm();
+          toast.success("Form update successfully!");
+        } else {
+          toast.error(res?.message || "Failed to update form. Please try again.");
+        }
       }
-      }
-      else{
-      const res = await saveFilledForm(selectedHostpital, selectedBranch, form);
-      if (res?.success) {
-        resetForm();
-        toast.success("Form submitted successfully!");
-      } else {
-        toast.error(res?.message || "Failed to submit form. Please try again.");
-      }
+      else {
+        const res = await saveFilledForm(selectedHostpital, selectedBranch, form);
+        if (res?.success) {
+          resetForm();
+          toast.success("Form submitted successfully!");
+        } else {
+          toast.error(res?.message || "Failed to submit form. Please try again.");
+        }
       }
 
     } catch (error) {
@@ -1119,26 +1463,6 @@ function Forms() {
       </div>
     );
   };
-  const renderRemarksComponents = () => {
-    return (
-      <div className="input-row">
-        <div className="input-group textarea-field-container">
-          <label className="required">Remarks</label>
-
-          <textarea
-            className="textarea-field"
-            value={form.formData.remarks}
-            onChange={(e) =>
-              handleChange("formData.remarks", e.target.value)
-            }
-            required
-            rows="3"
-          />
-        </div>
-      </div>
-    );
-
-  };
 
   const renderInboundPurposeDetails = () => {
     switch (form.formType === "inbound" && form.purpose) {
@@ -1283,150 +1607,19 @@ function Forms() {
             </div> */}
 
 
+            <AppointmentSlotsSelector
+              selectedDoctor={selectedDoctor}
+              doctorSlots={doctorSlots}
+              getSession={getSession}
+              form={form}
+              bookedSlotsSet={bookedSlotsSet}
+              isPastSlot={isPastSlot}
+              handleChange={handleChange}
+              setBookedSlotModal={setBookedSlotModal}
+              handleRemoveBookedSlot={handleRemoveBookedSlot}
+            />
 
-            {
 
-
-              selectedDoctor &&
-              doctorSlots?.length > 0 && (
-                <div>
-                  <div className="input-group">
-                    <label className="required">
-                      Select Appointment Slot
-                    </label>
-                    <div
-                      style={{
-                        width: "100%",
-                        display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fill, minmax(110px, 1fr))",
-                        gap: "4px",
-                        padding: "4px 0",
-                      }}
-                    >
-
-                      {
-                        doctorSlots?.map((slot) => {
-
-                          const session = getSession(
-                            slot.start
-                          );
-
-                          const isSelected =
-                            String(
-                              form.formData
-                                .appointmentSlot?.slotId
-                            ) === String(slot._id);
-
-                          const isBooked =
-                            bookedSlotsSet.has(
-                              String(slot._id)
-                            );
-
-                          const isPast = isPastSlot(
-                            slot.start,
-                            form.formData.dateTime
-                          );
-
-                          return (
-                            <button
-                              key={slot._id}
-                              type="button"
-                              disabled={isPast}
-
-                              onClick={() => {
-
-                                if (isBooked) {
-                                  setBookedSlotModal({
-                                    open: true,
-                                    slot,
-                                  });
-
-                                  return;
-                                }
-
-                                if (isPast) {
-                                  return;
-                                }
-
-                                handleChange(
-                                  "formData.appointmentSlot",
-                                  {
-                                    slotId: slot._id,
-
-                                    start: slot.start,
-
-                                    end: slot.end,
-
-                                    date:
-                                      form.formData.dateTime,
-                                  }
-                                );
-                              }}
-
-                              style={getSlotStyles({
-                                isPast,
-                                isBooked,
-                                isSelected,
-                              })}
-                            >
-
-                              {/* SESSION */}
-                              <div
-                                style={{
-                                  fontSize: "11px",
-                                  opacity: 0.8,
-                                  marginBottom: "4px",
-                                }}
-                              >
-                                {session}
-                              </div>
-
-                              {/* SLOT TIME */}
-                              <div>
-                                {slot.start} - {slot.end}
-                              </div>
-
-                              {/* BOOKED */}
-                              {isBooked && (
-                                <div
-                                  style={{
-                                    marginTop: 4,
-                                    fontSize: 11,
-                                    color: "#d32f2f",
-                                    fontWeight: 600,
-                                  }}
-                                >
-                                  Booked
-                                </div>
-                              )}
-
-                              {/* EXPIRED */}
-                              {isPast && (
-                                <div
-                                  style={{
-                                    marginTop: 4,
-                                    fontSize: 11,
-                                    color: "#c23737",
-                                    fontWeight: 600,
-                                  }}
-                                >
-                                  Expired
-                                </div>
-                              )}
-
-                            </button>
-                          );
-                        })
-                      }
-
-                    </div>
-
-                  </div>
-
-                </div>
-              )
-            }
             {/* Patient Arrival Time for No Slots - Separate Date and Time */}
             {form.formData.slotDuration === "no-slots" && (
               <div className="input-row">
@@ -1619,7 +1812,9 @@ function Forms() {
               </Grid>
             </Box>
 
-            <div className="input-group textarea-field-container">
+            <RenderRemarksComponents form={form} handleChange={handleChange} />
+
+            {/* <div className="input-group textarea-field-container">
               <label className="required">Remarks</label>
 
               <textarea
@@ -1632,7 +1827,7 @@ function Forms() {
                 rows="3"
               />
 
-            </div>
+            </div> */}
 
 
 
@@ -4892,25 +5087,44 @@ function Forms() {
             <div className="input-row">
               <div className="input-group">
                 <label className="required">Purpose Of Call</label>
-                <Autocomplete freeSolo
+                <Autocomplete
+
                   sx={{
-                    width: "100%", "& .MuiOutlinedInput-root":
-                    {
-                      minHeight: 28, height: 28, border: "1px solid var(--border-color)",
-                      borderRadius:
-                        "var(--radius)",
-                      backgroundColor: "#fff", fontSize: "13px", "& fieldset": { border: "none", },
+                    width: "100%",
+                    "& .MuiOutlinedInput-root": {
+                      minHeight: 28,
+                      height: 28,
+                      border: "1px solid var(--border-color)",
+                      borderRadius: "var(--radius)",
+                      backgroundColor: "#fff",
+                      fontSize: "13px",
+                      "& fieldset": { border: "none" },
                     },
-                    "& .MuiInputBase-input": { fontSize: "13px", padding: "0 14px", },
+                    "& .MuiInputBase-input": { fontSize: "13px", padding: "0 14px" },
                   }}
                   options={INBOUND_PURPOSE_OPTIONS}
-                  getOptionLabel={(option) => typeof option === "string" ?
-                    option : option.label}
-                  value={INBOUND_PURPOSE_OPTIONS.find((item) => item.value === form.purpose) || form.purpose}
-                  onChange={(_, newValue) => { handleChange("purpose", typeof newValue === "string" ? newValue : newValue?.value || ""); }}
-                  onInputChange={(_, newInputValue) => { handleChange("purpose", newInputValue); }}
-                  renderInput={(params) =>
-                    (<TextField {...params} placeholder="Search or type purpose" />)} />
+                  getOptionLabel={(option) =>
+                    typeof option === "string" ? option : option.label || ""
+                  }
+
+                  value={
+                    INBOUND_PURPOSE_OPTIONS.find((item) => item.value === form.purpose) || null
+                  }
+
+                  isOptionEqualToValue={(option, value) => option.value === value.value}
+
+                  onChange={(_, newValue) => {
+                    handleChange("purpose", newValue ? newValue.value : "");
+                  }}
+
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      placeholder="Search and select purpose"
+                      required
+                    />
+                  )}
+                />
               </div>
             </div>
 
@@ -5065,7 +5279,7 @@ function Forms() {
               }}
             >
               {editMode ? (
-                updateFormLoading ? (
+                updateFormApiLoading ? (
                   <CircularProgress size={20} color="inherit" />
                 ) : (
                   "Update Form"
@@ -5213,7 +5427,6 @@ function Forms() {
               <label className="required">Purpose</label>
 
               <Autocomplete
-                freeSolo
                 sx={{
                   width: "100%",
 
@@ -5236,26 +5449,21 @@ function Forms() {
                 }}
                 options={OUTBOUND_PURPOSE_OPTIONS}
                 getOptionLabel={(option) =>
-                  typeof option === "string"
-                    ? option
-                    : option.label
+                  typeof option === "string" ? option : option.label || ""
                 }
+
                 value={
                   OUTBOUND_PURPOSE_OPTIONS.find(
                     (item) => item.value === form.purpose
-                  ) || form.purpose
+                  ) || null
                 }
+
+                isOptionEqualToValue={(option, value) => option.value === value.value}
+
                 onChange={(_, newValue) => {
-                  handleChange(
-                    "purpose",
-                    typeof newValue === "string"
-                      ? newValue
-                      : newValue?.value || ""
-                  );
+                  handleChange("purpose", newValue ? newValue.value : "");
                 }}
-                onInputChange={(_, newInputValue) => {
-                  handleChange("purpose", newInputValue);
-                }}
+
                 renderInput={(params) => (
                   <TextField
                     {...params}
@@ -5323,7 +5531,7 @@ function Forms() {
 
           <Button
             type="submit"
-            disabled={editMode ? updateFormLoading : (saveFilledFormLoading || !form.purpose)}
+            disabled={editMode ? updateFormApiLoading : (saveFilledFormLoading || !form.purpose)}
             variant="contained"
             sx={{
               borderRadius: "12px",
@@ -5346,7 +5554,7 @@ function Forms() {
             }}
           >
             {editMode ? (
-              updateFormLoading ? (
+              updateFormApiLoading ? (
                 <CircularProgress size={20} color="inherit" />
               ) : (
                 "Update Form"
