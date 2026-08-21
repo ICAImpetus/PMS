@@ -112,14 +112,14 @@ export const buildPaginationResponse = (data, total, page, limit) => {
 export const connecttoAca = async (data) => {
   const URL = "mongodb+srv://kanhaiyamali_db_user:vNQw585DWl0PDqnF@cluster0.kssemtr.mongodb.net/ACA"
   if (!URL) {
-    console.log("ACA Connection String is Missing.");
+    //console.log("ACA Connection String is Missing.");
     return;
   }
 
   let conn;
 
   try {
-    console.log("urk", URL);
+    //console.log("urk", URL);
 
     conn = await mongoose.createConnection(URL).asPromise();
 
@@ -128,7 +128,7 @@ export const connecttoAca = async (data) => {
       conn.models.DoctorSchedule ||
       conn.model("DoctorSchedule", DoctorScheduleSchema);
 
-    console.log("After Register:", conn.modelNames());
+    //console.log("After Register:", conn.modelNames());
 
     const normalizedName = data.DoctorName
       .replace(/^dr\.?\s*/i, "")
@@ -157,7 +157,7 @@ export const connecttoAca = async (data) => {
       }
     );
 
-    console.log("Updated Doctor:", updatedDoctor);
+    //console.log("Updated Doctor:", updatedDoctor);
   } catch (err) {
     console.error("ACA Update Error:", err);
   } finally {

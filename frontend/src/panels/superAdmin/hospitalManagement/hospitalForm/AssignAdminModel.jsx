@@ -63,7 +63,7 @@ const AssignAdminModal = ({ open, onClose, onAssign, hospitalName }) => {
           toast.error("No assignable users found");
         }
       } else {
-        console.log("API Error:", response);
+        //console.log("API Error:", response);
         toast.error(response.message || "Failed to fetch users");
       }
     } catch (error) {

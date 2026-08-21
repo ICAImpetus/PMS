@@ -133,7 +133,7 @@ export const PatientHistory = () => {
     };
 
     const handleOpenDateFilter = (event) => {
-        console.log("event", event.currentTarget);
+        //console.log("event", event.currentTarget);
 
         setDateFilterAnchorEl(event.currentTarget);
     };
@@ -211,7 +211,7 @@ export const PatientHistory = () => {
         try {
 
             const res = await getPatients(null, pagination?.patient?.page, selectedBranch, selectedHospital, startDate, endDate, true)
-            console.log("patinat fetch ", res);
+            //console.log("patinat fetch ", res);
             if (res?.success) {
                 setPatients(res?.data)
                 setPagination((prev) => ({

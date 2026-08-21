@@ -150,7 +150,7 @@ function UserManagentAdmin() {
         toast.error(response.message || "Failed to delete user");
       }
     } catch (error) {
-      console.log("Error deleting user:", error);
+      //console.log("Error deleting user:", error);
       toast.error("Error deleting user");
     } finally {
       handleCloseDeleteModal();

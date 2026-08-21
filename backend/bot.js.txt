@@ -25,7 +25,7 @@ const db = new Pool({
 (async () => {
     try {
         await db.query('SELECT NOW()');
-        console.log("✅ DB Connected");
+        //console.log("✅ DB Connected");
     } catch (err) {
         console.error("❌ DB Error:", err.message);
     }
@@ -57,7 +57,7 @@ async function getAddress(lat, lng) {
         const res = await axios.get(url);
         return res.data.results?.[0]?.formatted || "Address not found";
     } catch (err) {
-        console.log("Geocode error:", err.message);
+        //console.log("Geocode error:", err.message);
         return "Error fetching address";
     }
 }
@@ -74,8 +74,8 @@ async function getDistance(lat1, lon1, lat2, lon2) {
 client.on('qr', qr => qrcode.generate(qr, { small: true }));
 
 client.on("ready", () => {
-    console.log('✅ WhatsApp connected!');
-    console.log("🔥 ADMIN ID:", client.info.wid._serialized);
+    //console.log('✅ WhatsApp connected!');
+    //console.log("🔥 ADMIN ID:", client.info.wid._serialized);
 });
 client.on('message_create', async (message) => {
     try {
@@ -90,7 +90,7 @@ client.on('message_create', async (message) => {
                     if (body.includes(shortToken)) {
                         const whatsappMessageId = message.id?._serialized || message.id?.id || null;
 
-                        console.log(`✅ Captured Message ID for lead ${leadId}: ${whatsappMessageId}`);
+                        //console.log(`✅ Captured Message ID for lead ${leadId}: ${whatsappMessageId}`);
 
                         await db.query(
                             `UPDATE leads 
@@ -118,7 +118,7 @@ client.on('message_create', async (message) => {
         try {
             chat = await message.getChat();
         } catch (e) {
-            console.log("Chat load skipped");
+            //console.log("Chat load skipped");
         }
 
       // =====================================================
@@ -144,7 +144,7 @@ if (msg && /^\/\d+$/.test(msg)) {
 
     // If user entered only last 10 digits, keep it as is
     // If user entered full number (with 91), also keep it
-    console.log("🔎 Lead lookup requested:", phoneNumber);
+    //console.log("🔎 Lead lookup requested:", phoneNumber);
 
     try {
         const result = await db.query(
@@ -194,7 +194,7 @@ ${lead.message || '-'}
 ${manageUrl}`;
 
         await message.reply(replyText);
-        console.log("✅ Lead lookup result sent");
+        //console.log("✅ Lead lookup result sent");
 
     } catch (lookupErr) {
         console.error("❌ Lead lookup error:", lookupErr.message);
@@ -230,14 +230,14 @@ ${manageUrl}`;
         const isImportant = keywords.some(keyword => msgText.includes(keyword));
         if (!isImportant) return;
 
-        console.log("📌 Lead Detected:", message.body);
+        //console.log("📌 Lead Detected:", message.body);
 
         const leadContact = await message.getContact();
         const manageToken = crypto.randomBytes(32).toString('hex');
         const shortToken = crypto.randomBytes(4).toString('hex');
 
-        console.log("🔑 Manage Token:", manageToken);
-        console.log("🔗 Short Token:", shortToken);
+        //console.log("🔑 Manage Token:", manageToken);
+        //console.log("🔗 Short Token:", shortToken);
 
         let leadId = null;
 
@@ -267,8 +267,8 @@ ${manageUrl}`;
             }
 
             leadId = leadResult.rows[0].id;
-            console.log("✅ Lead saved in database");
-            console.log("🆔 Lead ID:", leadId);
+            //console.log("✅ Lead saved in database");
+            //console.log("🆔 Lead ID:", leadId);
 
         } catch (dbErr) {
             console.error("❌ Failed to save lead:", dbErr.message);
@@ -282,14 +282,14 @@ ${manageUrl}`;
 
 Our team will contact you shortly regarding this.`
             );
-            console.log("✅ Auto-reply sent to customer");
+            //console.log("✅ Auto-reply sent to customer");
         } catch (replyErr) {
             console.error("❌ Failed to send auto-reply:", replyErr.message);
         }
 
         // Forward to Leads Group
         const manageUrl = `${LEAD_SHORT_URL}/${shortToken}`;
-        console.log("🔗 Manage URL:", manageUrl);
+        //console.log("🔗 Manage URL:", manageUrl);
 
         try {
             const forwardText =
@@ -302,19 +302,19 @@ Our team will contact you shortly regarding this.`
 👉 *Manage Lead*
 ${manageUrl}`;
 
-            console.log("📤 Sending lead to management group...");
+            //console.log("📤 Sending lead to management group...");
 
             // Mark as pending so we can capture the Message ID
             pendingLeadMessages.set(shortToken, leadId);
 
             await client.sendMessage(LEADS_GROUP_ID, forwardText);
 
-            console.log("✅ Lead forwarded to Leads management group");
+            //console.log("✅ Lead forwarded to Leads management group");
             setTimeout(async () => {
     try {
         // If still pending, try to find the message manually
         if (pendingLeadMessages.has(shortToken)) {
-            console.log(`⚠️ Message ID not captured yet for ${shortToken}. Trying fallback...`);
+            //console.log(`⚠️ Message ID not captured yet for ${shortToken}. Trying fallback...`);
 
             const group = await client.getChatById(LEADS_GROUP_ID);
             const messages = await group.fetchMessages({ limit: 10 });
@@ -327,7 +327,7 @@ ${manageUrl}`;
 
             if (found) {
                 const whatsappMessageId = found.id?._serialized || found.id?.id || null;
-                console.log(`✅ Fallback captured Message ID: ${whatsappMessageId}`);
+                //console.log(`✅ Fallback captured Message ID: ${whatsappMessageId}`);
 
                 await db.query(
                     `UPDATE leads 
@@ -340,14 +340,14 @@ ${manageUrl}`;
 
                 pendingLeadMessages.delete(shortToken);
             } else {
-                console.log("❌ Fallback also could not find the message");
+                //console.log("❌ Fallback also could not find the message");
             }
         }
     } catch (err) {
         console.error("Fallback error:", err.message);
     }
 }, 3000);
-            console.log("🔗 Short Manage URL:", manageUrl);
+            //console.log("🔗 Short Manage URL:", manageUrl);
 
         } catch (forwardErr) {
             console.error("❌ Failed to forward lead:", forwardErr.message);
@@ -362,7 +362,7 @@ ${manageUrl}`;
 // ====================== DAILY REPORTS ======================
 cron.schedule('20 0 * * *', async () => {
     try {
-        console.log("📤 Sending Daily Reports...");
+        //console.log("📤 Sending Daily Reports...");
 
         const now = new Date();
         now.setDate(now.getDate() - 1);
@@ -388,16 +388,16 @@ cron.schedule('20 0 * * *', async () => {
                     await client.sendMessage(group.id, media, {
                         caption: "📊 Labour Daily Attendance Report"
                     });
-                    console.log(`✅ Labour Report Sent to ${group.name}`);
+                    //console.log(`✅ Labour Report Sent to ${group.name}`);
                 } catch (err) {
-                    console.log(`❌ Failed to send Labour report to ${group.name}:`, err.message);
+                    //console.log(`❌ Failed to send Labour report to ${group.name}:`, err.message);
                 }
             }
         } else {
-            console.log("❌ Labour PDF not found");
+            //console.log("❌ Labour PDF not found");
         }
 
-        console.log("⏳ Waiting 5 minutes...");
+        //console.log("⏳ Waiting 5 minutes...");
         await new Promise(resolve => setTimeout(resolve, 5 * 60 * 1000));
 
         if (fs.existsSync(employeePath)) {
@@ -407,17 +407,17 @@ cron.schedule('20 0 * * *', async () => {
                     await client.sendMessage(group.id, media, {
                         caption: "📊 Employee Daily Attendance Report"
                     });
-                    console.log(`✅ Employee Report Sent to ${group.name}`);
+                    //console.log(`✅ Employee Report Sent to ${group.name}`);
                 } catch (err) {
-                    console.log(`❌ Failed to send Employee report to ${group.name}:`, err.message);
+                    //console.log(`❌ Failed to send Employee report to ${group.name}:`, err.message);
                 }
             }
         } else {
-            console.log("❌ Employee PDF not found");
+            //console.log("❌ Employee PDF not found");
         }
 
     } catch (err) {
-        console.log("❌ Auto Send Error:", err.message);
+        //console.log("❌ Auto Send Error:", err.message);
     }
 });
 

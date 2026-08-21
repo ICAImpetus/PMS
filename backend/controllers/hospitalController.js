@@ -80,7 +80,7 @@ function generateSlots(start, end, slotMinutes, sessionName = "General") {
     return [];
   }
 
-  // console.log("sessionName", sessionName);
+  // //console.log("sessionName", sessionName);
 
   const startTime = parseTime(start);
   const endTime = parseTime(end);
@@ -116,7 +116,7 @@ function generateSlots(start, end, slotMinutes, sessionName = "General") {
 }
 export async function generateDoctorSlots(doctor) {
   if (!doctor?.timings) {
-    console.log("Doctor timings not found.");
+    //console.log("Doctor timings not found.");
     return [];
   }
 
@@ -160,8 +160,8 @@ export async function generateDoctorSlots(doctor) {
     },
   };
 
-  // console.log("Doctor:", doctor.name);
-  // console.log("Timings:", timings);
+  // //console.log("Doctor:", doctor.name);
+  // //console.log("Timings:", timings);
 
   let allSlots = [];
 
@@ -174,7 +174,7 @@ export async function generateDoctorSlots(doctor) {
       "Morning"
     );
 
-    // console.log("Morning Slots:", morningSlots.length);
+    // //console.log("Morning Slots:", morningSlots.length);
 
     allSlots.push(...morningSlots);
   }
@@ -188,7 +188,7 @@ export async function generateDoctorSlots(doctor) {
       "Evening"
     );
 
-    // console.log("Evening Slots:", eveningSlots.length);
+    // //console.log("Evening Slots:", eveningSlots.length);
 
     allSlots.push(...eveningSlots);
   }
@@ -202,12 +202,12 @@ export async function generateDoctorSlots(doctor) {
       "Custom"
     );
 
-    // console.log("Custom Slots:", customSlots.length);
+    // //console.log("Custom Slots:", customSlots.length);
 
     allSlots.push(...customSlots);
   }
 
-  // console.log("Total Slots:", allSlots.length);
+  // //console.log("Total Slots:", allSlots.length);
 
   return allSlots;
 }
@@ -262,7 +262,7 @@ export const AddHospital = async (req, res) => {
   let uploadedPublicId = null;
   let uploadedImageUrl = null;
 
-  console.log("Received hospital data:", req.body);
+  //console.log("Received hospital data:", req.body);
 
   try {
     let hospitalData = sanitizeHospitalPayload(req.body || {});
@@ -434,7 +434,7 @@ export const AddHospital = async (req, res) => {
           await cloudinary.uploader.destroy(uploadedPublicId);
         }
 
-        console.log("Rollback successful");
+        //console.log("Rollback successful");
       } catch (rollbackErr) {
         console.error("Rollback failed:", rollbackErr);
       }
@@ -1385,7 +1385,7 @@ export const addDoctor = async (req, res) => {
   let uploadedImageUrl = null;
   let session;
 
-  // console.log("Request body:", req.body);
+  // //console.log("Request body:", req.body);
   try {
     const { branchId, hosId } = req.query;
 
@@ -1564,11 +1564,11 @@ export const addDoctor = async (req, res) => {
     doctorData.specialties = await updateSuggestions(conn, "speciality", doctorData.specialties);
     doctorData.slots = await generateDoctorSlots(doctorData);
 
-    // console.log("doctorData", doctorData);
+    // //console.log("doctorData", doctorData);
 
 
 
-    // console.log("Creating doctor with data:", doctorData);
+    // //console.log("Creating doctor with data:", doctorData);
     const createdDoctor = await DoctorModel.create([doctorData], { session });
 
     // return res.status(301).json({
@@ -1644,7 +1644,7 @@ export const addDoctor = async (req, res) => {
       } catch { }
     }
 
-    console.log("Add Doctor Error:", error);
+    //console.log("Add Doctor Error:", error);
 
     return res.status(500).json({
       success: false,
@@ -3988,7 +3988,7 @@ export const createProcedure = async (req, res, next) => {
       });
     }
 
-    console.log(error);
+    //console.log(error);
 
     return res.status(500).json({
       success: false,
@@ -4491,7 +4491,7 @@ export const updateIncharge = async (req, res) => {
       data: updatedIncharge,
     });
   } catch (error) {
-    console.log("Error", error);
+    //console.log("Error", error);
 
     if (error.name === "ValidationError") {
       return res.status(400).json({
@@ -4727,7 +4727,7 @@ export const createCodeAnnouncement = async (req, res) => {
       data: newCode,
     });
   } catch (error) {
-    console.log("ERROR", error);
+    //console.log("ERROR", error);
 
     if (error.name === "ValidationError") {
       return res.status(400).json({
@@ -4764,7 +4764,7 @@ export const createCodeAlert = async (req, res) => {
       });
     }
     const { hosId } = req.query;
-    console.log(req.body);
+    //console.log(req.body);
 
 
     // Validate IDs
@@ -4868,7 +4868,7 @@ export const getCreatedCodeAlerts = async (req, res) => {
     const user = req.user;
     const userRole = user?.type?.toLowerCase();
     const { hospitalId, branchId } = req.query
-    console.log(req.query);
+    //console.log(req.query);
 
     //  Validate hospitalId
     if (!hospitalId || !mongoose.isValidObjectId(hospitalId)) {
@@ -5013,12 +5013,12 @@ export const toggleCodeAlertStatus = async (req, res) => {
     }
 
     // Toggle status
-    // console.log("alert", alert);
+    // //console.log("alert", alert);
 
     alert.status = !alert.status;
     await alert.save();
 
-    // console.log("alert", alert);
+    // //console.log("alert", alert);
     return res.json({
       success: true,
       message: `Alert ${alert.status ? "Activated" : "Deactivated"} successfully`,
@@ -5261,7 +5261,7 @@ export const removeCodeAnnouncement = async (req, res) => {
 export const getBranchesByHospital = async (req, res, next) => {
   try {
     const { hospitalId } = req.query;
-    console.log("req.wuery", req.query);
+    //console.log("req.wuery", req.query);
 
     const user = req.user;
     if (!hospitalId || !mongoose.isValidObjectId(hospitalId)) {
@@ -5313,7 +5313,7 @@ export const getHospitalsNames = async (req, res) => {
       success: true,
     });
   } catch (error) {
-    console.log("error in fetching data", error);
+    //console.log("error in fetching data", error);
     res.json({ message: "Error occurred while fetching", success: false });
   }
 };
@@ -5341,7 +5341,7 @@ export const getHospitalByName = async (req, res) => {
       success: true,
     });
   } catch (error) {
-    console.log("error in fetching data", error);
+    //console.log("error in fetching data", error);
     res.json({ message: "Error occurred while fetching", success: false });
   }
 };
@@ -5617,7 +5617,7 @@ export const deleteBranchById = async (req, res) => {
       console.error("Audit log failed:", auditError.message);
     }
 
-    // console.log(qu);
+    // //console.log(qu);
 
 
     return res.status(200).json({
@@ -5638,7 +5638,7 @@ export const deleteBranchById = async (req, res) => {
 // * Fetches all branches for a hospital by hospitalName (from req.params).
 // * Returns an array of branch objects (not marked as deleted).
 export const getBranchesByHosptialName = async (req, res) => {
-  console.log("hospita", req.params);
+  //console.log("hospita", req.params);
 
   // const { hospitalName } = req.params;
   // if (!hospitalName)
@@ -5647,7 +5647,7 @@ export const getBranchesByHosptialName = async (req, res) => {
   //     success: false,
   //   });
   // const trimmedName = hospitalName.trim().toLowerCase().replace(/\s+/g, "");
-  // console.log("trimmedName is :", trimmedName);
+  // //console.log("trimmedName is :", trimmedName);
 
   try {
     // const fieldsToKeep = ["ID", "name", "isDeleted"];
@@ -5660,7 +5660,7 @@ export const getBranchesByHosptialName = async (req, res) => {
       success: true,
     });
   } catch (error) {
-    console.log("error in fetching data", error);
+    //console.log("error in fetching data", error);
     return res.json({
       message: "error during fetching branches",
       success: false,
@@ -5729,7 +5729,7 @@ export const deleteHospitalById = async (req, res) => {
 //       SuggestionModel.find(),
 //     ]);
 
-//     // console.log('empanelment type', empanelmentType);
+//     // //console.log('empanelment type', empanelmentType);
 
 //     return res.status(200).json({
 //       success: true,
@@ -5827,7 +5827,7 @@ export const getDashboard = async (req, res) => {
     const role = user.type?.toLowerCase(); //
     const { branch, hospitalId, startDate, endDate } = req.query;
 
-    console.log("req.quer",);
+    //console.log("req.quer",);
 
 
     //  Validate hospitalId
@@ -5857,8 +5857,8 @@ export const getDashboard = async (req, res) => {
     const bfPage = parseInt(req.query.bfPage) || 1;
     const bfLimit = parseInt(req.query.bfLimit) || 10;
 
-    // console.log("startdata", startDate);
-    // console.log("startdata", endDate);
+    // //console.log("startdata", startDate);
+    // //console.log("startdata", endDate);
 
     const date = {
       startDate: new Date(startDate),
@@ -6344,7 +6344,7 @@ export const executiveDashboardService = async (conn, branchId, user, bfPage = 1
     };
 
   } catch (error) {
-    console.log("error", error);
+    //console.log("error", error);
 
     throw new Error(error.message);
   }
@@ -6371,7 +6371,7 @@ export const teamLeaderDashboardService = async (conn, branchId = null, user, bf
       isDeleted: false,
       "branches.branchId": { $in: [branchObjectId] }
     };
-    // console.log("agentfilter", agentFilter);
+    // //console.log("agentfilter", agentFilter);
     const FilledFormsModel = await getFilledFormsModel(conn)
 
     const branchFollowupsQuery = branchId
@@ -6698,7 +6698,7 @@ export const teamLeaderDashboardService = async (conn, branchId = null, user, bf
     };
 
   } catch (error) {
-    console.log(error);
+    //console.log(error);
     throw new Error(error.message);
   }
 }
@@ -7001,8 +7001,8 @@ export const superManagerDashboardService = async (conn, branchId) => {
     const totalOutbound = raw?.outboundCount?.[0]?.count || 0;
     const totalForms = totalInbound + totalOutbound || 0;
 
-    // console.log("totalInbound", totalInbound)
-    // console.log("totalOutbound", totalOutbound)
+    // //console.log("totalInbound", totalInbound)
+    // //console.log("totalOutbound", totalOutbound)
 
     const apptInbound = raw?.appointmentFormsIn?.[0]?.count || 0;
     const apptOutbound = raw?.appointmentFormsOut?.[0]?.count || 0;
@@ -7023,7 +7023,7 @@ export const superManagerDashboardService = async (conn, branchId) => {
     };
 
   } catch (error) {
-    console.log(error);
+    //console.log(error);
 
     throw new Error(error.message);
   }
@@ -7084,7 +7084,7 @@ export const superAdminDashboardService = async (
     startDate.setMonth(startDate.getMonth() - 2);
 
 
-    console.log("matchstage", matchStage)
+    //console.log("matchstage", matchStage)
 
     const [
       totalUsers,
@@ -7365,7 +7365,7 @@ export const superAdminDashboardService = async (
       ]).allowDiskUse(true),
     ]);
 
-    // console.log(JSON.stringify(patientData, null, 2));
+    // //console.log(JSON.stringify(patientData, null, 2));
 
     let formattedPatientData = patientData;
 
@@ -7400,7 +7400,7 @@ export const superAdminDashboardService = async (
         };
       });
     }
-    // console.log("formattedPatientData", formattedPatientData);
+    // //console.log("formattedPatientData", formattedPatientData);
 
     // transform chart data
     const analytics = dashboardAgg?.[0] || {};
@@ -7964,9 +7964,9 @@ const uploadDoctorCSV = async ({
         }
 
         doc.slots = await generateDoctorSlots(doc);
-        // console.log("slots:", slots);
-        // console.log("isPromise:", slots instanceof Promise);
-        // console.log("constructor:", slots?.constructor?.name);
+        // //console.log("slots:", slots);
+        // //console.log("isPromise:", slots instanceof Promise);
+        // //console.log("constructor:", slots?.constructor?.name);
 
         doctorsToInsert.push(doc);
       } catch (innerError) {
@@ -7975,7 +7975,7 @@ const uploadDoctorCSV = async ({
           row?.name
         );
 
-        console.log(innerError);
+        //console.log(innerError);
       }
     }
 
@@ -9270,7 +9270,7 @@ export const getPastDoctorAppointments = async (req, res) => {
     // Count
     const total = await FilledFormsModel.countDocuments(query);
 
-    console.log("query", query);
+    //console.log("query", query);
 
     // Data
     const data = await FilledFormsModel.find(query)

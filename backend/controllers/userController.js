@@ -27,7 +27,7 @@ export const checkUserName = async (req, res, next) => {
     const existingUser = await AdminAndAgentModel.findOne({
       username: { $regex: `^${username}$`, $options: "i" },
     });
-    console.log(existingUser);
+    //console.log(existingUser);
 
     if (existingUser) {
       return res.status(200).json({
@@ -162,7 +162,7 @@ export const createUser = async (req, res) => {
   let branchIds = [];
   let typeSafe = "";
   let hospitalForBranch = null;
-  console.log("req.body", req.body);
+  //console.log("req.body", req.body);
 
 
   try {
@@ -426,7 +426,7 @@ export const updateUser = async (req, res) => {
       selectedBranch = [],
     } = req.body;
 
-    console.log(req.body);
+    //console.log(req.body);
 
 
     const existingUser = await AdminAndAgentModel.findById(id);
@@ -439,7 +439,7 @@ export const updateUser = async (req, res) => {
     }
 
     const typeSafe = type?.toLowerCase();
-    console.log("superadmin", typeSafe)
+    //console.log("superadmin", typeSafe)
 
 
     const roleFields = {
@@ -581,7 +581,7 @@ export const updateUser = async (req, res) => {
           { _id: 1, name: 1 }
         ).lean();
 
-        console.log("branchesData", branchesData);
+        //console.log("branchesData", branchesData);
 
 
         branchesFormatted = branchesData.map((b) => ({
@@ -664,8 +664,8 @@ export const deleteUserById = async (req, res) => {
     }
 
     const role = user?.type?.toLowerCase();
-    console.log("rols", role);
-    console.log("user", user);
+    //console.log("rols", role);
+    //console.log("user", user);
 
 
 
@@ -673,7 +673,7 @@ export const deleteUserById = async (req, res) => {
     const hospitalIds =
       user.hospitals?.map((h) => h.hospitalId) || [];
     // ===================== ADMIN =====================
-    console.log("hospitalIds", hospitalIds);
+    //console.log("hospitalIds", hospitalIds);
 
     // if (role === "admin") {
     // if (!user.canDelete) {

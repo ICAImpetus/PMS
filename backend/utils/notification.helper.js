@@ -11,7 +11,7 @@ export const createNotification = async (notificationData) => {
     try {
         const notification = new Notification(notificationData);
         await notification.save();
-        console.log(`Notification created: ${notificationData.type}`);
+        //console.log(`Notification created: ${notificationData.type}`);
         return notification;
     } catch (error) {
         console.error("Error creating notification:", error);

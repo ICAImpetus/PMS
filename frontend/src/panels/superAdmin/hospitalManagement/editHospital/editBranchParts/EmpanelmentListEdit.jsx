@@ -144,7 +144,7 @@ const AddEmpanelmentListModal = ({
   // --- Effects ---
 
   useEffect(() => {
-    console.log('effect fired');
+    //console.log('effect fired');
     if (open) {
       if (empanelmentData) {
         // Edit Mode
@@ -747,7 +747,7 @@ const AddEmpanelmentListModal = ({
                   </Box>
 
                   <Grid container spacing={2}>
-                    {/* {console.log("Coverage Options:", currentEmpanelment?.coverageOptions)} */}
+                    {/* {//console.log("Coverage Options:", currentEmpanelment?.coverageOptions)} */}
 
                     {currentEmpanelment?.coverageOptions.map(
                       (coverage, index) => (

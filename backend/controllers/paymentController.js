@@ -5,7 +5,7 @@ import Subscription from "../models/master.models/Subscription.js";
 export const createOrder = async (req, res) => {
     try {
         const { ammount } = req.body;
-        console.log('reach', ammount)
+        //console.log('reach', ammount)
         const options = {
             amount: ammount * 100,
             currency: 'INR',
@@ -17,7 +17,7 @@ export const createOrder = async (req, res) => {
             res.status(200).json(order);
         }
     } catch (error) {
-        console.log('While creating order', error);
+        //console.log('While creating order', error);
     }
 }
 
@@ -25,7 +25,7 @@ export const verifyPayment = async (req, res) => {
     try {
 
         const { razorpay_payment_id, razorpay_order_id, razorpay_signature, ammount, userId } = req.body;
-        console.log('verify', userId);
+        //console.log('verify', userId);
         const body = razorpay_order_id + '|' + razorpay_payment_id;
         const expectedSignature =
             crypto.createHmac(
@@ -52,6 +52,6 @@ export const verifyPayment = async (req, res) => {
             success: true
         });
     } catch (error) {
-        console.log('while verify payment', error);
+        //console.log('while verify payment', error);
     }
 }

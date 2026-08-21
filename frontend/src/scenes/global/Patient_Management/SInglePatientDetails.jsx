@@ -148,11 +148,11 @@ export const SInglePatientDetails = () => {
         // 2. Call API if Search Term OR Dates are present
         const shouldCallAPI = Boolean(searchValue || startDate || endDate);
 
-        console.log("shouldCallAPI", shouldCallAPI)
+        //console.log("shouldCallAPI", shouldCallAPI)
 
 
         if (shouldCallAPI) {
-            console.log("Calling API with dates/search...");
+            //console.log("Calling API with dates/search...");
 
             try {
                 const res = await patientHistory(
@@ -192,7 +192,7 @@ export const SInglePatientDetails = () => {
             }
         }
 
-        // console.log("filter", filtered);
+        // //console.log("filter", filtered);
 
         setVisits(filtered);
         setFilteredVisits(filtered)
@@ -348,7 +348,7 @@ export const SInglePatientDetails = () => {
     };
 
     const handleOpenDateFilter = (event) => {
-        console.log("event", event.currentTarget);
+        //console.log("event", event.currentTarget);
 
         setDateFilterAnchorEl(event.currentTarget);
     };
@@ -377,7 +377,7 @@ export const SInglePatientDetails = () => {
                     formTypeFilter?.toLowerCase()
             )
         );
-        console.log("formTypeFilter", formTypeFilter);
+        //console.log("formTypeFilter", formTypeFilter);
 
     }, [formTypeFilter, visits]);
 

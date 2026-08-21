@@ -381,12 +381,12 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
     useEffect(() => {
 
-        // console.log("userDtata", usersData);
+        // //console.log("userDtata", usersData);
 
         if (!usersData) return;
 
         setUsers(usersData?.data || []);
-        // console.log("user", users);
+        // //console.log("user", users);
 
 
         updatePagination(
@@ -425,11 +425,11 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         isDoctor;
 
 
-    console.log("currentUser", currentUser);
-    console.log("enabledQuery", enabledQuery);
-    console.log("!!selectedHostpital ", !!selectedHostpital);
-    console.log(" !!currentUser?._id ", !!currentUser?.mongoId);
-    console.log("isDoctor", isDoctor);
+    //console.log("currentUser", currentUser);
+    //console.log("enabledQuery", enabledQuery);
+    //console.log("!!selectedHostpital ", !!selectedHostpital);
+    //console.log(" !!currentUser?._id ", !!currentUser?.mongoId);
+    //console.log("isDoctor", isDoctor);
 
     const {
         data: appointmentData,
@@ -488,7 +488,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
 
 
-    console.log("stataenabledQuery", enabledQuery);
+    //console.log("stataenabledQuery", enabledQuery);
 
 
     // 1. Doctor Stats Fetching with React Query

@@ -43,7 +43,7 @@ const DoctorAttendanceCalendar = ({
     setUnavailableDates,
 }) => {
 
-    console.log("unavailableDates", unavailableDates);
+    //console.log("unavailableDates", unavailableDates);
 
     const handleDateClick = (date) => {
 

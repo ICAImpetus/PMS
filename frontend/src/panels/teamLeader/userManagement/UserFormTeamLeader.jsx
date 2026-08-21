@@ -102,14 +102,14 @@ const UserFormTeamLeader = ({ initialState = null, hospitalId, onClose, refetchU
 
   const handleSubmitForm = async (values, resetForm) => {
     try {
-      // console.log("values are :", values);
+      // //console.log("values are :", values);
       let valuesToSubmit = { ...values };
       // valuesToSubmit.hospitalName = [hospitalId]
 
       valuesToSubmit.selectedBranch = valuesToSubmit?.selectedBranch?.map(
         (item) => item?._id
       ) || [];
-      // console.log("selectedBranch are :", valuesToSubmit);
+      // //console.log("selectedBranch are :", valuesToSubmit);
 
       if (isUpdateComp) {
         const response = await updateUser(initialState?._id, valuesToSubmit);
@@ -126,7 +126,7 @@ const UserFormTeamLeader = ({ initialState = null, hospitalId, onClose, refetchU
         const data = await addUser(valuesToSubmit);
         if (data?.success) {
           if (refetchUsers) await refetchUsers()
-          console.log("valuesToSubmit", valuesToSubmit);
+          //console.log("valuesToSubmit", valuesToSubmit);
 
           toast.success("New User Added")
 
@@ -188,7 +188,7 @@ const UserFormTeamLeader = ({ initialState = null, hospitalId, onClose, refetchU
         handleBlur,
         setFieldValue,
       }) => {
-        // console.log("Formik Errors:", errors);
+        // //console.log("Formik Errors:", errors);
         // Custom handler to fetch branches when hospital changes
         const customHandleChange = (event) => {
           const { name, value } = event.target;

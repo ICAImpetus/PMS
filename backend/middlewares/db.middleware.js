@@ -6,7 +6,7 @@ const HospitalModel = await getHospitalModel(MasterConn)
 export const dbMiddleware = async (req, res, next) => {
     try {
         const { hospitals, type } = req.user
-        console.log(req.user);
+        //console.log(req.user);
 
 
         let hospitalsObj = [];

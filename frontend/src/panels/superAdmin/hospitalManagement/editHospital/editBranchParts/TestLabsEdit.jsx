@@ -344,7 +344,7 @@ const AddTestLabModal = ({
 
       onSave(testLabToSave);
     } else {
-      console.log("Form validation failed.", errors);
+      //console.log("Form validation failed.", errors);
     }
   };
   const serviceGroup = globalSuggestion?.filter(

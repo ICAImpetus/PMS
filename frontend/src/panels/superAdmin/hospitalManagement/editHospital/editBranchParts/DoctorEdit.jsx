@@ -227,7 +227,7 @@ const AddDoctorModal = ({
     surgeries: [],
   });
 
-  console.log("doctodata", doctorData);
+  //console.log("doctodata", doctorData);
 
   useEffect(() => {
     if (availableDepartments) {
@@ -1018,8 +1018,8 @@ const AddDoctorModal = ({
     const mFrom = currentDoctor.timings?.morning?.from;
     const mTo = currentDoctor.timings?.morning?.to;
 
-    console.log("mFrom =>", mFrom);
-    console.log("mTo =>", mTo);
+    //console.log("mFrom =>", mFrom);
+    //console.log("mTo =>", mTo);
 
     // Strict parsing
     const start = mFrom
@@ -1030,8 +1030,8 @@ const AddDoctorModal = ({
       ? dayjs(mTo, "hh:mm A", true)
       : null;
 
-    console.log("start =>", start?.format());
-    console.log("end =>", end?.format());
+    //console.log("start =>", start?.format());
+    //console.log("end =>", end?.format());
 
     // Validate only if at least one value exists
     if (mFrom || mTo) {
@@ -1152,7 +1152,7 @@ const AddDoctorModal = ({
     if (validateForm()) {
       //  Format nested timing objects to strings
 
-      console.log("Saving doctor with data:", currentDoctor);
+      //console.log("Saving doctor with data:", currentDoctor);
 
       // Helper function to normalize time to "hh:mm A" format
       const normalizeTime = (time) => {
@@ -1312,294 +1312,294 @@ const AddDoctorModal = ({
       >
         <Box sx={{ p: 4 }}>
           <Stack spacing={4}>
-              {/* Basic Information Card */}
-              <Card
-                elevation={3}
-                sx={{
-                  borderRadius: 3,
-                  background:
-                    theme.palette.mode === "dark"
-                      ? colors.primary[800]
-                      : "white",
-                  border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
-                }}
-              >
-                <CardContent sx={{ p: 3 }}>
-                  <Box
+            {/* Basic Information Card */}
+            <Card
+              elevation={3}
+              sx={{
+                borderRadius: 3,
+                background:
+                  theme.palette.mode === "dark"
+                    ? colors.primary[800]
+                    : "white",
+                border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    mb: 3,
+                  }}
+                >
+                  <PersonIcon
+                    sx={{ color: colors.blueAccent[500], fontSize: 24 }}
+                  />
+                  <Typography
+                    variant="h6"
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 2,
-                      mb: 3,
+                      fontWeight: 600,
+                      color: colors.primary[500],
                     }}
                   >
-                    <PersonIcon
-                      sx={{ color: colors.blueAccent[500], fontSize: 24 }}
-                    />
-                    <Typography
-                      variant="h6"
+                    Basic Information
+                  </Typography>
+                </Box>
+
+                <Grid container spacing={3}>
+                  {/* Profile Picture Upload */}
+                  <Grid item xs={12}>
+                    <Box
                       sx={{
-                        fontWeight: 600,
-                        color: colors.primary[500],
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        mb: 2,
                       }}
                     >
-                      Basic Information
-                    </Typography>
-                  </Box>
-
-                  <Grid container spacing={3}>
-                    {/* Profile Picture Upload */}
-                    <Grid item xs={12}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 2,
-                          mb: 2,
-                        }}
-                      >
-                        <Avatar
-                          src={
-                            currentDoctor.profilePreview ||
-                            (typeof currentDoctor.profilePicture === "string"
-                              ? currentDoctor.profilePicture
-                              : "")
-                          }
-                          sx={{
-                            width: 80,
-                            height: 80,
-                            bgcolor: colors.blueAccent[500],
-                          }}
-                          alt="Profile Picture"
-                        />
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            Profile Picture <Typography component="span" variant="caption" color="text.secondary">(Max 2MB)</Typography>
-                          </Typography>
-                          <Button
-                            variant="outlined"
-                            component="label"
-                            startIcon={<AddPhotoAlternateIcon />}
-                            sx={{ mr: 1 }}
-                          >
-                            Upload Picture
-                            <input
-                              type="file"
-                              hidden
-                              accept="image/*"
-                              onChange={(e) => {
-                                const file = e.target.files[0];
-
-                                if (file) {
-                                  if (file.size > 2 * 1024 * 1024) {
-                                    toast.error("Image size should be less than 2MB");
-                                    e.target.value = null; // Clear input
-                                    return;
-                                  }
-
-                                  setCurrentDoctor((prev) => ({
-                                    ...prev,
-                                    profilePicture: file, //actual file (for backend)
-                                    profilePreview: URL.createObjectURL(file),
-                                  }));
-                                }
-                              }}
-                            />
-                          </Button>
-                          {currentDoctor.profilePicture && (
-                            <Button
-                              variant="text"
-                              color="error"
-                              onClick={() =>
-                                setCurrentDoctor((prev) => ({
-                                  ...prev,
-                                  profilePicture: null,
-                                  profilePreview: null,
-                                  removeProfilePicture: true,
-                                }))
-                              }
-                            >
-                              Remove
-                            </Button>
-                          )}
-                        </Box>
-                      </Box>
-                    </Grid>
-                    {/* Degree Field */}
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle2" gutterBottom>
-                        Degree *
-                      </Typography>
-
-                      {/* Predefined Degrees Multi-Select */}
-                      <Autocomplete
-                        multiple
-                        id="degree-autocomplete"
-                        options={predefinedDegrees}
-                        value={currentDoctor.degrees || []}
-                        onChange={(event, newValue) => {
-                          setCurrentDoctor((prev) => ({
-                            ...prev,
-                            degrees: newValue,
-                          }));
-                        }}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            variant="outlined"
-                            label="Degrees"
-                            placeholder="Select degrees"
-                            error={!!errors.degrees}
-                            helperText={errors.degrees}
-                          />
-                        )}
-                        renderTags={(value, getTagProps) =>
-                          value.map((option, index) => (
-                            <Chip
-                              variant="outlined"
-                              label={option}
-                              {...getTagProps({ index })}
-                              key={option}
-                              size="small"
-                              sx={{
-                                backgroundColor: colors.blueAccent[600],
-                                color: "white",
-                              }}
-                            />
-                          ))
+                      <Avatar
+                        src={
+                          currentDoctor.profilePreview ||
+                          (typeof currentDoctor.profilePicture === "string"
+                            ? currentDoctor.profilePicture
+                            : "")
                         }
-                        sx={{ mb: 2 }}
+                        sx={{
+                          width: 80,
+                          height: 80,
+                          bgcolor: colors.blueAccent[500],
+                        }}
+                        alt="Profile Picture"
                       />
-
-                      {/* Custom Degrees List */}
-                      {currentDoctor.customDegrees?.map(
-                        (customDegree, index) => (
-                          <Box
-                            key={index}
-                            mb={1}
-                            display="flex"
-                            alignItems="center"
-                          >
-                            <Chip
-                              label={customDegree}
-                              onDelete={() =>
-                                setCurrentDoctor((prev) => ({
-                                  ...prev,
-                                  customDegrees: prev.customDegrees.filter(
-                                    (_, i) => i !== index,
-                                  ),
-                                }))
-                              }
-                              deleteIcon={<DeleteIcon />}
-                              color="primary"
-                              variant="outlined"
-                              size="small"
-                            />
-                          </Box>
-                        ),
-                      )}
-
-                      {/* Add Custom Degree */}
-                      {showCustomDegreeInput ? (
-                        <Box display="flex" gap={1} mb={2}>
-                          <TextField
-                            label="Custom Degree"
-                            variant="outlined"
-                            value={newCustomDegree}
-                            onChange={(e) => setNewCustomDegree(e.target.value)}
-                            sx={{ flex: 1 }}
-                            size="small"
-                            placeholder="Enter custom degree"
-                          />
-                          <Button
-                            onClick={() => {
-                              if (
-                                newCustomDegree.trim() &&
-                                !currentDoctor.customDegrees.includes(
-                                  newCustomDegree.trim(),
-                                )
-                              ) {
-                                setCurrentDoctor((prev) => ({
-                                  ...prev,
-                                  customDegrees: [
-                                    ...prev.customDegrees,
-                                    newCustomDegree.trim(),
-                                  ],
-                                }));
-                                setNewCustomDegree("");
-                                setShowCustomDegreeInput(false);
-                              }
-                            }}
-                            variant="contained"
-                            color="primary"
-                            size="small"
-                            disabled={!newCustomDegree.trim()}
-                          >
-                            Add
-                          </Button>
-                          <Button
-                            onClick={() => {
-                              setShowCustomDegreeInput(false);
-                              setNewCustomDegree("");
-                            }}
-                            variant="text"
-                            size="small"
-                          >
-                            Cancel
-                          </Button>
-                        </Box>
-                      ) : (
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          Profile Picture <Typography component="span" variant="caption" color="text.secondary">(Max 2MB)</Typography>
+                        </Typography>
                         <Button
-                          onClick={() => setShowCustomDegreeInput(true)}
                           variant="outlined"
-                          startIcon={<AddIcon />}
+                          component="label"
+                          startIcon={<AddPhotoAlternateIcon />}
+                          sx={{ mr: 1 }}
+                        >
+                          Upload Picture
+                          <input
+                            type="file"
+                            hidden
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+
+                              if (file) {
+                                if (file.size > 2 * 1024 * 1024) {
+                                  toast.error("Image size should be less than 2MB");
+                                  e.target.value = null; // Clear input
+                                  return;
+                                }
+
+                                setCurrentDoctor((prev) => ({
+                                  ...prev,
+                                  profilePicture: file, //actual file (for backend)
+                                  profilePreview: URL.createObjectURL(file),
+                                }));
+                              }
+                            }}
+                          />
+                        </Button>
+                        {currentDoctor.profilePicture && (
+                          <Button
+                            variant="text"
+                            color="error"
+                            onClick={() =>
+                              setCurrentDoctor((prev) => ({
+                                ...prev,
+                                profilePicture: null,
+                                profilePreview: null,
+                                removeProfilePicture: true,
+                              }))
+                            }
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </Box>
+                    </Box>
+                  </Grid>
+                  {/* Degree Field */}
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Degree *
+                    </Typography>
+
+                    {/* Predefined Degrees Multi-Select */}
+                    <Autocomplete
+                      multiple
+                      id="degree-autocomplete"
+                      options={predefinedDegrees}
+                      value={currentDoctor.degrees || []}
+                      onChange={(event, newValue) => {
+                        setCurrentDoctor((prev) => ({
+                          ...prev,
+                          degrees: newValue,
+                        }));
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          variant="outlined"
+                          label="Degrees"
+                          placeholder="Select degrees"
+                          error={!!errors.degrees}
+                          helperText={errors.degrees}
+                        />
+                      )}
+                      renderTags={(value, getTagProps) =>
+                        value.map((option, index) => (
+                          <Chip
+                            variant="outlined"
+                            label={option}
+                            {...getTagProps({ index })}
+                            key={option}
+                            size="small"
+                            sx={{
+                              backgroundColor: colors.blueAccent[600],
+                              color: "white",
+                            }}
+                          />
+                        ))
+                      }
+                      sx={{ mb: 2 }}
+                    />
+
+                    {/* Custom Degrees List */}
+                    {currentDoctor.customDegrees?.map(
+                      (customDegree, index) => (
+                        <Box
+                          key={index}
+                          mb={1}
+                          display="flex"
+                          alignItems="center"
+                        >
+                          <Chip
+                            label={customDegree}
+                            onDelete={() =>
+                              setCurrentDoctor((prev) => ({
+                                ...prev,
+                                customDegrees: prev.customDegrees.filter(
+                                  (_, i) => i !== index,
+                                ),
+                              }))
+                            }
+                            deleteIcon={<DeleteIcon />}
+                            color="primary"
+                            variant="outlined"
+                            size="small"
+                          />
+                        </Box>
+                      ),
+                    )}
+
+                    {/* Add Custom Degree */}
+                    {showCustomDegreeInput ? (
+                      <Box display="flex" gap={1} mb={2}>
+                        <TextField
+                          label="Custom Degree"
+                          variant="outlined"
+                          value={newCustomDegree}
+                          onChange={(e) => setNewCustomDegree(e.target.value)}
+                          sx={{ flex: 1 }}
+                          size="small"
+                          placeholder="Enter custom degree"
+                        />
+                        <Button
+                          onClick={() => {
+                            if (
+                              newCustomDegree.trim() &&
+                              !currentDoctor.customDegrees.includes(
+                                newCustomDegree.trim(),
+                              )
+                            ) {
+                              setCurrentDoctor((prev) => ({
+                                ...prev,
+                                customDegrees: [
+                                  ...prev.customDegrees,
+                                  newCustomDegree.trim(),
+                                ],
+                              }));
+                              setNewCustomDegree("");
+                              setShowCustomDegreeInput(false);
+                            }
+                          }}
+                          variant="contained"
+                          color="primary"
+                          size="small"
+                          disabled={!newCustomDegree.trim()}
+                        >
+                          Add
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setShowCustomDegreeInput(false);
+                            setNewCustomDegree("");
+                          }}
+                          variant="text"
                           size="small"
                         >
-                          + Add Custom Degree
+                          Cancel
                         </Button>
-                      )}
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        select
-                        fullWidth
-                        label="Specialization"
-                        name="specialization"
-                        value={currentDoctor.specialization}
-                        onChange={handleChange}
+                      </Box>
+                    ) : (
+                      <Button
+                        onClick={() => setShowCustomDegreeInput(true)}
                         variant="outlined"
-                        required
-                        error={!!errors.specialization}
-                        helperText={errors.specialization}
+                        startIcon={<AddIcon />}
+                        size="small"
                       >
-                        <MenuItem value="surgeon">General Surgeon</MenuItem>
-                        <MenuItem value="physician">General Physician</MenuItem>
-                      </TextField>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        select
-                        fullWidth
-                        label="Type"
-                        name="type"
-                        value={currentDoctor.type}
-                        onChange={handleChange}
-                        variant="outlined"
-                        required
-                        error={!!errors.type}
-                        helperText={errors.type}
-                      >
-                        <MenuItem value="fulltime">Full Time</MenuItem>
-                        <MenuItem value="parttime">Part Time</MenuItem>
-                        <MenuItem value="visiting">Visiting</MenuItem>
-                        <MenuItem value="oncall">On Call</MenuItem>
-                      </TextField>
-                    </Grid>
+                        + Add Custom Degree
+                      </Button>
+                    )}
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      select
+                      fullWidth
+                      label="Specialization"
+                      name="specialization"
+                      value={currentDoctor.specialization}
+                      onChange={handleChange}
+                      variant="outlined"
+                      required
+                      error={!!errors.specialization}
+                      helperText={errors.specialization}
+                    >
+                      <MenuItem value="surgeon">General Surgeon</MenuItem>
+                      <MenuItem value="physician">General Physician</MenuItem>
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      select
+                      fullWidth
+                      label="Type"
+                      name="type"
+                      value={currentDoctor.type}
+                      onChange={handleChange}
+                      variant="outlined"
+                      required
+                      error={!!errors.type}
+                      helperText={errors.type}
+                    >
+                      <MenuItem value="fulltime">Full Time</MenuItem>
+                      <MenuItem value="parttime">Part Time</MenuItem>
+                      <MenuItem value="visiting">Visiting</MenuItem>
+                      <MenuItem value="oncall">On Call</MenuItem>
+                    </TextField>
+                  </Grid>
 
-                    {/* Title and Department Fields */}
-                    <Grid item xs={12}>
-                      <Grid container spacing={2}>
-                        {/* <Grid item xs={12} sm={6}>
+                  {/* Title and Department Fields */}
+                  <Grid item xs={12}>
+                    <Grid container spacing={2}>
+                      {/* <Grid item xs={12} sm={6}>
                           <TextField
                             fullWidth
                             label="Title"
@@ -1612,1093 +1612,1549 @@ const AddDoctorModal = ({
                             helperText={errors.title}
                           />
                         </Grid> */}
-                        <Grid item xs={12} sm={6}>
-                          <Autocomplete
-                            freeSolo
-                            options={(() => {
-                              const unique = [];
-                              const seen = new Set();
-                              departments.forEach((dept) => {
-                                const name = (
-                                  typeof dept === "string"
-                                    ? dept
-                                    : dept?.name || ""
-                                )
-                                  .toLowerCase()
-                                  .trim();
-                                if (name && !seen.has(name)) {
-                                  seen.add(name);
-                                  unique.push(dept);
-                                }
-                              });
-                              return unique;
-                            })()}
-                            value={
-                              currentDoctor.department
-                                ? departments.find((d) => {
-                                  const deptId = typeof currentDoctor.department === "object" ? currentDoctor.department?._id : currentDoctor.department;
-                                  return (deptId && d?._id === deptId) || (deptId && (typeof d === "string" ? d : d?.name) === deptId);
-                                }) || null
-                                : null
-                            }
-                            getOptionLabel={(option) =>
-                              typeof option === "string"
-                                ? option
-                                : option?.name || ""
-                            }
-
-                            onChange={(event, newValue) => {
-                              if (typeof newValue === "string") {
-                                // user typed manually
-                                setCurrentDoctor((prev) => ({
-                                  ...prev,
-                                  department: { _id: null, name: newValue },
-                                }));
-                              } else {
-                                setCurrentDoctor((prev) => ({
-                                  ...prev,
-                                  department: newValue,
-                                }));
-                              }
-                            }}
-
-                            inputValue={newDepartment}
-                            onInputChange={(event, newInputValue) => {
-                              setNewDepartment(newInputValue);
-                            }}
-
-                            renderInput={(params) => (
-                              <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-                                <TextField
-                                  {...params}
-                                  fullWidth
-                                  label="Department"
-                                  variant="outlined"
-                                  error={!!errors.department}
-                                  helperText={errors.department}
-                                  placeholder="Select or type to add"
-                                />
-                                <Button
-                                  onClick={async () => {
-                                    const deptName = newDepartment.trim();
-                                    const exists = departments.some(
-                                      (dept) =>
-                                        (typeof dept === "string"
-                                          ? dept
-                                          : dept?.name || ""
-                                        )
-                                          .toLowerCase()
-                                          .trim() === deptName.toLowerCase(),
-                                    );
-
-                                    if (deptName && !exists) {
-                                      try {
-                                        const response =
-                                          await commonRoutes.addDep(hospitalId, branchId, {
-                                            name: deptName,
-                                          });
-
-                                        // Check multiple possible success indicators
-                                        const isSuccess =
-                                          response?.success ||
-                                          response?.data?.success ||
-                                          response?.status === 200 ||
-                                          response?.status === "success";
-
-                                        if (isSuccess) {
-                                          // Extract data from different possible response structures
-                                          const departmentData = response?.data?.data
-                                          const updatedDepartments = [
-                                            departmentData,
-                                            ...departments
-
-                                          ];
-                                          setDepartments(updatedDepartments);
-                                          setCurrentDoctor((prev) => ({
-                                            ...prev,
-                                            department: departmentData,
-                                          }));
-                                          setNewDepartment(deptName);
-                                          setErrors((prev) => ({
-                                            ...prev,
-                                            department: null,
-                                          }));
-
-                                          // Notify parent component about the new department
-                                          if (onDepartmentsUpdate) {
-                                            onDepartmentsUpdate(
-                                              updatedDepartments,
-                                            );
-                                          }
-
-                                          toast.success(
-                                            `Department "${deptName}" added successfully!`,
-                                          );
-                                        } else {
-
-                                          toast.error(
-                                            response?.message ||
-                                            "Failed to add department",
-                                          );
-                                        }
-                                      } catch (error) {
-                                        console.error(
-                                          "Error creating department:",
-                                          error,
-                                        );
-                                        toast.error(
-                                          error?.response?.data?.message || "Failed to add department. Please try again.",
-                                        );
-                                      }
-                                    }
-                                  }}
-                                  variant="contained"
-                                  color="secondary"
-                                  size="small"
-                                  disabled={
-                                    !newDepartment.trim() ||
-                                    departments.some(
-                                      (dept) =>
-                                        (typeof dept === "string"
-                                          ? dept
-                                          : dept?.name || ""
-                                        )
-                                          .toLowerCase()
-                                          .trim() ===
-                                        newDepartment.trim().toLowerCase(),
-                                    )
-                                  }
-
-                                >
-                                  Add
-                                </Button>
-                              </Box>
-                            )}
-                          />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <TextField
-                            select
-                            fullWidth
-                            label="Title"
-                            name="title"
-                            value={currentDoctor.title}
-                            onChange={handleChange}
-                            variant="outlined"
-                            // required
-                            error={!!errors.title}
-                            helperText={errors.title}
-                          >
-                            {/* <MenuItem value="" defaultChecked>Select Title</MenuItem> */}
-                            <MenuItem value="dr">Dr.</MenuItem>
-                            <MenuItem value="profdr">Prof. Dr.</MenuItem>
-                            <MenuItem value="assocprofdr">Assoc. Prof. Dr.</MenuItem>
-                            <MenuItem value="asstprofdr">Asst. Prof. Dr.</MenuItem>
-                          </TextField>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <TextField
-                            select
-                            fullWidth
-                            label="Designation"
-                            name="designation"
-                            value={currentDoctor.designation}
-                            onChange={handleChange}
-                          >
-                            <MenuItem value="consultant">Consultant</MenuItem>
-                            <MenuItem value="seniorconsultant">Senior Consultant</MenuItem>
-                            <MenuItem value="junioresident">Junior Resident</MenuItem>
-                            <MenuItem value="senioresident">Senior Resident</MenuItem>
-                            <MenuItem value="hod">HOD</MenuItem>
-                          </TextField>
-                        </Grid>
-                      </Grid>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Doctor Name"
-                        name="name"
-                        value={currentDoctor.name}
-                        onChange={handleChange}
-                        variant="outlined"
-                        required
-                        error={!!errors.name}
-                        helperText={errors.name}
-                      // InputProps={{
-                      //   endAdornment: (
-                      //     <InputAdornment position="end">
-                      //       <Tooltip title="Username auto-fills from doctor name and hospital name. You can still edit it." arrow>
-                      //         <InfoOutlinedIcon
-                      //           fontSize="small"
-                      //           sx={{ cursor: "pointer", color: "text.secondary" }}
-                      //         />
-                      //       </Tooltip>
-                      //     </InputAdornment>
-                      //   ),
-                      // }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Username"
-                        name="username"
-                        value={currentDoctor.username}
-                        onChange={handleChange}
-                        variant="outlined"
-                        required
-                        error={!!errors.username}
-                        helperText={errors.username}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Password"
-                        name="password"
-                        type={showPassword ? "text" : "password"}
-                        value={currentDoctor.password}
-                        onChange={handleChange}
-                        variant="outlined"
-                        required={!doctorData}
-                        error={!!errors.password}
-                        helperText={
-                          doctorData
-                            ? errors.password || "Leave blank to keep existing password"
-                            : errors.password || "Minimum 8 characters"
-                        }
-                        InputProps={{
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                <Tooltip title="Password must be at least 8 characters" arrow>
-                                  <InfoOutlinedIcon
-                                    fontSize="small"
-                                    sx={{ cursor: "pointer", color: "text.secondary" }}
-                                  />
-                                </Tooltip>
-                                <IconButton
-                                  onClick={() => setShowPassword((prev) => !prev)}
-                                  edge="end"
-                                  size="small"
-                                  sx={{ color: "text.secondary" }}
-                                >
-                                  {showPassword ? <VisibilityOff /> : <Visibility />}
-                                </IconButton>
-                              </Box>
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="OPD No."
-                        name="opdNo"
-                        value={currentDoctor.opdNo}
-                        onChange={(e) => handleNumberChange(e, 10)}
-                        variant="outlined"
-
-                        error={!!errors.opdNo}
-                        helperText={errors.opdNo}
-                        inputProps={{ inputMode: "numeric" }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Experience (Years)"
-                        name="experience"
-                        value={currentDoctor.experience}
-                        onChange={(e) => handleNumberChange(e, 2)}
-                        variant="outlined"
-                        required
-                        error={!!errors.experience}
-                        helperText={errors.experience}
-                        inputProps={{ inputMode: "numeric" }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          gap: 1,
-                          alignItems: "flex-start",
-                        }}
-                      >
+                      <Grid item xs={12} sm={6}>
                         <Autocomplete
-                          sx={{ width: "150px" }}
-                          options={countryCodes}
+                          freeSolo
+                          options={(() => {
+                            const unique = [];
+                            const seen = new Set();
+                            departments.forEach((dept) => {
+                              const name = (
+                                typeof dept === "string"
+                                  ? dept
+                                  : dept?.name || ""
+                              )
+                                .toLowerCase()
+                                .trim();
+                              if (name && !seen.has(name)) {
+                                seen.add(name);
+                                unique.push(dept);
+                              }
+                            });
+                            return unique;
+                          })()}
+                          value={
+                            currentDoctor.department
+                              ? departments.find((d) => {
+                                const deptId = typeof currentDoctor.department === "object" ? currentDoctor.department?._id : currentDoctor.department;
+                                return (deptId && d?._id === deptId) || (deptId && (typeof d === "string" ? d : d?.name) === deptId);
+                              }) || null
+                              : null
+                          }
                           getOptionLabel={(option) =>
                             typeof option === "string"
                               ? option
-                              : `${option.name} (${option.dial_code})`
+                              : option?.name || ""
                           }
-                          value={
-                            countryCodes.find(
-                              (c) => c.dial_code === currentDoctor.countryCode,
-                            ) || null
-                          }
+
                           onChange={(event, newValue) => {
-                            if (newValue) {
+                            if (typeof newValue === "string") {
+                              // user typed manually
                               setCurrentDoctor((prev) => ({
                                 ...prev,
-                                countryCode: newValue.dial_code,
+                                department: { _id: null, name: newValue },
+                              }));
+                            } else {
+                              setCurrentDoctor((prev) => ({
+                                ...prev,
+                                department: newValue,
                               }));
                             }
                           }}
-                          disableClearable
+
+                          inputValue={newDepartment}
+                          onInputChange={(event, newInputValue) => {
+                            setNewDepartment(newInputValue);
+                          }}
+
                           renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label="Code"
-                              variant="outlined"
-                              placeholder="+91"
-                            />
+                            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                              <TextField
+                                {...params}
+                                fullWidth
+                                label="Department"
+                                variant="outlined"
+                                error={!!errors.department}
+                                helperText={errors.department}
+                                placeholder="Select or type to add"
+                              />
+                              <Button
+                                onClick={async () => {
+                                  const deptName = newDepartment.trim();
+                                  const exists = departments.some(
+                                    (dept) =>
+                                      (typeof dept === "string"
+                                        ? dept
+                                        : dept?.name || ""
+                                      )
+                                        .toLowerCase()
+                                        .trim() === deptName.toLowerCase(),
+                                  );
+
+                                  if (deptName && !exists) {
+                                    try {
+                                      const response =
+                                        await commonRoutes.addDep(hospitalId, branchId, {
+                                          name: deptName,
+                                        });
+
+                                      // Check multiple possible success indicators
+                                      const isSuccess =
+                                        response?.success ||
+                                        response?.data?.success ||
+                                        response?.status === 200 ||
+                                        response?.status === "success";
+
+                                      if (isSuccess) {
+                                        // Extract data from different possible response structures
+                                        const departmentData = response?.data?.data
+                                        const updatedDepartments = [
+                                          departmentData,
+                                          ...departments
+
+                                        ];
+                                        setDepartments(updatedDepartments);
+                                        setCurrentDoctor((prev) => ({
+                                          ...prev,
+                                          department: departmentData,
+                                        }));
+                                        setNewDepartment(deptName);
+                                        setErrors((prev) => ({
+                                          ...prev,
+                                          department: null,
+                                        }));
+
+                                        // Notify parent component about the new department
+                                        if (onDepartmentsUpdate) {
+                                          onDepartmentsUpdate(
+                                            updatedDepartments,
+                                          );
+                                        }
+
+                                        toast.success(
+                                          `Department "${deptName}" added successfully!`,
+                                        );
+                                      } else {
+
+                                        toast.error(
+                                          response?.message ||
+                                          "Failed to add department",
+                                        );
+                                      }
+                                    } catch (error) {
+                                      console.error(
+                                        "Error creating department:",
+                                        error,
+                                      );
+                                      toast.error(
+                                        error?.response?.data?.message || "Failed to add department. Please try again.",
+                                      );
+                                    }
+                                  }
+                                }}
+                                variant="contained"
+                                color="secondary"
+                                size="small"
+                                disabled={
+                                  !newDepartment.trim() ||
+                                  departments.some(
+                                    (dept) =>
+                                      (typeof dept === "string"
+                                        ? dept
+                                        : dept?.name || ""
+                                      )
+                                        .toLowerCase()
+                                        .trim() ===
+                                      newDepartment.trim().toLowerCase(),
+                                  )
+                                }
+
+                              >
+                                Add
+                              </Button>
+                            </Box>
                           )}
                         />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
                         <TextField
+                          select
                           fullWidth
-                          label="Contact Number"
-                          name="contactNumber"
-                          value={currentDoctor.contactNumber}
-                          onChange={(e) => handleNumberChange(e, 10)}
+                          label="Title"
+                          name="title"
+                          value={currentDoctor.title}
+                          onChange={handleChange}
                           variant="outlined"
-                          required
-                          error={!!errors.contactNumber}
-                          helperText={errors.contactNumber}
-                          inputProps={{ inputMode: "numeric" }}
-                          placeholder="10 Digits Max"
-                        />
-                      </Box>
-                      <Box sx={{ mt: 1 }}>
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: colors.grey[300],
-                            mb: 0.5,
-                            display: "block",
-                          }}
+                          // required
+                          error={!!errors.title}
+                          helperText={errors.title}
                         >
-                          WhatsApp Number Option
-                        </Typography>
-                        <Stack direction="row" spacing={2}>
-                          <FormControlLabel
-                            control={
-                              <Radio
-                                checked={whatsappOption === "same"}
-                                onChange={() => {
-                                  setWhatsappOption("same");
-                                  setCurrentDoctor((prev) => ({
-                                    ...prev,
-                                    whatsappNumber: prev.contactNumber,
-                                  }));
-                                }}
-                                size="small"
-                                sx={{
-                                  color: colors.blueAccent[500],
-                                  "&.Mui-checked": {
-                                    color: colors.blueAccent[500],
-                                  },
-                                }}
-                              />
-                            }
-                            label={
-                              <Typography variant="caption">
-                                Same as Contact Number
-                              </Typography>
-                            }
-                          />
-                          <FormControlLabel
-                            control={
-                              <Radio
-                                checked={whatsappOption === "custom"}
-                                onChange={() => {
-                                  setWhatsappOption("custom");
-                                }}
-                                size="small"
-                                sx={{
-                                  color: colors.blueAccent[500],
-                                  "&.Mui-checked": {
-                                    color: colors.blueAccent[500],
-                                  },
-                                }}
-                              />
-                            }
-                            label={
-                              <Typography variant="caption">
-                                Add Different WhatsApp
-                              </Typography>
-                            }
-                          />
-                        </Stack>
-                      </Box>
-                      {whatsappOption === "custom" && (
-                        <Box sx={{ mt: 1.5 }}>
-                          <TextField
-                            fullWidth
-                            label="WhatsApp Number"
-                            name="whatsappNumber"
-                            value={currentDoctor.whatsappNumber}
-                            onChange={(e) => handleNumberChange(e, 10)}
-                            variant="outlined"
-                            error={!!errors.whatsappNumber}
-                            helperText={errors.whatsappNumber}
-                            inputProps={{ inputMode: "numeric" }}
-                            placeholder="Enter WhatsApp Number"
-                            size="small"
-                          />
-                        </Box>
-                      )}
+                          {/* <MenuItem value="" defaultChecked>Select Title</MenuItem> */}
+                          <MenuItem value="dr">Dr.</MenuItem>
+                          <MenuItem value="profdr">Prof. Dr.</MenuItem>
+                          <MenuItem value="assocprofdr">Assoc. Prof. Dr.</MenuItem>
+                          <MenuItem value="asstprofdr">Asst. Prof. Dr.</MenuItem>
+                        </TextField>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          select
+                          fullWidth
+                          label="Designation"
+                          name="designation"
+                          value={currentDoctor.designation}
+                          onChange={handleChange}
+                        >
+                          <MenuItem value="consultant">Consultant</MenuItem>
+                          <MenuItem value="seniorconsultant">Senior Consultant</MenuItem>
+                          <MenuItem value="junioresident">Junior Resident</MenuItem>
+                          <MenuItem value="senioresident">Senior Resident</MenuItem>
+                          <MenuItem value="hod">HOD</MenuItem>
+                        </TextField>
+                      </Grid>
                     </Grid>
                   </Grid>
-                </CardContent>
-              </Card>
-
-              {/* Specialties Card */}
-              <Card
-                elevation={3}
-                sx={{
-                  borderRadius: 3,
-                  background:
-                    theme.palette.mode === "dark"
-                      ? colors.primary[800]
-                      : "white",
-                  border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
-                }}
-              >
-                <CardContent sx={{ p: 3 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 2,
-                      mb: 3,
-                    }}
-                  >
-                    <MedicalServicesIcon
-                      sx={{ color: colors.greenAccent[500], fontSize: 24 }}
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Doctor Name"
+                      name="name"
+                      value={currentDoctor.name}
+                      onChange={handleChange}
+                      variant="outlined"
+                      required
+                      error={!!errors.name}
+                      helperText={errors.name}
+                    // InputProps={{
+                    //   endAdornment: (
+                    //     <InputAdornment position="end">
+                    //       <Tooltip title="Username auto-fills from doctor name and hospital name. You can still edit it." arrow>
+                    //         <InfoOutlinedIcon
+                    //           fontSize="small"
+                    //           sx={{ cursor: "pointer", color: "text.secondary" }}
+                    //         />
+                    //       </Tooltip>
+                    //     </InputAdornment>
+                    //   ),
+                    // }}
                     />
-                    <Typography
-                      variant="h6"
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Username"
+                      name="username"
+                      value={currentDoctor.username}
+                      onChange={handleChange}
+                      variant="outlined"
+                      required
+                      error={!!errors.username}
+                      helperText={errors.username}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      value={currentDoctor.password}
+                      onChange={handleChange}
+                      variant="outlined"
+                      required={!doctorData}
+                      error={!!errors.password}
+                      helperText={
+                        doctorData
+                          ? errors.password || "Leave blank to keep existing password"
+                          : errors.password || "Minimum 8 characters"
+                      }
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <Tooltip title="Password must be at least 8 characters" arrow>
+                                <InfoOutlinedIcon
+                                  fontSize="small"
+                                  sx={{ cursor: "pointer", color: "text.secondary" }}
+                                />
+                              </Tooltip>
+                              <IconButton
+                                onClick={() => setShowPassword((prev) => !prev)}
+                                edge="end"
+                                size="small"
+                                sx={{ color: "text.secondary" }}
+                              >
+                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                              </IconButton>
+                            </Box>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="OPD No."
+                      name="opdNo"
+                      value={currentDoctor.opdNo}
+                      onChange={(e) => handleNumberChange(e, 10)}
+                      variant="outlined"
+
+                      error={!!errors.opdNo}
+                      helperText={errors.opdNo}
+                      inputProps={{ inputMode: "numeric" }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Experience (Years)"
+                      name="experience"
+                      value={currentDoctor.experience}
+                      onChange={(e) => handleNumberChange(e, 2)}
+                      variant="outlined"
+                      required
+                      error={!!errors.experience}
+                      helperText={errors.experience}
+                      inputProps={{ inputMode: "numeric" }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <Box
                       sx={{
-                        fontWeight: 600,
-                        color: colors.primary[500],
+                        display: "flex",
+                        gap: 1,
+                        alignItems: "flex-start",
                       }}
                     >
-                      Treatable List
-                    </Typography>
-                  </Box>
-
-                  <Stack spacing={2}>
-                    <Typography
-                      variant="caption"
-                      color={
-                        currentDoctor.specialties.length === 0 &&
-                          errors.specialties
-                          ? "error"
-                          : "textSecondary"
-                      }
-                      sx={{ ml: 1 }}
-                    >
-                      Select from list or type and press Enter
-                    </Typography>
-                    <Stack spacing={0.5}>
                       <Autocomplete
-                        multiple
-                        fullWidth
-                        size="small"
-                        options={
-                          speciality?.map((item) => ({
-                            label: item.value,
-                            value: item._id,
-                          })) || []
-                        }
+                        sx={{ width: "150px" }}
+                        options={countryCodes}
                         getOptionLabel={(option) =>
-                          typeof option === "string" ? option : option.label
+                          typeof option === "string"
+                            ? option
+                            : `${option.name} (${option.dial_code})`
                         }
-                        value={currentDoctor.specialties || []}
-                        freeSolo
-
+                        value={
+                          countryCodes.find(
+                            (c) => c.dial_code === currentDoctor.countryCode,
+                          ) || null
+                        }
                         onChange={(event, newValue) => {
-                          let processedValues = [];
-
-                          newValue.forEach((item) => {
-                            if (typeof item === "string") {
-                              // split by comma
-                              const splitValues = item.split(",").map((val) => val.trim()).filter(Boolean);
-                              processedValues.push(...splitValues);
-                            } else {
-                              processedValues.push(item);
-                            }
-                          });
-
-                          setCurrentDoctor((prev) => ({
-                            ...prev,
-                            specialties: normalizeSuggestionArray(processedValues),
-                          }));
-
-                          if (errors.specialties) {
-                            setErrors((prev) => ({ ...prev, specialties: "" }));
+                          if (newValue) {
+                            setCurrentDoctor((prev) => ({
+                              ...prev,
+                              countryCode: newValue.dial_code,
+                            }));
                           }
                         }}
-                        renderTags={(value, getTagProps) =>
-                          value.map((option, index) => (
-                            <Chip
-                              variant="outlined"
-                              label={typeof option === "string" ? option : option.label || option.value}
-                              {...getTagProps({ index })}
-                              key={index}
-                              size="small"
-                              sx={{
-                                backgroundColor: colors.greenAccent[500],
-                                color: "white",
-                              }}
-                            />
-                          ))
-                        }
+                        disableClearable
                         renderInput={(params) => (
                           <TextField
                             {...params}
-                            label="Treatable List (Specialties)"
-                            placeholder="Select or type and press Enter"
-                            error={
-                              !!errors.specialties &&
-                              currentDoctor.specialties.length === 0
-                            }
+                            label="Code"
+                            variant="outlined"
+                            placeholder="+91"
                           />
                         )}
                       />
-
-                    </Stack>
-                  </Stack>
-                  <Box sx={{ height: "10px" }} />
-                  <Stack spacing={2}>
-                    <Stack spacing={0.5}>
-                      <Autocomplete
-                        multiple
+                      <TextField
                         fullWidth
-                        size="small"
-                        options={
-                          surgery?.map((item) => ({
-                            label: item.value,
-                            value: item._id,
-                          })) || []
-                        }
-                        value={currentDoctor.surgeries || []}
-                        freeSolo
-                        getOptionLabel={(option) =>
-                          typeof option === "string" ? option : option.label
-                        }
-
-                        onChange={(event, newValue) => {
-                          let processedValues = [];
-
-                          newValue.forEach((item) => {
-                            if (typeof item === "string") {
-                              const splitValues = item
-                                .split(",")
-                                .map((val) => val.trim())
-                                .filter(Boolean);
-
-                              processedValues.push(...splitValues);
-                            } else {
-                              processedValues.push(item);
-                            }
-                          });
-
-                          setCurrentDoctor((prev) => ({
-                            ...prev,
-                            surgeries: normalizeSuggestionArray(processedValues),
-                          }));
-                        }}
-                        renderTags={(value, getTagProps) =>
-                          value.map((option, index) => (
-                            <Chip
-                              variant="outlined"
-                              label={typeof option === "string" ? option : option.label || option.value}
-                              {...getTagProps({ index })}
-                              key={index}
-                              size="small"
-                              sx={{
-                                backgroundColor: colors.greenAccent[500],
-                                color: "white",
-                              }}
-                            />
-                          ))
-                        }
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Surgery Name"
-                            placeholder="Select or type and press Enter"
-                          />
-                        )}
+                        label="Contact Number"
+                        name="contactNumber"
+                        value={currentDoctor.contactNumber}
+                        onChange={(e) => handleNumberChange(e, 10)}
+                        variant="outlined"
+                        required
+                        error={!!errors.contactNumber}
+                        helperText={errors.contactNumber}
+                        inputProps={{ inputMode: "numeric" }}
+                        placeholder="10 Digits Max"
                       />
-                    </Stack>
-                  </Stack>
-                </CardContent>
-              </Card>
-
-              {/*  Schedule & Availability Card - UPDATED WITH FROM/TO */}
-              <Card
-                elevation={3}
-                sx={{
-                  borderRadius: 3,
-                  background:
-                    theme.palette.mode === "dark"
-                      ? colors.primary[800]
-                      : "white",
-                  border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
-                }}
-              >
-                <CardContent sx={{ p: 3 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 2,
-                      mb: 3,
-                    }}
-                  >
-                    <ScheduleIcon
-                      sx={{ color: colors.orangeAccent[500], fontSize: 24 }}
-                    />
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontWeight: 600,
-                        color: colors.primary[500],
-                      }}
-                    >
-                      Schedule & Availability
-                    </Typography>
-                  </Box>
-
-                  <Grid container spacing={3}>
-                    {/* SHIFT 1 */}
-                    <Grid item xs={12}>
+                    </Box>
+                    <Box sx={{ mt: 1 }}>
                       <Typography
                         variant="caption"
                         sx={{
-                          color: "text.secondary",
-                          fontWeight: 600,
+                          color: colors.grey[300],
+                          mb: 0.5,
                           display: "block",
-                          mb: 1,
                         }}
                       >
-                        SHIFT 1
+                        WhatsApp Number Option
                       </Typography>
+                      <Stack direction="row" spacing={2}>
+                        <FormControlLabel
+                          control={
+                            <Radio
+                              checked={whatsappOption === "same"}
+                              onChange={() => {
+                                setWhatsappOption("same");
+                                setCurrentDoctor((prev) => ({
+                                  ...prev,
+                                  whatsappNumber: prev.contactNumber,
+                                }));
+                              }}
+                              size="small"
+                              sx={{
+                                color: colors.blueAccent[500],
+                                "&.Mui-checked": {
+                                  color: colors.blueAccent[500],
+                                },
+                              }}
+                            />
+                          }
+                          label={
+                            <Typography variant="caption">
+                              Same as Contact Number
+                            </Typography>
+                          }
+                        />
+                        <FormControlLabel
+                          control={
+                            <Radio
+                              checked={whatsappOption === "custom"}
+                              onChange={() => {
+                                setWhatsappOption("custom");
+                              }}
+                              size="small"
+                              sx={{
+                                color: colors.blueAccent[500],
+                                "&.Mui-checked": {
+                                  color: colors.blueAccent[500],
+                                },
+                              }}
+                            />
+                          }
+                          label={
+                            <Typography variant="caption">
+                              Add Different WhatsApp
+                            </Typography>
+                          }
+                        />
+                      </Stack>
+                    </Box>
+                    {whatsappOption === "custom" && (
+                      <Box sx={{ mt: 1.5 }}>
+                        <TextField
+                          fullWidth
+                          label="WhatsApp Number"
+                          name="whatsappNumber"
+                          value={currentDoctor.whatsappNumber}
+                          onChange={(e) => handleNumberChange(e, 10)}
+                          variant="outlined"
+                          error={!!errors.whatsappNumber}
+                          helperText={errors.whatsappNumber}
+                          inputProps={{ inputMode: "numeric" }}
+                          placeholder="Enter WhatsApp Number"
+                          size="small"
+                        />
+                      </Box>
+                    )}
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
 
-                      <Grid container spacing={2}>
-                        <Grid item xs={6}>
-                          <TimePicker
-                            label="From"
-                            ampm
-                            ampmInClock
-                            views={["hours", "minutes"]}
-                            value={
+            {/* Specialties Card */}
+            <Card
+              elevation={3}
+              sx={{
+                borderRadius: 3,
+                background:
+                  theme.palette.mode === "dark"
+                    ? colors.primary[800]
+                    : "white",
+                border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    mb: 3,
+                  }}
+                >
+                  <MedicalServicesIcon
+                    sx={{ color: colors.greenAccent[500], fontSize: 24 }}
+                  />
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 600,
+                      color: colors.primary[500],
+                    }}
+                  >
+                    Treatable List
+                  </Typography>
+                </Box>
+
+                <Stack spacing={2}>
+                  <Typography
+                    variant="caption"
+                    color={
+                      currentDoctor.specialties.length === 0 &&
+                        errors.specialties
+                        ? "error"
+                        : "textSecondary"
+                    }
+                    sx={{ ml: 1 }}
+                  >
+                    Select from list or type and press Enter
+                  </Typography>
+                  <Stack spacing={0.5}>
+                    <Autocomplete
+                      multiple
+                      fullWidth
+                      size="small"
+                      options={
+                        speciality?.map((item) => ({
+                          label: item.value,
+                          value: item._id,
+                        })) || []
+                      }
+                      getOptionLabel={(option) =>
+                        typeof option === "string" ? option : option.label
+                      }
+                      value={currentDoctor.specialties || []}
+                      freeSolo
+
+                      onChange={(event, newValue) => {
+                        let processedValues = [];
+
+                        newValue.forEach((item) => {
+                          if (typeof item === "string") {
+                            // split by comma
+                            const splitValues = item.split(",").map((val) => val.trim()).filter(Boolean);
+                            processedValues.push(...splitValues);
+                          } else {
+                            processedValues.push(item);
+                          }
+                        });
+
+                        setCurrentDoctor((prev) => ({
+                          ...prev,
+                          specialties: normalizeSuggestionArray(processedValues),
+                        }));
+
+                        if (errors.specialties) {
+                          setErrors((prev) => ({ ...prev, specialties: "" }));
+                        }
+                      }}
+                      renderTags={(value, getTagProps) =>
+                        value.map((option, index) => (
+                          <Chip
+                            variant="outlined"
+                            label={typeof option === "string" ? option : option.label || option.value}
+                            {...getTagProps({ index })}
+                            key={index}
+                            size="small"
+                            sx={{
+                              backgroundColor: colors.greenAccent[500],
+                              color: "white",
+                            }}
+                          />
+                        ))
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Treatable List (Specialties)"
+                          placeholder="Select or type and press Enter"
+                          error={
+                            !!errors.specialties &&
+                            currentDoctor.specialties.length === 0
+                          }
+                        />
+                      )}
+                    />
+
+                  </Stack>
+                </Stack>
+                <Box sx={{ height: "10px" }} />
+                <Stack spacing={2}>
+                  <Stack spacing={0.5}>
+                    <Autocomplete
+                      multiple
+                      fullWidth
+                      size="small"
+                      options={
+                        surgery?.map((item) => ({
+                          label: item.value,
+                          value: item._id,
+                        })) || []
+                      }
+                      value={currentDoctor.surgeries || []}
+                      freeSolo
+                      getOptionLabel={(option) =>
+                        typeof option === "string" ? option : option.label
+                      }
+
+                      onChange={(event, newValue) => {
+                        let processedValues = [];
+
+                        newValue.forEach((item) => {
+                          if (typeof item === "string") {
+                            const splitValues = item
+                              .split(",")
+                              .map((val) => val.trim())
+                              .filter(Boolean);
+
+                            processedValues.push(...splitValues);
+                          } else {
+                            processedValues.push(item);
+                          }
+                        });
+
+                        setCurrentDoctor((prev) => ({
+                          ...prev,
+                          surgeries: normalizeSuggestionArray(processedValues),
+                        }));
+                      }}
+                      renderTags={(value, getTagProps) =>
+                        value.map((option, index) => (
+                          <Chip
+                            variant="outlined"
+                            label={typeof option === "string" ? option : option.label || option.value}
+                            {...getTagProps({ index })}
+                            key={index}
+                            size="small"
+                            sx={{
+                              backgroundColor: colors.greenAccent[500],
+                              color: "white",
+                            }}
+                          />
+                        ))
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Surgery Name"
+                          placeholder="Select or type and press Enter"
+                        />
+                      )}
+                    />
+                  </Stack>
+                </Stack>
+              </CardContent>
+            </Card>
+
+            {/*  Schedule & Availability Card - UPDATED WITH FROM/TO */}
+            <Card
+              elevation={3}
+              sx={{
+                borderRadius: 3,
+                background:
+                  theme.palette.mode === "dark"
+                    ? colors.primary[800]
+                    : "white",
+                border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    mb: 3,
+                  }}
+                >
+                  <ScheduleIcon
+                    sx={{ color: colors.orangeAccent[500], fontSize: 24 }}
+                  />
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 600,
+                      color: colors.primary[500],
+                    }}
+                  >
+                    Schedule & Availability
+                  </Typography>
+                </Box>
+
+                <Grid container spacing={3}>
+                  {/* SHIFT 1 */}
+                  <Grid item xs={12}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "text.secondary",
+                        fontWeight: 600,
+                        display: "block",
+                        mb: 1,
+                      }}
+                    >
+                      SHIFT 1
+                    </Typography>
+
+                    <Grid container spacing={2}>
+                      <Grid item xs={6}>
+                        <TimePicker
+                          label="From"
+                          ampm
+                          ampmInClock
+                          views={["hours", "minutes"]}
+                          value={
+                            currentDoctor.timings.morning.from
+                              ? dayjs(
+                                currentDoctor.timings.morning.from,
+                                "hh:mm A"
+                              )
+                              : null
+                          }
+                          referenceDate={dayjs()}
+                          minTime={dayjs().hour(5).minute(0)}
+                          maxTime={dayjs().hour(23).minute(59)}
+                          minutesStep={5}
+                          onChange={(newValue) =>
+                            handleTimingsChange(
+                              newValue,
+                              "morning",
+                              "from"
+                            )
+                          }
+                          slotProps={{
+                            textField: {
+                              fullWidth: true,
+                            },
+                          }}
+                        />
+                      </Grid>
+
+                      <Grid item xs={6}>
+                        <TimePicker
+                          label="To"
+                          ampm
+                          ampmInClock
+                          views={["hours", "minutes"]}
+                          value={
+                            currentDoctor.timings.morning.to
+                              ? dayjs(
+                                currentDoctor.timings.morning.to,
+                                "hh:mm A"
+                              )
+                              : null
+                          }
+                          referenceDate={dayjs()}
+                          minTime={
+                            currentDoctor.timings.morning.from
+                              ? dayjs(
+                                currentDoctor.timings.morning.from,
+                                "hh:mm A"
+                              )
+                              : dayjs().hour(5).minute(0)
+                          }
+                          maxTime={
+                            currentDoctor.timings.morning.from
+                              ? dayjs(
+                                currentDoctor.timings.morning.from,
+                                "hh:mm A"
+                              ).add(12, "hour")
+                              : dayjs().hour(23).minute(59)
+                          }
+                          minutesStep={5}
+                          onChange={(newValue) =>
+                            handleTimingsChange(
+                              newValue,
+                              "morning",
+                              "to"
+                            )
+                          }
+                          slotProps={{
+                            textField: {
+                              fullWidth: true,
+                            },
+                          }}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Grid>
+
+                  {/* SHIFT 2 */}
+                  <Grid item xs={12}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "text.secondary",
+                        fontWeight: 600,
+                        display: "block",
+                        mb: 1,
+                      }}
+                    >
+                      SHIFT 2 (Optional)
+                    </Typography>
+
+                    <Grid container spacing={2}>
+                      {/* FROM */}
+                      <Grid item xs={6}>
+                        <TimePicker
+                          label="From"
+                          ampm
+                          ampmInClock
+                          views={["hours", "minutes"]}
+                          value={
+                            currentDoctor.timings.evening.from
+                              ? dayjs(
+                                currentDoctor.timings.evening.from,
+                                "hh:mm A"
+                              )
+                              : null
+                          }
+                          referenceDate={dayjs()}
+                          minTime={
+                            currentDoctor.timings.morning.to
+                              ? dayjs(
+                                currentDoctor.timings.morning.to,
+                                "hh:mm A"
+                              )
+                              : dayjs().hour(5).minute(0)
+                          }
+                          maxTime={dayjs().hour(23).minute(59)}
+                          minutesStep={5}
+                          onChange={(newValue) =>
+                            handleTimingsChange(
+                              newValue,
+                              "evening",
+                              "from"
+                            )
+                          }
+                          slotProps={{
+                            textField: {
+                              fullWidth: true,
+                            },
+                          }}
+                        />
+                      </Grid>
+
+                      {/* TO */}
+                      <Grid item xs={6}>
+                        <TimePicker
+                          label="To"
+                          ampm
+                          ampmInClock
+                          views={["hours", "minutes"]}
+                          value={
+                            currentDoctor.timings.evening.to
+                              ? dayjs(
+                                currentDoctor.timings.evening.to,
+                                "hh:mm A"
+                              )
+                              : null
+                          }
+                          referenceDate={dayjs()}
+                          minTime={
+                            currentDoctor.timings.evening.from
+                              ? dayjs(
+                                currentDoctor.timings.evening.from,
+                                "hh:mm A"
+                              )
+                              : undefined
+                          }
+                          minutesStep={5}
+                          shouldDisableTime={(value, view) => {
+                            if (!currentDoctor.timings.evening.from)
+                              return false;
+
+                            const fromTime = dayjs(
+                              currentDoctor.timings.evening.from,
+                              "hh:mm A"
+                            );
+
+                            if (view === "hours") {
+                              const selectedHour = dayjs()
+                                .hour(value)
+                                .minute(0);
+
+                              return selectedHour.isBefore(fromTime);
+                            }
+
+                            return false;
+                          }}
+                          onChange={(newValue) =>
+                            handleTimingsChange(
+                              newValue,
+                              "evening",
+                              "to"
+                            )
+                          }
+                          slotProps={{
+                            textField: {
+                              fullWidth: true,
+                            },
+                          }}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Grid>
+
+                  {/* CUSTOM SHIFT */}
+                  <Grid item xs={12}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "text.secondary",
+                        fontWeight: 600,
+                        display: "block",
+                        mb: 1,
+                      }}
+                    >
+                      CUSTOM SHIFT (Optional)
+                    </Typography>
+
+                    <Grid container spacing={2}>
+                      {/* FROM */}
+                      <Grid item xs={6}>
+                        <TimePicker
+                          label="From"
+                          ampm
+                          ampmInClock
+                          views={["hours", "minutes"]}
+                          value={
+                            currentDoctor.timings.custom.from
+                              ? dayjs(
+                                currentDoctor.timings.custom.from,
+                                "hh:mm A"
+                              )
+                              : null
+                          }
+                          referenceDate={dayjs()}
+                          minutesStep={5}
+                          onChange={(newValue) =>
+                            handleTimingsChange(
+                              newValue,
+                              "custom",
+                              "from"
+                            )
+                          }
+                          shouldDisableTime={(value, view) => {
+                            const mFrom =
                               currentDoctor.timings.morning.from
                                 ? dayjs(
                                   currentDoctor.timings.morning.from,
                                   "hh:mm A"
                                 )
-                                : null
-                            }
-                            referenceDate={dayjs()}
-                            minTime={dayjs().hour(5).minute(0)}
-                            maxTime={dayjs().hour(23).minute(59)}
-                            minutesStep={5}
-                            onChange={(newValue) =>
-                              handleTimingsChange(
-                                newValue,
-                                "morning",
-                                "from"
-                              )
-                            }
-                            slotProps={{
-                              textField: {
-                                fullWidth: true,
-                              },
-                            }}
-                          />
-                        </Grid>
+                                : null;
 
-                        <Grid item xs={6}>
-                          <TimePicker
-                            label="To"
-                            ampm
-                            ampmInClock
-                            views={["hours", "minutes"]}
-                            value={
+                            const mTo =
                               currentDoctor.timings.morning.to
                                 ? dayjs(
                                   currentDoctor.timings.morning.to,
                                   "hh:mm A"
                                 )
-                                : null
-                            }
-                            referenceDate={dayjs()}
-                            minTime={
-                              currentDoctor.timings.morning.from
-                                ? dayjs(
-                                  currentDoctor.timings.morning.from,
-                                  "hh:mm A"
-                                )
-                                : dayjs().hour(5).minute(0)
-                            }
-                            maxTime={
-                              currentDoctor.timings.morning.from
-                                ? dayjs(
-                                  currentDoctor.timings.morning.from,
-                                  "hh:mm A"
-                                ).add(12, "hour")
-                                : dayjs().hour(23).minute(59)
-                            }
-                            minutesStep={5}
-                            onChange={(newValue) =>
-                              handleTimingsChange(
-                                newValue,
-                                "morning",
-                                "to"
-                              )
-                            }
-                            slotProps={{
-                              textField: {
-                                fullWidth: true,
-                              },
-                            }}
-                          />
-                        </Grid>
-                      </Grid>
-                    </Grid>
+                                : null;
 
-                    {/* SHIFT 2 */}
-                    <Grid item xs={12}>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: "text.secondary",
-                          fontWeight: 600,
-                          display: "block",
-                          mb: 1,
-                        }}
-                      >
-                        SHIFT 2 (Optional)
-                      </Typography>
-
-                      <Grid container spacing={2}>
-                        {/* FROM */}
-                        <Grid item xs={6}>
-                          <TimePicker
-                            label="From"
-                            ampm
-                            ampmInClock
-                            views={["hours", "minutes"]}
-                            value={
+                            const eFrom =
                               currentDoctor.timings.evening.from
                                 ? dayjs(
                                   currentDoctor.timings.evening.from,
                                   "hh:mm A"
                                 )
-                                : null
-                            }
-                            referenceDate={dayjs()}
-                            minTime={
-                              currentDoctor.timings.morning.to
-                                ? dayjs(
-                                  currentDoctor.timings.morning.to,
-                                  "hh:mm A"
-                                )
-                                : dayjs().hour(5).minute(0)
-                            }
-                            maxTime={dayjs().hour(23).minute(59)}
-                            minutesStep={5}
-                            onChange={(newValue) =>
-                              handleTimingsChange(
-                                newValue,
-                                "evening",
-                                "from"
-                              )
-                            }
-                            slotProps={{
-                              textField: {
-                                fullWidth: true,
-                              },
-                            }}
-                          />
-                        </Grid>
+                                : null;
 
-                        {/* TO */}
-                        <Grid item xs={6}>
-                          <TimePicker
-                            label="To"
-                            ampm
-                            ampmInClock
-                            views={["hours", "minutes"]}
-                            value={
+                            const eTo =
                               currentDoctor.timings.evening.to
                                 ? dayjs(
                                   currentDoctor.timings.evening.to,
                                   "hh:mm A"
                                 )
-                                : null
-                            }
-                            referenceDate={dayjs()}
-                            minTime={
-                              currentDoctor.timings.evening.from
-                                ? dayjs(
-                                  currentDoctor.timings.evening.from,
-                                  "hh:mm A"
+                                : null;
+
+                            if (view === "hours") {
+                              const hourTime = dayjs()
+                                .hour(value)
+                                .minute(0);
+
+                              if (
+                                mFrom &&
+                                mTo &&
+                                hourTime.isBetween(
+                                  mFrom,
+                                  mTo,
+                                  null,
+                                  "[)"
                                 )
-                                : undefined
-                            }
-                            minutesStep={5}
-                            shouldDisableTime={(value, view) => {
-                              if (!currentDoctor.timings.evening.from)
-                                return false;
-
-                              const fromTime = dayjs(
-                                currentDoctor.timings.evening.from,
-                                "hh:mm A"
-                              );
-
-                              if (view === "hours") {
-                                const selectedHour = dayjs()
-                                  .hour(value)
-                                  .minute(0);
-
-                                return selectedHour.isBefore(fromTime);
+                              ) {
+                                return true;
                               }
 
-                              return false;
-                            }}
-                            onChange={(newValue) =>
-                              handleTimingsChange(
-                                newValue,
-                                "evening",
-                                "to"
-                              )
+                              if (
+                                eFrom &&
+                                eTo &&
+                                hourTime.isBetween(
+                                  eFrom,
+                                  eTo,
+                                  null,
+                                  "[)"
+                                )
+                              ) {
+                                return true;
+                              }
                             }
-                            slotProps={{
-                              textField: {
-                                fullWidth: true,
-                              },
-                            }}
-                          />
-                        </Grid>
+
+                            return false;
+                          }}
+                          slotProps={{
+                            textField: {
+                              fullWidth: true,
+                            },
+                          }}
+                        />
+                      </Grid>
+
+                      {/* TO */}
+                      <Grid item xs={6}>
+                        <TimePicker
+                          label="To"
+                          ampm
+                          ampmInClock
+                          views={["hours", "minutes"]}
+                          value={
+                            currentDoctor.timings.custom.to
+                              ? dayjs(
+                                currentDoctor.timings.custom.to,
+                                "hh:mm A"
+                              )
+                              : null
+                          }
+                          referenceDate={dayjs()}
+                          minTime={
+                            currentDoctor.timings.custom.from
+                              ? dayjs(
+                                currentDoctor.timings.custom.from,
+                                "hh:mm A"
+                              )
+                              : undefined
+                          }
+                          minutesStep={5}
+                          shouldDisableTime={(value, view) => {
+                            if (!currentDoctor.timings.custom.from)
+                              return false;
+
+                            const fromTime = dayjs(
+                              currentDoctor.timings.custom.from,
+                              "hh:mm A"
+                            );
+
+                            if (view === "hours") {
+                              const selectedHour = dayjs()
+                                .hour(value)
+                                .minute(0);
+
+                              return selectedHour.isBefore(fromTime);
+                            }
+
+                            return false;
+                          }}
+                          onChange={(newValue) =>
+                            handleTimingsChange(
+                              newValue,
+                              "custom",
+                              "to"
+                            )
+                          }
+                          slotProps={{
+                            textField: {
+                              fullWidth: true,
+                            },
+                          }}
+                        />
                       </Grid>
                     </Grid>
+                  </Grid>
 
-                    {/* CUSTOM SHIFT */}
-                    <Grid item xs={12}>
+                  {/* OPD Days Selector (Updated to Multi-Select) */}
+                  <Grid item xs={12} sm={12}>
+                    <Box
+                      sx={{
+                        p: 2,
+                        border: "1px solid",
+                        borderColor: errors.opdDays
+                          ? "error.main"
+                          : theme.palette.divider,
+                        borderRadius: 2,
+                        bgcolor:
+                          theme.palette.mode === "dark"
+                            ? "rgba(255,255,255,0.02)"
+                            : "rgba(0,0,0,0.02)",
+                      }}
+                    >
                       <Typography
                         variant="caption"
                         sx={{
-                          color: "text.secondary",
-                          fontWeight: 600,
+                          mb: 2,
                           display: "block",
-                          mb: 1,
+                          fontWeight: 600,
+                          color: colors.primary[500],
                         }}
                       >
-                        CUSTOM SHIFT (Optional)
+                        OPD DAYS *
                       </Typography>
 
-                      <Grid container spacing={2}>
-                        {/* FROM */}
-                        <Grid item xs={6}>
+                      {(() => {
+                        const currentVal = currentDoctor.opdDays || "";
+                        const DAYS = [
+                          "Monday",
+                          "Tuesday",
+                          "Wednesday",
+                          "Thursday",
+                          "Friday",
+                          "Saturday",
+                          "Sunday",
+                        ];
+
+                        return (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: "wrap" }}>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                mb: 1.5,
+                                display: "block",
+                                color: "text.secondary",
+                                fontWeight: 500,
+                              }}
+                            >
+                              Select Days:
+                            </Typography>
+                            <Stack
+                              direction="row"
+                              spacing={1}
+                              flexWrap="wrap"
+                              useFlexGap
+                            >
+                              {DAYS.map((day) => {
+                                let selectedDays = Array.isArray(currentVal)
+                                  ? currentVal
+                                  : currentVal
+                                    ? currentVal.split(", ").filter((d) => d)
+                                    : [];
+                                const isSelected = selectedDays.includes(day);
+                                return (
+                                  <Chip
+                                    key={day}
+                                    label={day.slice(0, 3)}
+                                    onClick={() => {
+                                      let updatedDays = [...selectedDays];
+                                      if (isSelected) {
+                                        updatedDays = updatedDays.filter(
+                                          (d) => d !== day,
+                                        );
+                                      } else {
+                                        updatedDays.push(day);
+                                      }
+
+                                      // Sort days based on original array order
+                                      updatedDays.sort(
+                                        (a, b) =>
+                                          DAYS.indexOf(a) - DAYS.indexOf(b),
+                                      );
+
+                                      const newValue = updatedDays.join(", ");
+                                      setCurrentDoctor((prev) => ({
+                                        ...prev,
+                                        opdDays: newValue,
+                                      }));
+
+                                      // Clear error when at least one day is selected
+                                      if (updatedDays.length > 0) {
+                                        setErrors((prev) => ({
+                                          ...prev,
+                                          opdDays: null,
+                                        }));
+                                      }
+                                    }}
+                                    color={
+                                      isSelected ? "secondary" : "default"
+                                    }
+                                    variant={
+                                      isSelected ? "filled" : "outlined"
+                                    }
+                                    size="small"
+                                    sx={{ borderRadius: 1.5 }}
+                                  />
+                                );
+                              })}
+                            </Stack>
+                          </Box>
+                        );
+                      })()}
+
+                      {currentDoctor.opdDays && (
+                        <Box sx={{ mt: 2 }}>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              mb: 1,
+                              fontWeight: 600,
+                              color: colors.blueAccent[500],
+                            }}
+                          >
+                            Selected Days:
+                          </Typography>
+
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            flexWrap="wrap"
+                            useFlexGap
+                          >
+                            {currentDoctor.opdDays
+                              .split(", ")
+                              .filter(Boolean)
+                              .map((day) => (
+                                <Chip
+                                  key={day}
+                                  label={day}
+                                  color="secondary"
+                                  onDelete={() => {
+                                    const updatedDays =
+                                      currentDoctor.opdDays
+                                        .split(", ")
+                                        .filter((d) => d !== day);
+
+                                    setCurrentDoctor((prev) => ({
+                                      ...prev,
+                                      opdDays: updatedDays.join(", "),
+                                    }));
+                                  }}
+                                />
+                              ))}
+                          </Stack>
+                        </Box>
+                      )}
+                      {errors.opdDays && (
+                        <Typography
+                          variant="caption"
+                          color="error"
+                          sx={{ mt: 1, display: "block" }}
+                        >
+                          {errors.opdDays}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Consultation Charges"
+                      name="consultationCharges"
+                      value={currentDoctor.consultationCharges}
+                      onChange={handleChange}
+                      required
+                      error={!!errors.consultationCharges}
+                      helperText={errors.consultationCharges}
+                      placeholder="₹ Amount"
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Floor"
+                      name="floor"
+                      value={currentDoctor.floor}
+                      onChange={handleChange}
+                      required
+                      error={!!errors.floor}
+                      helperText={errors.floor}
+                      placeholder="Floor Number"
+                    />
+                  </Grid>
+                  {/* <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Max Patients Handled"
+                        name="maxPatientsHandled"
+                        value={currentDoctor.maxPatientsHandled}
+                        onChange={handleChange}
+                        required
+                        type="number"
+                        inputProps={{ min: 1, max: 20 }}
+                        error={!!errors.maxPatientsHandled}
+                        helperText={errors.maxPatientsHandled}
+                        placeholder="Ex. 10, 15, 20"
+                      />
+                    </Grid> */}
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      select
+                      fullWidth
+                      label="Average Patient Time"
+                      name="averagePatientTime"
+                      value={currentDoctor.averagePatientTime || "10"}
+                      onChange={handleChange}
+                    >
+                      <MenuItem default value="10">10 Minutes</MenuItem>
+                      <MenuItem value="15">15 Minutes</MenuItem>
+                      <MenuItem value="30">30 Minutes</MenuItem>
+                      <MenuItem value="45">45 Minutes</MenuItem>
+                      <MenuItem value="60">60 Minutes</MenuItem>
+                    </TextField>
+                  </Grid>
+
+                </Grid>
+              </CardContent>
+            </Card>
+
+            {/* Additional Details Card */}
+            <Card
+              elevation={3}
+              sx={{
+                borderRadius: 3,
+                background:
+                  theme.palette.mode === "dark"
+                    ? colors.primary[800]
+                    : "white",
+                border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 600,
+                    color: colors.primary[500],
+                    mb: 3,
+                  }}
+                >
+                  Additional Details
+                </Typography>
+
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Extension Number"
+                      name="extensionNumber"
+                      value={currentDoctor.extensionNumber}
+                      onChange={handleChange}
+                      helperText="Optional"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="PA Name"
+                      name="paName"
+                      value={currentDoctor.paName}
+                      onChange={handleChange}
+                      helperText="Optional"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      select
+                      fullWidth
+                      label="Tele Consultation"
+                      name="teleMedicine"
+                      value={currentDoctor.teleMedicine}
+                      onChange={handleChange}
+                      required
+                      error={!!errors.teleMedicine}
+                      helperText={errors.teleMedicine}
+                    >
+                      <MenuItem value="Yes">Yes</MenuItem>
+                      <MenuItem value="No">No</MenuItem>
+                    </TextField>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="PA Contact Number"
+                      name="paContactNumber"
+                      value={currentDoctor.paContactNumber}
+                      onChange={(e) => handleNumberChange(e, 10)}
+                      error={!!errors.paContactNumber}
+                      helperText={
+                        errors.paContactNumber || "Optional – 10 digits"
+                      }
+                      inputProps={{ inputMode: "numeric" }}
+                      placeholder="10 Digits"
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Additional Information"
+                      name="additionalInfo"
+                      value={currentDoctor.additionalInfo}
+                      onChange={handleChange}
+                      multiline
+                      rows={3}
+                      helperText="Optional"
+                    />
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+
+            {/* Video Consultation Card */}
+            <Card
+              elevation={3}
+              sx={{
+                borderRadius: 3,
+                background:
+                  theme.palette.mode === "dark"
+                    ? colors.primary[800]
+                    : "white",
+                border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    mb: 3,
+                  }}
+                >
+                  <VideoCallIcon
+                    sx={{ color: colors.blueAccent[500], fontSize: 24 }}
+                  />
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 600,
+                      color: colors.primary[500],
+                    }}
+                  >
+                    Video Consultation
+                  </Typography>
+                </Box>
+
+                <Stack spacing={3}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={currentDoctor.videoConsultation.enabled}
+                        onChange={handleVideoConsultationChange}
+                        name="enabled"
+                      />
+                    }
+                    label="Enable Video Consultation"
+                  />
+
+                  {currentDoctor.videoConsultation.enabled && (
+                    <Grid
+                      container
+                      spacing={3}
+                      sx={{
+                        p: 3,
+                        backgroundColor:
+                          theme.palette.mode === "dark"
+                            ? colors.primary[700]
+                            : colors.grey[50],
+                        borderRadius: 2,
+                      }}
+                    >
+                      {/* First Row: From Time and To Time */}
+                      <Grid item xs={12} sm={6}>
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
                           <TimePicker
-                            label="From"
-                            ampm
-                            ampmInClock
-                            views={["hours", "minutes"]}
-                            value={
-                              currentDoctor.timings.custom.from
-                                ? dayjs(
-                                  currentDoctor.timings.custom.from,
-                                  "hh:mm A"
-                                )
-                                : null
-                            }
-                            referenceDate={dayjs()}
-                            minutesStep={5}
-                            onChange={(newValue) =>
-                              handleTimingsChange(
-                                newValue,
-                                "custom",
-                                "from"
-                              )
-                            }
-                            shouldDisableTime={(value, view) => {
-                              const mFrom =
-                                currentDoctor.timings.morning.from
-                                  ? dayjs(
-                                    currentDoctor.timings.morning.from,
-                                    "hh:mm A"
-                                  )
-                                  : null;
-
-                              const mTo =
-                                currentDoctor.timings.morning.to
-                                  ? dayjs(
-                                    currentDoctor.timings.morning.to,
-                                    "hh:mm A"
-                                  )
-                                  : null;
-
-                              const eFrom =
-                                currentDoctor.timings.evening.from
-                                  ? dayjs(
-                                    currentDoctor.timings.evening.from,
-                                    "hh:mm A"
-                                  )
-                                  : null;
-
-                              const eTo =
-                                currentDoctor.timings.evening.to
-                                  ? dayjs(
-                                    currentDoctor.timings.evening.to,
-                                    "hh:mm A"
-                                  )
-                                  : null;
-
-                              if (view === "hours") {
-                                const hourTime = dayjs()
-                                  .hour(value)
-                                  .minute(0);
-
-                                if (
-                                  mFrom &&
-                                  mTo &&
-                                  hourTime.isBetween(
-                                    mFrom,
-                                    mTo,
-                                    null,
-                                    "[)"
-                                  )
-                                ) {
-                                  return true;
-                                }
-
-                                if (
-                                  eFrom &&
-                                  eTo &&
-                                  hourTime.isBetween(
-                                    eFrom,
-                                    eTo,
-                                    null,
-                                    "[)"
-                                  )
-                                ) {
-                                  return true;
-                                }
+                            label="From Time"
+                            value={currentDoctor.videoConsultation.startTime}
+                            onChange={(newValue) => {
+                              setCurrentDoctor((prev) => ({
+                                ...prev,
+                                videoConsultation: {
+                                  ...prev.videoConsultation,
+                                  startTime: newValue,
+                                },
+                              }));
+                              if (errors["videoConsultation.startTime"]) {
+                                setErrors((prev) => ({
+                                  ...prev,
+                                  ["videoConsultation.startTime"]: "",
+                                }));
                               }
-
-                              return false;
                             }}
-                            slotProps={{
-                              textField: {
-                                fullWidth: true,
-                              },
-                            }}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                required
+                                error={
+                                  !!errors["videoConsultation.startTime"]
+                                }
+                                helperText={
+                                  errors["videoConsultation.startTime"]
+                                }
+                              />
+                            )}
                           />
-                        </Grid>
-
-                        {/* TO */}
-                        <Grid item xs={6}>
-                          <TimePicker
-                            label="To"
-                            ampm
-                            ampmInClock
-                            views={["hours", "minutes"]}
-                            value={
-                              currentDoctor.timings.custom.to
-                                ? dayjs(
-                                  currentDoctor.timings.custom.to,
-                                  "hh:mm A"
-                                )
-                                : null
-                            }
-                            referenceDate={dayjs()}
-                            minTime={
-                              currentDoctor.timings.custom.from
-                                ? dayjs(
-                                  currentDoctor.timings.custom.from,
-                                  "hh:mm A"
-                                )
-                                : undefined
-                            }
-                            minutesStep={5}
-                            shouldDisableTime={(value, view) => {
-                              if (!currentDoctor.timings.custom.from)
-                                return false;
-
-                              const fromTime = dayjs(
-                                currentDoctor.timings.custom.from,
-                                "hh:mm A"
-                              );
-
-                              if (view === "hours") {
-                                const selectedHour = dayjs()
-                                  .hour(value)
-                                  .minute(0);
-
-                                return selectedHour.isBefore(fromTime);
-                              }
-
-                              return false;
-                            }}
-                            onChange={(newValue) =>
-                              handleTimingsChange(
-                                newValue,
-                                "custom",
-                                "to"
-                              )
-                            }
-                            slotProps={{
-                              textField: {
-                                fullWidth: true,
-                              },
-                            }}
-                          />
-                        </Grid>
+                        </LocalizationProvider>
                       </Grid>
-                    </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                          <TimePicker
+                            label="To Time"
+                            value={currentDoctor.videoConsultation.endTime}
+                            onChange={(newValue) => {
+                              setCurrentDoctor((prev) => ({
+                                ...prev,
+                                videoConsultation: {
+                                  ...prev.videoConsultation,
+                                  endTime: newValue,
+                                },
+                              }));
+                              if (errors["videoConsultation.endTime"]) {
+                                setErrors((prev) => ({
+                                  ...prev,
+                                  ["videoConsultation.endTime"]: "",
+                                }));
+                              }
+                            }}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                required
+                                error={!!errors["videoConsultation.endTime"]}
+                                helperText={
+                                  errors["videoConsultation.endTime"]
+                                }
+                              />
+                            )}
+                          />
+                        </LocalizationProvider>
+                      </Grid>
 
-                    {/* OPD Days Selector (Updated to Multi-Select) */}
-                    <Grid item xs={12} sm={12}>
-                      <Box
-                        sx={{
-                          p: 2,
-                          border: "1px solid",
-                          borderColor: errors.opdDays
-                            ? "error.main"
-                            : theme.palette.divider,
-                          borderRadius: 2,
-                          bgcolor:
-                            theme.palette.mode === "dark"
-                              ? "rgba(255,255,255,0.02)"
-                              : "rgba(0,0,0,0.02)",
-                        }}
-                      >
+                      {/* Second Row: Consultation Charges and Available Days */}
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          label="Consultation Charges"
+                          name="charges"
+                          value={currentDoctor.videoConsultation.charges}
+                          onChange={handleVideoConsultationChange}
+                          required
+                          error={!!errors["videoConsultation.charges"]}
+                          helperText={errors["videoConsultation.charges"]}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
                         <Typography
                           variant="caption"
                           sx={{
-                            mb: 2,
+                            mb: 1.5,
                             display: "block",
-                            fontWeight: 600,
-                            color: colors.primary[500],
+                            color: "text.secondary",
+                            fontWeight: 500,
                           }}
                         >
-                          OPD DAYS *
+                          Available Days *
                         </Typography>
-
                         {(() => {
-                          const currentVal = currentDoctor.opdDays || "";
+                          const currentVal =
+                            currentDoctor.videoConsultation.days || "";
                           const DAYS = [
                             "Monday",
                             "Tuesday",
@@ -2710,18 +3166,7 @@ const AddDoctorModal = ({
                           ];
 
                           return (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: "wrap" }}>
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  mb: 1.5,
-                                  display: "block",
-                                  color: "text.secondary",
-                                  fontWeight: 500,
-                                }}
-                              >
-                                Select Days:
-                              </Typography>
+                            <>
                               <Stack
                                 direction="row"
                                 spacing={1}
@@ -2732,40 +3177,41 @@ const AddDoctorModal = ({
                                   let selectedDays = Array.isArray(currentVal)
                                     ? currentVal
                                     : currentVal
-                                      ? currentVal.split(", ").filter((d) => d)
+                                      ? currentVal
+                                        .split(", ")
+                                        .filter((d) => d)
                                       : [];
-                                  const isSelected = selectedDays.includes(day);
+                                  const isSelected =
+                                    selectedDays.includes(day);
                                   return (
                                     <Chip
                                       key={day}
                                       label={day.slice(0, 3)}
                                       onClick={() => {
-                                        let updatedDays = [...selectedDays];
                                         if (isSelected) {
-                                          updatedDays = updatedDays.filter(
+                                          selectedDays = selectedDays.filter(
                                             (d) => d !== day,
                                           );
                                         } else {
-                                          updatedDays.push(day);
+                                          selectedDays.push(day);
                                         }
-
-                                        // Sort days based on original array order
-                                        updatedDays.sort(
+                                        selectedDays.sort(
                                           (a, b) =>
                                             DAYS.indexOf(a) - DAYS.indexOf(b),
                                         );
-
-                                        const newValue = updatedDays.join(", ");
                                         setCurrentDoctor((prev) => ({
                                           ...prev,
-                                          opdDays: newValue,
+                                          videoConsultation: {
+                                            ...prev.videoConsultation,
+                                            days: selectedDays.join(", "),
+                                          },
                                         }));
-
-                                        // Clear error when at least one day is selected
-                                        if (updatedDays.length > 0) {
+                                        if (
+                                          errors["videoConsultation.days"]
+                                        ) {
                                           setErrors((prev) => ({
                                             ...prev,
-                                            opdDays: null,
+                                            ["videoConsultation.days"]: "",
                                           }));
                                         }
                                       }}
@@ -2781,525 +3227,79 @@ const AddDoctorModal = ({
                                   );
                                 })}
                               </Stack>
-                            </Box>
+                              {currentDoctor.videoConsultation.days && (
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    mt: 2,
+                                    fontWeight: 600,
+                                    color: colors.blueAccent[500],
+                                  }}
+                                >
+                                  Selected:{" "}
+                                  {currentDoctor.videoConsultation.days}
+                                </Typography>
+                              )}
+                              {errors["videoConsultation.days"] && (
+                                <Typography
+                                  variant="caption"
+                                  color="error"
+                                  sx={{ mt: 1, display: "block" }}
+                                >
+                                  {errors["videoConsultation.days"]}
+                                </Typography>
+                              )}
+                            </>
                           );
                         })()}
-
-                        {currentDoctor.opdDays && (
-                          <Box sx={{ mt: 2 }}>
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                mb: 1,
-                                fontWeight: 600,
-                                color: colors.blueAccent[500],
-                              }}
-                            >
-                              Selected Days:
-                            </Typography>
-
-                            <Stack
-                              direction="row"
-                              spacing={1}
-                              flexWrap="wrap"
-                              useFlexGap
-                            >
-                              {currentDoctor.opdDays
-                                .split(", ")
-                                .filter(Boolean)
-                                .map((day) => (
-                                  <Chip
-                                    key={day}
-                                    label={day}
-                                    color="secondary"
-                                    onDelete={() => {
-                                      const updatedDays =
-                                        currentDoctor.opdDays
-                                          .split(", ")
-                                          .filter((d) => d !== day);
-
-                                      setCurrentDoctor((prev) => ({
-                                        ...prev,
-                                        opdDays: updatedDays.join(", "),
-                                      }));
-                                    }}
-                                  />
-                                ))}
-                            </Stack>
-                          </Box>
-                        )}
-                        {errors.opdDays && (
-                          <Typography
-                            variant="caption"
-                            color="error"
-                            sx={{ mt: 1, display: "block" }}
-                          >
-                            {errors.opdDays}
-                          </Typography>
-                        )}
-                      </Box>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Consultation Charges"
-                        name="consultationCharges"
-                        value={currentDoctor.consultationCharges}
-                        onChange={handleChange}
-                        required
-                        error={!!errors.consultationCharges}
-                        helperText={errors.consultationCharges}
-                        placeholder="₹ Amount"
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Floor"
-                        name="floor"
-                        value={currentDoctor.floor}
-                        onChange={handleChange}
-                        required
-                        error={!!errors.floor}
-                        helperText={errors.floor}
-                        placeholder="Floor Number"
-                      />
-                    </Grid>
-                    {/* <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Max Patients Handled"
-                        name="maxPatientsHandled"
-                        value={currentDoctor.maxPatientsHandled}
-                        onChange={handleChange}
-                        required
-                        type="number"
-                        inputProps={{ min: 1, max: 20 }}
-                        error={!!errors.maxPatientsHandled}
-                        helperText={errors.maxPatientsHandled}
-                        placeholder="Ex. 10, 15, 20"
-                      />
-                    </Grid> */}
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        select
-                        fullWidth
-                        label="Average Patient Time"
-                        name="averagePatientTime"
-                        value={currentDoctor.averagePatientTime || "10"}
-                        onChange={handleChange}
-                      >
-                        <MenuItem default value="10">10 Minutes</MenuItem>
-                        <MenuItem value="15">15 Minutes</MenuItem>
-                        <MenuItem value="30">30 Minutes</MenuItem>
-                        <MenuItem value="45">45 Minutes</MenuItem>
-                        <MenuItem value="60">60 Minutes</MenuItem>
-                      </TextField>
-                    </Grid>
-
-                  </Grid>
-                </CardContent>
-              </Card>
-
-              {/* Additional Details Card */}
-              <Card
-                elevation={3}
-                sx={{
-                  borderRadius: 3,
-                  background:
-                    theme.palette.mode === "dark"
-                      ? colors.primary[800]
-                      : "white",
-                  border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
-                }}
-              >
-                <CardContent sx={{ p: 3 }}>
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontWeight: 600,
-                      color: colors.primary[500],
-                      mb: 3,
-                    }}
-                  >
-                    Additional Details
-                  </Typography>
-
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Extension Number"
-                        name="extensionNumber"
-                        value={currentDoctor.extensionNumber}
-                        onChange={handleChange}
-                        helperText="Optional"
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="PA Name"
-                        name="paName"
-                        value={currentDoctor.paName}
-                        onChange={handleChange}
-                        helperText="Optional"
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        select
-                        fullWidth
-                        label="Tele Consultation"
-                        name="teleMedicine"
-                        value={currentDoctor.teleMedicine}
-                        onChange={handleChange}
-                        required
-                        error={!!errors.teleMedicine}
-                        helperText={errors.teleMedicine}
-                      >
-                        <MenuItem value="Yes">Yes</MenuItem>
-                        <MenuItem value="No">No</MenuItem>
-                      </TextField>
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="PA Contact Number"
-                        name="paContactNumber"
-                        value={currentDoctor.paContactNumber}
-                        onChange={(e) => handleNumberChange(e, 10)}
-                        error={!!errors.paContactNumber}
-                        helperText={
-                          errors.paContactNumber || "Optional – 10 digits"
-                        }
-                        inputProps={{ inputMode: "numeric" }}
-                        placeholder="10 Digits"
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label="Additional Information"
-                        name="additionalInfo"
-                        value={currentDoctor.additionalInfo}
-                        onChange={handleChange}
-                        multiline
-                        rows={3}
-                        helperText="Optional"
-                      />
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-
-              {/* Video Consultation Card */}
-              <Card
-                elevation={3}
-                sx={{
-                  borderRadius: 3,
-                  background:
-                    theme.palette.mode === "dark"
-                      ? colors.primary[800]
-                      : "white",
-                  border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
-                }}
-              >
-                <CardContent sx={{ p: 3 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 2,
-                      mb: 3,
-                    }}
-                  >
-                    <VideoCallIcon
-                      sx={{ color: colors.blueAccent[500], fontSize: 24 }}
-                    />
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontWeight: 600,
-                        color: colors.primary[500],
-                      }}
-                    >
-                      Video Consultation
-                    </Typography>
-                  </Box>
-
-                  <Stack spacing={3}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={currentDoctor.videoConsultation.enabled}
-                          onChange={handleVideoConsultationChange}
-                          name="enabled"
-                        />
-                      }
-                      label="Enable Video Consultation"
-                    />
-
-                    {currentDoctor.videoConsultation.enabled && (
-                      <Grid
-                        container
-                        spacing={3}
-                        sx={{
-                          p: 3,
-                          backgroundColor:
-                            theme.palette.mode === "dark"
-                              ? colors.primary[700]
-                              : colors.grey[50],
-                          borderRadius: 2,
-                        }}
-                      >
-                        {/* First Row: From Time and To Time */}
-                        <Grid item xs={12} sm={6}>
-                          <LocalizationProvider dateAdapter={AdapterDayjs}>
-                            <TimePicker
-                              label="From Time"
-                              value={currentDoctor.videoConsultation.startTime}
-                              onChange={(newValue) => {
-                                setCurrentDoctor((prev) => ({
-                                  ...prev,
-                                  videoConsultation: {
-                                    ...prev.videoConsultation,
-                                    startTime: newValue,
-                                  },
-                                }));
-                                if (errors["videoConsultation.startTime"]) {
-                                  setErrors((prev) => ({
-                                    ...prev,
-                                    ["videoConsultation.startTime"]: "",
-                                  }));
-                                }
-                              }}
-                              renderInput={(params) => (
-                                <TextField
-                                  {...params}
-                                  fullWidth
-                                  required
-                                  error={
-                                    !!errors["videoConsultation.startTime"]
-                                  }
-                                  helperText={
-                                    errors["videoConsultation.startTime"]
-                                  }
-                                />
-                              )}
-                            />
-                          </LocalizationProvider>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <LocalizationProvider dateAdapter={AdapterDayjs}>
-                            <TimePicker
-                              label="To Time"
-                              value={currentDoctor.videoConsultation.endTime}
-                              onChange={(newValue) => {
-                                setCurrentDoctor((prev) => ({
-                                  ...prev,
-                                  videoConsultation: {
-                                    ...prev.videoConsultation,
-                                    endTime: newValue,
-                                  },
-                                }));
-                                if (errors["videoConsultation.endTime"]) {
-                                  setErrors((prev) => ({
-                                    ...prev,
-                                    ["videoConsultation.endTime"]: "",
-                                  }));
-                                }
-                              }}
-                              renderInput={(params) => (
-                                <TextField
-                                  {...params}
-                                  fullWidth
-                                  required
-                                  error={!!errors["videoConsultation.endTime"]}
-                                  helperText={
-                                    errors["videoConsultation.endTime"]
-                                  }
-                                />
-                              )}
-                            />
-                          </LocalizationProvider>
-                        </Grid>
-
-                        {/* Second Row: Consultation Charges and Available Days */}
-                        <Grid item xs={12} sm={6}>
-                          <TextField
-                            fullWidth
-                            label="Consultation Charges"
-                            name="charges"
-                            value={currentDoctor.videoConsultation.charges}
-                            onChange={handleVideoConsultationChange}
-                            required
-                            error={!!errors["videoConsultation.charges"]}
-                            helperText={errors["videoConsultation.charges"]}
-                          />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              mb: 1.5,
-                              display: "block",
-                              color: "text.secondary",
-                              fontWeight: 500,
-                            }}
-                          >
-                            Available Days *
-                          </Typography>
-                          {(() => {
-                            const currentVal =
-                              currentDoctor.videoConsultation.days || "";
-                            const DAYS = [
-                              "Monday",
-                              "Tuesday",
-                              "Wednesday",
-                              "Thursday",
-                              "Friday",
-                              "Saturday",
-                              "Sunday",
-                            ];
-
-                            return (
-                              <>
-                                <Stack
-                                  direction="row"
-                                  spacing={1}
-                                  flexWrap="wrap"
-                                  useFlexGap
-                                >
-                                  {DAYS.map((day) => {
-                                    let selectedDays = Array.isArray(currentVal)
-                                      ? currentVal
-                                      : currentVal
-                                        ? currentVal
-                                          .split(", ")
-                                          .filter((d) => d)
-                                        : [];
-                                    const isSelected =
-                                      selectedDays.includes(day);
-                                    return (
-                                      <Chip
-                                        key={day}
-                                        label={day.slice(0, 3)}
-                                        onClick={() => {
-                                          if (isSelected) {
-                                            selectedDays = selectedDays.filter(
-                                              (d) => d !== day,
-                                            );
-                                          } else {
-                                            selectedDays.push(day);
-                                          }
-                                          selectedDays.sort(
-                                            (a, b) =>
-                                              DAYS.indexOf(a) - DAYS.indexOf(b),
-                                          );
-                                          setCurrentDoctor((prev) => ({
-                                            ...prev,
-                                            videoConsultation: {
-                                              ...prev.videoConsultation,
-                                              days: selectedDays.join(", "),
-                                            },
-                                          }));
-                                          if (
-                                            errors["videoConsultation.days"]
-                                          ) {
-                                            setErrors((prev) => ({
-                                              ...prev,
-                                              ["videoConsultation.days"]: "",
-                                            }));
-                                          }
-                                        }}
-                                        color={
-                                          isSelected ? "secondary" : "default"
-                                        }
-                                        variant={
-                                          isSelected ? "filled" : "outlined"
-                                        }
-                                        size="small"
-                                        sx={{ borderRadius: 1.5 }}
-                                      />
-                                    );
-                                  })}
-                                </Stack>
-                                {currentDoctor.videoConsultation.days && (
-                                  <Typography
-                                    variant="body2"
-                                    sx={{
-                                      mt: 2,
-                                      fontWeight: 600,
-                                      color: colors.blueAccent[500],
-                                    }}
-                                  >
-                                    Selected:{" "}
-                                    {currentDoctor.videoConsultation.days}
-                                  </Typography>
-                                )}
-                                {errors["videoConsultation.days"] && (
-                                  <Typography
-                                    variant="caption"
-                                    color="error"
-                                    sx={{ mt: 1, display: "block" }}
-                                  >
-                                    {errors["videoConsultation.days"]}
-                                  </Typography>
-                                )}
-                              </>
-                            );
-                          })()}
-                        </Grid>
                       </Grid>
-                    )}
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Stack>
-          </Box>
-        </FormContent>
+                    </Grid>
+                  )}
+                </Stack>
+              </CardContent>
+            </Card>
+          </Stack>
+        </Box>
+      </FormContent>
 
-        <FormActions
+      <FormActions
+        sx={{
+          p: 3,
+          background:
+            theme.palette.mode === "dark"
+              ? colors.primary[800]
+              : colors.grey[50],
+        }}
+      >
+        <Button
+          onClick={onClose}
+          variant="outlined"
+          size="large"
+          disabled={loading}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSave}
+          variant="contained"
+          color="primary"
+          disabled={loading}
+          startIcon={
+            loading && <CircularProgress size={20} color="inherit" />
+          }
           sx={{
-            p: 3,
-            background:
-              theme.palette.mode === "dark"
-                ? colors.primary[800]
-                : colors.grey[50],
+            background: `linear-gradient(135deg, ${colors.greenAccent[500]} 0%, ${colors.greenAccent[600]} 100%)`,
           }}
         >
-          <Button
-            onClick={onClose}
-            variant="outlined"
-            size="large"
-            disabled={loading}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            variant="contained"
-            color="primary"
-            disabled={loading}
-            startIcon={
-              loading && <CircularProgress size={20} color="inherit" />
-            }
-            sx={{
-              background: `linear-gradient(135deg, ${colors.greenAccent[500]} 0%, ${colors.greenAccent[600]} 100%)`,
-            }}
-          >
-            {loading
-              ? "Saving..."
-              : doctorData
-                ? "Update Doctor"
-                : "Add Doctor"}
-          </Button>
-        </FormActions>
-      </>
-    );
+          {loading
+            ? "Saving..."
+            : doctorData
+              ? "Update Doctor"
+              : "Add Doctor"}
+        </Button>
+      </FormActions>
+    </>
+  );
 
   if (isInline) {
     if (!open) return null;

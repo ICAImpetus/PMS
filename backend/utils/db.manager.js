@@ -28,7 +28,7 @@ export const getMasterConnection = async () => {
 
     masterConnection = await mongoose.createConnection(uri).asPromise();
 
-    console.log("Master DB Connected");
+    //console.log("Master DB Connected");
 
 
     return masterConnection;
@@ -37,7 +37,7 @@ export const getMasterConnection = async () => {
 export const MasterConn = await getMasterConnection()
 
 export const getConnection = async (dbName) => {
-    console.log("Getting connection for DB:", dbName);
+    //console.log("Getting connection for DB:", dbName);
     if (!dbName) {
         throw new Error("DB name is required");
     }
@@ -53,7 +53,7 @@ export const getConnection = async (dbName) => {
     const conn = await mongoose.createConnection(uri).asPromise();
 
     conn.on("connected", () => {
-        console.log(`Connected: ${dbName}`);
+        //console.log(`Connected: ${dbName}`);
     });
 
     conn.on("error", (err) => {

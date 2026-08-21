@@ -284,7 +284,7 @@ const AddProcedureModal = ({
       };
       onSave(procedureToSave); // Call the onSave prop with the prepared data
     } else {
-      console.log("Form validation failed.", errors);
+      //console.log("Form validation failed.", errors);
     }
   };
 

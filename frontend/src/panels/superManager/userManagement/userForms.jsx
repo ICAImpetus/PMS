@@ -96,7 +96,7 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
     const fetchBranches = async () => {
       try {
         // //  ALWAYS convert to pure ID array
-        // console.log("Selected Hospital in useEffect:", hospitalId);
+        // //console.log("Selected Hospital in useEffect:", hospitalId);
         if (!hospitalId) return;
 
         const response = await getBranches(hospitalId);
@@ -168,11 +168,11 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
       validateOnBlur={true}
       validate={(values) => {
         const validationSchema = getValidationSchema(isUpdateComp);
-        console.log("validationSchema", validationSchema);
-        console.log("values", values);
+        //console.log("validationSchema", validationSchema);
+        //console.log("values", values);
       }}
       onSubmit={async (values, { resetForm }) => {
-        console.log("Form values on submit:", values);
+        //console.log("Form values on submit:", values);
         await handleSubmitForm(values);
         if (!isUpdateComp) {
           resetForm();
@@ -180,8 +180,8 @@ const UserFormSupermanager = ({ initialState = null, onClose, allUsers = [], ref
       }}
     >
       {({ values, errors, touched, handleChange, handleBlur, setFieldValue }) => {
-        // console.log(errors);
-        // console.log(touched);
+        // //console.log(errors);
+        // //console.log(touched);
 
 
         const customHandleChange = (event) => {

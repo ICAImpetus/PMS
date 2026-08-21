@@ -7,7 +7,7 @@ This project can produce a single-file, self-contained Node.js bundle and option
 - Bundler: `webpack.standalone.obfuscated.config.js` produces `dist/server.standalone.obf.js`.
 - Includes dependencies: The bundle is standalone (no `node_modules` needed at runtime).
 - Obfuscation: The output JS is transformed by `webpack-obfuscator` with aggressive options.
-- Console output disabled: `disableConsoleOutput: true` replaces `console.log/warn/error/...` with no-ops. This is why you don't see logs when running the obfuscated build.
+- Console output disabled: `disableConsoleOutput: true` replaces `//console.log/warn/error/...` with no-ops. This is why you don't see logs when running the obfuscated build.
 
 ## Key options in `webpack-obfuscator`
 

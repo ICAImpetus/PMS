@@ -32,7 +32,7 @@ export const requestLogger = (req, res, next) => {
 };
 
 export const auditLog = async (data) => {
-    // console.log("auditLog", data);
+    // //console.log("auditLog", data);
 
     const AuditLog = await getAuditLogModel(MasterConn)
     try {
@@ -56,7 +56,7 @@ export const auditLog = async (data) => {
         const isSpecialAction = data.action?.includes("NEW_") || data.action?.includes("_FORM_") || data.action?.includes("PATIENT");
 
         if (isSignificantEvent || isSpecialAction) {
-            
+
             // Determine notification type
             let notifType = "TENANT_OPERATION";
             if (data.action?.includes("PATIENT")) notifType = "NEW_PATIENT";
@@ -67,9 +67,9 @@ export const auditLog = async (data) => {
                 type: notifType,
                 title: `${data.module || "System"} Operation`,
                 message: data.customMessage || `${data.action} performed by ${data.name}`,
-                data: { 
-                    action: data.action, 
-                    module: data.module, 
+                data: {
+                    action: data.action,
+                    module: data.module,
                     performedBy: data.name,
                     details: data.newData
                 }

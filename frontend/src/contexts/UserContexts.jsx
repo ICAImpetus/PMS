@@ -56,7 +56,7 @@ export const GlobalUserContextProvider = ({ children }) => {
           throw new Error("Session expired");
         }
       } catch (error) {
-        console.log("Fetch User Error:", error);
+        //console.log("Fetch User Error:", error);
 
         if (error.code === "ECONNABORTED") {
           toast.error("Request timeout (10s). Try again.");
@@ -121,7 +121,7 @@ export const GlobalUserContextProvider = ({ children }) => {
 
       navigate("/", { replace: true });
     } catch (error) {
-      console.log("Login Error:", error);
+      //console.log("Login Error:", error);
     }
   };
 
@@ -139,7 +139,7 @@ export const GlobalUserContextProvider = ({ children }) => {
 
       // toast.success("Logout Success");
     } catch (error) {
-      console.log("Logout Error:", error);
+      //console.log("Logout Error:", error);
     }
   };
 

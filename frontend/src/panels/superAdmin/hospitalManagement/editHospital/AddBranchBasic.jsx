@@ -466,7 +466,7 @@ const AddBranchBasic = ({
         );
       }
     } else {
-      console.log("Validation Errors:", errors);
+      //console.log("Validation Errors:", errors);
       toast.error("Please fix the errors in the form.");
     }
   };

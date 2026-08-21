@@ -12,13 +12,13 @@ export const checkHospitalIPAccess = async (req, res, next) => {
             clientIP = clientIP.replace("::ffff:", "");
         }
 
-        console.log("clientIP", clientIP);
+        //console.log("clientIP", clientIP);
 
 
         const hospitalId = req.query.hospitalId || req.params.hospitalId || null
 
 
-        console.log("hospitalId", hospitalId);
+        //console.log("hospitalId", hospitalId);
 
         if (!hospitalId) {
             return res.status(400).json({ success: false, message: "Hospital ID is required" });
@@ -30,7 +30,7 @@ export const checkHospitalIPAccess = async (req, res, next) => {
             return res.status(403).json({ success: false, message: "Hospital account is inactive or not found." });
         }
 
-        console.log("hospital.ipAddresses", hospital.ipAddresses);
+        //console.log("hospital.ipAddresses", hospital.ipAddresses);
         // Agar IP whitelist empty hai toh default allow/block setup karein
 
 

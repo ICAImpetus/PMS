@@ -90,16 +90,16 @@ export default function DoctorDropdown({
 
     // OPD day check
 
-    // console.log("selectedDay:", selectedDay);
-    // console.log("doctor:", doctor);
+    // //console.log("selectedDay:", selectedDay);
+    // //console.log("doctor:", doctor);
 
 
     const day = getDayName(selectedDay)
     const isOpdDay =
       doctor?.opdDays?.includes(day);
 
-    // console.log("isOpdDay:", isOpdDay);
-    // console.log("dayName:", dayName);
+    // //console.log("isOpdDay:", isOpdDay);
+    // //console.log("dayName:", dayName);
 
     // Unavailable check
     const isUnavailable =

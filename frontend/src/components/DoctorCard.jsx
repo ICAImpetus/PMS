@@ -18,6 +18,7 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { useApi } from "../api/useApi";
 import { toTitleCase } from "../utils/normalizeUserType";
+import { useQuery } from "@tanstack/react-query";
 
 const chipStyles = {
     opd: { bgcolor: "#E3F2FD", color: "#1976D2" },
@@ -25,31 +26,33 @@ const chipStyles = {
     surgeries: { bgcolor: "#F3E5F5", color: "#7B1FA2" },
 };
 const DoctorProfileCard = ({ doctor, hosId, setDoctorSlots = null }) => {
-
-
-
     const [profile, setProfile] = useState(null)
 
-    const { request: getSingledoctor, loading: getSingleDocorLoading } =
-        useApi(commonRoutes.getSingleDoctor)
+    const {
+        data: profiledata,
+        isLoading: getSingleDocorLoading,
+        refetch: refreshDoctorProfile
+    } = useQuery({
+        queryKey: ['singleDoctor', hosId, doctor?._id],
+        queryFn: async () => {
+            const res = await commonRoutes.getSingleDoctor(hosId, doctor._id);
+            return res?.data?.data;
+        },
+        enabled: Boolean(doctor?._id && hosId),
+    });
 
+    // Sync profile data to local state when query returns data
     useEffect(() => {
 
-        if (!doctor?._id) return
+        if (profiledata) {
 
-        const getaprofile = async () => {
-            try {
-                const res = await getSingledoctor(hosId, doctor._id)
-                setProfile(res?.data)
-                if (setDoctorSlots) setDoctorSlots(res?.data?.slots || [])
-            } catch (err) {
-                console.error("Doctor fetch error", err)
+            setProfile(profiledata);
+            if (setDoctorSlots) {
+                setDoctorSlots(profiledata?.slots || []);
             }
         }
+    }, [profiledata, setDoctorSlots]);
 
-        getaprofile()
-
-    }, [doctor])
 
 
     if (!doctor) {
@@ -107,7 +110,7 @@ const DoctorProfileCard = ({ doctor, hosId, setDoctorSlots = null }) => {
                         </Typography>
                         <Stack direction="row" spacing={0.5} mt={0.5} flexWrap="wrap">
 
-                            {/* {console.log("data?.experience", data?.experience)} */}
+                            {/* {//console.log("data?.experience", data?.experience)} */}
                             <Chip
                                 label={
                                     data?.experience !== null

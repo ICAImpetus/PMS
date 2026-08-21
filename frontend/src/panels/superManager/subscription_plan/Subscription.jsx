@@ -12,7 +12,7 @@ const Subscription = () => {
 
     const handlePay = async (ammount) => {
         try {
-            // console.log('ammount',ammount)
+            // //console.log('ammount',ammount)
             const res = await axios.post('http://localhost:5000/api/create-order', { ammount }, {
                 headers: {
                     'Content-Type': 'application/json'
@@ -34,9 +34,9 @@ const Subscription = () => {
                 order_id: order.id,
 
                 handler: async function (response) {
-                    console.log("Payment Success");
+                    //console.log("Payment Success");
 
-                    console.log(response);
+                    //console.log(response);
 
                     /*
                     response.razorpay_payment_id
@@ -53,7 +53,7 @@ const Subscription = () => {
                             { ...response, ammount, userId: currentUser?._id }
                         );
 
-                    console.log(verifyRes.data);
+                    //console.log(verifyRes.data);
                 },
 
                 prefill: {
@@ -71,7 +71,7 @@ const Subscription = () => {
 
             rzp.open();
         } catch (error) {
-            console.log('error in handle pay', error);
+            //console.log('error in handle pay', error);
             toast.error(response?.message || 'Error Occured, Contact Admin!')
         }
     }

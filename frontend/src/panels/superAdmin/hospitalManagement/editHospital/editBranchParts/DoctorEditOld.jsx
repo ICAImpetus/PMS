@@ -212,7 +212,7 @@ const AddDoctorModal = ({ open, onClose, onSave }) => {
       onSave(doctorToSave);
       onClose(); // Close modal after saving
     } else {
-      console.log('Form validation failed.', errors);
+      //console.log('Form validation failed.', errors);
     }
   };
 

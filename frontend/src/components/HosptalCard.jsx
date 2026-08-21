@@ -41,7 +41,7 @@ export default function HospitalCard({
   };
 
   useEffect(() => {
-    // console.log(hostpitalData);
+    // //console.log(hostpitalData);
 
     // navigationFunction(hostpitalData);
 

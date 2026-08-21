@@ -188,7 +188,7 @@ const AddDayCareDetailsModal = ({
       onSave("dayCare", dayCareDetailsToSave); // Call the onSave prop with type and data
       onClose(); // Close modal after successful save
     } else {
-      console.log("Form validation failed.", errors);
+      //console.log("Form validation failed.", errors);
     }
   };
 

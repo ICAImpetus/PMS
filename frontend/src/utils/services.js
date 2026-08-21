@@ -129,7 +129,7 @@ export const uploadImageToServer = async ({
     };
     return object;
   } catch (error) {
-    console.log(error);
+    //console.log(error);
   }
 };
 
@@ -146,7 +146,7 @@ export const downloadFileServer = async ({ end_point, call_back, props }) => {
     link.click();
     //call_back(true);
   } catch (error) {
-    console.log(error);
+    //console.log(error);
     //call_back(false);
   }
 };
@@ -181,7 +181,7 @@ export const sendDataApiFunc = async (end_point, data, method) => {
 
     return response.data; // Return response data on success
   } catch (error) {
-    console.log(error);
+    //console.log(error);
     return {
       success: false,
       message:
@@ -260,7 +260,7 @@ export const getDataFunc = async (end_point) => {
     }
     return response.data;
   } catch (error) {
-    console.log("error message in api", error.message);
+    //console.log("error message in api", error.message);
     if (error.message === "Cannot read properties of null (reading 'token')") {
       localStorage.clear();
       // // Navigate('/login');
@@ -268,7 +268,7 @@ export const getDataFunc = async (end_point) => {
     }
     const errorMessage = error.message;
     if (errorMessage === "Request failed with status code 401") {
-      // console.log("error message in api", errorMessage);
+      // //console.log("error message in api", errorMessage);
       localStorage.clear();
       // // Navigate('/login');
       window.location.href = "/";

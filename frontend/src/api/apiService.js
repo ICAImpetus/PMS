@@ -422,18 +422,29 @@ export const commonRoutes = {
       isExport,
     };
 
-    console.log("params", params);
+    //console.log("params", params);
 
 
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
     if (searchInput) params.searchInput = searchInput;
 
-    console.log("paramr", params);
+    //console.log("paramr", params);
 
 
     return API.get(`api/single-patient-history/`, { params });
   },
+
+  updateBookedSlots: (hosId, branchId, formId, slotId) =>
+
+    API.put(`api/booked-slots/${slotId}/unbook`, null, {
+      params: {
+        hosId,
+        branchId,
+        formId
+      }
+    }),
+
 
   getBookedSlotsApi: (hosId, branchId, data) =>
 
@@ -518,7 +529,7 @@ export const commonRoutes = {
         },
       });
 
-      console.log("respon", response);
+      //console.log("respon", response);
 
       return response;
     } catch (error) {

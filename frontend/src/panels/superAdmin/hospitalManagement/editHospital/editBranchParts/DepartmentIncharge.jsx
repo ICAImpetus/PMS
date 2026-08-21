@@ -270,7 +270,7 @@ const AddDepartmentInchargeModal = ({
       onSave(inchargeToSave);
 
     } else {
-      console.log("Form validation failed.", errors);
+      //console.log("Form validation failed.", errors);
     }
   };
 
@@ -286,365 +286,365 @@ const AddDepartmentInchargeModal = ({
 
   const formContent = (
     <>
-        <FormHeader
+      <FormHeader
+        sx={{
+          background:
+            theme.palette.mode === "dark"
+              ? `linear-gradient(135deg, ${colors.blueAccent[700]} 0%, ${colors.blueAccent[800]} 100%)`
+              : `linear-gradient(135deg, ${colors.blueAccent[500]} 0%, ${colors.blueAccent[600]} 100%)`,
+          color: "white",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          py: 2,
+          px: 3,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <BusinessIcon sx={{ fontSize: 28 }} />
+          <Typography variant="h5" component="div" sx={{ fontWeight: 600 }}>
+            {inchargeData
+              ? "Edit Department Incharge"
+              : "Add New Department Incharge"}
+          </Typography>
+        </Box>
+        <IconButton
+          onClick={onClose}
           sx={{
-            background:
-              theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${colors.blueAccent[700]} 0%, ${colors.blueAccent[800]} 100%)`
-                : `linear-gradient(135deg, ${colors.blueAccent[500]} 0%, ${colors.blueAccent[600]} 100%)`,
             color: "white",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            py: 2,
-            px: 3,
+            "&:hover": {
+              backgroundColor: "rgba(255, 255, 255, 0.1)",
+              transform: "scale(1.1)",
+            },
+            transition: "all 0.2s ease-in-out",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <BusinessIcon sx={{ fontSize: 28 }} />
-            <Typography variant="h5" component="div" sx={{ fontWeight: 600 }}>
-              {inchargeData
-                ? "Edit Department Incharge"
-                : "Add New Department Incharge"}
-            </Typography>
-          </Box>
-          <IconButton
-            onClick={onClose}
-            sx={{
-              color: "white",
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-                transform: "scale(1.1)",
-              },
-              transition: "all 0.2s ease-in-out",
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </FormHeader>
+          <CloseIcon />
+        </IconButton>
+      </FormHeader>
 
-        <FormContent
-          sx={{
-            p: 0,
-            backgroundColor:
-              theme.palette.mode === "dark"
-                ? colors.primary[900]
-                : colors.grey[50],
-          }}
-        >
-          <Box sx={{ p: 4 }}>
-            <Stack spacing={4}>
-              {/* Basic Information Card */}
-              <Card
-                elevation={3}
-                sx={{
-                  borderRadius: 3,
-                  background:
-                    theme.palette.mode === "dark" ? colors.primary[800] : "white",
-                  border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
-                }}
-              >
-                <CardContent sx={{ p: 3 }}>
-                  <Box
-                    sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}
+      <FormContent
+        sx={{
+          p: 0,
+          backgroundColor:
+            theme.palette.mode === "dark"
+              ? colors.primary[900]
+              : colors.grey[50],
+        }}
+      >
+        <Box sx={{ p: 4 }}>
+          <Stack spacing={4}>
+            {/* Basic Information Card */}
+            <Card
+              elevation={3}
+              sx={{
+                borderRadius: 3,
+                background:
+                  theme.palette.mode === "dark" ? colors.primary[800] : "white",
+                border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}
+                >
+                  <PersonIcon
+                    sx={{ color: colors.blueAccent[500], fontSize: 24 }}
+                  />
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 600,
+                      color: colors.primary[500],
+                    }}
                   >
-                    <PersonIcon
-                      sx={{ color: colors.blueAccent[500], fontSize: 24 }}
-                    />
-                    <Typography
-                      variant="h6"
+                    Basic Information
+                  </Typography>
+                </Box>
+
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Incharge Name"
+                      name="name"
+                      value={currentIncharge.name}
+                      onChange={handleChange}
+                      variant="outlined"
+                      size="medium"
+                      required
+                      error={!!errors.name}
+                      helperText={errors.name}
                       sx={{
-                        fontWeight: 600,
-                        color: colors.primary[500],
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                        },
                       }}
-                    >
-                      Basic Information
-                    </Typography>
-                  </Box>
-
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Incharge Name"
-                        name="name"
-                        value={currentIncharge.name}
-                        onChange={handleChange}
-                        variant="outlined"
-                        size="medium"
-                        required
-                        error={!!errors.name}
-                        helperText={errors.name}
-                        sx={{
-                          "& .MuiOutlinedInput-root": {
-                            borderRadius: 2,
-                          },
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Contact No."
-                        name="contactNo"
-                        value={currentIncharge.contactNo}
-                        onChange={handleChange}
-                        onBlur={() => {
-                          const contact = currentIncharge.contactNo.trim();
-                          if (!contact) {
-                            setErrors((prev) => ({
-                              ...prev,
-                              contactNo: "Contact Number is required.",
-                            }));
-                          } else if (!/^\d{10}$/.test(contact)) {
-                            setErrors((prev) => ({
-                              ...prev,
-                              contactNo:
-                                "Contact Number must be exactly 10 digits.",
-                            }));
-                          } else {
-                            setErrors((prev) => ({ ...prev, contactNo: "" }));
-                          }
-                        }}
-                        variant="outlined"
-                        size="medium"
-                        required
-                        error={!!errors.contactNo}
-                        helperText={errors.contactNo}
-                        sx={{
-                          "& .MuiOutlinedInput-root": {
-                            borderRadius: 2,
-                          },
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Extension No."
-                        name="extensionNo"
-                        value={currentIncharge.extensionNo}
-                        onChange={handleChange}
-                        variant="outlined"
-                        size="medium"
-                        sx={{
-                          "& .MuiOutlinedInput-root": {
-                            borderRadius: 2,
-                          },
-                        }}
-                      />
-                    </Grid>
+                    />
                   </Grid>
-                </CardContent>
-              </Card>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Contact No."
+                      name="contactNo"
+                      value={currentIncharge.contactNo}
+                      onChange={handleChange}
+                      onBlur={() => {
+                        const contact = currentIncharge.contactNo.trim();
+                        if (!contact) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            contactNo: "Contact Number is required.",
+                          }));
+                        } else if (!/^\d{10}$/.test(contact)) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            contactNo:
+                              "Contact Number must be exactly 10 digits.",
+                          }));
+                        } else {
+                          setErrors((prev) => ({ ...prev, contactNo: "" }));
+                        }
+                      }}
+                      variant="outlined"
+                      size="medium"
+                      required
+                      error={!!errors.contactNo}
+                      helperText={errors.contactNo}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                        },
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Extension No."
+                      name="extensionNo"
+                      value={currentIncharge.extensionNo}
+                      onChange={handleChange}
+                      variant="outlined"
+                      size="medium"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                        },
+                      }}
+                    />
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
 
-              {/* Department & Service Information Card */}
-              <Card
-                elevation={3}
-                sx={{
-                  borderRadius: 3,
-                  background:
-                    theme.palette.mode === "dark" ? colors.primary[800] : "white",
-                  border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
-                }}
-              >
-                <CardContent sx={{ p: 3 }}>
-                  <Box
-                    sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}
+            {/* Department & Service Information Card */}
+            <Card
+              elevation={3}
+              sx={{
+                borderRadius: 3,
+                background:
+                  theme.palette.mode === "dark" ? colors.primary[800] : "white",
+                border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}
+                >
+                  <MedicalServicesIcon
+                    sx={{ color: colors.blueAccent[500], fontSize: 24 }}
+                  />
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 600,
+                      color: colors.primary[500],
+                    }}
                   >
-                    <MedicalServicesIcon
-                      sx={{ color: colors.blueAccent[500], fontSize: 24 }}
-                    />
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontWeight: 600,
-                        color: colors.primary[500],
+                    Department & Service Information
+                  </Typography>
+                </Box>
+
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6}>
+                    <Autocomplete
+                      fullWidth
+                      freeSolo
+                      options={
+                        department?.map((item) => ({
+                          ...item,
+                          label: item.value,
+                        })) || []
+                      }
+
+                      value={currentIncharge.department || null}
+
+                      getOptionLabel={(option) =>
+                        typeof option === "string" ? option : option?.value || ""
+                      }
+
+                      onInputChange={(event, newInputValue) => {
+                        setCurrentIncharge((prev) => ({
+                          ...prev,
+                          department: {
+                            ...prev.department,
+                            value: newInputValue,
+                          },
+                        }));
                       }}
-                    >
-                      Department & Service Information
-                    </Typography>
-                  </Box>
 
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} sm={6}>
-                      <Autocomplete
-                        fullWidth
-                        freeSolo
-                        options={
-                          department?.map((item) => ({
-                            ...item,
-                            label: item.value,
-                          })) || []
-                        }
+                      onChange={(event, newValue) => {
+                        setCurrentIncharge((prev) => ({
+                          ...prev,
+                          department: newValue,
+                        }));
+                      }}
 
-                        value={currentIncharge.department || null}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Department Name"
+                          placeholder="Select or type"
+                        />
+                      )}
+                    />
 
-                        getOptionLabel={(option) =>
-                          typeof option === "string" ? option : option?.value || ""
-                        }
-
-                        onInputChange={(event, newInputValue) => {
-                          setCurrentIncharge((prev) => ({
-                            ...prev,
-                            department: {
-                              ...prev.department,
-                              value: newInputValue,
-                            },
-                          }));
-                        }}
-
-                        onChange={(event, newValue) => {
-                          setCurrentIncharge((prev) => ({
-                            ...prev,
-                            department: newValue,
-                          }));
-                        }}
-
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Department Name"
-                            placeholder="Select or type"
-                          />
-                        )}
-                      />
-
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Autocomplete
-                        fullWidth
-                        freeSolo
-                        options={
-                          serviceType?.map((item) => ({
-                            ...item,
-                            label: item.value,
-                          })) || []
-                        }
-
-                        value={currentIncharge.serviceType || null}
-
-                        getOptionLabel={(option) =>
-                          typeof option === "string" ? option : option?.value || ""
-                        }
-
-                        onInputChange={(event, newInputValue) => {
-                          setCurrentIncharge((prev) => ({
-                            ...prev,
-                            serviceType: {
-                              ...prev.serviceType,
-                              value: newInputValue,
-                            },
-                          }));
-                        }}
-
-                        onChange={(event, newValue) => {
-                          setCurrentIncharge((prev) => ({
-                            ...prev,
-                            serviceType: newValue,
-                          }));
-                        }}
-
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Service Type"
-                            placeholder="Select or type"
-                          />
-                        )}
-                      />
-
-                    </Grid>
                   </Grid>
-                </CardContent>
-              </Card>
+                  <Grid item xs={12} sm={6}>
+                    <Autocomplete
+                      fullWidth
+                      freeSolo
+                      options={
+                        serviceType?.map((item) => ({
+                          ...item,
+                          label: item.value,
+                        })) || []
+                      }
 
-              {/* Schedule Information Card */}
-              <Card
-                elevation={3}
-                sx={{
-                  borderRadius: 3,
-                  background:
-                    theme.palette.mode === "dark" ? colors.primary[800] : "white",
-                  border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
-                }}
-              >
-                <CardContent sx={{ p: 3 }}>
-                  <Box
-                    sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}
+                      value={currentIncharge.serviceType || null}
+
+                      getOptionLabel={(option) =>
+                        typeof option === "string" ? option : option?.value || ""
+                      }
+
+                      onInputChange={(event, newInputValue) => {
+                        setCurrentIncharge((prev) => ({
+                          ...prev,
+                          serviceType: {
+                            ...prev.serviceType,
+                            value: newInputValue,
+                          },
+                        }));
+                      }}
+
+                      onChange={(event, newValue) => {
+                        setCurrentIncharge((prev) => ({
+                          ...prev,
+                          serviceType: newValue,
+                        }));
+                      }}
+
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Service Type"
+                          placeholder="Select or type"
+                        />
+                      )}
+                    />
+
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+
+            {/* Schedule Information Card */}
+            <Card
+              elevation={3}
+              sx={{
+                borderRadius: 3,
+                background:
+                  theme.palette.mode === "dark" ? colors.primary[800] : "white",
+                border: `1px solid ${theme.palette.mode === "dark" ? colors.primary[700] : colors.grey[200]}`,
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}
+                >
+                  <ScheduleIcon
+                    sx={{ color: colors.blueAccent[500], fontSize: 24 }}
+                  />
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 600,
+                      color: colors.primary[500],
+                    }}
                   >
-                    <ScheduleIcon
-                      sx={{ color: colors.blueAccent[500], fontSize: 24 }}
-                    />
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontWeight: 600,
-                        color: colors.primary[500],
-                      }}
-                    >
-                      Schedule Information
-                    </Typography>
-                  </Box>
+                    Schedule Information
+                  </Typography>
+                </Box>
 
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} sm={6}>
-                      <TimePicker
-                        label="From"
-                        value={currentIncharge.timeSlot.from}
-                        onChange={(newValue) =>
-                          setCurrentIncharge((prev) => ({
-                            ...prev,
-                            timeSlot: { ...prev.timeSlot, from: newValue },
-                          }))
-                        }
-                        slotProps={{
-                          textField: {
-                            fullWidth: true,
-                            variant: "outlined",
-                            size: "medium",
-                            error: !!errors.timeSlot,
-                            helperText: errors.timeSlot,
-                            sx: {
-                              "& .MuiOutlinedInput-root": {
-                                borderRadius: 2,
-                              },
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6}>
+                    <TimePicker
+                      label="From"
+                      value={currentIncharge.timeSlot.from}
+                      onChange={(newValue) =>
+                        setCurrentIncharge((prev) => ({
+                          ...prev,
+                          timeSlot: { ...prev.timeSlot, from: newValue },
+                        }))
+                      }
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: "outlined",
+                          size: "medium",
+                          error: !!errors.timeSlot,
+                          helperText: errors.timeSlot,
+                          sx: {
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: 2,
                             },
                           },
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TimePicker
-                        label="To"
-                        value={currentIncharge.timeSlot.to}
-                        onChange={(newValue) =>
-                          setCurrentIncharge((prev) => ({
-                            ...prev,
-                            timeSlot: { ...prev.timeSlot, to: newValue },
-                          }))
-                        }
-                        slotProps={{
-                          textField: {
-                            fullWidth: true,
-                            variant: "outlined",
-                            size: "medium",
-                            error: !!errors.timeSlot,
-                            helperText: errors.timeSlot,
-                            sx: {
-                              "& .MuiOutlinedInput-root": {
-                                borderRadius: 2,
-                              },
-                            },
-                          },
-                        }}
-                      />
-                    </Grid>
+                        },
+                      }}
+                    />
                   </Grid>
-                </CardContent>
-              </Card>
-            </Stack>
-          </Box>
+                  <Grid item xs={12} sm={6}>
+                    <TimePicker
+                      label="To"
+                      value={currentIncharge.timeSlot.to}
+                      onChange={(newValue) =>
+                        setCurrentIncharge((prev) => ({
+                          ...prev,
+                          timeSlot: { ...prev.timeSlot, to: newValue },
+                        }))
+                      }
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: "outlined",
+                          size: "medium",
+                          error: !!errors.timeSlot,
+                          helperText: errors.timeSlot,
+                          sx: {
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: 2,
+                            },
+                          },
+                        },
+                      }}
+                    />
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Stack>
+        </Box>
       </FormContent>
 
       <FormActions

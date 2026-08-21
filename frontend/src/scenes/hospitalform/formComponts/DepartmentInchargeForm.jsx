@@ -130,7 +130,7 @@ import { useTheme } from '@mui/material';
 //                         ))}
 //                         <Button
 //                             onClick={() => {
-//                                 console.log("Adding new incharge"); // Debugging: See if this gets called multiple times
+//                                 //console.log("Adding new incharge"); // Debugging: See if this gets called multiple times
 //                                 push({
 //                                     name: '',
 //                                     extensionNo: '',
@@ -307,7 +307,7 @@ const DepartmentInchargeForm = React.memo(({ incharge, index, handleChange, remo
 
             {/* Service Type */}
             <Box mb={2}>
-            {/* <Typography>Service Type</Typography> */}
+                {/* <Typography>Service Type</Typography> */}
                 <TextField
                     fullWidth
                     variant="filled"

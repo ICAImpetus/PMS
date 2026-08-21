@@ -69,7 +69,7 @@ export const sendWhatsAppMessage = async (
 
             // Exponential backoff: 1s -> 2s -> 4s
             const delay = 1000 * Math.pow(2, attempt - 1);
-            console.log(`Retrying in ${delay} ms...`);
+            //console.log(`Retrying in ${delay} ms...`);
             await sleep(delay);
         }
     }
@@ -78,10 +78,10 @@ export const sendWhatsAppMessage = async (
 export const sendWhatsAppInBackground = (payload, delay = 0) => {
     setTimeout(async () => {
         try {
-            console.log("payload", payload);
+            //console.log("payload", payload);
 
             const result = await sendWhatsAppMessage(payload);
-            console.log("result", result);
+            //console.log("result", result);
 
             if (!result.success) {
                 console.error("WhatsApp send failed:", result.error);

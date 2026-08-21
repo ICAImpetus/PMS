@@ -19,7 +19,7 @@ import RatingWithLabels from '../outboundForm/RatingWithLabels';
 
 export const renderFieldInFormGeneration = (field, index, handleChange, readonly = false) => {
 
-    //   console.log(formData); // Debugging
+    //   //console.log(formData); // Debugging
     //   const fieldValue = formData[field.name] || ''; // Use field.name dynamically
     // const fieldValue = field.name || ''; // Use field.name dynamically
     const fieldValue = ''; // Use field.name dynamically

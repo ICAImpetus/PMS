@@ -333,18 +333,52 @@ nextWeek.setDate(nextWeek.getDate() + 7);
 nextWeek.setMinutes(nextWeek.getMinutes() - nextWeek.getTimezoneOffset());
 const maxDate = nextWeek.toISOString().slice(0, 16);
 
+
 const AppointmentSlotsSelector = ({
-  selectedDoctor,
-  doctorSlots,
+
+  editFormId,
+  doctorSlots = [],
   getSession,
   form,
-  bookedSlotsSet,
+  bookedSlotsSet = new Set(),
   isPastSlot,
   handleChange,
   setBookedSlotModal,
-  handleRemoveBookedSlot,
+  selectedBranch,
+  selectedHostpital,
+  handleParentRefreshClick,
+  selectedDoctor
 }) => {
-  if (!selectedDoctor || !doctorSlots?.length) return null;
+  if (!doctorSlots?.length || !selectedDoctor) return null;
+
+
+  const {
+    request: updateBookedSlotsApi,
+    error: updateBookedSlotError,
+    loading: updateBookedSlotsLoading,
+  } = useApi(
+    commonRoutes.updateBookedSlots
+  );
+
+
+  const handleRemoveBookedSlot = async (slotId) => {
+    try {
+      if (!editFormId) toast.error("Form Not Found! Please Select Doctor First")
+
+      const res = await updateBookedSlotsApi(selectedHostpital, selectedBranch, editFormId, slotId)
+      if (res?.success) toast.success("Slot update successfully")
+      if (handleParentRefreshClick) handleParentRefreshClick()
+
+    } catch (error) {
+      // //console.log("error in ", error);
+
+      toast.error("Error to update slot status ")
+    }
+  };
+  // Selected slot ID safe extract
+  const selectedSlotId = form?.formData?.appointmentSlot?.slotId
+    ? String(form.formData.appointmentSlot.slotId)
+    : "";
 
   return (
     <Box sx={{ my: 2 }}>
@@ -364,39 +398,44 @@ const AppointmentSlotsSelector = ({
           py: 1,
         }}
       >
-        {doctorSlots?.map((slot) => {
-          const session = getSession(slot.start);
-          const isSelected =
-            String(form.formData.appointmentSlot?.slotId) === String(slot._id);
-          const isBooked = bookedSlotsSet.has(String(slot._id));
-          const isPast = isPastSlot(slot.start, form.formData.dateTime);
+        {doctorSlots.map((slot) => {
+          const currentSlotId = String(slot._id);
+          const session = getSession ? getSession(slot.start) : "";
+          const isSelected = selectedSlotId === currentSlotId;
+          const isBooked = bookedSlotsSet.has(currentSlotId);
+
+          const isPast = isPastSlot ? isPastSlot(slot.start, form?.formData?.dateTime) : false;
+
+          const handleSlotClick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (isBooked) {
+              if (setBookedSlotModal) {
+                setBookedSlotModal({ open: true, slot });
+              }
+              return;
+            }
+
+            if (isPast) return;
+
+            // Direct single click select without unselecting logic
+            handleChange("formData.appointmentSlot", {
+              slotId: slot._id,
+              start: slot.start,
+              end: slot.end,
+              date: form?.formData?.dateTime,
+            });
+          };
 
           return (
             <Button
               key={slot._id}
+              type="button"
               variant={isSelected ? "contained" : "outlined"}
               disabled={isPast}
-              onClick={() => {
-                if (isBooked) {
-                  setBookedSlotModal({
-                    open: true,
-                    slot,
-                  });
-                  return;
-                }
-
-                if (isPast) return;
-
-                handleChange("formData.appointmentSlot", {
-                  slotId: slot._id,
-                  start: slot.start,
-                  end: slot.end,
-                  date: form.formData.dateTime,
-                });
-              }}
-              color={
-                isBooked ? "error" : isSelected ? "primary" : "inherit"
-              }
+              onClick={handleSlotClick}
+              color={isBooked ? "error" : isSelected ? "primary" : "inherit"}
               sx={{
                 flexDirection: "column",
                 alignItems: "center",
@@ -411,50 +450,61 @@ const AppointmentSlotsSelector = ({
                     : "divider",
                 backgroundColor: isBooked
                   ? "error.lighter"
-                  : isPast
-                    ? "action.disabledBackground"
-                    : "background.paper",
-                "&:hover": {
-                  backgroundColor: isBooked ? "#ffebee" : undefined,
-                },
+                  : isSelected
+                    ? "primary.main"
+                    : isPast
+                      ? "action.disabledBackground"
+                      : "background.paper",
+                // color: isSelected ? "#3437a3 !important" : "inherit",
+                // "&:hover": {
+                //   backgroundColor: isBooked
+                //     ? "#3e35c0"
+                //     : isSelected
+                //       ? "primary.dark"
+                //       : "#26639f",
+                // },
               }}
             >
               {/* REMOVE BOOKED SLOT BUTTON */}
-              {isBooked && (
+              {isBooked && editFormId && (
                 <Tooltip title="Remove/Cancel Booking">
                   <IconButton
+                    disabled={updateBookedSlotsLoading}
                     size="small"
                     color="error"
                     onClick={(e) => {
-                      e.stopPropagation(); // स्लॉट सेलेक्ट होने से रोके
-                      if (handleRemoveBookedSlot) {
-                        handleRemoveBookedSlot(slot._id);
-                      }
+                      e.stopPropagation();
+
+                      handleRemoveBookedSlot(slot._id);
+
                     }}
                     sx={{
                       position: "absolute",
                       top: 2,
                       right: 2,
                       padding: "2px",
-                      backgroundColor: "rgba(255, 255, 255, 0.8)",
-                      "&:hover": {
-                        backgroundColor: "#fff",
-                      },
+                      // backgroundColor: "rgba(255, 255, 255, 0.9)",
+                      // zIndex: 2,
+                      // "&:hover": {
+                      // backgroundColor: "#fff",
+                      // },
                     }}
                   >
-                    <DeleteOutlineIcon sx={{ fontSize: "16px" }} />
+                    {updateBookedSlotsLoading ? <CircularProgress size={22} /> : <DeleteOutlineIcon sx={{ fontSize: "16px" }} />}
                   </IconButton>
                 </Tooltip>
-              )}
+              )
+              }
 
               {/* SESSION */}
-              <Typography
+              < Typography
                 variant="caption"
                 sx={{
                   fontSize: "10px",
-                  color: isSelected ? "inherit" : "text.secondary",
+                  // color: isSelected ? "rgba(95, 118, 177, 0.8)" : "text.secondary",
                   lineHeight: 1,
                   mb: 0.5,
+                  pointerEvents: "none",
                 }}
               >
                 {session}
@@ -464,49 +514,58 @@ const AppointmentSlotsSelector = ({
               <Typography
                 variant="body2"
                 sx={{
-                  fontWeight: 600,
+                  fontWeight: 700,
                   fontSize: "12px",
                   lineHeight: 1.2,
+                  // color: isSelected ? "#329185" : "text.primary",
+                  pointerEvents: "none",
                 }}
               >
                 {slot.start} - {slot.end}
               </Typography>
 
               {/* STATUS TAGS */}
-              {isBooked && (
-                <Typography
-                  variant="caption"
-                  sx={{
-                    mt: 0.5,
-                    fontSize: "10px",
-                    fontWeight: 700,
-                    color: "error.main",
-                  }}
-                >
-                  Booked
-                </Typography>
-              )}
+              {
+                isBooked && (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      mt: 0.5,
+                      fontSize: "10px",
+                      fontWeight: 700,
+                      color: "error.main",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    Booked
+                  </Typography>
+                )
+              }
 
-              {isPast && (
-                <Typography
-                  variant="caption"
-                  sx={{
-                    mt: 0.5,
-                    fontSize: "10px",
-                    fontWeight: 600,
-                    color: "text.disabled",
-                  }}
-                >
-                  Expired
-                </Typography>
-              )}
+              {
+                isPast && (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      mt: 0.5,
+                      fontSize: "10px",
+                      fontWeight: 600,
+                      color: "text.disabled",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    Expired
+                  </Typography>
+                )
+              }
             </Button>
           );
         })}
-      </Box>
-    </Box>
+      </Box >
+    </Box >
   );
 };
+
 
 const RenderRemarksComponents = ({ form, handleChange }) => {
   const [open, setOpen] = useState(false);
@@ -558,7 +617,7 @@ const RenderRemarksComponents = ({ form, handleChange }) => {
         onClose={() => setOpen(false)}
         options={REMARK_INBOUND_TEMPLATES}
 
-        // Fix 1: value को हमेशा null रखें क्योंकि आप नियंत्रित फ्री-टेक्स्ट (inputValue) का इस्तेमाल कर रहे हैं
+
         value={null}
 
         getOptionLabel={(option) =>
@@ -680,6 +739,7 @@ function Forms() {
   const [bookedSlotAction, setBookedSlotAction] = useState("");
   const [cancelReason, setCancelReason] = useState("");
   const [selectedQuestions, setSelectedQuestions] = useState(null);
+  const refreshDoctorFnRef = useRef(null);
   const { request: getSingleBranch, error: getSingleBranchError, loading: getSingleBranchLoading } = useApi(commonRoutes.getBranchByIdForForms)
   const { request: saveFilledForm, error: saveFilledFormError, loading: saveFilledFormLoading } = useApi(commonRoutes.saveFilledForm)
   // const { request: updateform, error: updateFormError, loading: updateFormApiLoading } = useApi(commonRoutes.updateFilledForm)
@@ -690,6 +750,8 @@ function Forms() {
   } = useApi(
     commonRoutes.getBookedSlotsApi
   );
+
+
 
   const {
     request: updateFormApi,
@@ -754,12 +816,14 @@ function Forms() {
           const fetchedData = res?.data;
           setSelectedBranch(fetchedData?.branchId)
           setSelectedDoctor(fetchedData?.doctor)
-          console.log("selected", fetchedData?.doctor);
+          // //console.log("selected", fetchedData?.doctor);
+          const branchId = selectedBranch
+          if (fetchedData?.branchId) setSelectedBranch(fetchedData?.branchId || branchId)
 
           setForm(() => ({
             formType: fetchedData?.formType || initialFormState.formType,
             purpose: fetchedData?.purpose || "",
-            doctor: fetchedData?.doctor || null,
+            doctor: fetchedData?.doctor?._id || null,
             department: fetchedData?.department || null,
             branchId: fetchedData?.branchId || null,
             hospitalId: fetchedData?.hospitalId || selectedHostpital || null,
@@ -947,7 +1011,6 @@ function Forms() {
     }
   };
 
-
   useEffect(() => {
     const fetchRegisteredPatients = async () => {
       try {
@@ -1037,7 +1100,7 @@ function Forms() {
         response?.data || []
       );
     } catch (error) {
-      console.log(error);
+      console.error("Error to fetch Bookes Slots");
     }
   };
 
@@ -1084,28 +1147,6 @@ function Forms() {
     });
   };
 
-  const handleRemoveBookedSlot = async (slotId) => {
-    try {
-      // (Optional) अगर बैकएंड API है, तो यहाँ API कॉल करें:
-      // await axios.post("/api/cancel-slot", { slotId });
-
-      // 1. UI State (bookedSlotsSet) से Slot Id हटाएँ
-      setBookedSlotsSet((prevSet) => {
-        const newSet = new Set(prevSet);
-        newSet.delete(String(slotId));
-        return newSet;
-      });
-
-      // 2. अगर यूज़र ने उसी स्लॉट को फ़ॉर्म में सेलेक्ट किया हुआ था, तो फ़ॉर्म से साफ़ करें
-      if (form.formData.appointmentSlot?.slotId === slotId) {
-        handleChange("formData.appointmentSlot", null);
-      }
-
-      console.log(` Slot ${slotId} removed successfully.`);
-    } catch (error) {
-      console.error(" Failed to remove booked slot:", error);
-    }
-  };
 
   const handleDepartmentChange = async (depId) => {
 
@@ -1129,7 +1170,6 @@ function Forms() {
         selectedDep.doctors?.length > 0
       ) {
         setSelectedDay(form?.formData.dateTime || null)
-
 
         setfilteredDoctors(selectedDep.doctors);
         return;
@@ -1159,7 +1199,7 @@ function Forms() {
 
   const handleDoctorSelect = (doctor) => {
 
-    console.log("selectedDoctor", doctor);
+    // //console.log("selectedDoctor", doctor);
 
     if (!doctor) {
       handleChange("doctor", null);
@@ -1170,7 +1210,7 @@ function Forms() {
     // doctor set - save ID for form submission
     handleChange("doctor", doctor?._id);
     // set full object for UI card - immediate reflection
-    console.log("doctor", doctor);
+    // //console.log("doctor", doctor);
 
     setSelectedDoctor(doctor);
 
@@ -1197,7 +1237,19 @@ function Forms() {
     }
     try {
       if (editMode) {
-        const res = await updateFormApi(selectedHostpital, selectedBranch, editFormId, form);
+        const updatedForm = {
+          ...form,
+          branchId: selectedBranch,
+          formData: {
+            ...form?.formData,
+            patientDetails: {
+              ...form?.formData?.patientDetails,
+              branchId: selectedBranch,
+            }
+          }
+        };
+        const res = await updateFormApi(selectedHostpital, selectedBranch, editFormId, updatedForm);
+
         if (res?.success) {
           resetForm();
           toast.success("Form update successfully!");
@@ -1286,7 +1338,7 @@ function Forms() {
         "formData.patientArrivalTime",
         slotStart
       );
-      console.log("patientArrivalTime", form.formData.patientArrivalTime);
+      // //console.log("patientArrivalTime", form.formData.patientArrivalTime);
 
     }
 
@@ -1608,7 +1660,7 @@ function Forms() {
 
 
             <AppointmentSlotsSelector
-              selectedDoctor={selectedDoctor}
+              editFormId={editFormId}
               doctorSlots={doctorSlots}
               getSession={getSession}
               form={form}
@@ -1616,7 +1668,10 @@ function Forms() {
               isPastSlot={isPastSlot}
               handleChange={handleChange}
               setBookedSlotModal={setBookedSlotModal}
-              handleRemoveBookedSlot={handleRemoveBookedSlot}
+              selectedBranch={selectedBranch}
+              selectedHostpital={selectedHostpital}
+              handleParentRefreshClick={fetchBookedSlots}
+              selectedDoctor={selectedDoctor}
             />
 
 
@@ -4419,7 +4474,7 @@ function Forms() {
                 </div>
               </div>
               {/* 
-              {console.log("Reference From", isRequired)} */}
+              {//console.log("Reference From", isRequired)} */}
               {(form.formData.callerType === "Patient" ||
                 form.formData.callerType === "Attendant")
                 && (
@@ -4740,7 +4795,7 @@ function Forms() {
                                       sx={{ textTransform: "none", ml: 2 }}
                                       onClick={(e) => {
                                         e.stopPropagation(); // Prevents double click trigger if parent handles click
-                                        console.log("Selected Patient ID:", patient?._id);
+                                        // //console.log("Selected Patient ID:", patient?._id);
 
                                         handleSelectPatient(patient?._id)
                                       }}
@@ -5393,7 +5448,7 @@ function Forms() {
                                 sx={{ textTransform: "none", ml: 2 }}
                                 onClick={(e) => {
                                   e.stopPropagation(); // Prevents double click trigger if parent handles click
-                                  console.log("Selected Patient ID:", patient?._id);
+                                  // //console.log("Selected Patient ID:", patient?._id);
 
                                   handleSelectPatient(patient?._id)
                                 }}

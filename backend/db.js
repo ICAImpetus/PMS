@@ -15,12 +15,12 @@ async function insertOne(obj, coll) {
     const collection = database.collection(coll);
 
     const result = await collection.insertOne(obj);
-    console.log(result.acknowledged, " document inserted");
+    //console.log(result.acknowledged, " document inserted");
   } catch (e) {
     console.error("Error inserting document:", e);
   } finally {
     await client.close();
-    console.log("Connection closed");
+    //console.log("Connection closed");
   }
 }
 
@@ -32,12 +32,12 @@ async function insertMulti(obj, coll) {
     const database = client.db(`${process.env.database}`);
     const dtmfdetials = database.collection(coll);
     const result = await dtmfdetials.insertMany(obj);
-    console.log(result.insertedCount + " documents inserted");
+    //console.log(result.insertedCount + " documents inserted");
   } catch (e) {
-    console.log("catch block in instertMulti");
+    //console.log("catch block in instertMulti");
     console.error(e);
   } finally {
-    console.log("finally called closing insertMulti connection");
+    //console.log("finally called closing insertMulti connection");
     await client.close();
   }
 }
@@ -54,7 +54,7 @@ async function updateMulti(filter, coll, updateDoc) {
       filter._id = new ObjectId(filter._id);
     }
     const result = await collections.updateOne(filter, updateDoc);
-    console.log("result in updateMulti function", result);
+    //console.log("result in updateMulti function", result);
     return result; // Return the result
   } catch (e) {
     console.error(e);
@@ -81,7 +81,7 @@ async function updateDocument(filter, coll, updateDoc, options = {}) {
     // Pass the 'options' object to the native updateOne method
     const result = await collections.updateOne(filter, updateDoc, options);
 
-    console.log("updateOne Result:", result); // Added for debugging
+    //console.log("updateOne Result:", result); // Added for debugging
     return result; // Return the result object
   } catch (e) {
     console.error("Error in updateDocument:", e);
@@ -101,17 +101,17 @@ async function findMulti(qurobj, coll, options = {}) { // Added options paramete
     await client.connect();
     const database = client.db(`${process.env.database}`);
     const dtmfdetials = database.collection(coll);
-    
+
     // Convert _id string to ObjectId if it exists in the query object
     if (qurobj._id && typeof qurobj._id === 'string') {
-        qurobj._id = new ObjectId(qurobj._id);
+      qurobj._id = new ObjectId(qurobj._id);
     }
-    
+
     const query = qurobj;
 
     // Apply options like sort, skip, limit if provided
     let result = dtmfdetials.find(query);
-    
+
     if (options.sort) {
       result = result.sort(options.sort);
     }
@@ -127,7 +127,7 @@ async function findMulti(qurobj, coll, options = {}) { // Added options paramete
   } catch (e) {
     console.error("Error in findMulti:", e);
   } finally {
-    console.log("finally called closing findMulti connection");
+    //console.log("finally called closing findMulti connection");
     await client.close();
   }
 }
@@ -157,8 +157,8 @@ async function deleteOne(filter, coll) {
     await client.connect();
     const database = client.db(`${process.env.database}`);
     const collection = database.collection(coll);
-     // Convert _id string to ObjectId if it exists in the filter
-     if (filter._id && typeof filter._id === 'string') {
+    // Convert _id string to ObjectId if it exists in the filter
+    if (filter._id && typeof filter._id === 'string') {
       filter._id = new ObjectId(filter._id);
     }
     const result = await collection.deleteOne(filter);
@@ -185,13 +185,13 @@ async function findAllData(qurobj, coll) {
     const result = dtmfdetials
       .find({ ...query, ...queryAlways })
       .project({ _id: 0, password: 0 });
-    //console.log("list of  documents inserted");
+    ////console.log("list of  documents inserted");
     const datavalues = await result.toArray();
     return datavalues;
   } catch (e) {
     console.error(e);
   } finally {
-    console.log("finally called closing findAllData connection");
+    //console.log("finally called closing findAllData connection");
     await client.close();
   }
 }
@@ -213,7 +213,7 @@ async function findAllDataWithProjection(queryObj, projectionObj, coll) {
   } catch (e) {
     console.error(e);
   } finally {
-    console.log("finally called closing findAllDataWithProjection connection");
+    //console.log("finally called closing findAllDataWithProjection connection");
     await client.close();
   }
 }
@@ -258,7 +258,7 @@ async function findSingleProjectedArrayField(
   } catch (e) {
     console.error(e);
   } finally {
-    console.log("finally called: closing MongoDB connection");
+    //console.log("finally called: closing MongoDB connection");
     await client.close();
   }
 }
@@ -279,13 +279,13 @@ async function findMultiwithLimit(qurobj, coll, lmt) {
       projection: { _id: 0, study: 1 },
     };
     const result = dtmfdetials.find(query, options).limit(lmt);
-    //console.log("list of  documents inserted");
+    ////console.log("list of  documents inserted");
     const datavalues = await result.toArray();
     return datavalues;
   } catch (e) {
     console.error(e);
   } finally {
-    console.log("finally called closing findMultiwithLimit connection");
+    //console.log("finally called closing findMultiwithLimit connection");
     await client.close();
   }
 }
@@ -300,12 +300,12 @@ async function deleteMulti(qurobj, coll) {
     //const query = {"camp":"test"};
     const query = qurobj;
     const deleteAck = await collection.deleteMany(query);
-    console.log("delete operation ack");
-    console.log(deleteAck);
+    //console.log("delete operation ack");
+    //console.log(deleteAck);
   } catch (e) {
     console.error(e);
   } finally {
-    console.log("finally called closing connection after delete operation ");
+    //console.log("finally called closing connection after delete operation ");
     await client.close();
   }
 }
@@ -316,14 +316,14 @@ async function finddoc(collectionName, filter) {
     await client.connect();
     const database = client.db(`${process.env.database}`);
     const collection = database.collection(collectionName);
-    // console.log('collection is :', collection)
-    console.log("filter is :", filter);
-    
+    // //console.log('collection is :', collection)
+    //console.log("filter is :", filter);
+
     // Convert _id string to ObjectId if it exists in the filter
     if (filter._id && typeof filter._id === 'string') {
-        filter._id = new ObjectId(filter._id);
+      filter._id = new ObjectId(filter._id);
     }
-    
+
     const foundDocument = await collection.findOne(filter);
 
     if (foundDocument) {
@@ -345,7 +345,7 @@ async function finddoc(collectionName, filter) {
     throw err;
   } finally {
     await client.close();
-    console.log("finally called findOne connection");
+    //console.log("finally called findOne connection");
   }
 }
 
@@ -494,7 +494,7 @@ const findBranchById = async (hospitalId, branchId, collection, dbName) => {
     if (!result.length || result[0].branches.length === 0) {
       throw new Error("Branch not found in hospital");
     }
-    // console.log('result in findBranchById is:', result[0].branches);
+    // //console.log('result in findBranchById is:', result[0].branches);
     // Return the first (and only) matching branch
     return result[0].branches[0];
   } catch (error) {
@@ -682,7 +682,7 @@ async function findActiveHospitalData(
                       input: "$$branch.departmentIncharge",
                       as: "inc",
                       // *** THIS IS THE CORRECTED LINE (removed stray 'f') ***
-                      cond: neTrue("$$inc." + flag), 
+                      cond: neTrue("$$inc." + flag),
                     },
                   },
                 },
@@ -705,13 +705,13 @@ async function findActiveHospitalData(
     const col = db.collection(coll);
 
     const data = await col.aggregate(pipeline).toArray();
-    // console.log("findActiveHospitalData data:", data);
+    // //console.log("findActiveHospitalData data:", data);
     return data;
   } catch (err) {
     console.error("findActiveHospitalData error:", err);
     throw err; // let caller handle it
   } finally {
-    console.log("Closing Mongo connection (findActiveHospitalData)");
+    //console.log("Closing Mongo connection (findActiveHospitalData)");
     await client.close();
   }
 }
@@ -770,13 +770,13 @@ const findDoctorsAndDepartmentsByBranch = async (
       departments
     };
 
-    // console.log("findActiveHospitalData data:", data);
+    // //console.log("findActiveHospitalData data:", data);
     return object;
   } catch (err) {
     console.error("findActiveHospitalData error:", err);
     throw err; // let caller handle it
   } finally {
-    console.log("Closing Mongo connection (findActiveHospitalData)");
+    //console.log("Closing Mongo connection (findActiveHospitalData)");
     await client.close();
   }
 };

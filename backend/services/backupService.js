@@ -64,7 +64,7 @@ Status: SUCCESS
       `,
         });
 
-        console.log("Backup completed");
+        //console.log("Backup completed");
     } catch (error) {
         // Failure Email
         await sendEmail({

@@ -35,7 +35,7 @@ export const useApi = (apiFn, options = {}) => {
       return res.data;
 
     } catch (err) {
-      console.log("Error in ", err);
+      //console.log("Error in ", err);
 
       const status = err.response?.status;
       const message =

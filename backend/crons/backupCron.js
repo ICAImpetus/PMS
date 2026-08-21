@@ -12,7 +12,7 @@ const HospitalModel = getHospitalModel(MasterConn)
 cron.schedule(
     "0 2 * * 0",
     async () => {
-        console.log("Starting weekly backup...");
+        //console.log("Starting weekly backup...");
         await runBackup();
     },
     {
@@ -23,11 +23,11 @@ cron.schedule(
 cron.schedule(
     "0 2 * * 0",
     async () => {
-        console.log("Starting Weekly Medical Director Report...");
+        //console.log("Starting Weekly Medical Director Report...");
 
         try {
             await sendWeeklyMedicalDirectorReports();
-            console.log("Weekly reports sent successfully.");
+            //console.log("Weekly reports sent successfully.");
         } catch (err) {
             console.error(err);
         }
@@ -55,7 +55,7 @@ cron.schedule(
 
 // export const uploadDatabaseBackup = async (req, res) => {
 //     try {
-//         console.log("Starting database backup...");
+//         //console.log("Starting database backup...");
 
 
 //         const { hosId, branchId } = req.query;
@@ -133,9 +133,9 @@ cron.schedule(
 
 //         let result; // uploadBranchCSV FIX (let instead of const)
 
-//         console.log("CSV Rows:", rows);
+//         //console.log("CSV Rows:", rows);
 
-//         console.log("type", type);
+//         //console.log("type", type);
 
 
 //         const conn = await getConnection(hospital.trimmedName);
@@ -172,7 +172,7 @@ cron.schedule(
 //             });
 
 
-//             console.log("patient", data)
+//             //console.log("patient", data)
 //             if (!patient) {
 //                 patient = await PatientModel.create({
 //                     hospitalId: {
@@ -193,7 +193,7 @@ cron.schedule(
 //                 });
 //             }
 
-//             console.log("patient", patient)
+//             //console.log("patient", patient)
 
 
 //             // ======================
@@ -259,13 +259,13 @@ cron.schedule(
 //             count++;
 
 //             if (count % 100 === 0) {
-//                 console.log(
+//                 //console.log(
 //                     `Processed: ${count}, Forms Ready: ${results.length}`
 //                 );
 //             }
 //         }
 
-//         console.log(
+//         //console.log(
 //             `Preparing to insert ${results.length} forms`
 //         );
 
@@ -275,7 +275,7 @@ cron.schedule(
 //             });
 //         }
 
-//         console.log(
+//         //console.log(
 //             `Successfully inserted ${results.length} forms`
 //         );
 //     } catch (error) {
@@ -290,7 +290,7 @@ cron.schedule(
 // export const changePatienStatus = async () => {
 //     try {
 //         let count = 0;
-//         console.log("Starting update...");
+//         //console.log("Starting update...");
 
 //         const hospital = await HospitalModel.findById(
 //             "6a22705f6f164344a2644a8a"
@@ -318,7 +318,7 @@ cron.schedule(
 //         );
 //         // const patients = await PatientModel.find();
 
-//         // console.log("statging");
+//         // //console.log("statging");
 
 //         // for (const patient of patients) {
 //         //     const lastForm = await FilledFormsModel
@@ -338,10 +338,10 @@ cron.schedule(
 //         //         );
 //         //     }
 //         //     count++;
-//         //     console.log("process", count);
+//         //     //console.log("process", count);
 //         // }
 
-//         console.log("Done");
+//         //console.log("Done");
 //     } catch (error) {
 //         console.error(error);
 //     }
@@ -389,7 +389,7 @@ const processHospitalReport = async (hospital) => {
     );
 
     if (!medicalDirector) {
-        console.log(`${hospital.name} has no Medical Director`);
+        //console.log(`${hospital.name} has no Medical Director`);
         return;
     }
 
@@ -415,7 +415,7 @@ const processHospitalReport = async (hospital) => {
         payload
     );
 
-    console.log(`Report sent to ${medicalDirector.name}`);
+    //console.log(`Report sent to ${medicalDirector.name}`);
 };
 
 export const generateWeeklyReport = async (conn) => {

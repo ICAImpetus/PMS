@@ -520,7 +520,7 @@ const BranchInfo = () => {
     const res = await getSingleBranch(id, hosId);
     const branch = res?.data;
     // const suggestion = await getSuggestions();
-    // console.log('suggestion', suggestion);
+    // //console.log('suggestion', suggestion);
     setGlobalSuggestion(branch?.suggestion || {});
     setCurrentBranch(branch?.branch);
     setDoctorsList(res?.data?.doctors || []);
@@ -704,9 +704,9 @@ const BranchInfo = () => {
         .map((d) => d.trim())
         .filter(Boolean);
 
-      console.log("dayValue", dayValue);
-      console.log("days", days);
-      console.log(Array.isArray(days)); // true
+      //console.log("dayValue", dayValue);
+      //console.log("days", days);
+      //console.log(Array.isArray(days)); // true
 
 
       const invalidDays = days.filter(
@@ -838,7 +838,7 @@ const BranchInfo = () => {
         chunk.forEach((row, index) => {
           const rowNumber = processed + index + 2;
           const rowErrors = validateUploadCSVRow(row, rowNumber);
-          console.log("rowErrors", rowErrors);
+          // //console.log("rowErrors", rowErrors);
 
           if (rowErrors.length > 0) {
             invalidRows.push(row);
@@ -906,7 +906,7 @@ const BranchInfo = () => {
 
       await processCSVRows(parsed.data, totalRows);
     } catch (error) {
-      console.log("error ", error);
+      //console.log("error ", error);
 
       setCSVParseError(error?.message || "Unable to read the file");
       setCSVStatus("completed");
@@ -918,7 +918,7 @@ const BranchInfo = () => {
   const handleCSVFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    console.log("file", file);
+    //console.log("file", file);
 
     setSelectedFile(file);
     setUploadCSVModalOpen(true);
@@ -1291,8 +1291,8 @@ const BranchInfo = () => {
   const handleRemove = async () => {
     try {
       const { type, id } = selectedItem || {};
-      console.log("type", type);
-      console.log("id", id);
+      //console.log("type", type);
+      //console.log("id", id);
 
 
       if (!type || !id) {
@@ -1302,7 +1302,7 @@ const BranchInfo = () => {
 
       let res;
 
-      console.log("removeDoctorApi", id);
+      //console.log("removeDoctorApi", id);
 
       switch (type) {
         case "doctor":
@@ -1354,7 +1354,7 @@ const BranchInfo = () => {
           break;
 
         case "procedure":
-          // console.log("Call", "this is model");
+          // //console.log("Call", "this is model");
 
           res = await removeProcedureApi(hosId, id);
           if (res?.success) {
@@ -1541,7 +1541,7 @@ const BranchInfo = () => {
 
 
   const handleUploadCSV = async (type, file) => {
-    console.log("handleUploadCSV", type, file);
+    //console.log("handleUploadCSV", type, file);
 
 
     Papa.parse(file, {
@@ -1571,7 +1571,7 @@ const BranchInfo = () => {
           return;
         }
 
-        console.log("CSV parsed successfully, starting upload...", validation);
+        //console.log("CSV parsed successfully, starting upload...", validation);
 
         // Continue upload
         const formdata = new FormData();
@@ -1681,7 +1681,7 @@ const BranchInfo = () => {
       }
 
     } catch (error) {
-      console.log("error");
+      //console.log("error");
       toast.error("Error To Upload Data! Try After Sometime ")
 
     }
@@ -1734,7 +1734,7 @@ const BranchInfo = () => {
     const error = errors.find(Boolean);
 
     if (error) {
-      console.log("error", error);
+      //console.log("error", error);
       toast.error(error || "Internal Server Error");
     }
   }, [
@@ -3209,7 +3209,7 @@ const BranchInfo = () => {
       <Dialog
         open={uploadCSVModalOpen}
         onClose={(event, reason) => {
-          console.log("Dialog close reason:", reason);
+          //console.log("Dialog close reason:", reason);
 
           if (reason === "backdropClick") return;
           if (reason === "backdropClick" || reason === "escapeKeyDown") {

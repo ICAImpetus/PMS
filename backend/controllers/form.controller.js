@@ -15,7 +15,7 @@ const HospitalModel = getHospitalModel(MasterConn)
 export const createFilledForm = async (req, res) => {
   let session;
   let isNewPatient = false;
-  console.log("req.body", req.body?.formData?.feedback?.questions);
+  // //console.log("req.body", req.body?.formData?.feedback?.questions);
 
 
   try {
@@ -298,7 +298,7 @@ export const createFilledForm = async (req, res) => {
     // Book appointment slot
     // =========================
 
-    // console.log("filledForm", filledForm);
+    // //console.log("filledForm", filledForm);
 
     if (
       filledForm?.formType?.toLowerCase() === "inbound" &&
@@ -306,7 +306,7 @@ export const createFilledForm = async (req, res) => {
       "appointment"
 
     ) {
-      // console.log("call");
+      // //console.log("call");
 
       if (data?.formData?.appointmentSlot?._id) {
         const updatedDoctor =
@@ -493,7 +493,7 @@ export const getFormById = async (req, res) => {
     // 3. Fetch existing form to compare previous state
     const existingForm = await FilledFormsModel.findById(formId)
       .populate({ path: "formData.patientDetails", model: PatientModel })
-      .populate({ path: "doctor", model: DoctorModel })
+      .populate({ path: "doctor", model: DoctorModel, select: "-slots" })
       .lean();
     if (!existingForm) {
       return res.status(404).json({
@@ -523,153 +523,159 @@ export const updateFilledForm = async (req, res) => {
 
   let session;
 
-  // try {
-  //   const { formId } = req.params; // Passed in URL e.g., PUT /api/forms/:formId
-  //   const { hosId, branchId } = req.query;
-  //   const user = req.user;
-  //   const data = req.body;
+  try {
+    const { formId } = req.params; // Passed in URL e.g., PUT /api/forms/:formId
+    const { hosId, branchId } = req.query;
+    const user = req.user;
+    const data = req.body;
 
-  //   // 1. Validation
-  //   if (
-  //     !formId ||
-  //     !hosId ||
-  //     !branchId ||
-  //     !mongoose.isValidObjectId(formId) ||
-  //     !mongoose.isValidObjectId(hosId) ||
-  //     !mongoose.isValidObjectId(branchId)
-  //   ) {
-  //     return res.status(400).json({
-  //       success: false,
-  //       message: "Valid formId, hospitalId, and branchId are required.",
-  //     });
-  //   }
+    // 1. Validation
+    if (
+      !formId ||
+      !hosId ||
+      !branchId ||
+      !mongoose.isValidObjectId(formId) ||
+      !mongoose.isValidObjectId(hosId) ||
+      !mongoose.isValidObjectId(branchId)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid formId, hospitalId, and branchId are required.",
+      });
+    }
 
-  //   const hospital = await HospitalModel.findById(hosId)
-  //     .select("trimmedName name")
-  //     .lean();
+    const hospital = await HospitalModel.findById(hosId)
+      .select("trimmedName name")
+      .lean();
 
-  //   if (!hospital) {
-  //     return res.status(404).json({
-  //       success: false,
-  //       message: "Hospital not found.",
-  //     });
-  //   }
+    if (!hospital) {
+      return res.status(404).json({
+        success: false,
+        message: "Hospital not found.",
+      });
+    }
 
-  //   // 2. Establish multi-tenant dynamic connection
-  //   const conn = await getConnection(hospital.trimmedName);
-  //   const FilledFormsModel = getFilledFormsModel(conn);
-  //   const PatientModel = getPatientModel(conn);
+    // 2. Establish multi-tenant dynamic connection
+    const conn = await getConnection(hospital.trimmedName);
+    const FilledFormsModel = getFilledFormsModel(conn);
+    const PatientModel = getPatientModel(conn);
 
-  //   // 3. Fetch existing form to compare previous state
-  //   const existingForm = await FilledFormsModel.findById(formId).lean();
-  //   if (!existingForm) {
-  //     return res.status(404).json({
-  //       success: false,
-  //       message: "Form record not found.",
-  //     });
-  //   }
+    // 3. Fetch existing form to compare previous state
+    const existingForm = await FilledFormsModel.findById(formId).lean();
+    if (!existingForm) {
+      return res.status(404).json({
+        success: false,
+        message: "Form record not found.",
+      });
+    }
 
-  //   session = await conn.startSession();
-  //   session.startTransaction();
+    session = await conn.startSession();
+    session.startTransaction();
 
-  //   // 4. Data Type Conversions
-  //   if (data?.formData?.dateTime) {
-  //     data.formData.dateTime = new Date(data.formData.dateTime);
-  //   }
+    // 4. Data Type Conversions
+    if (data?.formData?.dateTime) {
+      data.formData.dateTime = new Date(data.formData.dateTime);
+    }
 
-  //   if (data?.formData?.patientDetails?.patientAge) {
-  //     data.formData.patientDetails.patientAge = Number(
-  //       data.formData.patientDetails.patientAge
-  //     );
-  //   }
+    if (data?.formData?.patientDetails?.patientAge) {
+      data.formData.patientDetails.patientAge = Number(
+        data.formData.patientDetails.patientAge
+      );
+    }
 
-  //   // 5. Update Associated Patient Details (if patient info modified)
-  //   if (existingForm.formData?.patientDetails && data?.formData?.patientDetails) {
-  //     await PatientModel.findByIdAndUpdate(
-  //       existingForm.formData.patientDetails,
-  //       {
-  //         $set: {
-  //           patientName: data.formData.patientDetails.patientName,
-  //           patientAge: data.formData.patientDetails.patientAge,
-  //           gender: data.formData.patientDetails.gender,
-  //           patientMobile: data.formData.patientDetails.patientMobile,
-  //         },
-  //       },
-  //       { session }
-  //     );
-  //   }
+    // 5. Update Associated Patient Details (if patient info modified)
+    if (existingForm.formData?.patientDetails && data?.formData?.patientDetails) {
+      await PatientModel.findByIdAndUpdate(
+        existingForm.formData.patientDetails?._id,
+        {
+          $set: {
+            patientName: data.formData.patientDetails.patientName,
+            patientAge: data.formData.patientDetails.patientAge,
+            gender: data.formData.patientDetails.gender,
+            patientMobile: data.formData.patientDetails.patientMobile,
+            alternateMobile: data.formData.patientDetails.alternateMobile,
+            location: data.formData.patientDetails.location,
+            gender: data.formData.patientDetails.gender,
+            status: data.formData.patientDetails.status,
+            category: data.formData.patientDetails.category,
+            agentDetails: data.formData.patientDetails.agentDetails,
+          },
+        },
+        { session }
+      );
+    }
 
-  //   // 6. Build Update Payload
-  //   const updatePayload = {
-  //     ...(data.callStatus && { callStatus: data.callStatus }),
-  //     ...(data.doctor && { doctor: data.doctor }),
-  //     ...(data.department && { department: data.department }),
-  //     ...(data.purpose && { purpose: data.purpose }),
-  //     ...(typeof data.useForFollowup === "boolean" && {
-  //       useForFollowup: data.useForFollowup,
-  //       followupStatus: data.useForFollowup ? "pending" : null,
-  //     }),
-  //     formStatus: FormStatus.PENDING,
-  //     formData: {
-  //       ...existingForm.formData,
-  //       ...data.formData,
-  //       patientDetails: existingForm.formData.patientDetails, // Maintain reference ID
-  //       appointmentSlot: data.formData?.appointmentSlot
-  //         ? {
-  //           ...data.formData.appointmentSlot,
-  //           date: new Date(data.formData.appointmentSlot.date),
-  //         }
-  //         : existingForm.formData?.appointmentSlot,
-  //     },
-  //   };
+    // 6. Build Update Payload
+    const updatePayload = {
+      ...(data.callStatus && { callStatus: data.callStatus }),
+      ...(data.doctor && { doctor: data.doctor }),
+      ...(data.department && { department: data.department }),
+      ...(data.purpose && { purpose: data.purpose }),
+      ...(typeof data.useForFollowup === "boolean" && {
+        useForFollowup: data.useForFollowup,
+        followupStatus: data.useForFollowup ? "pending" : null,
+      }),
+      formStatus: FormStatus.PENDING,
+      formData: {
+        ...existingForm.formData,
+        ...data.formData,
+        patientDetails: existingForm.formData.patientDetails?._id, // Maintain reference ID
+        appointmentSlot: data.formData?.appointmentSlot
+          ? {
+            ...data.formData.appointmentSlot,
+            date: new Date(data.formData.appointmentSlot.date),
+          }
+          : existingForm.formData?.appointmentSlot,
+      },
+    };
 
-  //   // 7. Update Form Document
-  //   const updatedForm = await FilledFormsModel.findByIdAndUpdate(
-  //     formId,
-  //     { $set: updatePayload },
-  //     { new: true, session }
-  //   );
+    // 7. Update Form Document
+    const updatedForm = await FilledFormsModel.findByIdAndUpdate(
+      formId,
+      { $set: updatePayload },
+      { new: true, session }
+    );
 
-  //   // Commit Transaction
-  //   await session.commitTransaction();
-  //   await session.endSession();
+    // Commit Transaction
+    await session.commitTransaction();
+    await session.endSession();
 
-  //   // 8. Non-blocking Audit Logging
-  //   setImmediate(() => {
-  //     auditLog({
-  //       action: `UPDATE_${existingForm.formType.toUpperCase()}_FORM`,
-  //       event: "EDIT",
-  //       module: "FORM_SUBMISSION",
-  //       role: user?.type || "Unknown",
-  //       customMessage: `${user?.type || "User"} "${user?.name}" updated form ID ${formId}.`,
-  //       name: user?.name,
-  //       userId: user?.id,
-  //       oldData: existingForm,
-  //       newData: updatedForm,
-  //       ip: req.userIp,
-  //       userAgent: req.headers["user-agent"],
-  //     });
-  //   });
+    // 8. Non-blocking Audit Logging
+    setImmediate(() => {
+      auditLog({
+        action: `UPDATE_${existingForm.formType.toUpperCase()}_FORM`,
+        event: "EDIT",
+        module: "FORM_SUBMISSION",
+        role: user?.type || "Unknown",
+        customMessage: `${user?.type || "User"} "${user?.name}" updated form ID ${formId}.`,
+        name: user?.name,
+        userId: user?.id,
+        oldData: existingForm,
+        newData: updatedForm,
+        ip: req.userIp,
+        userAgent: req.headers["user-agent"],
+      });
+    });
 
-  //   return res.status(200).json({
-  //     success: true,
-  //     message: "Form updated successfully.",
-  //     data: updatedForm,
-  //   });
-  // } catch (error) {
-  //   console.error("Error updating filled form:", error);
+    return res.status(200).json({
+      success: true,
+      message: "Form updated successfully.",
+      data: updatedForm,
+    });
+  } catch (error) {
+    console.error("Error updating filled form:", error);
 
-  //   if (session) {
-  //     await session.abortTransaction();
-  //     await session.endSession();
-  //   }
+    if (session) {
+      await session.abortTransaction();
+      await session.endSession();
+    }
 
-  //   return res.status(500).json({
-  //     success: false,
-  //     message: error.message || "Internal server error.",
-  //     error: error.message,
-  //   });
-  // }
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error.",
+      error: error.message,
+    });
+  }
 };
 
 export const getFilledForms = async (req, res) => {
@@ -827,8 +833,8 @@ export const getBookedSlotsController =
       const { doctorId, date } = req.body;
       const { hosId, branchId } = req.query;
 
-      // console.log("doctorId", doctorId);
-      // console.log("date", date);
+      // //console.log("doctorId", doctorId);
+      // //console.log("date", date);
 
 
       if (
@@ -912,7 +918,7 @@ export const getBookedSlotsController =
         data: bookedSlotIds,
       });
     } catch (error) {
-      console.log(error);
+      // //console.log(error);
 
       return res.status(500).json({
         success: false,
@@ -925,7 +931,11 @@ export const getBookedSlotsController =
 export const unbookSlotController = async (req, res) => {
   try {
     const { slotId } = req.params;
-    const { hosId, branchId, doctorId } = req.query;
+    const { hosId, branchId, formId } = req.query;
+
+    // //console.log("req.query", req.query);
+    // //console.log("req.params", req.params);
+
 
     // 1. Hospital & Branch ID Validation
     if (
@@ -942,14 +952,14 @@ export const unbookSlotController = async (req, res) => {
 
     // 2. Doctor ID & Slot ID Validation
     if (
-      !doctorId ||
+      !formId ||
       !slotId ||
-      !mongoose.isValidObjectId(doctorId) ||
+      !mongoose.isValidObjectId(formId) ||
       !mongoose.isValidObjectId(slotId)
     ) {
       return res.status(400).json({
         success: false,
-        message: "Valid doctorId and slotId are required",
+        message: "Valid formId and slotId are required",
       });
     }
 
@@ -967,37 +977,35 @@ export const unbookSlotController = async (req, res) => {
 
     // 4. Dynamic DB Connection
     const conn = await getConnection(hospital.trimmedName);
-    const DoctorModel = getDoctorModel(conn);
-
-    // 5. Update: isBooked को false करें और unavailableDates को खाली ([]) करें
-    const updatedDoctor = await DoctorModel.findOneAndUpdate(
+    const FilledFormModel = getFilledFormsModel(conn)
+    const updatedForm = await FilledFormModel.findByIdAndUpdate(
+      formId, // Pehla argument directly ID ho sakta hai
       {
-        _id: doctorId,
-        "slots._id": slotId,
-      },
-      {
+        $unset: {
+          "formData.appointmentSlot": 1,
+        },
         $set: {
-          "slots.$.isBooked": false,
-          "slots.$.unavailableDates": []
+          "formData.patientArrivalTime": "",
         },
       },
       { new: true }
     );
 
-    if (!updatedDoctor) {
+    // //console.log("updatedForm", updatedForm)
+
+
+    if (!updatedForm) {
       return res.status(404).json({
         success: false,
-        message: "Doctor or Slot not found",
+        message: "Form or Slot not found",
       });
     }
 
-    // 6. Updated Slot निकालें
-    const updatedSlot = updatedDoctor.slots.id(slotId);
+
 
     return res.status(200).json({
       success: true,
       message: "Slot unbooked and reset successfully",
-      data: updatedSlot,
     });
   } catch (error) {
     console.error("Error in unbookSlotController:", error);
@@ -1232,8 +1240,8 @@ export const uploadFormsCsv = async (req, res) => {
         ),
       },
     }).lean();
-    // console.log("csvBranchNames", csvBranchNames);
-    // console.log("csvBranchNames", branches);
+    // //console.log("csvBranchNames", csvBranchNames);
+    // //console.log("csvBranchNames", branches);
 
     const branchMap = new Map(
       branches.map(b => [normalize(b.name), b])
@@ -1248,14 +1256,14 @@ export const uploadFormsCsv = async (req, res) => {
         ),
       },
     }).lean();
-    // console.log("doctors", doctors);
+    // //console.log("doctors", doctors);
 
 
     const doctorMap = new Map(
       doctors.map(d => [cleanDoctorName(d.name), d])
     );
-    // console.log("csvDoctorNames", csvDoctorNames);
-    // console.log("doctorMap", doctorMap);
+    // //console.log("csvDoctorNames", csvDoctorNames);
+    // //console.log("doctorMap", doctorMap);
     const departments = await DepartmentModel.find({
       name: {
         $in: csvDeptNames.map(
@@ -1268,8 +1276,8 @@ export const uploadFormsCsv = async (req, res) => {
       departments.map(d => [normalize(d.name), d])
     );
 
-    // console.log("csvDeptNames", csvDeptNames);
-    // console.log("deptMap", deptMap);
+    // //console.log("csvDeptNames", csvDeptNames);
+    // //console.log("deptMap", deptMap);
     // Existing Patients
     const existingPatients = await PatientModel.find({
       patientMobile: { $in: mobiles },
@@ -1303,14 +1311,14 @@ export const uploadFormsCsv = async (req, res) => {
       }
 
       // Validate Doctor (Only if provided in CSV)
-      // console.log("doctorMap", doctorMap);
+      // //console.log("doctorMap", doctorMap);
 
       if (row.doctor) {
         const matchedDoctor = doctorMap.get(cleanDoctorName(row.doctor));
 
-        // console.log("cleanDoctorName", normalize(row.doctor));
-        // console.log("doctorMap", doctorMap);
-        // console.log("matchedDoctor", matchedDoctor);
+        // //console.log("cleanDoctorName", normalize(row.doctor));
+        // //console.log("doctorMap", doctorMap);
+        // //console.log("matchedDoctor", matchedDoctor);
 
         if (!matchedDoctor) {
           rowErrors.push({ rowNumber, columnName: "doctor", invalidValue: row.doctor, message: `Doctor '${row.doctor}' does not exist in database` });
@@ -1366,7 +1374,7 @@ export const uploadFormsCsv = async (req, res) => {
       const mobile = row.patientMobile;
       if (patientMap.has(mobile)) continue;
 
-      // console.log("patietn detaik", row);
+      // //console.log("patietn detaik", row);
 
 
       newPatients.push({
@@ -1521,10 +1529,10 @@ async function updateFeedbackDocuments() {
     };
 
     const formsToUpdate = await FilledFormsModel.find(filterQuery);
-    console.log(`Found ${formsToUpdate.length} documents to update.`);
+    //console.log(`Found ${formsToUpdate.length} documents to update.`);
 
     if (formsToUpdate.length === 0) {
-      console.log("No matching documents found.");
+      //console.log("No matching documents found.");
       process.exit(0);
     }
 
@@ -1535,7 +1543,7 @@ async function updateFeedbackDocuments() {
         ""
       ).toLowerCase();
 
-      console.log("type", type);
+      //console.log("type", type);
 
       // Agar feedbackType missing hai, toh random IPD ya OPD select kar lein
       if (type !== "ipd" && type !== "opd") {
@@ -1567,13 +1575,13 @@ async function updateFeedbackDocuments() {
     });
 
     const result = await FilledFormsModel.bulkWrite(bulkOps);
-    console.log(`Successfully updated ${result.modifiedCount} documents!`);
+    //console.log(`Successfully updated ${result.modifiedCount} documents!`);
 
   } catch (error) {
     console.error("Error while updating documents:", error);
   } finally {
     await mongoose.disconnect();
-    console.log("Database disconnected.");
+    //console.log("Database disconnected.");
   }
 }
 

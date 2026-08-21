@@ -28,7 +28,7 @@ export const checkPatientIsNewOrOld = async (req, res) => {
 
         const PatientModel = getPatientModel(conn);
 
-        console.log("pmsCode", pmsCode)
+        //console.log("pmsCode", pmsCode)
 
 
         // Find patient

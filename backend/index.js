@@ -6,9 +6,9 @@ import "./server.js";
 
 // const results = [];
 // fs.createReadStream("data.csv").pipe(csv()).on("data", (row) => {
-//     console.log(row);
+//     //console.log(row);
 //     results.push(row);
 // }).on("end", async () => {
-//     console.log("results", results);
+//     //console.log("results", results);
 
 // });  

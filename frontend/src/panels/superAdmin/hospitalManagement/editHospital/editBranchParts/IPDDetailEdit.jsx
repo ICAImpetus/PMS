@@ -181,7 +181,7 @@ const AddIpdDetailsModal = ({ open, onClose, onSave, ipdData = null, departments
       onSave(currentIpdDetails); // Call the onSave prop with the prepared data
       // onClose() will typically be called by the parent after onSave is handled
     } else {
-      console.log('Form validation failed.', errors);
+      //console.log('Form validation failed.', errors);
     }
   };
 

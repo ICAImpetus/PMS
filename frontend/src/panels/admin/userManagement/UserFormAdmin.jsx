@@ -44,7 +44,7 @@ const UserFormAdmin = ({
   const [open, setOpen] = useState(false);
 
 
-  console.log("UserFormAdmin", anyFieldDisabled);
+  //console.log("UserFormAdmin", anyFieldDisabled);
 
   const isUpdateComp = !!initialState;
 
@@ -104,7 +104,7 @@ const UserFormAdmin = ({
       valuesToSubmit.selectedBranch = valuesToSubmit?.selectedBranch?.map(
         (item) => item?._id
       ) || [];
-      // console.log("selectedBranch are :", valuesToSubmit);
+      // //console.log("selectedBranch are :", valuesToSubmit);
 
       if (isUpdateComp) {
         const response = await updateUser(initialState?._id, valuesToSubmit);

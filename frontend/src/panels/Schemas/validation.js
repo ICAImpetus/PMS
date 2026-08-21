@@ -150,7 +150,7 @@ export const validateCSVRows = ({
             const rules = validations[column];
             const value = row[column];
 
-            console.log("rules", rules, value);
+            //console.log("rules", rules, value);
 
 
             // Required validation
