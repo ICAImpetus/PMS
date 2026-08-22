@@ -25,7 +25,7 @@ const chipStyles = {
     specialties: { bgcolor: "#FFF3E0", color: "#F57C00" },
     surgeries: { bgcolor: "#F3E5F5", color: "#7B1FA2" },
 };
-const DoctorProfileCard = ({ doctor, hosId, setDoctorSlots = null }) => {
+const DoctorProfileCard = ({ doctor, hosId, setDoctorSlots = null, setDocProfile }) => {
     const [profile, setProfile] = useState(null)
 
     const {
@@ -47,9 +47,17 @@ const DoctorProfileCard = ({ doctor, hosId, setDoctorSlots = null }) => {
         if (profiledata) {
 
             setProfile(profiledata);
+
             if (setDoctorSlots) {
                 setDoctorSlots(profiledata?.slots || []);
             }
+            if (setDocProfile) setDocProfile(
+                {
+                    "name": profiledata?.name,
+                    "department": profiledata?.department?.name
+
+                })
+
         }
     }, [profiledata, setDoctorSlots]);
 

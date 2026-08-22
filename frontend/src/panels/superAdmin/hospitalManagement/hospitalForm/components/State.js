@@ -4,67 +4,67 @@ export const REMARK_INBOUND_TEMPLATES = [
     category: "Appointment",
     name: "Appointment Booked",
     code: "/appointment_booked",
-    content: `Patient called for appointment with [Doctor Name]. Appointment successfully booked for [Date] at [Time]. Patient was informed about the appointment details and required instructions.`
+    content: `Patient called for appointment with [DoctorName]. Appointment successfully booked on [DateAndTime]. Patient was informed about the appointment details and required instructions.`
   },
   {
     category: "Appointment",
-    name: "Appointment CaPatient called for appointment with [Doctor Name]. Appointment successfully booked for [Date] at [Time]. Patient was informed about the appointment details and required instructions.ncellation",
+    name: "Appointment CaPatient called for appointment with [DoctorName]. Appointment successfully booked on [DateAndTime]. Patient was informed about the appointment details and required instructions ncellation",
     code: "/appointment_cancellation",
-    content: "Patient called to cancel the appointment with [Doctor Name] scheduled for [Date/Time]. Cancellation reason: [Reason]. Appointment cancelled successfully."
+    content: "Patient called to cancel the appointment with [DoctorName] scheduled for [DateAndTime]. Cancellation reason: Reason. Appointment cancelled successfully."
   },
   {
     category: "Appointment",
     name: "Appointment Reschedule",
     code: "/appointment_reschedule",
-    content: "Patient requested rescheduling of the appointment with [Doctor Name] from [Original Date/Time] to [Requested Date/Time]. Appointment was [Rescheduled/Not Rescheduled]."
+    content: "Patient requested rescheduling of the appointment with [DoctorName] from  [DateAndTime] to [DateAndTime]. Appointment was Rescheduled/Not Rescheduled."
   },
   {
     category: "OPD Timings",
     name: "OPD Timing",
     code: "/opd_timing",
-    content: `Patient enquired about OPD timings for [Doctor/Department]. OPD timing of [Time/Days] was communicated to the patient.`
+    content: `Patient enquired about OPD timings for [DoctorName] in [Department]. OPD timing of Time/Days was communicated to the patient.`
   },
   {
     category: "OPD Timings",
     name: "Doctor Availability",
     code: "/doctor_availability",
-    content: "Patient enquired about the availability of [Doctor Name] on [Date]. Doctor availability was confirmed as [Available/Unavailable]. [Alternative slot/doctor information] was provided."
+    content: "Patient enquired about the availability of [DoctorName] on [DateAndTime]. Doctor availability was confirmed as [Available][Unavailable]. Alternative slot/doctor information was provided."
   },
   {
     category: "Surgery",
     name: "Surgery Enquiry",
     code: "/surgery_enquiry",
-    content: "Patient enquired about [Surgery/Procedure Name] under [Department/Doctor] in [Health Scheme/Cash]. Patient was advised to consult the concerned doctor/department for clinical assessment and final treatment-related information."
+    content: "Patient enquired about [SurgeryName] under [Department] of [DoctorName] in [CategoryName]. Patient was advised to consult the concerned [DoctorName] in [Department] for clinical assessment and final treatment-related information."
   },
   {
     category: "Surgery",
     name: "Surgery Cost",
     code: "/surgery_cost",
-    content: "Patient enquired about the estimated cost of [Surgery/Procedure]. Available pricing/package information of ₹[Amount/Range] was communicated. Patient was informed that final charges may vary based on clinical requirements and hospital billing."
+    content: "Patient enquired about the estimated cost of [SurgeryName]. Available pricing/package information of ₹[Amount/Range] was communicated. Patient was informed that final charges may vary based on clinical requirements and hospital billing."
   },
   {
     category: "Surgery",
     name: "Surgery Cost",
     code: "/surgery_cost_denied",
-    content: "Patient enquired about the estimated cost of [Surgery/Procedure]. Asked patient to visit and consult Doctor and estimate cost will be shared by Doctor only"
+    content: "Patient enquired about the estimated cost of [SurgeryName]. Asked patient to visit and consult Doctor and estimate cost will be shared by Doctor only"
   },
   {
     category: "Surgery",
     name: "Surgery Admission",
     code: "/surgery_admission",
-    content: "Patient enquired about the admission process for [Surgery/Procedure]. Admission requirements and available information were communicated. Patient was directed to [Department/Admission Desk] for further assistance."
+    content: "Patient enquired about the admission process for [SurgeryName]. Admission requirements and available information were communicated. Patient was directed to [Department] [Admission Desk] for further assistance."
   },
   {
     category: "Health Check Up",
     name: "Checkup Enquiry",
     code: "/healthcheckup_enquiry",
-    content: "Patient enquired about health checkup [Package/Service]. Available details including tests/services and applicable price of ₹[Amount] were communicated."
+    content: "Patient enquired about health checkup [PackageName]. Available details including tests/services and applicable price of ₹[Amount] were communicated."
   },
   {
     category: "Health Check Up",
     name: "Health Checkup Packages",
     code: "/healthcheckup_packages",
-    content: "Patient enquired about available health checkup packages. Available options [Package Names] were explained based on the hospital package information."
+    content: "Patient enquired about available health checkup packages. Available options [PackageName] were explained based on the hospital package information."
   },
   {
     category: "Health Check Up",
@@ -76,13 +76,13 @@ export const REMARK_INBOUND_TEMPLATES = [
     category: "Health Check Up",
     name: "Health Checkup Booking",
     code: "/healthcheckup_booking",
-    content: "Patient requested booking of [PackageName] for [Date/Time]. Booking status: [Confirmed/Pending/Not Booked]."
+    content: "Patient requested booking of [PackageName] for [DateAndTime]. Booking status: [Confirmed][Pending][NotBooked]."
   },
   {
     category: "Diagnose & Test Price",
     name: "Diagnostic/Test Enquiry",
     code: "/test_enquiry",
-    content: "Patient enquired about [Test/Investigation Name]. Information regarding availability, applicable charges and relevant instructions was [provided/referred to concerned department]."
+    content: "Patient enquired about [TestName]. Information regarding availability, applicable charges and relevant instructions was [provided/referred to concerned department]."
   },
   {
     category: "Diagnose & Test Price",
@@ -100,19 +100,19 @@ export const REMARK_INBOUND_TEMPLATES = [
     category: "Reports",
     name: "Report Status",
     code: "/report_status",
-    content: "Patient enquired about the status of the [Test/Investigation] report conducted on [Date]. Current report status: [Available/Pending/Under Process]. Patient was informed accordingly."
+    content: "Patient enquired about the status of the [TestName] report conducted on [Date]. Current report status: [Available/Pending/Under Process]. Patient was informed accordingly."
   },
   {
     category: "Reports",
     name: "Report Sharing",
     code: "/report_sharing",
-    content: "Patient requested the [Test] report to be shared through [WhatsApp]. Shared the report and confirmed."
+    content: "Patient requested the [TestName] report to be shared through [WhatsApp]. Shared the report and confirmed."
   },
   {
     category: "Reports",
     name: "Report Sharing Denied",
     code: "/report_sharing_denied",
-    content: "Patient requested the [Test] report to be shared through [WhatsApp]. Asked patient to visit hospital an collect the report as These reports are only available for in-person collection at the hospital."
+    content: "Patient requested the [TestName] report to be shared through [WhatsApp]. Asked patient to visit hospital an collect the report as These reports are only available for in-person collection at the hospital."
   },
   {
     category: "Emergency",
@@ -124,7 +124,7 @@ export const REMARK_INBOUND_TEMPLATES = [
     category: "Emergency",
     name: "Emergency Enquiry",
     code: "/emergency_enquiry",
-    content: "Caller contacted the hospital regarding an emergency situation involving [Brief Description]. Available emergency-related information was provided and patient was asked to visit hospital."
+    content: "Caller contacted the hospital regarding an emergency situation involving [Remarks]. Available emergency-related information was provided and patient was asked to visit hospital."
   },
   {
     category: "Ambulance",
@@ -148,25 +148,25 @@ export const REMARK_INBOUND_TEMPLATES = [
     category: "Complaint",
     name: "General Complaint",
     code: "/complaint_general",
-    content: "Patient/attendant reported a complaint regarding [Issue] related to [Department/Service]. Patient/attendant was asked to explain the issue in detail."
+    content: "Patient/attendant reported a complaint regarding [Issue] related to [Department][Service]. Patient/attendant was asked to explain the issue in detail."
   },
   {
     category: "Complaint",
     name: "Staff Complaint",
     code: "/complaint_staff",
-    content: "Patient/attendant reported a complaint regarding staff behaviour/service at [Department/Location]. [Document the issue (free test)]"
+    content: "Patient/attendant reported a complaint regarding staff behaviour/service at [Department][Location]. [Document the issue (free test)]"
   },
   {
     category: "Complaint",
     name: "Doctor Complaint",
     code: "/complaint_doctor",
-    content: "Patient/attendant reported a complaint regarding consultation/service provided by [Doctor Name]. [Document the issue (free test)]"
+    content: "Patient/attendant reported a complaint regarding consultation/service provided by [DoctorName]. [Document the issue (free test)]"
   },
   {
     category: "Complaint",
     name: "Waiting Time Complaint",
     code: "/complaint_waiting",
-    content: "Patient reported excessive waiting time at [Department/Location]. [Document the issue (free test)]"
+    content: "Patient reported excessive waiting time at [Department][Location]. [Document the issue (free test)]"
   },
   {
     category: "Complaint",
@@ -190,19 +190,19 @@ export const REMARK_INBOUND_TEMPLATES = [
     category: "Marketing Campaign",
     name: "Campaign Enquiry",
     code: "/campaign",
-    content: "Patient responded to [Campaign Name] campaign and enquired about [Service/Offer]. Details were communicated."
+    content: "Patient responded to [CampaignName] campaign and enquired about [Service/Offer]. Details were communicated."
   },
   {
     category: "Marketing Campaign",
     name: "Campaign Offer",
     code: "/campaign_offer",
-    content: "Patient enquired about promotional offer [Offer Name] received through [SMS/WhatsApp/Social Media/Other]. Offer details and applicable conditions were communicated."
+    content: "Patient enquired about promotional offer [OfferName] received through [SMS/WhatsApp/Social Media/Other]. Offer details and applicable conditions were communicated."
   },
   {
     category: "Marketing Campaign",
     name: "Campaign Health Checkup",
     code: "/campaign_healthcheck",
-    content: "Patient responded to [Campaign Name] regarding health checkup package [Package Name]. Price/details were communicated."
+    content: "Patient responded to [CampaignName] regarding health checkup package [PackageName]. Price/details were communicated."
   },
   {
     category: "Job Enquiry",

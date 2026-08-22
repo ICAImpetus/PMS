@@ -8972,7 +8972,7 @@ export const getRegisteredPatientsByNumber = async (req, res) => {
       branchId: new mongoose.Types.ObjectId(branchId),
       isDeleted: false,
     })
-      .select("patientName")
+      .select("patientName patientAge gender")
       .lean();
 
     if (!patient) {

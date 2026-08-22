@@ -58,6 +58,7 @@ import CallMadeIcon from "@mui/icons-material/CallMade";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 
+
 function FormTypeToggleGroup({
   editMode,
   form,
@@ -567,7 +568,7 @@ const AppointmentSlotsSelector = ({
 };
 
 
-const RenderRemarksComponents = ({ form, handleChange }) => {
+const RenderRemarksComponents = ({ dynamicDepartments = [], message = "Remarks", form, handleChange, docProfile }) => {
   const [open, setOpen] = useState(false);
 
   const handleInputChange = (event, newInputValue, reason) => {
@@ -583,26 +584,49 @@ const RenderRemarksComponents = ({ form, handleChange }) => {
     }
   };
 
+  const departmentMap = useMemo(() => {
+    const map = new Map();
+    if (Array.isArray(dynamicDepartments)) {
+      dynamicDepartments.forEach((dep) => {
+        if (dep?._id) {
+          map.set(dep._id, dep.name || dep.departmentName || "");
+        }
+      });
+    }
+    return map;
+  }, [dynamicDepartments]);
   const replaceDynamicFields = (rawText) => {
     const data = form.formData || {};
+    const formattedDateTime = data?.dateTime
+      ? moment(data.dateTime).format("MMM DD, YYYY, h:mm A")
+      : getCurrentDateTime();
+
+    const departmentName = docProfile?.department
+      ? departmentMap.get(docProfile.department) || ""
+      : "";
     return rawText
-      .replace(/\[DoctorName\]|\[Doctor\/Department\]|\[Doctor\]/gi, data.doctorName || data.doctor || "[Doctor Name]")
-      .replace(/\[Date\]|\[Date\/Time\]/gi, data.date || "[Date]")
-      .replace(/\[Time\]/gi, data.time || "[Time]")
-      .replace(/\[Reason\]/gi, data.reason || "[Reason]")
-      .replace(/\[Amount\]|\[Amount\/Range\]/gi, data.amount || "[Amount]");
+      .replace(/\[DoctorName\]/gi, !form?.doctor ? "[Doctor Name]" : docProfile?.name || "[Doctor Name]")
+      .replace(/\[Department\]/gi, !form?.department ? "[Department]" : departmentName || "[Department]")
+      .replace(/\[SurgeryName\]/gi, data?.surgeryName || "[Surgery Name]")
+      .replace(/\[CategoryName\]/gi, data?.patientDetails?.category || "[Category Name]")
+      .replace(/\[TestName\]/gi, data?.reportName || "[Test Name]")
+      .replace(/\[CampaignName\]/gi, data?.marketingCampaignName || "[Campaign Name]")
+      .replace(/\[PackageName\]/gi, data?.healthPackageName || "[Package Name]")
+      .replace(/\[DateAndTime\]|\[Date\/Time\]/gi, formattedDateTime || "[Date & Time]");
   };
   const handleSelectTemplate = (event, selectedOption) => {
     if (selectedOption && typeof selectedOption === "object") {
-      const currentText = form.formData.remarks || "";
+      // Process placeholders using the template content
+      const formattedContent = replaceDynamicFields(
+        selectedOption.content,
+        form,
+        docProfile
+      );
 
-      // Dynamic replace चलाएं
-      const formattedContent = replaceDynamicFields(selectedOption.content);
+      // Override the remarks field completely with the new template content
+      handleChange("formData.remarks", formattedContent);
 
-      // '/' हटाकर नया टेक्स्ट सेट करें
-      const updatedText = currentText.replace(/\/$/, "") + formattedContent;
-
-      handleChange("formData.remarks", updatedText);
+      // Close the dropdown immediately
       setOpen(false);
     }
   };
@@ -610,6 +634,17 @@ const RenderRemarksComponents = ({ form, handleChange }) => {
   return (
     <Box sx={{ width: "100%", my: 2 }}>
       <Autocomplete
+        componentsProps={{
+          popper: {
+            placement: "bottom-start",
+            modifiers: [
+              {
+                name: "flip",
+                enabled: false,
+              },
+            ],
+          },
+        }}
         open={open}
         onOpen={() => {
           if (form.formData.remarks?.includes("/")) setOpen(true);
@@ -617,13 +652,15 @@ const RenderRemarksComponents = ({ form, handleChange }) => {
         onClose={() => setOpen(false)}
         options={REMARK_INBOUND_TEMPLATES}
 
-
+        // Ensures single selected value state
         value={null}
+        multiple={false}
 
         getOptionLabel={(option) =>
           typeof option === "string" ? option : option.name
         }
         filterOptions={(options, state) => {
+          // Searches after the last '/' typed
           const query = state.inputValue.split("/").pop().toLowerCase();
           return options.filter(
             (opt) =>
@@ -632,10 +669,15 @@ const RenderRemarksComponents = ({ form, handleChange }) => {
               opt.category.toLowerCase().includes(query)
           );
         }}
-        onChange={handleSelectTemplate}
+        onChange={(event, newValue) => {
+          // Trigger your selection handler when a single option is clicked
+          if (newValue) {
+            handleSelectTemplate(event, newValue);
+            setOpen(false); // Close dropdown immediately upon single selection
+          }
+        }}
         onInputChange={handleInputChange}
         inputValue={form.formData.remarks || ""}
-        freeSolo
         renderOption={(props, option) => (
           <Box
             component="li"
@@ -694,7 +736,7 @@ const RenderRemarksComponents = ({ form, handleChange }) => {
         renderInput={(params) => (
           <TextField
             {...params}
-            label="Remarks"
+            label={message}
             required
             multiline
             rows={3}
@@ -739,7 +781,8 @@ function Forms() {
   const [bookedSlotAction, setBookedSlotAction] = useState("");
   const [cancelReason, setCancelReason] = useState("");
   const [selectedQuestions, setSelectedQuestions] = useState(null);
-  const refreshDoctorFnRef = useRef(null);
+  const [docProfile, setDocProfile] = useState(null);
+
   const { request: getSingleBranch, error: getSingleBranchError, loading: getSingleBranchLoading } = useApi(commonRoutes.getBranchByIdForForms)
   const { request: saveFilledForm, error: saveFilledFormError, loading: saveFilledFormLoading } = useApi(commonRoutes.saveFilledForm)
   // const { request: updateform, error: updateFormError, loading: updateFormApiLoading } = useApi(commonRoutes.updateFilledForm)
@@ -1647,7 +1690,7 @@ function Forms() {
             </div>
 
 
-            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} setDoctorSlots={setDoctorSlots} />}
+            {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} setDoctorSlots={setDoctorSlots} setDocProfile={setDocProfile} />}
 
             {/* Slot Duration Selector */}
             {/* <div className="input-row">
@@ -1867,7 +1910,7 @@ function Forms() {
               </Grid>
             </Box>
 
-            <RenderRemarksComponents form={form} handleChange={handleChange} />
+            <RenderRemarksComponents dynamicDepartments={dynamicDepartments} form={form} handleChange={handleChange} docProfile={{ "name": selectedDoctor?.name, "department": selectedDoctor?.department }} />
 
             {/* <div className="input-group textarea-field-container">
               <label className="required">Remarks</label>
@@ -2038,8 +2081,8 @@ function Forms() {
               </div>
             </div>
 
-
-            <div className="input-row">
+            <RenderRemarksComponents dynamicDepartments={dynamicDepartments} form={form} handleChange={handleChange} docProfile={{ "name": selectedDoctor?.name, "department": selectedDoctor?.department }} />
+            {/* <div className="input-row">
               <div className="input-group textarea-field-container">
                 <label className="required">Remarks</label>
 
@@ -2053,7 +2096,7 @@ function Forms() {
                   rows="3"
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         );
 
@@ -2214,8 +2257,8 @@ function Forms() {
                 </label>
               </div>
             </div>
-
-            <div className="input-row">
+            <RenderRemarksComponents dynamicDepartments={dynamicDepartments} form={form} handleChange={handleChange} docProfile={{ "name": selectedDoctor?.name, "department": selectedDoctor?.department }} />
+            {/* <div className="input-row">
               <div className="input-group textarea-field-container">
                 <label className="required">Remarks</label>
 
@@ -2229,7 +2272,7 @@ function Forms() {
                   rows="3"
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         );
 
@@ -2397,8 +2440,9 @@ function Forms() {
                 </label>
               </div>
             </div>
+            <RenderRemarksComponents dynamicDepartments={dynamicDepartments} form={form} handleChange={handleChange} docProfile={{ "name": selectedDoctor?.name, "department": selectedDoctor?.department }} />
 
-            <div className="input-row">
+            {/* <div className="input-row">
               <div className="input-group textarea-field-container">
                 <label className="required">Remarks</label>
 
@@ -2412,7 +2456,7 @@ function Forms() {
                   rows="2"
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         );
 
@@ -2576,7 +2620,8 @@ function Forms() {
               </div>
             </div>
 
-            <div className="input-row">
+            <RenderRemarksComponents dynamicDepartments={dynamicDepartments} form={form} handleChange={handleChange} docProfile={{ "name": selectedDoctor?.name, "department": selectedDoctor?.department }} />
+            {/* <div className="input-row">
               <div className="input-group textarea-field-container">
                 <label className="required">Remarks</label>
 
@@ -2590,7 +2635,7 @@ function Forms() {
                   rows="2"
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         );
 
@@ -2715,8 +2760,9 @@ function Forms() {
                 </label>
               </div>
             </div>
+            <RenderRemarksComponents dynamicDepartments={dynamicDepartments} form={form} handleChange={handleChange} docProfile={{ "name": selectedDoctor?.name, "department": selectedDoctor?.department }} />
 
-            <div className="input-row">
+            {/* <div className="input-row">
               <div className="input-group textarea-field-container">
                 <label className="required">Remarks</label>
 
@@ -2730,7 +2776,7 @@ function Forms() {
                   rows="2"
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         );
 
@@ -2876,8 +2922,8 @@ function Forms() {
                 </label>
               </div>
             </div>
-
-            <div className="input-row">
+            <RenderRemarksComponents dynamicDepartments={dynamicDepartments} form={form} handleChange={handleChange} docProfile={{ "name": selectedDoctor?.name, "department": selectedDoctor?.department }} />
+            {/* <div className="input-row">
               <div className="input-group textarea-field-container">
                 <label className="required">Remarks</label>
 
@@ -2891,7 +2937,7 @@ function Forms() {
                   rows="2"
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         );
 
@@ -3037,8 +3083,8 @@ function Forms() {
                 </label>
               </div>
             </div>
-
-            <div className="input-row">
+            <RenderRemarksComponents dynamicDepartments={dynamicDepartments} form={form} handleChange={handleChange} docProfile={{ "name": selectedDoctor?.name, "department": selectedDoctor?.department }} />
+            {/* <div className="input-row">
               <div className="input-group textarea-field-container">
                 <label className="required">Remarks</label>
 
@@ -3052,7 +3098,7 @@ function Forms() {
                   rows="2"
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         );
 
@@ -3217,7 +3263,8 @@ function Forms() {
               </div>
             </div>
 
-            <div className="input-row">
+            <RenderRemarksComponents dynamicDepartments={dynamicDepartments} form={form} handleChange={handleChange} docProfile={{ "name": selectedDoctor?.name, "department": selectedDoctor?.department }} />
+            {/* <div className="input-row">
               <div className="input-group textarea-field-container">
                 <label className="required">Remarks</label>
 
@@ -3231,7 +3278,7 @@ function Forms() {
                   rows="2"
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         );
 
@@ -3271,8 +3318,8 @@ function Forms() {
                 </label>
               </div>
             </div>
-
-            <div className="input-row">
+            <RenderRemarksComponents dynamicDepartments={dynamicDepartments} form={form} handleChange={handleChange} docProfile={{ "name": selectedDoctor?.name, "department": selectedDoctor?.department }} />
+            {/* <div className="input-row">
               <div className="input-group textarea-field-container">
                 <label className="required">Remarks</label>
 
@@ -3286,7 +3333,7 @@ function Forms() {
                   rows="2"
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         );
 
@@ -3399,7 +3446,8 @@ function Forms() {
               </div>
             </div>
 
-            <div className="input-row">
+            <RenderRemarksComponents dynamicDepartments={dynamicDepartments} form={form} handleChange={handleChange} docProfile={{ "name": selectedDoctor?.name, "department": selectedDoctor?.department }} />
+            {/* <div className="input-row">
               <div className="input-group textarea-field-container">
                 <label className="required">Remarks</label>
 
@@ -3413,7 +3461,7 @@ function Forms() {
                   rows="2"
                 />
               </div>
-            </div>
+            </div> */}
           </div >
         );
 
@@ -3529,7 +3577,8 @@ function Forms() {
               </div>
             </div>
 
-            <div className="input-row">
+            <RenderRemarksComponents dynamicDepartments={dynamicDepartments} form={form} handleChange={handleChange} docProfile={{ "name": selectedDoctor?.name, "department": selectedDoctor?.department }} />
+            {/* <div className="input-row">
               <div className="input-group textarea-field-container">
                 <label className="required">Remarks</label>
 
@@ -3543,7 +3592,7 @@ function Forms() {
                   rows="2"
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         );
 
@@ -3609,8 +3658,9 @@ function Forms() {
                 </label>
               </div>
             </div>
+            <RenderRemarksComponents dynamicDepartments={dynamicDepartments} form={form} handleChange={handleChange} docProfile={{ "name": selectedDoctor?.name, "department": selectedDoctor?.department }} />
 
-            <div className="input-row">
+            {/* <div className="input-row">
               <div className="input-group textarea-field-container">
                 <label className="required">Remarks</label>
 
@@ -3624,14 +3674,16 @@ function Forms() {
                   rows="2"
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         );
 
       case "Junk":
         return (
           <div className="sub-section">
-            <div className="input-row">
+            <RenderRemarksComponents message={"Junk Remarks"} dynamicDepartments={dynamicDepartments} form={form} handleChange={handleChange} docProfile={{ "name": selectedDoctor?.name, "department": selectedDoctor?.department }} />
+            {/* <RenderRemarksComponents message={"Junk Remarks"} form={form} handleChange={handleChange} docProfile={docProfile} /> */}
+            {/* <div className="input-row">
               <div className="input-group textarea-field-container">
                 <label className="required">Junk Remarks</label>
 
@@ -3645,14 +3697,16 @@ function Forms() {
                   rows="2"
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         );
 
       case "Job Related":
         return (
           <div className="sub-section">
-            <div className="input-row">
+            <RenderRemarksComponents message={"Job Related Remarks"} dynamicDepartments={dynamicDepartments} form={form} handleChange={handleChange} docProfile={{ "name": selectedDoctor?.name, "department": selectedDoctor?.department }} />
+            {/* <RenderRemarksComponents message={"Job Related Remarks"} form={form} handleChange={handleChange} docProfile={docProfile} /> */}
+            {/* <div className="input-row">
               <div className="input-group textarea-field-container">
                 <label className="required">Job Related Remarks</label>
 
@@ -3666,7 +3720,7 @@ function Forms() {
                   rows="2"
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         );
 
@@ -4759,6 +4813,7 @@ function Forms() {
                               </Typography>
                             </Box>
 
+
                             {/* Patient List */}
                             <List disablePadding>
                               {patientList.map((patient, index) => (
@@ -4783,6 +4838,7 @@ function Forms() {
                                           {patient.patientName || "Unknown Name"}
                                         </Typography>
                                       }
+
                                       secondary={
                                         <Typography variant="caption" sx={{ color: "text.secondary" }}>
                                           Age: {patient.patientAge || "N/A"} | Gender: {patient.gender || "N/A"}
