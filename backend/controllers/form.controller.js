@@ -518,13 +518,145 @@ export const getFormById = async (req, res) => {
   }
 };
 
-export const updateFilledForm = async (req, res) => {
-  console.log("req,body", req.body);
+export const getFormEditChanges = async (req, res) => {
+  try {
+    const { hospitalId } = req.query;
 
+    // 1. Validation
+    if (
+      !hospitalId ||
+      // !branchId ||
+      !mongoose.isValidObjectId(hospitalId)
+      // !mongoose.isValidObjectId(branchId)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid hospitalId  are required.",
+      });
+    }
+
+    // 2. Fetch Hospital Details
+    const hospital = await HospitalModel.findById(hospitalId)
+      .select("trimmedName name")
+      .lean();
+
+    if (!hospital) {
+      return res.status(404).json({
+        success: false,
+        message: "Hospital not found.",
+      });
+    }
+
+    // 3. Establish multi-tenant dynamic database connection
+    const conn = await getConnection(hospital.trimmedName);
+    const FilledFormsModel = getFilledFormsModel(conn);
+    const BranchModel = getBranchModel(conn)
+
+    // 4. Fetch pending edit forms with populated Agent and Branch info
+    const pendingForms = await FilledFormsModel.find({
+      // branchId: branchId,
+      formStatus: FormStatus.PENDING,
+    }).select("changesLog branchId agentName")
+      .populate({ path: "branchId", model: BranchModel, select: "name" })
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    if (!pendingForms || pendingForms.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No pending form edit requests found.",
+        data: [],
+      });
+    }
+
+
+    return res.status(200).json({
+      success: true,
+      message: "Form edit change history fetched successfully.",
+      data: {
+        branchName: pendingForms?.branchId?.name || "",
+        role: "teamleader",
+        totalChanges: pendingForms?.length || 0,
+        changes: pendingForms || []
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching form edit changes:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error.",
+      error: error.message,
+    });
+  }
+};
+
+const getObjectDiff = (oldObj = {}, newObj = {}, ignoredKeys = []) => {
+  const defaultIgnored = ["_id", "__v", "createdAt", "updatedAt", "isArchived", "version", "oldformId"];
+  const allIgnored = new Set([...defaultIgnored, ...ignoredKeys]);
+  const changes = [];
+
+  const compare = (v1, v2, path = "") => {
+    // Standardize nullish values
+    const val1 = v1 ?? null;
+    const val2 = v2 ?? null;
+
+    if (val1 === val2) return;
+
+    // Compare Dates
+    if (val1 instanceof Date || val2 instanceof Date) {
+      const d1 = val1 ? new Date(val1).getTime() : null;
+      const d2 = val2 ? new Date(val2).getTime() : null;
+      if (d1 !== d2) {
+        changes.push({
+          field: path,
+          oldValue: val1 ? new Date(val1).toISOString() : null,
+          newValue: val2 ? new Date(val2).toISOString() : null,
+        });
+      }
+      return;
+    }
+
+    // Compare Mongo ObjectIds / Strings
+    if (val1?.toString && val2?.toString && (val1._bsontype === 'ObjectID' || val2._bsontype === 'ObjectID')) {
+      if (val1.toString() !== val2.toString()) {
+        changes.push({ field: path, oldValue: val1.toString(), newValue: val2.toString() });
+      }
+      return;
+    }
+
+    // Deep compare nested Objects
+    if (
+      typeof val1 === "object" && val1 !== null &&
+      typeof val2 === "object" && val2 !== null &&
+      !Array.isArray(val1) && !Array.isArray(val2)
+    ) {
+      const keys = new Set([...Object.keys(val1), ...Object.keys(val2)]);
+      keys.forEach((key) => {
+        if (allIgnored.has(key)) return;
+        compare(val1[key], val2[key], path ? `${path}.${key}` : key);
+      });
+      return;
+    }
+
+    // Primitive values comparison
+    if (JSON.stringify(val1) !== JSON.stringify(val2)) {
+      changes.push({
+        field: path,
+        oldValue: val1,
+        newValue: val2,
+      });
+    }
+  };
+
+  compare(oldObj, newObj);
+  return changes;
+};
+export const updateFilledForm = async (req, res) => {
   let session;
 
   try {
-    const { formId } = req.params; // Passed in URL e.g., PUT /api/forms/:formId
+    const { formId } = req.params;
     const { hosId, branchId } = req.query;
     const user = req.user;
     const data = req.body;
@@ -555,12 +687,12 @@ export const updateFilledForm = async (req, res) => {
       });
     }
 
-    // 2. Establish multi-tenant dynamic connection
+    // 2. Multi-tenant connection setup
     const conn = await getConnection(hospital.trimmedName);
     const FilledFormsModel = getFilledFormsModel(conn);
     const PatientModel = getPatientModel(conn);
 
-    // 3. Fetch existing form to compare previous state
+    // 3. Fetch existing form
     const existingForm = await FilledFormsModel.findById(formId).lean();
     if (!existingForm) {
       return res.status(404).json({
@@ -572,7 +704,7 @@ export const updateFilledForm = async (req, res) => {
     session = await conn.startSession();
     session.startTransaction();
 
-    // 4. Data Type Conversions
+    // 4. Data Type Formatting
     if (data?.formData?.dateTime) {
       data.formData.dateTime = new Date(data.formData.dateTime);
     }
@@ -583,10 +715,10 @@ export const updateFilledForm = async (req, res) => {
       );
     }
 
-    // 5. Update Associated Patient Details (if patient info modified)
+    // 5. Update Associated Patient Details
     if (existingForm.formData?.patientDetails && data?.formData?.patientDetails) {
       await PatientModel.findByIdAndUpdate(
-        existingForm.formData.patientDetails?._id,
+        existingForm.formData.patientDetails?._id || existingForm.formData.patientDetails,
         {
           $set: {
             patientName: data.formData.patientDetails.patientName,
@@ -595,7 +727,6 @@ export const updateFilledForm = async (req, res) => {
             patientMobile: data.formData.patientDetails.patientMobile,
             alternateMobile: data.formData.patientDetails.alternateMobile,
             location: data.formData.patientDetails.location,
-            gender: data.formData.patientDetails.gender,
             status: data.formData.patientDetails.status,
             category: data.formData.patientDetails.category,
             agentDetails: data.formData.patientDetails.agentDetails,
@@ -605,21 +736,16 @@ export const updateFilledForm = async (req, res) => {
       );
     }
 
-    // 6. Build Update Payload
-    const updatePayload = {
-      ...(data.callStatus && { callStatus: data.callStatus }),
-      ...(data.doctor && { doctor: data.doctor }),
-      ...(data.department && { department: data.department }),
-      ...(data.purpose && { purpose: data.purpose }),
-      ...(typeof data.useForFollowup === "boolean" && {
-        useForFollowup: data.useForFollowup,
-        followupStatus: data.useForFollowup ? "pending" : null,
-      }),
-      formStatus: FormStatus.PENDING,
+    // 6. DYNAMIC PAYLOAD CREATION (Merge existing document with incoming data dynamically)
+    const currentVersion = existingForm.version || 1;
+
+    const mergedPayload = {
+      ...existingForm, // Existing document base
+      ...data,         // Dynamically merge top-level properties (callStatus, doctor, department, purpose, etc.)
       formData: {
         ...existingForm.formData,
         ...data.formData,
-        patientDetails: existingForm.formData.patientDetails?._id, // Maintain reference ID
+        patientDetails: existingForm.formData?.patientDetails?._id || existingForm.formData?.patientDetails,
         appointmentSlot: data.formData?.appointmentSlot
           ? {
             ...data.formData.appointmentSlot,
@@ -627,23 +753,54 @@ export const updateFilledForm = async (req, res) => {
           }
           : existingForm.formData?.appointmentSlot,
       },
+      formStatus: FormStatus.PENDING,
+      ...(typeof data.useForFollowup === "boolean" && {
+        useForFollowup: data.useForFollowup,
+        followupStatus: data.useForFollowup ? "pending" : null,
+      }),
     };
 
-    // 7. Update Form Document
-    const updatedForm = await FilledFormsModel.findByIdAndUpdate(
-      formId,
-      { $set: updatePayload },
-      { new: true, session }
+    // 7.  FULL DYNAMIC COMPARE (Entire existing record vs Entire incoming payload)
+    const changesDiff = getObjectDiff(
+      existingForm,
+      mergedPayload,
+      ["formStatus"] // Add keys you want to skip tracking
     );
+
+    // 8. Archive Old Record
+    await FilledFormsModel.findByIdAndUpdate(
+      formId,
+      {
+        $set: {
+          isArchived: true,
+          formStatus: FormStatus.ARCHIVED,
+        },
+      },
+      { session }
+    );
+
+    // 9. Prepare and Create New Active Document Version
+    const newFormPayload = {
+      ...mergedPayload,
+      _id: new mongoose.Types.ObjectId(),
+      oldformId: existingForm._id,
+      version: currentVersion + 1,
+      isArchived: false,
+      changesLog: changesDiff, // Dynamic changes automatically logged
+      createdAt: undefined,
+      updatedAt: undefined,
+    };
+
+    const [newFormDocument] = await FilledFormsModel.create([newFormPayload], { session });
 
     // Commit Transaction
     await session.commitTransaction();
     await session.endSession();
 
-    // 8. Non-blocking Audit Logging
+    // 10. Non-blocking Audit Logging
     setImmediate(() => {
       auditLog({
-        action: `UPDATE_${existingForm.formType.toUpperCase()}_FORM`,
+        action: `UPDATE_${existingForm.formType?.toUpperCase() || "FORM"}_FORM`,
         event: "EDIT",
         module: "FORM_SUBMISSION",
         role: user?.type || "Unknown",
@@ -651,7 +808,8 @@ export const updateFilledForm = async (req, res) => {
         name: user?.name,
         userId: user?.id,
         oldData: existingForm,
-        newData: updatedForm,
+        newData: newFormDocument,
+        changes: changesDiff,
         ip: req.userIp,
         userAgent: req.headers["user-agent"],
       });
@@ -659,8 +817,12 @@ export const updateFilledForm = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Form updated successfully.",
-      data: updatedForm,
+      message: "Form updated successfully with dynamic change tracking.",
+      data: newFormDocument,
+      changesSummary: {
+        totalChanges: changesDiff.length,
+        changes: changesDiff,
+      },
     });
   } catch (error) {
     console.error("Error updating filled form:", error);
@@ -677,7 +839,6 @@ export const updateFilledForm = async (req, res) => {
     });
   }
 };
-
 export const getFilledForms = async (req, res) => {
   try {
     const {
@@ -696,6 +857,37 @@ export const getFilledForms = async (req, res) => {
     const PAGE_LIMIT = 10;
     const pageNum = Math.max(parseInt(page) || 1, 1);
     const skip = (pageNum - 1) * PAGE_LIMIT;
+
+    const userType = req.user.type?.toLowerCase() || "";
+
+    // Define base fields to select
+    const fields = [
+      "agentName",
+      "formType",
+      "gender",
+      "callStatus",
+      "purpose",
+      "followupStatus",
+      "createdAt",
+      "formData.appointmentSlot",
+      "formData.patientDetails",
+      "formData.patientArrivalTime",
+      "formData.remarks",
+      "formData.surgeryName",
+      "formData.healthPackageName",
+      "formData.healthSchemeName",
+      "formData.govertHealthSchemeName",
+      "formData.nonGovtHealthSchemeName",
+      "formData.reportName",
+      "formData.referenceFrom",
+      "formData.feedbackType",
+      "formData.feedback",
+    ];
+
+    // Conditionally append 'formStatus' if user is a teamleader
+    if (userType === "teamleader") {
+      fields.push("formStatus");
+    }
 
     // ================= VALIDATION =================
     if (!hospitalId || !mongoose.isValidObjectId(hospitalId)) {
@@ -780,9 +972,7 @@ export const getFilledForms = async (req, res) => {
 
     // 2. Build Mongoose Query
     let query = FilledFormsModel.find(matchStage)
-      .select(
-        "agentName formType gender callStatus purpose formData.appointmentSlot followupStatus createdAt formData.patientDetails formData.patientArrivalTime formData.remarks formData.surgeryName formData.healthPackageName formData.healthSchemeName formData.govertHealthSchemeName formData.nonGovtHealthSchemeName formData.reportName formData.referenceFrom formData.feedbackType formData.feedback"
-      )
+      .select(fields.join(" "))
       .populate(pop("branchId", BranchModel, "name"))
       .populate(pop("doctor", DoctorModel, "name"))
       .populate(pop("department", DepartmentModel, "name"))

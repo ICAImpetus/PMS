@@ -1056,6 +1056,7 @@ const FilledFormsComponent = ({
                 </TableRow>
               </TableHead>
 
+
               <PatientHistoryTableBody
                 columns={visibleFormColumns}
                 filteredLatestVisits={filterForm}

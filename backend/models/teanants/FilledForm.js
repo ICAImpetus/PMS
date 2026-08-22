@@ -32,20 +32,47 @@ const feedbackQuestionSchema = new mongoose.Schema(
 
 export const FilledFormSchema = new mongoose.Schema(
   {
+    // Form versioning & historical tracking
     formStatus: String,
+
+    version: {
+      type: Number,
+      default: 1,
+      index: true,
+    },
+
+    isArchived: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+    oldformId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "FilledForms",
+      index: true,
+    },
+
+    changesLog: [
+      {
+        field: String,
+        oldValue: mongoose.Schema.Types.Mixed,
+        newValue: mongoose.Schema.Types.Mixed,
+        _id: false, // Prevents generating unnecessary sub-document IDs
+      },
+    ],
+
     errorCount: Number,
 
     formType: {
       type: String,
-      // enum: ["inbound", "outbound"],
-      // required: true,
       index: true,
     },
-
     branchId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Branch",
       required: true,
+      index: true,
     },
 
     agentId: {
@@ -152,7 +179,7 @@ export const FilledFormSchema = new mongoose.Schema(
         feedbackType: String,
         ipdNumber: String,
         opdNumber: String,
-        questions: [feedbackQuestionSchema], // Dynamic array of question responses
+        questions: [feedbackQuestionSchema],
       },
 
       appointmentSlot: {
@@ -187,6 +214,7 @@ export const FilledFormSchema = new mongoose.Schema(
 
 export const FormStatus = {
   PENDING: "PENDING",
+  ARCHIVED: "ARCHIVED",
   REJECTED: "REJECTED",
   ERRORFORM: "ERRORFORM",
 }

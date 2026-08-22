@@ -366,6 +366,15 @@ export const commonRoutes = {
     })
 
   },
+  getFormEditChanges: (hospitalId) => {
+
+    return API.get(`api/edit-changes`, {
+      params: {
+        hospitalId
+      }
+    })
+
+  },
 
 
   toggleCodeAlertStatus: (hosId, id) => {

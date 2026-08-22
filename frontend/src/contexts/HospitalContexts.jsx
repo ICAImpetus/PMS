@@ -355,6 +355,33 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     });
 
     const {
+        data: formEditChanges,
+        error: formEditChangesError,
+        isFetching: formEditChangesRefetchLoader,
+        refetch: refetchformEditChanges
+    } = useQuery({
+        queryKey: [
+            "formEditChanges",
+            selectedHostpital,
+            selectedBranch
+        ],
+        queryFn: async () => {
+
+            const res = await commonRoutes.getFormEditChanges(
+                selectedHostpital
+            );
+
+            return res?.data?.data || [];
+        },
+        enabled:
+            !!selectedHostpital &&
+            isAdmin,
+
+        onError: () =>
+            toast.error("Failed to fetch Hospital Code")
+    });
+
+    const {
         data: usersData,
         isFetching: usersLoading,
         refetch: refetchUsers,
@@ -685,6 +712,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         isStatsLoading,
 
 
+
         // isAnyLoading:
         //     hospitalsLoading ||
         //     branchesLoading ||
@@ -722,6 +750,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         codeAlerts,
         branchFollowups,
         codeAlertsData,
+        formEditChanges,
 
         dateFilter,
 
@@ -783,6 +812,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         codeAlerts,
         branchFollowups,
         codeAlertsData,
+        formEditChanges,
         selectedHostpital,
         selectedBranch,
         pagination,

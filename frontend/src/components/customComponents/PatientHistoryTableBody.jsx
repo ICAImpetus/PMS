@@ -23,8 +23,14 @@ import {
 import { getNestedValue } from "../../utils/exportUtils";
 import EditIcon from "@mui/icons-material/Edit";
 import { useNavigate } from "react-router-dom";
+import { useMemo } from "react";
+import { useCallback } from "react";
 
-
+export const FormStatus = {
+    PENDING: "PENDING",
+    REJECTED: "REJECTED",
+    ERRORFORM: "ERRORFORM",
+}
 
 const ExpandableText = ({ text = "", limit = 60 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -55,6 +61,7 @@ const ExpandableText = ({ text = "", limit = 60 }) => {
         </Typography>
     );
 };
+
 
 // --- Component 1: Ratings Popup Modal ---
 export const RatingsDialog = ({ open, questions, onClose }) => {
@@ -104,6 +111,48 @@ export const RatingsDialog = ({ open, questions, onClose }) => {
 };
 
 
+const getFormattedCellValue = (key, col, row, rawValue) => {
+    let displayValue = rawValue;
+
+    // 1. Format Appointment Slot
+    if (key === "formData.appointmentSlot") {
+        if (displayValue && typeof displayValue === "object") {
+            const formattedDate = displayValue?.date
+                ? moment(displayValue.date).format("dddd, DD MMM YYYY")
+                : null;
+            const timeRange = `${displayValue?.start || "N/A"} to ${displayValue?.end || "N/A"}`;
+            return formattedDate ? `${formattedDate} | ${timeRange}` : timeRange;
+        }
+
+        if (col?.value === "Appointment") {
+            const formattedDate = row?.dateTime
+                ? moment(row.dateTime).format("dddd, DD MMM YYYY")
+                : null;
+            const arrival = `Arrival Time: ${row?.patientArrivalTime || "-"}`;
+            return formattedDate ? `${formattedDate} | ${arrival}` : arrival;
+        }
+
+        return "-";
+    }
+
+    // 2. Format Created At Date
+    if (key === "createdAt" && displayValue && moment(displayValue).isValid()) {
+        return moment(displayValue).format("DD MMM YYYY, hh:mm A");
+    }
+
+    // 3. Format Date Objects
+    if (displayValue instanceof Date) {
+        return moment(displayValue).format("DD/MM/YYYY hh:mm A");
+    }
+
+    // 4. Object & Nullish fallbacks
+    if (typeof displayValue === "object" && displayValue !== null) {
+        return "-";
+    }
+
+    return displayValue ?? "-";
+};
+
 const TableMessageRow = React.memo(({ colSpan, children }) => (
     <tr>
         <td colSpan={colSpan} style={{ textAlign: "center", padding: "16px" }}>
@@ -112,17 +161,19 @@ const TableMessageRow = React.memo(({ colSpan, children }) => (
     </tr>
 ));
 
-export const PatientHistoryRow = ({
+export const PatientHistoryRow = React.memo(({
     row,
     columns,
     patientProfile,
     onViewRatings,
     showAction = false,
     editRowId
-
 }) => {
+    // Derive status directly to avoid side-effect state setter in render loop
+    const status = row?.formStatus || "";
 
-    const fieldMap = {
+    // Memoize static mappings relative to patientProfile
+    const fieldMap = useMemo(() => ({
         "formData.patientDetails.patientName": patientProfile?.patientName,
         "formData.patientDetails.patientMobile": patientProfile?.patientMobile,
         "formData.patientDetails.status": patientProfile?.status,
@@ -130,36 +181,51 @@ export const PatientHistoryRow = ({
         "formData.patientDetails.category": patientProfile?.category,
         "formData.patientDetails.location": patientProfile?.location,
         "formData.patientDetails.gender": patientProfile?.gender,
-    };
+    }), [patientProfile]);
 
-
+    const handleEditClick = useCallback(() => {
+        editRowId?.(row);
+    }, [editRowId, row]);
 
     return (
-
         <TableRow>
-
             {showAction && (
                 <TableCell align="center">
-                    <IconButton size="small" onClick={() => editRowId?.(row)}>
+                    {/* {status ? (
+                        status
+                    ) : (
+                        <IconButton
+                            size="small"
+                            onClick={handleEditClick}
+                        >
+                            <EditIcon fontSize="small" />
+                        </IconButton>
+                    )} */}
+                    <IconButton
+                        size="small"
+                        onClick={handleEditClick}
+                    >
                         <EditIcon fontSize="small" />
                     </IconButton>
                 </TableCell>
             )}
+
             {columns.map((col, colIndex) => {
                 const key = col?.key;
+                const cellKey = col?.id || col?.key || colIndex;
 
-                // 1. Feedback Questions Rating Link
+                // Case 1: Feedback Questions Rating Link
                 if (key === "formData.feedback.questions") {
                     const questions = getNestedValue(row, key) || [];
                     if (Array.isArray(questions) && questions.length > 0) {
                         return (
-                            <TableCell key={col?.id || colIndex}>
+                            <TableCell key={cellKey}>
                                 <Link
                                     component="button"
                                     variant="body2"
                                     underline="hover"
                                     sx={{ fontWeight: "medium", cursor: "pointer" }}
-                                    onClick={() => onViewRatings(questions)}
+                                    onClick={() => onViewRatings?.(questions)}
                                 >
                                     View Rating
                                 </Link>
@@ -168,65 +234,29 @@ export const PatientHistoryRow = ({
                     }
                 }
 
-
-
-                // 2. Resolve field value
                 const rawValue = fieldMap[key] ?? getNestedValue(row, key);
-                let displayValue = rawValue;
 
+                // Case 2: Remarks with expandable text
                 if (key === "formData.remarks") {
                     return (
-                        <TableCell key={col?.id || colIndex} sx={{ maxWidth: 250 }}>
+                        <TableCell key={cellKey} sx={{ maxWidth: 250 }}>
                             <ExpandableText text={rawValue} limit={60} />
                         </TableCell>
                     );
                 }
 
-                // 3. Format Appointment Slot
-                if (key === "formData.appointmentSlot") {
-                    if (displayValue && typeof displayValue === "object") {
-                        const formattedDate = displayValue?.date
-                            ? moment(displayValue.date).format("dddd, DD MMM YYYY")
-                            : null;
-
-                        const timeRange = `${displayValue?.start || "N/A"} to ${displayValue?.end || "N/A"}`;
-                        displayValue = formattedDate ? `${formattedDate} | ${timeRange}` : timeRange;
-                    } else if (col?.value === "Appointment") {
-                        const formattedDate = row?.dateTime
-                            ? moment(row.dateTime).format("dddd, DD MMM YYYY")
-                            : null;
-
-                        const arrival = `Arrival Time: ${row?.patientArrivalTime || "-"}`;
-                        displayValue = formattedDate ? `${formattedDate} | ${arrival}` : arrival;
-                    } else {
-                        displayValue = "-";
-                    }
-                }
-                // 4. Format Created At Date
-                else if (key === "createdAt" && displayValue && moment(displayValue).isValid()) {
-                    displayValue = moment(displayValue).format("DD MMM YYYY, hh:mm A");
-                }
-                // 5. Format Date Objects
-                else if (displayValue instanceof Date) {
-                    displayValue = moment(displayValue).format("DD/MM/YYYY hh:mm A");
-                }
-                // 6. Object & Nullish fallbacks
-                else if (typeof displayValue === "object" && displayValue !== null) {
-                    displayValue = "-";
-                } else {
-                    displayValue = displayValue ?? "-";
-                }
+                // Case 3: Standard cell values & fallbacks
+                const displayValue = getFormattedCellValue(key, col, row, rawValue);
 
                 return (
-                    <TableCell key={col?.id || colIndex}>
+                    <TableCell key={cellKey}>
                         {displayValue}
                     </TableCell>
                 );
             })}
         </TableRow>
     );
-};
-
+});
 // --- Component 3: Main Table Body ---
 export function PatientHistoryTableBody({
     columns = [],
@@ -236,6 +266,8 @@ export function PatientHistoryTableBody({
     showAction = false,
     editRowId
 }) {
+    // console.log("filteredLatestVisits", filteredLatestVisits);
+
     const [selectedQuestions, setSelectedQuestions] = useState(null);
     const colSpan = columns.length;
 

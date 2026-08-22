@@ -40,6 +40,7 @@ import { UserContextHook } from "../../../contexts/UserContexts";
 import HospitalContext from "../../../contexts/HospitalContexts";
 import { ProfilePopup } from "../../../scenes/global/ProfileAndCodeAnnousementPopup";
 import NotificationCenter from "../../../components/NotificationCenter";
+import FormEditApprovalCard from "../../../components/FormEditApprovalCard";
 
 // Register ChartJS components
 ChartJS.register(
@@ -97,11 +98,17 @@ const SuperAdminDashboard = () => {
     filter,
     errors,
     codeAlerts,
+    formEditChanges,
     handleFilterChange,
     setSelectedHostpital,
     dateRange,
 
   } = useContext(HospitalContext);
+
+  useEffect(() => {
+    console.log("formEditChanges", formEditChanges);
+
+  }, [formEditChanges])
 
   const navigate = useNavigate();
 
@@ -402,6 +409,11 @@ const SuperAdminDashboard = () => {
               Real-time facility orchestration and predictive diagnostics.
             </Typography>
           </Box>
+          <FormEditApprovalCard
+            // approvalData={[]}
+            onApprove={() => console.log("Approved!")}
+            onReject={() => console.log("Rejected!")}
+          />
 
           {/* --- CODE ALERTS --- */}
           {codeAlerts?.length > 0 && (

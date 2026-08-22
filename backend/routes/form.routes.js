@@ -5,6 +5,7 @@ import { uploadDoctorAssets } from '../utils/multer.js';
 const router = express.Router();
 
 router.post("/filled-forms", auth, formController.createFilledForm);
+router.get("/edit-changes", auth, formController.getFormEditChanges);
 router.get("/forms/:formId", auth, formController.getFormById);
 router.put("/forms/:formId", auth, formController.updateFilledForm);
 router.get("/filled-forms", auth, formController.getFilledForms);

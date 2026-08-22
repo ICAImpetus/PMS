@@ -47,6 +47,7 @@ import { toast } from "react-toastify";
 import SectionLoader from "../../../components/SectionLoader";
 import { UserContextHook } from "../../../contexts/UserContexts";
 import HospitalContext from "../../../contexts/HospitalContexts";
+import FormEditApprovalCard from "../../../components/FormEditApprovalCard";
 
 
 // Register ChartJS components
@@ -418,6 +419,8 @@ const AdminDashboard = () => {
               })}
             </div>
           )}
+
+
 
           {/* --- CRITICAL KPI STRIP --- */}
           <section className="critical-strip" style={{ marginBottom: "12px" }}>
