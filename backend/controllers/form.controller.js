@@ -1017,11 +1017,20 @@ export const getFilledForms = async (req, res) => {
     // ================= BASE MATCH STAGE =================
     const matchStage = {
       isDeleted: false,
-      formStatus: {
-        $exists: true,
-        $ne: null,
-        $nin: [FormStatus.PENDING, FormStatus.REJECTED, FormStatus.NOTAPPROVED, FormStatus.ERRORFORM, ""]
-      }
+      $or: [
+        { formStatus: { $exists: false } },
+        { formStatus: null },
+        {
+          formStatus: {
+            $nin: [
+              FormStatus.PENDING,
+              FormStatus.REJECTED,
+              FormStatus.NOTAPPROVED,
+              FormStatus.ERRORFORM,
+            ],
+          },
+        },
+      ],
     };
 
     if (branchId && mongoose.isValidObjectId(branchId)) {

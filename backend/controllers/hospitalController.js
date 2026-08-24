@@ -5983,11 +5983,22 @@ export const executiveDashboardService = async (conn, branchId, user, bfPage = 1
       // agentId: new mongoose.Types.ObjectId(agentId),
       branchId: new mongoose.Types.ObjectId(branchId),
       isDeleted: false,
-      formStatus: {
-        $exists: true,
-        $ne: null,
-        $nin: [FormStatus.PENDING, FormStatus.REJECTED, FormStatus.NOTAPPROVED, FormStatus.ERRORFORM, ""]
-      },
+      $or: [
+
+        { formStatus: { $exists: false } },
+        { formStatus: null },
+
+        {
+          formStatus: {
+            $nin: [
+              FormStatus.PENDING,
+              FormStatus.REJECTED,
+              FormStatus.NOTAPPROVED,
+              FormStatus.ERRORFORM,
+            ],
+          },
+        },
+      ],
       createdAt: {
         $gte: date.startDate,
         $lte: date.endDate,
@@ -6366,18 +6377,31 @@ export const teamLeaderDashboardService = async (conn, branchId = null, user, bf
     const agentId = user.id;
     const skip = (bfPage - 1) * bfLimit;
 
+
     const matchStage = {
       isDeleted: false,
       branchId: branchObjectId,
-      formStatus: {
-        $exists: true,
-        $ne: null,
-        $nin: [FormStatus.PENDING, FormStatus.REJECTED, FormStatus.NOTAPPROVED, FormStatus.ERRORFORM, ""]
-      },
       createdAt: {
         $gte: date.startDate,
         $lte: date.endDate,
       },
+      $or: [
+        // Case 1: Agar formStatus field document me nahi hai (Normal/Un-edited Form)
+        { formStatus: { $exists: false } },
+        { formStatus: null },
+
+        // Case 2: Agar formStatus field hai, toh ye rejected/pending/archived wale status nahi hone chahiye
+        {
+          formStatus: {
+            $nin: [
+              FormStatus.PENDING,
+              FormStatus.REJECTED,
+              FormStatus.NOTAPPROVED,
+              FormStatus.ERRORFORM,
+            ],
+          },
+        },
+      ],
     };
 
     const agentFilter = {
@@ -6745,11 +6769,22 @@ export const superManagerDashboardService = async (conn, branchId) => {
     const branchObjectId = new mongoose.Types.ObjectId(branchId);
     const matchStage = {
       branchId: branchObjectId,
-      formStatus: {
-        $exists: true,
-        $ne: null,
-        $nin: [FormStatus.PENDING, FormStatus.REJECTED, FormStatus.NOTAPPROVED, FormStatus.ERRORFORM, ""]
-      },
+      $or: [
+
+        { formStatus: { $exists: false } },
+        { formStatus: null },
+
+        {
+          formStatus: {
+            $nin: [
+              FormStatus.PENDING,
+              FormStatus.REJECTED,
+              FormStatus.NOTAPPROVED,
+              FormStatus.ERRORFORM,
+            ],
+          },
+        },
+      ],
     }
     const [totalDoctors, totalDepartment, totalUsers, aggResult] = await Promise.all([
       DoctorModel.countDocuments({ branch: branchId }),
@@ -7083,11 +7118,22 @@ export const superAdminDashboardService = async (
 
     const matchStage = {
       isDeleted: false,
-      formStatus: {
-        $exists: true,
-        $ne: null,
-        $nin: [FormStatus.PENDING, FormStatus.REJECTED, FormStatus.NOTAPPROVED, FormStatus.ERRORFORM, ""]
-      },
+      $or: [
+
+        { formStatus: { $exists: false } },
+        { formStatus: null },
+
+        {
+          formStatus: {
+            $nin: [
+              FormStatus.PENDING,
+              FormStatus.REJECTED,
+              FormStatus.NOTAPPROVED,
+              FormStatus.ERRORFORM,
+            ],
+          },
+        },
+      ],
       createdAt: {
         $gte: date.startDate,
         $lte: date.endDate,
