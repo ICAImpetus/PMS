@@ -145,7 +145,7 @@ export const createFilledForm = async (req, res) => {
       patient = patient[0];
     }
 
-    else if (patient && patient?.name !== data.formData.patientDetails.patientName) {
+    else if (patient && patient?.patientName !== data.formData.patientDetails.patientName) {
       isNewPatient = true;
 
       const patientPayload = {
@@ -1443,7 +1443,7 @@ export const uploadFormsCsv = async (req, res) => {
     const hospital = await HospitalModel.findById(hosId).lean();
     if (!hospital) return res.status(404).json({ success: false, message: "Hospital not found" });
 
-    // Establish dynamic tenant connection
+    // Dynamic tenant connection
     const conn = await getConnection(hospital.trimmedName);
 
     const FilledFormsModel = getFilledFormsModel(conn);
@@ -1456,7 +1456,6 @@ export const uploadFormsCsv = async (req, res) => {
     const validRows = [];
     const errorList = [];
 
-
     await new Promise((resolve, reject) => {
       const stream = Readable.from(file.buffer);
 
@@ -1468,7 +1467,6 @@ export const uploadFormsCsv = async (req, res) => {
             cleaned[k.trim()] = (data[k] ?? "").toString().trim();
           });
 
-          // Only push non-empty rows
           if (!Object.values(cleaned).every(v => v === "")) {
             rows.push(cleaned);
           }
@@ -1480,15 +1478,11 @@ export const uploadFormsCsv = async (req, res) => {
     if (rows.length === 0) {
       return res.status(400).json({ success: false, message: "The CSV file is empty" });
     }
-    const normalize = (val) =>
-      (val || "")
-        .toString()
-        .trim()
-        .toLowerCase();
+
+    const normalize = (val) => (val || "").toString().trim().toLowerCase();
 
     const cleanDoctorName = (name) => {
       if (!name) return "";
-
       return name
         .toString()
         .replace(/^(dr\.?|prof\.?\s*dr\.?|assoc\.?\s*prof\.?\s*dr\.?|asst\.?\s*prof\.?\s*dr\.?)/i, "")
@@ -1496,100 +1490,47 @@ export const uploadFormsCsv = async (req, res) => {
         .toLowerCase();
     };
 
-    // ======================
+    const getPatientCompositeKey = (mobile, name) => `${normalize(mobile)}_${normalize(name)}`;
+
     // STEP 1: EXTRACT UNIQUE VALUES FOR BULK FETCH
-    // ======================
-    const csvBranchNames = [
-      ...new Set(rows.map(r => normalize(r.branchId)).filter(Boolean)),
-    ];
+    const csvBranchNames = [...new Set(rows.map(r => normalize(r.branchId)).filter(Boolean))];
+    const csvDoctorNames = [...new Set(rows.map(r => cleanDoctorName(r.doctor)).filter(Boolean))];
+    const csvDeptNames = [...new Set(rows.map(r => normalize(r.department)).filter(Boolean))];
+    const mobiles = [...new Set(rows.map(r => normalize(r.patientMobile)).filter(Boolean))];
 
-    const csvDoctorNames = [
-      ...new Set(
-        rows
-          .map(r => cleanDoctorName(r.doctor))
-          .filter(Boolean)
-      ),
-    ];
-
-    const csvDeptNames = [
-      ...new Set(rows.map(r => normalize(r.department)).filter(Boolean)),
-    ];
-
-    const mobiles = [
-      ...new Set(rows.map(r => normalize(r.patientMobile)).filter(Boolean)),
-    ];
-
-    // ======================
     // STEP 2: BULK FETCH MASTER DATA
-    // ======================
-
-    // Branches
     const branches = await BranchModel.find({
-      name: {
-        $in: csvBranchNames.map(
-          name => new RegExp(`^${name}$`, "i")
-        ),
-      },
+      name: { $in: csvBranchNames.map(name => new RegExp(`^${name}$`, "i")) },
     }).lean();
-    // //console.log("csvBranchNames", csvBranchNames);
-    // //console.log("csvBranchNames", branches);
-
-    const branchMap = new Map(
-      branches.map(b => [normalize(b.name), b])
-    );
-
-
+    const branchMap = new Map(branches.map(b => [normalize(b.name), b]));
 
     const doctors = await DoctorModel.find({
-      name: {
-        $in: csvDoctorNames.map(
-          name => new RegExp(`^${name}$`, "i")
-        ),
-      },
+      name: { $in: csvDoctorNames.map(name => new RegExp(`^${name}$`, "i")) },
     }).lean();
-    // //console.log("doctors", doctors);
+    const doctorMap = new Map(doctors.map(d => [cleanDoctorName(d.name), d]));
 
-
-    const doctorMap = new Map(
-      doctors.map(d => [cleanDoctorName(d.name), d])
-    );
-    // //console.log("csvDoctorNames", csvDoctorNames);
-    // //console.log("doctorMap", doctorMap);
     const departments = await DepartmentModel.find({
-      name: {
-        $in: csvDeptNames.map(
-          name => new RegExp(`^${name}$`, "i")
-        ),
-      },
+      name: { $in: csvDeptNames.map(name => new RegExp(`^${name}$`, "i")) },
     }).lean();
+    const deptMap = new Map(departments.map(d => [normalize(d.name), d]));
 
-    const deptMap = new Map(
-      departments.map(d => [normalize(d.name), d])
-    );
-
-    // //console.log("csvDeptNames", csvDeptNames);
-    // //console.log("deptMap", deptMap);
-    // Existing Patients
+    // Fetch existing patients
     const existingPatients = await PatientModel.find({
       patientMobile: { $in: mobiles },
     }).lean();
 
-    const patientMap = new Map(
-      existingPatients.map(p => [normalize(p.patientMobile), p])
-    );
+    const patientMap = new Map();
+    existingPatients.forEach(p => {
+      const pName = p.patientName || p.name || "";
+      patientMap.set(getPatientCompositeKey(p.patientMobile, pName), p);
+    });
 
-    // ======================
     // STEP 3: ROW BY ROW VALIDATION
-    // ======================
-    // ======================
-    // STEP 3: ROW BY ROW VALIDATION
-    // ======================
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
-      const rowNumber = i + 1; // 1-indexed for user visibility
+      const rowNumber = i + 1;
       const rowErrors = [];
 
-      // Validate Branch
       if (!row.branchId) {
         rowErrors.push({ rowNumber, columnName: "branchId", invalidValue: "Empty", message: "Branch Name is empty" });
       } else {
@@ -1597,20 +1538,12 @@ export const uploadFormsCsv = async (req, res) => {
         if (!matchedBranch) {
           rowErrors.push({ rowNumber, columnName: "branchId", invalidValue: row.branchId, message: `Branch '${row.branchId}' does not exist in database` });
         } else {
-          row.dbBranchId = matchedBranch._id; // Attach real ObjectId to row object
+          row.dbBranchId = matchedBranch._id;
         }
       }
 
-      // Validate Doctor (Only if provided in CSV)
-      // //console.log("doctorMap", doctorMap);
-
       if (row.doctor) {
         const matchedDoctor = doctorMap.get(cleanDoctorName(row.doctor));
-
-        // //console.log("cleanDoctorName", normalize(row.doctor));
-        // //console.log("doctorMap", doctorMap);
-        // //console.log("matchedDoctor", matchedDoctor);
-
         if (!matchedDoctor) {
           rowErrors.push({ rowNumber, columnName: "doctor", invalidValue: row.doctor, message: `Doctor '${row.doctor}' does not exist in database` });
         } else {
@@ -1618,7 +1551,6 @@ export const uploadFormsCsv = async (req, res) => {
         }
       }
 
-      // Validate Department (Only if provided in CSV)
       if (row.department) {
         const matchedDept = deptMap.get(normalize(row.department));
         if (!matchedDept) {
@@ -1628,7 +1560,6 @@ export const uploadFormsCsv = async (req, res) => {
         }
       }
 
-      // Validate Patient Name & Mobile
       if (!row.patientName) {
         rowErrors.push({ rowNumber, columnName: "patientName", invalidValue: "Empty", message: "Patient Name is missing" });
       }
@@ -1636,7 +1567,28 @@ export const uploadFormsCsv = async (req, res) => {
         rowErrors.push({ rowNumber, columnName: "patientMobile", invalidValue: "Empty", message: "Patient Mobile is missing" });
       }
 
-      // Distribute to valid or invalid groups
+      if (row.createdAt) {
+        const parsedMoment = moment(row.createdAt, [
+          "YYYY-MM-DD HH:mm:ss",
+          "YYYY-MM-DD",
+          "D/M/YYYY HH:mm:ss",
+          "D/M/YYYY",
+          "M/D/YYYY",
+          "DD-MM-YYYY",
+          "DD/MM/YYYY",
+          "MM/DD/YYYY"
+        ], true);
+
+        if (!parsedMoment.isValid()) {
+          rowErrors.push({
+            rowNumber,
+            columnName: "createdAt",
+            invalidValue: row.createdAt,
+            message: `Invalid Date format '${row.createdAt}'. Allowed ex: 2/6/2026 or YYYY-MM-DD`,
+          });
+        }
+      }
+
       if (rowErrors.length > 0) {
         errorList.push(...rowErrors);
       } else {
@@ -1644,7 +1596,6 @@ export const uploadFormsCsv = async (req, res) => {
       }
     }
 
-    // If there are validation errors, stop execution and return errors to frontend
     if (errorList.length > 0) {
       return res.status(502).json({
         success: false,
@@ -1656,47 +1607,76 @@ export const uploadFormsCsv = async (req, res) => {
       });
     }
 
-    // ======================
-    // STEP 4: BULK CREATE NEW PATIENTS (Only for valid rows)
-    // ======================
-    const newPatients = [];
+    // STEP 4: BULK CREATE PATIENTS (SAFE PATIENT DEDUPLICATION)
+    const newPatientsToInsert = [];
+    const pendingKeysInBatch = new Set();
 
     for (const row of validRows) {
       const mobile = row.patientMobile;
-      if (patientMap.has(mobile)) continue;
+      const name = row.patientName;
+      const compositeKey = getPatientCompositeKey(mobile, name);
 
-      // //console.log("patietn detaik", row);
+      // Agar DB mein pehle se nahi hai aur iss batch mein bhi push nahi hua
+      if (!patientMap.has(compositeKey) && !pendingKeysInBatch.has(compositeKey)) {
+        pendingKeysInBatch.add(compositeKey);
 
+        newPatientsToInsert.push({
+          hospitalId: {
+            hospitalId: hospital._id,
+            name: hospital.name,
+          },
+          branchId: row.dbBranchId, // Correct ObjectId passed
+          gender: row.gender || "Other",
+          patientName: name,
+          status: row.patientStatus || "",
+          patientMobile: mobile,
+          patientAge: parseInt(row.age || row.patientAge, 10) || 0,
+          location: row.location || "",
+          category: row.category || "",
+        });
+      }
+    }
 
-      newPatients.push({
-        hospitalId: {
-          hospitalId: hospital._id,
-          name: hospital.name,
-        },
-        branchId: row.branchId,
-        gender: row.gender || "Other",
-        patientName: row.patientName,
-        status: row.patientStatus || "",
-        patientMobile: mobile,
-        patientAge: parseInt(row.age || row.patientAge, 10) || 0, // handles both 'age' and 'patientAge' headers
-        location: row.location || "",
-        category: row.category || "",
+    // Insert newly created patients in DB
+    if (newPatientsToInsert.length > 0) {
+      const insertedPatients = await PatientModel.insertMany(newPatientsToInsert);
+      insertedPatients.forEach(p => {
+        const key = getPatientCompositeKey(p.patientMobile, p.patientName || p.name);
+        patientMap.set(key, p);
       });
     }
 
-    if (newPatients.length) {
-      const inserted = await PatientModel.insertMany(newPatients, { ordered: false });
-      inserted.forEach(p => patientMap.set(p.patientMobile, p));
-    }
-
-    // ======================
     // STEP 5: BUILD & INSERT FORMS
-    // ======================
     const forms = [];
+    const currentNow = new Date();
 
     for (const row of validRows) {
-      const patient = patientMap.get(row.patientMobile);
-      if (!patient) continue;
+      const compositeKey = getPatientCompositeKey(row.patientMobile, row.patientName);
+      const patient = patientMap.get(compositeKey);
+
+      if (!patient || !patient._id) {
+        console.error(`Patient mapping failed for row: ${row.patientName} (${row.patientMobile})`);
+        continue;
+      }
+
+      let customCreatedAt = currentNow;
+
+      if (row.createdAt) {
+        const parsedMoment = moment(row.createdAt, [
+          "YYYY-MM-DD HH:mm:ss",
+          "YYYY-MM-DD",
+          "D/M/YYYY HH:mm:ss",
+          "D/M/YYYY",
+          "M/D/YYYY",
+          "DD-MM-YYYY",
+          "DD/MM/YYYY",
+          "MM/DD/YYYY"
+        ], true);
+
+        if (parsedMoment.isValid()) {
+          customCreatedAt = parsedMoment.toDate();
+        }
+      }
 
       forms.push({
         formType: row.formType?.toLowerCase() || "inbound",
@@ -1710,7 +1690,7 @@ export const uploadFormsCsv = async (req, res) => {
         formData: {
           referenceFrom: row.referenceFrom || "",
           callerType: row.callerType || "",
-          patientDetails: patient._id,
+          patientDetails: patient._id, // Linked Patient ObjectId
           remarks: row.remarks || "",
           surgeryName: row.surgeryName || "",
           healthPackageName: row.healthPackageName || "",
@@ -1720,34 +1700,24 @@ export const uploadFormsCsv = async (req, res) => {
           reportName: row.reportName || "",
           status: row.patientStatus || "",
         },
+        uploadedDate: currentNow,
+        createdAt: customCreatedAt,
+        updatedAt: customCreatedAt,
+      });
+    }
+
+    if (forms.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No forms could be constructed.",
       });
     }
 
     const BATCH = 500;
     for (let i = 0; i < forms.length; i += BATCH) {
       const batch = forms.slice(i, i + BATCH);
-      await FilledFormsModel.insertMany(batch);
+      await FilledFormsModel.insertMany(batch, { timestamps: false });
     }
-
-    // ======================
-    // AUDIT LOG & RESPONSE
-    // ======================
-    const user = req.user;
-    setImmediate(() => {
-      if (typeof auditLog === "function") {
-        auditLog({
-          action: "BULK_UPLOAD_FORMS",
-          event: "ADD",
-          module: "FORM_SUBMISSION",
-          role: user?.type || "Unknown",
-          customMessage: `${user?.type || "User"} "${user?.name}" uploaded ${forms.length} forms successfully.`,
-          name: user?.name,
-          userId: user?.id,
-          ip: req.userIp,
-          userAgent: req.headers["user-agent"],
-        });
-      }
-    });
 
     return res.status(200).json({
       success: true,
@@ -1763,8 +1733,6 @@ export const uploadFormsCsv = async (req, res) => {
     });
   }
 };
-
-
 
 // 1. IPD Questions (8 Questions)
 const ipdQuestionsList = [

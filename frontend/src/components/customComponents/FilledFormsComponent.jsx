@@ -245,6 +245,18 @@ const FilledFormsComponent = ({
     const followupStatus = normalizeValue(row.followupStatus)?.toLowerCase();
     const gender = normalizeValue(row.gender)?.toLowerCase();
     const patientStatus = normalizeValue(row.patientStatus)?.toLowerCase();
+    const createdAt = normalizeValue(row.createdAt)
+
+    const SUPPORTED_DATE_FORMATS = [
+      "YYYY-MM-DD HH:mm:ss",
+      "YYYY-MM-DD",
+      "D/M/YYYY HH:mm:ss",
+      "D/M/YYYY",
+      "M/D/YYYY",
+      "DD-MM-YYYY",
+      "DD/MM/YYYY",
+      "MM/DD/YYYY"
+    ];
 
     if (!branchId) {
       errors.push({
@@ -253,6 +265,19 @@ const FilledFormsComponent = ({
         invalidValue: branchId,
         message: "BranchId is required",
       });
+    }
+    // 2. CreatedAt Date Validation (Only check if user provided a value)
+    if (createdAt) {
+      const parsedMoment = moment(createdAt, SUPPORTED_DATE_FORMATS, true);
+
+      if (!parsedMoment.isValid()) {
+        errors.push({
+          rowNumber,
+          columnName: "createdAt",
+          invalidValue: createdAt,
+          message: `Invalid Date or Format '${createdAt}'. Allowed format ex: 2/6/2026 or YYYY-MM-DD`,
+        });
+      }
     }
 
     if (gender && !["male", "female", "transgender", "others"].includes(gender)) {

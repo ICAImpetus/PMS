@@ -59,6 +59,7 @@ export const FORMS_TEMPLATE = [
     { key: "reportName", label: "Report Name" },
     { key: "followupStatus", label: "Follow-up Status" },
     { key: "remarks", label: "Remarks" },
+    { key: "createdAt", label: "Created At (ex. 2/6/2026)" },
 ];
 
 export const FORMS_AVAILABLE_COLUMNS = [

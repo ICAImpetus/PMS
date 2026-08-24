@@ -1,0 +1,2 @@
+branchId,agentName,formType,patientName,patientMobile,patientStatus,gender,age,callStatus,purpose,referenceFrom,callerType,doctor,department,surgeryName,healthPackageName,healthSchemeName,govertHealthSchemeName,nonGovtHealthSchemeName,reportName,followupStatus,remarks,createdAt
+Main Hospital,Vishal,inbound,Saini,7340479570,new,male,22,connefcted,appointment,doctor,patient,Dr N.D Soni,Cardiology,vvisdhal,helathpacage ,,,,,,test,8/23/2026
