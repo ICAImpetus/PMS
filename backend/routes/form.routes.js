@@ -5,10 +5,11 @@ import { uploadDoctorAssets } from '../utils/multer.js';
 const router = express.Router();
 
 router.post("/filled-forms", auth, formController.createFilledForm);
+router.get("/filled-forms", auth, formController.getFilledForms);
 router.get("/edit-changes", auth, formController.getFormEditChanges);
+router.put("/edit-status", auth, formController.updateFormEditStatus);
 router.get("/forms/:formId", auth, formController.getFormById);
 router.put("/forms/:formId", auth, formController.updateFilledForm);
-router.get("/filled-forms", auth, formController.getFilledForms);
 router.post("/booked-slots", formController.getBookedSlotsController);
 router.put("/booked-slots/:slotId/unbook", formController.unbookSlotController);
 router.post("/bulk-upload", auth, uploadDoctorAssets, formController.uploadFormsCsv);

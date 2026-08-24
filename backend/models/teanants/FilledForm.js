@@ -61,6 +61,11 @@ export const FilledFormSchema = new mongoose.Schema(
         _id: false, // Prevents generating unnecessary sub-document IDs
       },
     ],
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "AdminAgentSchema",
+    },
+    reviewedAt: Date,
 
     errorCount: Number,
 
@@ -74,6 +79,7 @@ export const FilledFormSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+
 
     agentId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -215,6 +221,8 @@ export const FilledFormSchema = new mongoose.Schema(
 export const FormStatus = {
   PENDING: "PENDING",
   ARCHIVED: "ARCHIVED",
+  APPROVED: "APPROVED",
+  NOTAPPROVED: "NOTAPPROVED",
   REJECTED: "REJECTED",
   ERRORFORM: "ERRORFORM",
 }

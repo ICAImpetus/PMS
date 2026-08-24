@@ -26,12 +26,14 @@ import { useNavigate } from "react-router-dom";
 import { useMemo } from "react";
 import { useCallback } from "react";
 
+
 export const FormStatus = {
     PENDING: "PENDING",
+    ARCHIVED: "ARCHIVED",
+    APPROVED: "APPROVED",
     REJECTED: "REJECTED",
     ERRORFORM: "ERRORFORM",
 }
-
 const ExpandableText = ({ text = "", limit = 60 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -191,7 +193,7 @@ export const PatientHistoryRow = React.memo(({
         <TableRow>
             {showAction && (
                 <TableCell align="center">
-                    {/* {status ? (
+                    {status ? (
                         status
                     ) : (
                         <IconButton
@@ -200,13 +202,13 @@ export const PatientHistoryRow = React.memo(({
                         >
                             <EditIcon fontSize="small" />
                         </IconButton>
-                    )} */}
-                    <IconButton
+                    )}
+                    {/* <IconButton
                         size="small"
                         onClick={handleEditClick}
                     >
                         <EditIcon fontSize="small" />
-                    </IconButton>
+                    </IconButton> */}
                 </TableCell>
             )}
 

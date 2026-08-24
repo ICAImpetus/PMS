@@ -9,6 +9,7 @@ import {
     Divider,
     Stack,
     Paper,
+    CircularProgress,
 } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
@@ -17,37 +18,40 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import PersonIcon from "@mui/icons-material/Person";
 import BadgeIcon from "@mui/icons-material/Badge";
 import StorefrontIcon from "@mui/icons-material/Storefront";
-const approvalData = {
-    success: true,
-    message: "Form updated successfully with change history.",
-    changesSummary: {
-        branchName: "city branch",
-        agentName: "dansdeep",
-        role: "teamleader",
-        totalChanges: 2,
-        changes: [
-            {
-                field: "formData.remarks",
-                oldValue: "Patient requested callback in morning",
-                newValue: "Patient confirmed appointment for evening"
-            },
-            {
-                field: "callStatus",
-                oldValue: "pending",
-                newValue: "completed"
-            }
-        ]
-    }
-};
-const FormEditApprovalCard = ({ onApprove, onReject }) => {
-    const summary = approvalData?.changesSummary;
-    const changes = summary?.changes || [];
-    const totalChanges = summary?.totalChanges || 0;
-
+import { FormStatus } from "./customComponents/PatientHistoryTableBody";
+// const approvalData = {
+//     success: true,
+//     message: "Form updated successfully with change history.",
+//     changesSummary: {
+//         branchName: "city branch",
+//         agentName: "dansdeep",
+//         role: "teamleader",
+//         totalChanges: 2,
+//         changes: [
+//             {
+//                 field: "formData.remarks",
+//                 oldValue: "Patient requested callback in morning",
+//                 newValue: "Patient confirmed appointment for evening"
+//             },
+//             {
+//                 field: "callStatus",
+//                 oldValue: "pending",
+//                 newValue: "completed"
+//             }
+//         ]
+//     }
+// };
+const FormEditApprovalCard = ({ key, approvalData, onApprove, onReject, activeAction = null }) => {
+    const changes = approvalData?.changesLog || [];
+    const totalChanges = changes?.totalChanges || 0;
+    const isApproving = activeAction === FormStatus.APPROVED || activeAction === "APPROVED";
+    const isRejecting = activeAction === FormStatus.REJECTED || activeAction === "REJECTED";
+    const isAnyLoading = Boolean(activeAction);
     if (changes.length === 0) return null;
 
     return (
         <Card
+            key={key}
             elevation={0}
             sx={{
                 borderRadius: "16px",
@@ -113,10 +117,10 @@ const FormEditApprovalCard = ({ onApprove, onReject }) => {
                     borderRadius="12px"
                     border="1px solid #F1F5F9"
                 >
-                    {summary?.agentName && (
+                    {approvalData?.agentName && (
                         <Chip
                             icon={<PersonIcon sx={{ fontSize: "14px !important" }} />}
-                            label={`Agent: ${summary.agentName}`}
+                            label={`Agent: ${approvalData?.agentName || 'Agent'}`}
                             size="small"
                             sx={{
                                 bgcolor: "#FFFFFF",
@@ -127,27 +131,27 @@ const FormEditApprovalCard = ({ onApprove, onReject }) => {
                             }}
                         />
                     )}
+                    {/* 
+                    {approvalData?.role && ( */}
+                    <Chip
+                        icon={<BadgeIcon sx={{ fontSize: "14px !important" }} />}
+                        label={`Role: ${"TeamLeader"}`}
+                        size="small"
+                        sx={{
+                            bgcolor: "#FFFFFF",
+                            border: "1px solid #E2E8F0",
+                            fontWeight: 700,
+                            fontSize: "11px",
+                            color: "#0256E8",
+                            textTransform: "capitalize",
+                        }}
+                    />
+                    {/* )} */}
 
-                    {summary?.role && (
-                        <Chip
-                            icon={<BadgeIcon sx={{ fontSize: "14px !important" }} />}
-                            label={`Role: ${summary.role}`}
-                            size="small"
-                            sx={{
-                                bgcolor: "#FFFFFF",
-                                border: "1px solid #E2E8F0",
-                                fontWeight: 700,
-                                fontSize: "11px",
-                                color: "#0256E8",
-                                textTransform: "capitalize",
-                            }}
-                        />
-                    )}
-
-                    {summary?.branchName && (
+                    {approvalData?.branchId?.name && (
                         <Chip
                             icon={<StorefrontIcon sx={{ fontSize: "14px !important" }} />}
-                            label={`Branch: ${summary.branchName}`}
+                            label={`Branch: ${approvalData?.branchId?.name}`}
                             size="small"
                             sx={{
                                 bgcolor: "#FFFFFF",
@@ -232,11 +236,19 @@ const FormEditApprovalCard = ({ onApprove, onReject }) => {
 
                 {/* Action Buttons */}
                 <Box display="flex" justifyContent="flex-end" gap={1.5}>
+                    {/* REJECT BUTTON */}
                     <Button
                         variant="outlined"
                         color="error"
-                        startIcon={<CancelOutlinedIcon />}
+                        startIcon={
+                            isRejecting ? (
+                                <CircularProgress size={16} color="inherit" />
+                            ) : (
+                                <CancelOutlinedIcon />
+                            )
+                        }
                         onClick={onReject}
+                        disabled={isAnyLoading}
                         sx={{
                             borderRadius: "10px",
                             textTransform: "none",
@@ -251,13 +263,21 @@ const FormEditApprovalCard = ({ onApprove, onReject }) => {
                             },
                         }}
                     >
-                        Reject Request
+                        {isRejecting ? "Rejecting..." : "Reject Request"}
                     </Button>
 
+                    {/* APPROVE BUTTON */}
                     <Button
                         variant="contained"
-                        startIcon={<CheckCircleOutlineIcon />}
+                        startIcon={
+                            isApproving ? (
+                                <CircularProgress size={16} color="inherit" />
+                            ) : (
+                                <CheckCircleOutlineIcon />
+                            )
+                        }
                         onClick={onApprove}
+                        disabled={isAnyLoading}
                         sx={{
                             borderRadius: "10px",
                             textTransform: "none",
@@ -273,7 +293,7 @@ const FormEditApprovalCard = ({ onApprove, onReject }) => {
                             },
                         }}
                     >
-                        Approve Changes
+                        {isApproving ? "Approving..." : "Approve Changes"}
                     </Button>
                 </Box>
             </CardContent>

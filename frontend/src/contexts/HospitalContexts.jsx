@@ -7,7 +7,7 @@ import React, {
 
 import { commonRoutes } from "../api/apiService";
 import { UserContextHook } from "./UserContexts";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
 export const HospitalContext = createContext();
@@ -28,7 +28,7 @@ const defaultPagination = {
 };
 
 export const GlobalHospitalContextProvider = ({ children }) => {
-
+    const queryClient = useQueryClient();
     const today = new Date();
 
     const startOfToday = new Date(today);
@@ -379,6 +379,26 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
         onError: () =>
             toast.error("Failed to fetch Hospital Code")
+    });
+
+    const updateFormStatusMutation = useMutation({
+        mutationFn: async ({ formId, status, branchId }) => {
+            return await commonRoutes.updateFormEditStatus({
+                formId,
+                hosId: selectedHostpital,
+                branchId,
+                status,
+            });
+        },
+        onSuccess: (res, variables) => {
+            const actionText = variables.status === "APPROVED" ? "Approved" : "Rejected";
+            toast.success(`Form change request ${actionText} successfully!`);
+            queryClient.invalidateQueries(["formEditChanges"]);
+        },
+        onError: (err) => {
+            log
+            toast.error(err?.response?.data?.message || "Failed to update form status");
+        },
     });
 
     const {
@@ -790,6 +810,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         loading,
         errors,
 
+        updateFormStatusMutation,
         refetchDashboard,
         refetchHospital,
         refetchAdmins,

@@ -19,6 +19,7 @@ import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat.js";
 import bcrypt from "bcrypt"
 import { connecttoAca } from "../utils/database.js";
+import { FormStatus } from "../models/teanants/FilledForm.js";
 dayjs.extend(customParseFormat);
 
 const HospitalModel = getHospitalModel(MasterConn)
@@ -5977,16 +5978,23 @@ export const executiveDashboardService = async (conn, branchId, user, bfPage = 1
   try {
 
     // const startDate = calculateFilter(filter);
-    const agentId = user.id;
+    // const agentId = user.id;
     const matchStage = {
       // agentId: new mongoose.Types.ObjectId(agentId),
       branchId: new mongoose.Types.ObjectId(branchId),
       isDeleted: false,
+      formStatus: {
+        $exists: true,
+        $ne: null,
+        $nin: [FormStatus.PENDING, FormStatus.REJECTED, FormStatus.NOTAPPROVED, FormStatus.ERRORFORM, ""]
+      },
       createdAt: {
         $gte: date.startDate,
         $lte: date.endDate,
       },
     };
+    console.log("matchStage", matchStage);
+
 
     // if (startDate) {
     //   matchStage.createdAt = {
@@ -5999,7 +6007,7 @@ export const executiveDashboardService = async (conn, branchId, user, bfPage = 1
     const PatientModel = await getPatientModel(conn)
     const DepartmentModel = await getDepartmentModel(conn)
     const DoctorModel = await getDoctorModel(conn)
-    const skip = (bfPage - 1) * bfLimit;
+    // const skip = (bfPage - 1) * bfLimit;
 
     // const branchFollowupsQuery = branchId
     //   ? FilledFormsModel.aggregate([
@@ -6341,6 +6349,7 @@ export const executiveDashboardService = async (conn, branchId, user, bfPage = 1
       //   page: bfPage,
       //   limit: bfLimit
       // }
+      // matchStage
     };
 
   } catch (error) {
@@ -6360,6 +6369,11 @@ export const teamLeaderDashboardService = async (conn, branchId = null, user, bf
     const matchStage = {
       isDeleted: false,
       branchId: branchObjectId,
+      formStatus: {
+        $exists: true,
+        $ne: null,
+        $nin: [FormStatus.PENDING, FormStatus.REJECTED, FormStatus.NOTAPPROVED, FormStatus.ERRORFORM, ""]
+      },
       createdAt: {
         $gte: date.startDate,
         $lte: date.endDate,
@@ -6729,6 +6743,14 @@ export const superManagerDashboardService = async (conn, branchId) => {
 
     const notAre = ["superadmin", "admin", "supermanager", "doctor"];
     const branchObjectId = new mongoose.Types.ObjectId(branchId);
+    const matchStage = {
+      branchId: branchObjectId,
+      formStatus: {
+        $exists: true,
+        $ne: null,
+        $nin: [FormStatus.PENDING, FormStatus.REJECTED, FormStatus.NOTAPPROVED, FormStatus.ERRORFORM, ""]
+      },
+    }
     const [totalDoctors, totalDepartment, totalUsers, aggResult] = await Promise.all([
       DoctorModel.countDocuments({ branch: branchId }),
 
@@ -6739,8 +6761,10 @@ export const superManagerDashboardService = async (conn, branchId) => {
         type: { $nin: notAre }
       }),
 
+
+
       FilledFormsModel.aggregate([
-        { $match: { branchId: branchObjectId } },
+        { $match: matchStage },
         {
           $facet: {
 
@@ -7059,6 +7083,11 @@ export const superAdminDashboardService = async (
 
     const matchStage = {
       isDeleted: false,
+      formStatus: {
+        $exists: true,
+        $ne: null,
+        $nin: [FormStatus.PENDING, FormStatus.REJECTED, FormStatus.NOTAPPROVED, FormStatus.ERRORFORM, ""]
+      },
       createdAt: {
         $gte: date.startDate,
         $lte: date.endDate,

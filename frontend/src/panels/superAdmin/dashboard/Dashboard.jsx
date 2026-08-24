@@ -41,6 +41,7 @@ import HospitalContext from "../../../contexts/HospitalContexts";
 import { ProfilePopup } from "../../../scenes/global/ProfileAndCodeAnnousementPopup";
 import NotificationCenter from "../../../components/NotificationCenter";
 import FormEditApprovalCard from "../../../components/FormEditApprovalCard";
+import { FormStatus } from "../../../components/customComponents/PatientHistoryTableBody";
 
 // Register ChartJS components
 ChartJS.register(
@@ -102,13 +103,9 @@ const SuperAdminDashboard = () => {
     handleFilterChange,
     setSelectedHostpital,
     dateRange,
+    updateFormStatusMutation
 
   } = useContext(HospitalContext);
-
-  useEffect(() => {
-    console.log("formEditChanges", formEditChanges);
-
-  }, [formEditChanges])
 
   const navigate = useNavigate();
 
@@ -190,6 +187,15 @@ const SuperAdminDashboard = () => {
     },
   };
 
+  const handleUpdateFormStatus = (formId, status, branchId) => {
+    if (!formId) return toast.error("Form Not Found");
+
+    // Pass single payload object to mutate
+    updateFormStatusMutation.mutate({ formId, status, branchId });
+  };
+
+  // Extract Active Loading Variables
+  const { isPending: isUpdatingStatus, variables: activeVariables } = updateFormStatusMutation;
   useEffect(() => {
     const error =
       errors?.dashError || errors?.hospitalsError || errors?.formsError;
@@ -320,7 +326,7 @@ const SuperAdminDashboard = () => {
                           my: 0.3,
                           py: 1,
                           "&.Mui-selected": {
-                            bgcolor: "#EFF6FF !important",
+                            bgcolor: "#F8FAFC",
                             color: "#0256E8",
                             fontWeight: 800,
                           },
@@ -409,11 +415,26 @@ const SuperAdminDashboard = () => {
               Real-time facility orchestration and predictive diagnostics.
             </Typography>
           </Box>
-          <FormEditApprovalCard
-            // approvalData={[]}
-            onApprove={() => console.log("Approved!")}
-            onReject={() => console.log("Rejected!")}
-          />
+          {formEditChanges?.map((item) => {
+            // Check if THIS specific item is currently processing
+            const isThisItemLoading = isUpdatingStatus && activeVariables?.formId === item?._id;
+            const activeAction = isThisItemLoading ? activeVariables?.status : null;
+
+            return (
+              <FormEditApprovalCard
+                key={item?._id}
+                approvalData={item}
+                activeAction={activeAction}
+                onApprove={() =>
+                  handleUpdateFormStatus(item?._id, FormStatus.APPROVED, item?.branchId?._id)
+                }
+                onReject={() =>
+                  handleUpdateFormStatus(item?._id, FormStatus.REJECTED, item?.branchId?._id)
+                }
+              />
+            );
+          })}
+
 
           {/* --- CODE ALERTS --- */}
           {codeAlerts?.length > 0 && (

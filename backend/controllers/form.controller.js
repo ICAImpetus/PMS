@@ -573,12 +573,7 @@ export const getFormEditChanges = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Form edit change history fetched successfully.",
-      data: {
-        branchName: pendingForms?.branchId?.name || "",
-        role: "teamleader",
-        totalChanges: pendingForms?.length || 0,
-        changes: pendingForms || []
-      },
+      data: pendingForms,
     });
   } catch (error) {
     console.error("Error fetching form edit changes:", error);
@@ -587,6 +582,105 @@ export const getFormEditChanges = async (req, res) => {
       success: false,
       message: error.message || "Internal server error.",
       error: error.message,
+    });
+  }
+};
+
+export const updateFormEditStatus = async (req, res) => {
+  try {
+    const { formId, hosId, branchId, status } = req.body;
+
+    // console.log("req.body:", req.body);
+
+
+    // 1. Validation
+    if (
+      !formId ||
+      !hosId ||
+      !branchId ||
+      !status ||
+      // !["APPROVED", "REJECTED"].includes(status.toUpperCase()) ||
+      !mongoose.isValidObjectId(formId) ||
+      !mongoose.isValidObjectId(hosId) ||
+      !mongoose.isValidObjectId(branchId)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid formId, hosId, branchId, and status (APPROVED/REJECTED) are required.",
+      });
+    }
+
+    // 2. Fetch Hospital
+    const hospital = await HospitalModel.findById(hosId)
+      .select("trimmedName")
+      .lean();
+
+    if (!hospital) {
+      return res.status(404).json({
+        success: false,
+        message: "Hospital not found.",
+      });
+    }
+
+    // 3. Dynamic DB Connection
+    const conn = await getConnection(hospital.trimmedName);
+    const FilledFormsModel = getFilledFormsModel(conn);
+
+    // 4. Update Form Status
+    const targetStatus =
+      status.toUpperCase() === "APPROVED"
+        ? FormStatus.APPROVED || "APPROVED"
+        : FormStatus.REJECTED || "REJECTED";
+
+    const updatedForm = await FilledFormsModel.findOneAndUpdate(
+      { _id: formId, branchId: branchId },
+      {
+        $set: {
+          formStatus: targetStatus,
+          reviewedBy: req.user?._id || null,
+          reviewedAt: new Date(),
+        },
+      },
+      { new: true }
+    );
+
+    if (!updatedForm) {
+      return res.status(404).json({
+        success: false,
+        message: "Form record not found.",
+      });
+    }
+
+    const parentId = updatedForm.oldformId
+
+    if (parentId && mongoose.isValidObjectId(parentId)) {
+      if (isApproved) {
+        await FilledFormsModel.findByIdAndUpdate(parentId, {
+          $set: {
+            formStatus: FormStatus.ERRORFORM || "ERRORFORM",
+            isArchived: true,
+            archivedAt: new Date(),
+          },
+        });
+      } else {
+        await FilledFormsModel.findByIdAndUpdate(parentId, {
+          $set: {
+            formStatus: FormStatus.NOTAPPROVED || "NOTAPPROVED",
+            isArchived: false,
+          },
+        });
+      }
+    }
+    return res.status(200).json({
+      success: true,
+      message: `Form request successfully ${targetStatus.toLowerCase()}.`,
+      // data: updatedForm,
+    });
+  } catch (error) {
+    console.error("Error updating form status:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error.",
     });
   }
 };
@@ -921,7 +1015,14 @@ export const getFilledForms = async (req, res) => {
     });
 
     // ================= BASE MATCH STAGE =================
-    const matchStage = { isDeleted: false };
+    const matchStage = {
+      isDeleted: false,
+      formStatus: {
+        $exists: true,
+        $ne: null,
+        $nin: [FormStatus.PENDING, FormStatus.REJECTED, FormStatus.NOTAPPROVED, FormStatus.ERRORFORM, ""]
+      }
+    };
 
     if (branchId && mongoose.isValidObjectId(branchId)) {
       matchStage.branchId = new mongoose.Types.ObjectId(branchId);
