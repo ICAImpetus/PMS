@@ -470,7 +470,7 @@ const FilledFormsComponent = ({
         purpose,
         formsModalOpen,
         formsTypeFilter,
-        true
+        false
       );
 
       if (res?.success) {

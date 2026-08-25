@@ -18,6 +18,7 @@ import {
     Divider,
     CircularProgress,
     IconButton,
+    Chip
 
 } from "@mui/material";
 import { getNestedValue } from "../../utils/exportUtils";
@@ -31,6 +32,7 @@ export const FormStatus = {
     PENDING: "PENDING",
     ARCHIVED: "ARCHIVED",
     APPROVED: "APPROVED",
+    NOTAPPROVED: "NOTAPPROVED",
     REJECTED: "REJECTED",
     ERRORFORM: "ERRORFORM",
 }
@@ -174,6 +176,10 @@ export const PatientHistoryRow = React.memo(({
     // Derive status directly to avoid side-effect state setter in render loop
     const status = row?.formStatus || "";
 
+    // Safe calculation for version:
+    const rawVersion = Number(row?.version);
+    const version = !isNaN(rawVersion) && rawVersion > 0 ? rawVersion - 1 : 0;
+
     // Memoize static mappings relative to patientProfile
     const fieldMap = useMemo(() => ({
         "formData.patientDetails.patientName": patientProfile?.patientName,
@@ -189,26 +195,46 @@ export const PatientHistoryRow = React.memo(({
         editRowId?.(row);
     }, [editRowId, row]);
 
+
     return (
         <TableRow>
             {showAction && (
                 <TableCell align="center">
-                    {status ? (
-                        status
-                    ) : (
-                        <IconButton
+                    {/* CASE 1: Agar status APPROVED ya REJECTED hai -> Edit Button WITH Status & Version */}
+                    {status && [FormStatus.APPROVED, FormStatus.NOTAPPROVED].includes(status) ? (
+                        <IconButton size="small" onClick={handleEditClick}>
+                            <EditIcon fontSize="small" />
+                            <Typography
+                                variant="caption"
+                                sx={{
+                                    ml: 0.5,
+                                    fontWeight: 700,
+                                    fontSize: "11px",
+                                    color: status === FormStatus.APPROVED ? "#16A34A" : "#EF4444",
+                                }}
+                            >
+                                {status} {version > 0 ? `v${version}` : ""}
+                            </Typography>
+                        </IconButton>
+                    ) : status ? (
+                        /* CASE 2: Agar Status Under Review / Pending hai -> Sirf Status Chip/Badge (Edit Disabled) */
+                        <Chip
+                            label={status}
                             size="small"
-                            onClick={handleEditClick}
-                        >
+                            sx={{
+                                bgcolor: "#FEF3C7",
+                                color: "#D97706",
+                                fontWeight: 700,
+                                fontSize: "11px",
+                                borderRadius: "6px",
+                            }}
+                        />
+                    ) : (
+                        /* CASE 3: Agar koi Status nahi hai -> Plain Edit Button */
+                        <IconButton size="small" onClick={handleEditClick}>
                             <EditIcon fontSize="small" />
                         </IconButton>
                     )}
-                    {/* <IconButton
-                        size="small"
-                        onClick={handleEditClick}
-                    >
-                        <EditIcon fontSize="small" />
-                    </IconButton> */}
                 </TableCell>
             )}
 

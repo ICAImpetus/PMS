@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useMemo } from "react";
 import { AlertTriangle } from "lucide-react";
 import {
   Chart as ChartJS,
@@ -194,8 +194,23 @@ const SuperAdminDashboard = () => {
     updateFormStatusMutation.mutate({ formId, status, branchId });
   };
 
+
   // Extract Active Loading Variables
   const { isPending: isUpdatingStatus, variables: activeVariables } = updateFormStatusMutation;
+
+  // handling profile card and its names
+  const { profileName, hospitalName, greeting } = useMemo(() => {
+    const hour = new Date().getHours();
+    // Get name of currently selected hospital for the operational chip
+    const currentHospitalObj = hospitals?.find((h) => h._id === selectedHostpital);
+    const currentHospitalName = currentHospitalObj?.name || "N/A";
+
+    return {
+      profileName: currentUser?.name || "Agent",
+      hospitalName: currentHospitalName,
+      greeting: hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening",
+    };
+  }, [currentUser, selectedHostpital]);
   useEffect(() => {
     const error =
       errors?.dashError || errors?.hospitalsError || errors?.formsError;
@@ -215,9 +230,7 @@ const SuperAdminDashboard = () => {
     );
   }
 
-  // Get name of currently selected hospital for the operational chip
-  const currentHospitalObj = hospitals?.find((h) => h._id === selectedHostpital);
-  const currentHospitalName = currentHospitalObj?.name || "N/A";
+
 
   return (
     <>
@@ -243,7 +256,7 @@ const SuperAdminDashboard = () => {
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Chip
-                label={`CURRENTLY OPERATING: ${currentHospitalName.toUpperCase()}`}
+                label={`CURRENTLY OPERATING: ${hospitalName?.toUpperCase()}`}
                 size="small"
                 sx={{
                   // bgcolor: "#EFF6FF",
@@ -392,9 +405,17 @@ const SuperAdminDashboard = () => {
                 }}
               >
                 <NotificationCenter />
-              </IconButton>   <Box onClick={() => setProfileModalOpen(true)} sx={{ display: "flex", alignItems: "center", gap: 1, ml: 1, bgcolor: "#fff", border: "1px solid #e2e8f0", borderRadius: "50px", py: 0.5, px: 2, cursor: "pointer", "&:hover": { bgcolor: "#f8fafc" } }}>
+              </IconButton>
+
+              <Box onClick={() => setProfileModalOpen(true)} sx={{ display: "flex", alignItems: "center", gap: 1, ml: 1, bgcolor: "#fff", border: "1px solid #e2e8f0", borderRadius: "50px", py: 0.5, px: 2, cursor: "pointer", "&:hover": { bgcolor: "#f8fafc" } }}>
+                <Box sx={{ textAlign: "right" }}>
+                  <Typography variant="body2" fontWeight={800} color="#0f172a" fontSize="0.8rem">
+                    {hospitalName}
+                  </Typography>
+
+                </Box>
                 <Avatar sx={{ width: 32, height: 32, bgcolor: "#0a4bb6", fontSize: "0.8rem", fontWeight: 800 }}>
-                  {currentUser?.name ? currentUser.name.slice(0, 2).toUpperCase() : "TL"}
+                  {profileName ? profileName?.slice(0, 2).toUpperCase() : "TeamLeader"}
                 </Avatar>
               </Box>
 
@@ -405,11 +426,23 @@ const SuperAdminDashboard = () => {
           {/* --- GREETING TITLE --- */}
           <Box sx={{ mb: 4 }}>
 
-            <Typography variant="h4" fontWeight={900} color="#0F172A" sx={{ letterSpacing: "-0.5px" }}>
-              Good Morning{" "}
-              <span style={{ color: "#0256E8" }}>
-                {currentUser?.name || "User"}
-              </span>
+            <Typography
+              variant="h4"
+              fontWeight={900}
+              color="#0F172A"
+              sx={{ letterSpacing: "-0.5px" }}
+            >
+              {greeting},{" "}
+              <Box
+                component="span"
+                sx={{
+                  color: "#0256E8",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px"
+                }}
+              >
+                {profileName || "User"}
+              </Box>
             </Typography>
             <Typography variant="body2" color="#64748B" fontWeight={500} sx={{ mt: 0.5 }}>
               Real-time facility orchestration and predictive diagnostics.

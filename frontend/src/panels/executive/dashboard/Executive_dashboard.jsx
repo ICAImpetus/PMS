@@ -24,10 +24,10 @@ import { UserContextHook } from "../../../contexts/UserContexts";
 import { useApi } from "../../../api/useApi";
 import { commonRoutes } from "../../../api/apiService";
 import NotificationCenter from "../../../components/NotificationCenter";
-import SettingsIcon from "@mui/icons-material/Settings";
+// import SettingsIcon from "@mui/icons-material/Settings";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import WatchLaterOutlinedIcon from "@mui/icons-material/WatchLaterOutlined";
+// import WatchLaterOutlinedIcon from "@mui/icons-material/WatchLaterOutlined";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import FloatingNewsNotifications from "./FloatingNewsNotifications";
 
@@ -37,9 +37,9 @@ const ExecutiveDashboard = () => {
   const hourlyChartInstance = useRef(null);
   const [loadingId, setLoadingId] = useState(null);
   const [modalOpen, setModalOpen] = useState(null);
-  const [callsModalOpen, setCallsModalOpen] = useState(false);
-  const [callsDateFilter, setCallsDateFilter] = useState("today");
-  const [callsTab, setCallsTab] = useState("all");
+  // const [callsModalOpen, setCallsModalOpen] = useState(false);
+  // const [callsDateFilter, setCallsDateFilter] = useState("today");
+  // const [callsTab, setCallsTab] = useState("all");
   const [formsModalOpen, setFormsModalOpen] = useState(null);
   const [formsTypeFilter, setFormsTypeFilter] = useState("all");
   const [notesModalOpen, setNotesModalOpen] = useState(false);
@@ -53,7 +53,6 @@ const ExecutiveDashboard = () => {
   const { currentUser } = UserContextHook();
 
   const {
-    forms,
     loading,
     analytics,
     codeAlerts,
@@ -68,6 +67,7 @@ const ExecutiveDashboard = () => {
     dateRange,
     handleFilterChange
   } = useContext(HospitalContext);
+
 
   const { request: toggleAlertStatus } = useApi(commonRoutes.toggleCodeAlertStatus);
 
@@ -184,10 +184,6 @@ const ExecutiveDashboard = () => {
     toast.info("Note deleted");
   };
 
-  const currentBranch = branches?.find((b) => b._id === selectedBranch);
-  const branchLabel = currentBranch?.name || "Main Hospital";
-  const hospitalName = selectedHostpital?.name || "Mahatma Gandhi";
-
   const todayStr = useMemo(() => {
     const d = new Date();
     return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
@@ -203,7 +199,17 @@ const ExecutiveDashboard = () => {
         return { label: "SCHEDULED", color: "#0a4bb6", bg: "#eff6ff", icon: <ScheduleIcon sx={{ fontSize: 14 }} /> };
     }
   };
+  // showing data in profile card 
+  const { branchLabel, profileName, hospitalName } = useMemo(() => {
+    const branch = branches?.find((b) => b._id === selectedBranch);
+    const label = branch?.name || "Main Hospital";
 
+    return {
+      branchLabel: label,
+      profileName: currentUser?.name || "Agent",
+      hospitalName: currentUser?.hospitals?.[0]?.hospitalId?.name || label,
+    };
+  }, [branches, selectedBranch]);
   if (loading?.dashboardLoading) {
     return (
       <Box sx={{ p: 4, display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
@@ -424,7 +430,7 @@ const ExecutiveDashboard = () => {
                   </Typography>
                 </Box>
                 <Avatar sx={{ width: 28, height: 28, bgcolor: "#0a4bb6", fontSize: "0.75rem", fontWeight: 800 }}>
-                  {currentUser?.name ? currentUser.name.slice(0, 2).toUpperCase() : "EX"}
+                  {profileName ? profileName?.slice(0, 2).toUpperCase() : "Executive"}
                 </Avatar>
               </Box>
             </Box>
