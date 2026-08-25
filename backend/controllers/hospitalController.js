@@ -5993,7 +5993,7 @@ export const executiveDashboardService = async (conn, branchId, user, bfPage = 1
             $nin: [
               FormStatus.PENDING,
               FormStatus.REJECTED,
-              FormStatus.NOTAPPROVED,
+              // FormStatus.NOTAPPROVED,
               FormStatus.ERRORFORM,
             ],
           },
@@ -6396,7 +6396,7 @@ export const teamLeaderDashboardService = async (conn, branchId = null, user, bf
             $nin: [
               FormStatus.PENDING,
               FormStatus.REJECTED,
-              FormStatus.NOTAPPROVED,
+              // FormStatus.NOTAPPROVED,
               FormStatus.ERRORFORM,
             ],
           },
@@ -6779,7 +6779,7 @@ export const superManagerDashboardService = async (conn, branchId) => {
             $nin: [
               FormStatus.PENDING,
               FormStatus.REJECTED,
-              FormStatus.NOTAPPROVED,
+              // FormStatus.NOTAPPROVED,
               FormStatus.ERRORFORM,
             ],
           },
@@ -7128,7 +7128,7 @@ export const superAdminDashboardService = async (
             $nin: [
               FormStatus.PENDING,
               FormStatus.REJECTED,
-              FormStatus.NOTAPPROVED,
+              // FormStatus.NOTAPPROVED,
               FormStatus.ERRORFORM,
             ],
           },

@@ -1476,7 +1476,7 @@ export const initialFormData = {
   followupType: "",
   status: "",
   detailsShared: "",
-  slotDuration: "",
+  // slotDuration: "",
   appointmentSlot: null,
   patientArrivalTime: "",
 };
@@ -1487,7 +1487,7 @@ export const initialFormState = {
   doctor: null,
   department: null,
   branchId: null,
-  hospitalId: null,
+  // hospitalId: null,
   callStatus: "",
   useForFollowup: false,
   formData: initialFormData

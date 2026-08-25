@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useMemo } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -121,9 +121,6 @@ const SuperManagerDashboard = () => {
     selectedBranch,
     selectedHostpital,
     setSelectedBranch,
-    filterOptions,
-    filter,
-    handleFilterChange,
   } = useContext(HospitalContext);
 
   const { currentUser } = UserContextHook() || {};
@@ -147,10 +144,24 @@ const SuperManagerDashboard = () => {
   const formsData = formsDataMap[formsModalOpen] || [];
 
   // User display
-  const userName = currentUser?.name || currentUser?.username || "User";
-  const userInitials = userName.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
-  const currentHospitalObj = hospitals?.find((h) => h._id === selectedHostpital);
-  const hospitalName = currentHospitalObj?.name || "Hospital";
+  // const userName = currentUser?.name || currentUser?.username || "User";
+  // const profileName = userName.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+  // const currentHospitalObj = hospitals?.find((h) => h._id === selectedHostpital);
+  // const hospitalName = currentHospitalObj?.name || "Hospital";
+  // showing data in profile card 
+  const { branchLabel, profileName, hospitalName, beds } = useMemo(() => {
+    const branch = branches?.find((b) => b._id === selectedBranch);
+    const label = branch?.name || "Main Hospital";
+    const beds = branch?.beds
+
+    return {
+
+      branchLabel: label,
+      profileName: currentUser?.name || "Agent",
+      hospitalName: currentUser?.hospitals?.[0]?.hospitalId?.name || label,
+      beds: beds
+    };
+  }, [branches, selectedBranch]);
 
   // Data processing for Categorization Summary
   const categoryData = analytics?.callCategorization || {};
@@ -281,10 +292,6 @@ const SuperManagerDashboard = () => {
   const erWait = analytics?.erTriage?.waitLevel ?? analytics?.erWaitLevel ?? "N/A";
   const erPct = erWait === "Low" ? 20 : erWait === "Medium" ? 55 : erWait === "High" ? 85 : 0;
 
-  // Selected Branch
-  const currentBranchObj = branches?.find((b) => b._id === selectedBranch);
-  const selectedBranchName = currentBranchObj ? currentBranchObj.name : "Select Branch";
-
   // Distribution chart dynamic legend from currentDataa
   const doughnutColors = ["#1d4ed8", "#3b82f6", "#60a5fa", "#93c5fd", "#38bdf8"];
   const distributionTotal = currentDataa.reduce((s, d) => s + getTotalCount(d), 0);
@@ -380,7 +387,7 @@ const SuperManagerDashboard = () => {
                 {hospitalName}
               </Typography>
               <Typography variant="caption" color="#64748b">
-                {selectedBranchName.toUpperCase()}
+                {branchLabel?.toUpperCase()}
               </Typography>
             </Box>
             <Avatar
@@ -392,7 +399,7 @@ const SuperManagerDashboard = () => {
                 fontWeight: 700,
               }}
             >
-              {userInitials}
+              {profileName ? profileName?.slice(0, 2).toUpperCase() : "EX"}
             </Avatar>
           </Box>
         </Box>
@@ -465,9 +472,9 @@ const SuperManagerDashboard = () => {
               displayEmpty
               disableUnderline
               renderValue={(selected) => {
-                if (!selected) return selectedBranchName;
+                if (!selected) return branchLabel;
                 const b = branches.find((item) => item._id === selected);
-                return b ? b.name : selectedBranchName;
+                return b ? b.name : branchLabel;
               }}
               sx={{
                 fontWeight: 700,
@@ -502,7 +509,7 @@ const SuperManagerDashboard = () => {
             </Box>
             <Box sx={{ textAlign: "center" }}>
               <Typography variant="h5" fontWeight={800} color="#0a4bb6" lineHeight={1}>
-                {currentBranchObj?.beds || 150}
+                {beds || 150}
               </Typography>
               <Typography variant="caption" fontWeight={800} color="#94a3b8" fontSize="0.68rem" sx={{ letterSpacing: "0.5px" }}>
                 BEDS

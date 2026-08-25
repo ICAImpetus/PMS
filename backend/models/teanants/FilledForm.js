@@ -128,6 +128,7 @@ export const FilledFormSchema = new mongoose.Schema(
       refHospitalLocation: String,
       location: String,
 
+
       bookSlot: {
         type: Object,
         default: null,
@@ -151,12 +152,14 @@ export const FilledFormSchema = new mongoose.Schema(
       marketingCampaignName: String,
       marketingDetailsShared: String,
 
+
       remarks: String,
       callBack: String,
       callDropReason: String,
       connected: String,
       disconnectionReason: String,
 
+      diagnosisOrTestName: String,
       surgeryName: String,
       healthPackageName: String,
       healthSchemeName: String,

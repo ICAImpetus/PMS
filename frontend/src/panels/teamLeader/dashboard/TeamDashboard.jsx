@@ -8,8 +8,8 @@ import {
 } from "@mui/material";
 import { Bar, Doughnut } from "react-chartjs-2";
 import SearchIcon from "@mui/icons-material/Search";
-import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
-import SettingsIcon from "@mui/icons-material/Settings";
+// import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
+// import SettingsIcon from "@mui/icons-material/Settings";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DescriptionIcon from "@mui/icons-material/Description";
@@ -31,6 +31,7 @@ import { toast } from "react-toastify";
 import FloatingNewsNotifications from "../../executive/dashboard/FloatingNewsNotifications";
 
 const chartColors = ["#0a4bb6", "#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe", "#dbeafe"];
+
 
 const TeamDashboard = () => {
   const navigate = useNavigate();
@@ -68,9 +69,27 @@ const TeamDashboard = () => {
     closeAssignModal();
   };
 
-  const currentBranch = branches?.find((b) => b._id === selectedBranch);
-  const branchLabel = currentBranch?.name || (branches?.[0]?.name ?? "Branch");
-  const hospitalName = currentUser?.hospitals?.[0]?.hospitalId?.name || selectedHostpital?.name || "Hospital";
+
+  // const currentBranch = branches?.find((b) => b._id === selectedBranch);
+  // const branchLabel = currentBranch?.name || (branches?.[0]?.name ?? "Branch");
+  // const hospitalName = currentUser?.hospitals?.[0]?.hospitalId?.name || selectedHostpital?.name || "Hospital";
+
+  // showing data in profile card 
+  const { branchLabel, profileName, hospitalName, greeting } = useMemo(() => {
+    // 1. Branch/Hospital Logic
+    const branch = branches?.find((b) => b._id === selectedBranch);
+    const label = branch?.name || "Main Hospital";
+
+    // 2. Dynamic Time Greeting Logic
+    const hour = new Date().getHours();
+
+    return {
+      branchLabel: label,
+      profileName: currentUser?.name || "Agent",
+      hospitalName: currentUser?.hospitals?.[0]?.hospitalId?.name || label,
+      greeting: hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening",
+    };
+  }, [branches, selectedBranch, currentUser]);
 
   // ── PREPARE PRODUCTIVITY BAR DATA (STRICTLY REAL DYNAMIC DATA) ──
   const productivityBarData = useMemo(() => {
@@ -263,7 +282,7 @@ const TeamDashboard = () => {
                   </Typography>
                 </Box>
                 <Avatar sx={{ width: 32, height: 32, bgcolor: "#0a4bb6", fontSize: "0.8rem", fontWeight: 800 }}>
-                  {currentUser?.name ? currentUser.name.slice(0, 2).toUpperCase() : "TL"}
+                  {profileName ? profileName?.slice(0, 2).toUpperCase() : "TeamLeader"}
                 </Avatar>
               </Box>
             </Box>
@@ -271,9 +290,28 @@ const TeamDashboard = () => {
 
           {/* ── GREETING TITLE SECTION ── */}
           <Box sx={{ mb: 3 }}>
-            <Typography variant="h4" fontWeight={800} color="#0f172a" sx={{ fontSize: { xs: "1.5rem", md: "1.85rem" } }}>
-              Good Morning, {currentUser?.name || "Team Leader"}
+
+            <Typography
+              variant="h4"
+              fontWeight={900}
+              color="#0F172A"
+              sx={{ letterSpacing: "-0.5px" }}
+            >
+              {greeting},{" "}
+              <Box
+                component="span"
+                sx={{
+                  color: "#0256E8",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px"
+                }}
+              >
+                {profileName || "User"}
+              </Box>
             </Typography>
+            {/* <Typography variant="h4" fontWeight={800} color="#0f172a" sx={{ fontSize: { xs: "1.5rem", md: "1.85rem" } }}>
+              , {currentUser?.name || "Team Leader"}
+            </Typography> */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
               <LocationOnIcon sx={{ fontSize: 16, color: "#94a3b8" }} />
               <Typography variant="body2" fontWeight={600} color="#64748b" fontSize="0.85rem">

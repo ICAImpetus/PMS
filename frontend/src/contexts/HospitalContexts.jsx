@@ -396,7 +396,6 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             queryClient.invalidateQueries(["formEditChanges"]);
         },
         onError: (err) => {
-            log
             toast.error(err?.response?.data?.message || "Failed to update form status");
         },
     });

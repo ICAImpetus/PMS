@@ -869,7 +869,7 @@ function Forms() {
             doctor: fetchedData?.doctor?._id || null,
             department: fetchedData?.department || null,
             branchId: fetchedData?.branchId || null,
-            hospitalId: fetchedData?.hospitalId || selectedHostpital || null,
+            // hospitalId: fetchedData?.hospitalId || selectedHostpital || null,
             callStatus: fetchedData?.callStatus ?? "",
             useForFollowup: fetchedData?.useForFollowup ?? false,
             formData: {
@@ -905,7 +905,7 @@ function Forms() {
       if (selectedHostpital) {
         const branchDetails = await getSingleBranch(selectedBranch, selectedHostpital);
         handleChange("branchId", selectedBranch);
-        handleChange("hospitalId", selectedHostpital);
+        // handleChange("hospitalId", selectedHostpital);
         setBranchData(branchDetails.data?.branch);
         setDynamicDepartments(branchDetails?.data?.departments || []);
         setDynamicDoctors(branchDetails?.data?.doctors || []);
@@ -1165,7 +1165,7 @@ function Forms() {
     setForm({
       ...initialFormState,
       branchId: form.branchId, // Preserve IDs
-      hospitalId: form.hospitalId,
+      // hospitalId: form.hospitalId,
       formData: {
         ...initialFormData,
         dateTime: getCurrentDateTime() // Refresh time on reset
@@ -1295,9 +1295,9 @@ function Forms() {
 
         if (res?.success) {
           resetForm();
-          toast.success("Form update successfully!");
+          toast.success("Form submitted! Changes are under review.");
         } else {
-          toast.error(res?.message || "Failed to update form. Please try again.");
+          toast.error(res?.message || "Failed to submit form. Please try again.");
         }
       }
       else {
@@ -1719,7 +1719,7 @@ function Forms() {
 
 
             {/* Patient Arrival Time for No Slots - Separate Date and Time */}
-            {form.formData.slotDuration === "no-slots" && (
+            {/* {form.formData.slotDuration === "no-slots" && (
               <div className="input-row">
                 <Box>
                   <label className="required">
@@ -1745,7 +1745,7 @@ function Forms() {
                   />
                 </Box>
               </div>
-            )}
+            )} */}
 
             <Box sx={{ width: "100%", my: 2 }}>
               {/* Required Header Label */}
@@ -5598,7 +5598,7 @@ function Forms() {
 
       {form.formType === "outbound" && form.purpose && (
         <div className="button-group">
-          <button
+          {/* <button
             disabled={saveFilledFormLoading}
             type="button"
             className="btn btn-clear"
@@ -5609,7 +5609,7 @@ function Forms() {
 
           <button type="submit" disabled={saveFilledFormLoading || !form.purpose} className="btn btn-submit">
             {saveFilledFormLoading ? <CircularProgress size={20} color="inherit" /> : "Submit"}
-          </button>
+          </button> */}
 
           <Button
             disabled={saveFilledFormLoading}

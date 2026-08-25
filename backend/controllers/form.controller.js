@@ -652,6 +652,7 @@ export const updateFormEditStatus = async (req, res) => {
     }
 
     const parentId = updatedForm.oldformId
+    const isApproved = targetStatus === (FormStatus.APPROVED || "APPROVED");
 
     if (parentId && mongoose.isValidObjectId(parentId)) {
       if (isApproved) {
@@ -780,7 +781,6 @@ export const updateFilledForm = async (req, res) => {
         message: "Hospital not found.",
       });
     }
-
     // 2. Multi-tenant connection setup
     const conn = await getConnection(hospital.trimmedName);
     const FilledFormsModel = getFilledFormsModel(conn);
@@ -981,6 +981,7 @@ export const getFilledForms = async (req, res) => {
     // Conditionally append 'formStatus' if user is a teamleader
     if (userType === "teamleader") {
       fields.push("formStatus");
+      fields.push("version");
     }
 
     // ================= VALIDATION =================
@@ -1025,7 +1026,7 @@ export const getFilledForms = async (req, res) => {
             $nin: [
               FormStatus.PENDING,
               FormStatus.REJECTED,
-              FormStatus.NOTAPPROVED,
+              // FormStatus.NOTAPPROVED,
               FormStatus.ERRORFORM,
             ],
           },
@@ -1782,7 +1783,7 @@ const getRandomRating = () => {
 async function updateFeedbackDocuments() {
   try {
     // Database connection string update karein
-    const conn = await getConnection("jindalhospital-JH001");
+    const conn = await getConnection("sevayatanhospital-Seva01");
     const FilledFormsModel = getFilledFormsModel(conn);
 
     // Date range filters (1 May 2026 to 31 July 2026)
@@ -1843,7 +1844,7 @@ async function updateFeedbackDocuments() {
     });
 
     const result = await FilledFormsModel.bulkWrite(bulkOps);
-    //console.log(`Successfully updated ${result.modifiedCount} documents!`);
+    console.log(`Successfully updated ${result.modifiedCount} documents!`);
 
   } catch (error) {
     console.error("Error while updating documents:", error);
@@ -1853,4 +1854,4 @@ async function updateFeedbackDocuments() {
   }
 }
 
-// updateFeedbackDocuments();
+// updateF  eedbackDocuments();

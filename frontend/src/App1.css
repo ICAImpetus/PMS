@@ -14,8 +14,12 @@
 
 .main-layout {
   display: flex;
-  flex: 1;
-  /* overflow: hidden; */
+  height: 100vh;
+  /* Screen ki poori height lock karega */
+  width: 100vw;
+  /* Screen ki full width lega */
+  overflow: hidden;
+  /* Main container ka apna scrollbar band rahega */
 }
 
 /* FIX: Sidebar.jsx sets height:"100vh" via inline sx on its wrapper Box.
