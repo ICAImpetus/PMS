@@ -312,6 +312,7 @@ const HospitalCreationNew = () => {
         <Box display="flex" alignItems="center" gap={1.5}>
           {isSuperAdmin && (
             <Button
+              data-testid='createhospitaltextid'
               variant="contained"
               startIcon={<AddIcon />}
               onClick={handleOpenAdd}

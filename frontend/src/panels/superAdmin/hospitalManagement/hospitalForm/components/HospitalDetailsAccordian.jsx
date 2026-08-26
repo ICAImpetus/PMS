@@ -215,6 +215,7 @@ const HospitalBasicDetailAccrodian = ({
             <TextField
               label="Beds"
               type="number"
+              name="beds"
               value={values.beds}
               onChange={(e) => setFieldValue("beds", e.target.value)}
               onBlur={handleBlur}
@@ -240,6 +241,7 @@ const HospitalBasicDetailAccrodian = ({
             <TextField
               label="Email"
               value={values.email}
+              name="email"
               onChange={(e) => setFieldValue("email", e.target.value)}
               onBlur={handleBlur}
               fullWidth
@@ -259,6 +261,7 @@ const HospitalBasicDetailAccrodian = ({
             <TextField
               label="Contact Number"
               value={values.contact}
+              name="contact"
               onChange={(e) => setFieldValue("contact", e.target.value)}
               onBlur={handleBlur}
               fullWidth

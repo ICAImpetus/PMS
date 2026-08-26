@@ -247,6 +247,7 @@ const MultiSelectDropdown = ({
                 </InputLabel>
 
                 <Select
+                data-testid='multihospitalselect'
                     multiple={!isSingleSelect}
                     value={
                         isSingleSelect
