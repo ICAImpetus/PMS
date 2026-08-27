@@ -125,7 +125,7 @@ const CustomHospitalCard = ({ hospital, role, onEdit, onManageBranches }) => {
         </Box>
 
         <IconButton size="small" onClick={handleMenuClick} sx={{ color: "#94A3B8" }}>
-          <MoreVertIcon fontSize="small" />
+          <MoreVertIcon fontSize="small" data-testid='moreoptionbtn' />
         </IconButton>
       </Box>
 
@@ -175,6 +175,7 @@ const CustomHospitalCard = ({ hospital, role, onEdit, onManageBranches }) => {
             onManageBranches(hospital);
           }}
           sx={{ py: 1, px: 2 }}
+          data-testid='managebranchesoptionbtn'
         >
           <ListItemIcon sx={{ color: "#475569" }}>
             <AccountTreeOutlinedIcon fontSize="small" />
