@@ -1905,16 +1905,16 @@ const BranchInfo = () => {
                 },
               }}
             >
-              <Tab label="OVERVIEW" />
-              <Tab label="DEPARTMENTS" />
-              <Tab label="DOCTORS" />
-              <Tab label="EMPANELMENT" />
-              <Tab label="TEST LABS" />
-              <Tab label="IPD" />
-              <Tab label="DAY CARE" />
-              <Tab label="PROCEDURES/SURGERIES" />
-              <Tab label="IN-CHARGE" />
-              <Tab label="CODE ALERTS" />
+              <Tab label="OVERVIEW"  />
+              <Tab label="DEPARTMENTS" data-testid='departments-tab' />
+              <Tab label="DOCTORS" data-testid='doctors-tab' />
+              <Tab label="EMPANELMENT" data-testid='empanelment-tab' />
+              <Tab label="TEST LABS" data-testid='test-labs-tab' />
+              <Tab label="IPD" data-testid='ipd-tab' />
+              <Tab label="DAY CARE" data-testid='day-care-tab' />
+              <Tab label="PROCEDURES/SURGERIES" data-testid='procedures-surgeries-tab' />
+              <Tab label="IN-CHARGE" data-testid='in-charge-tab' />
+              <Tab label="CODE ALERTS" data-testid='code-alerts-tab' />
             </Tabs>
           </Paper>
         </>

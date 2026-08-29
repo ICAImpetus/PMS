@@ -640,6 +640,7 @@ const UserForm = ({
                 <Grid item xs={12} pt={2}>
                   <Box display="flex" justifyContent="flex-end" gap={1.5}>
                     <Button
+                    data-testid="canceluserbtn"
                       type="button"
                       variant="outlined"
                       onClick={onClose}

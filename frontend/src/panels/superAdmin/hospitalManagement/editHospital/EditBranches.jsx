@@ -160,7 +160,7 @@ const BranchCardItem = ({
           </Avatar>
 
           <IconButton size="small" onClick={handleMenuClick} sx={{ color: "#94A3B8" }}>
-            <MoreVertIcon fontSize="small" />
+            <MoreVertIcon fontSize="small" data-testid='branchmoreoptionbtn' />
           </IconButton>
         </Box>
 
@@ -231,6 +231,7 @@ const BranchCardItem = ({
             onViewInfo(branch);
           }}
           sx={{ py: 1, px: 2 }}
+          data-testid='viewinfooptionbtn'
         >
           <ListItemIcon sx={{ color: "#475569" }}>
             <InfoOutlinedIcon fontSize="small" />
@@ -248,6 +249,7 @@ const BranchCardItem = ({
               onEdit(branch);
             }}
             sx={{ py: 1, px: 2 }}
+            data-testid='editbranchoptionbtn'
           >
             <ListItemIcon sx={{ color: "#475569" }}>
               <EditOutlinedIcon fontSize="small" />
@@ -470,6 +472,7 @@ const EditBranches = () => {
               </Button>
               <Button
                 variant="contained"
+                data-testid='add-branch-button'
                 startIcon={<AddIcon />}
                 onClick={handleOpen}
                 sx={{
