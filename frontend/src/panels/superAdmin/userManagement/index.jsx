@@ -437,6 +437,7 @@ function UserManagement() {
 
           <Button
             variant="contained"
+            data-testid='adduserbtn'
             startIcon={<PersonAddAlt1Icon />}
             onClick={handleAddUserModel}
             disabled={!selectedHostpital}

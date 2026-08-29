@@ -31,7 +31,7 @@ const ManagementDetailsAccordion = ({ values, handleChange, handleBlur, touched,
     const currentValues = (values.managementDetails ?? [])
       .map(m => m.memberType)
       .filter(val => typeof val === "string" && val.trim() !== "");
-    
+
     return [...new Set([...initialSuggestions, ...currentValues])];
   }, [initialSuggestions, values.managementDetails]);
 
@@ -56,6 +56,7 @@ const ManagementDetailsAccordion = ({ values, handleChange, handleBlur, touched,
           <Grid container spacing={3}>
             <Grid item xs={12} md={4}>
               <Autocomplete
+                data-testid='membertypetestid'
                 freeSolo
                 options={memberTypeSuggestions}
                 value={member.memberType || null}
