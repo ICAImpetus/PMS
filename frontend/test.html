@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>WhatsApp Embedded Signup Test</title>
+</head>
+
+<body>
+
+    <h2>WhatsApp Tech Provider Testing</h2>
+
+    <!-- WhatsApp Login Button -->
+    <button onclick="launchWhatsAppSignup()"
+        style="padding: 10px 20px; background-color: #1877F2; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+        Connect WhatsApp Business
+    </button>
+
+    <!-- Output Display Box -->
+    <h3>Received Data:</h3>
+    <pre id="output" style="background: #f4f4f4; padding: 15px; border-radius: 5px;">Waiting for connection...</pre>
+
+    <!-- Facebook SDK Initialization -->
+    <script>
+        window.fbAsyncInit = function () {
+            FB.init({
+                appId: '1326555106257196',
+                autoLogAppEvents: true,
+                xfbml: true,
+                version: 'v20.0'
+            });
+        };
+
+        (function (d, s, id) {
+            var js, fjs = d.getElementsByTagName(s)[0];
+            if (d.getElementById(id)) return;
+            js = d.createElement(s); js.id = id;
+            js.src = "https://connect.facebook.net/en_US/sdk.js";
+            fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+    </script>
+
+    <!-- Event Listener & Launch Function -->
+    <script>
+        // 1. Popup se response receive karne ka listener
+        window.addEventListener('message', (event) => {
+            if (event.origin !== "https://www.facebook.com" && event.origin !== "https://web.facebook.com") return;
+
+            try {
+                const data = JSON.parse(event.data);
+
+                if (data.type === 'WA_EMBEDDED_SIGNUP') {
+                    console.log("Embedded Signup Event Received:", data);
+
+                    // Screen par result show karne ke liye
+                    document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+
+                    // Data extract karein
+                    if (data.event === 'FINISH') {
+                        const code = data.data.code;
+                        const wabaId = data.data.waba_id;
+                        const phoneNumberId = data.data.phone_number_id;
+
+                        alert(`Success!\nCode: ${code}\nWABA ID: ${wabaId}\nPhone Number ID: ${phoneNumberId}`);
+                    }
+                }
+            } catch (err) {
+                // Ignore non-JSON messages
+            }
+        });
+
+        // 2. Button click hone par Embedded Signup Popup kholne ka function
+        function launchWhatsAppSignup() {
+            FB.login(function (response) {
+                if (response.authResponse) {
+                    const code = response.authResponse.code;
+                    console.log("Authorization Code:", code);
+                } else {
+                    console.log('User cancelled login or did not fully authorize.');
+                }
+            }, {
+                config_id: 'YOUR_CONFIGURATION_ID', // Dashboard par bani Config ID yahan daalein
+                response_type: 'code',
+                override_default_response_type: true,
+                extras: {
+                    setup: {
+                        // Optional parameters
+                    }
+                }
+            });
+        }
+    </script>
+
+</body>
+
+</html>
