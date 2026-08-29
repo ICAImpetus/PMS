@@ -40,6 +40,23 @@ const roles = {
   "supermanager": ["teamleader", "executive"],
   "teamleader": ["executive"],
 }
+
+const getBranchIds = (branches) => {
+  if (!branches) return [];
+
+
+  const branchArray = Array.isArray(branches)
+    ? branches
+    : [branches];
+
+  return branchArray.map((branch) => {
+    return {
+      name: branch?.name,
+      _id: branch?.branchId
+    }
+  }
+  );
+};
 const UserForm = ({
   initialState = null,
   onClose,
@@ -68,16 +85,16 @@ const UserForm = ({
         : initialState?.hospitals
           ? [initialState.hospitals]
           : [],
-      selectedBranch: Array.isArray(initialState?.branches)
-        ? initialState.branches
-        : initialState?.branches
-          ? [initialState.branches]
-          : [],
+      selectedBranch: getBranchIds(initialState?.branches)
+      ,
 
       canDelete: initialState?.canDelete ?? false,
     }),
     [initialState, isUpdateComp, hospitalId]
   );
+
+  // console.log("initialValues", initialValues);
+
 
   const {
     request: addUser,
@@ -110,21 +127,43 @@ const UserForm = ({
     try {
       setSubmitting(true);
 
-      let valuesToSubmit = { ...values };
-      valuesToSubmit.hospitalName =
-        valuesToSubmit?.hospitalName?.map((item) => item?._id) || [];
+      // Deep Copy taaki console memory-reference bug na aaye
+      let valuesToSubmit = JSON.parse(JSON.stringify(values));
 
+      // 1. Hospital Names Extraction (Safe mapping)
+      valuesToSubmit.hospitalName = [hospitalId];
+
+      // 2. Selected Branch Extraction (Fixes [undefined, undefined, undefined])
       valuesToSubmit.selectedBranch =
-        valuesToSubmit?.selectedBranch?.map((item) =>
-          isUpdateComp ? item?.branchId : item?._id
-        ) || [];
+        valuesToSubmit?.selectedBranch?.map((item) => {
+          // Agar item direct ID string hai
+          if (typeof item !== "object" || item === null) {
+            return item;
+          }
+
+          // Agar item Object hai, toh prioritized key check karein
+          if (isUpdateComp) {
+            return item?.branchId || item?._id || item?.id;
+          } else {
+            return item?._id || item?.branchId || item?.id;
+          }
+        }) || [];
+
+
+      // Cleaned-up array se undefined / null items ko filter kar dein
+      valuesToSubmit.selectedBranch = valuesToSubmit.selectedBranch.filter(Boolean);
+      valuesToSubmit.hospitalName = valuesToSubmit.hospitalName.filter(Boolean);
+
+      // console.log("Original values:", values);
+      // console.log("Processed valuesToSubmit:", valuesToSubmit);
 
       let didClose = false;
 
+      // API Calls
       if (isUpdateComp) {
         const response = await updateUser(initialState?._id, valuesToSubmit);
         if (response?.success) {
-          if (refetchAdmins) await refetchAdmins();
+          if (refetchUsers) await refetchUsers();
           toast.success("Profile Updated");
           didClose = true;
         } else {
@@ -133,7 +172,7 @@ const UserForm = ({
       } else {
         const data = await addUser(valuesToSubmit);
         if (data?.success) {
-          if (refetchAdmins) await refetchAdmins();
+          if (refetchUsers) await refetchUsers();
           toast.success("New User Added");
           didClose = true;
         } else {
@@ -146,19 +185,20 @@ const UserForm = ({
       }
     } catch (error) {
       console.error("Submit error:", error);
+      toast.error("An unexpected error occurred");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const [hospitalNames, setHospitalNames] = useState([]);
-  useEffect(() => {
-    const fetchHospitals = async () => {
-      const response = await allHospital();
-      setHospitalNames(response?.data || []);
-    };
-    fetchHospitals();
-  }, []);
+  // const [hospitalNames, setHospitalNames] = useState([]);
+  // useEffect(() => {
+  //   const fetchHospitals = async () => {
+  //     const response = await allHospital();
+  //     setHospitalNames(response?.data || []);
+  //   };
+  //   fetchHospitals();
+  // }, []);
 
   useEffect(() => {
     const error = hosApiError || branchError || userError || userUpdate || null;
@@ -552,11 +592,14 @@ const UserForm = ({
                 </Grid>
 
                 {/* MultiSelect Hospitals */}
-                <Grid item xs={12}>
+                {/* <Grid item xs={12}>
                   <MultiSelectDropdown
+
                     options={hospitalNames}
                     selectedOptions={values.hospitalName}
                     setSelectedOptions={(val) => {
+                      console.log("hospitalName", val);
+
                       setFieldValue("hospitalName", val);
                     }}
                     label="Select Hospital(s)"
@@ -565,7 +608,7 @@ const UserForm = ({
                     error={touched.hospitalName && Boolean(errors.hospitalName)}
                     helperText={touched.hospitalName && errors.hospitalName}
                   />
-                </Grid>
+                </Grid> */}
 
                 {/* MultiSelect Branches for Team Leaders and Executives */}
                 {(values.type === "teamleader" || values.type === "executive") && (
@@ -573,17 +616,25 @@ const UserForm = ({
                     <MultiSelectDropdown
                       options={branchOptions}
                       selectedOptions={values.selectedBranch}
-                      setSelectedOptions={(val) => setFieldValue("selectedBranch", val)}
+                      setSelectedOptions={(val) => {
+                        // console.log("val", val);
+
+                        setFieldValue("selectedBranch", val);
+                      }}
                       label="Select Branch(s)"
                       role={values.type}
                       currentId={initialState?._id}
-                      isSingleSelect={values.type === "executive"}
+                      // isSingleSelect={values.type === "executive"}
+                      isBranchRender={isUpdateComp}
                       error={touched.selectedBranch && Boolean(errors.selectedBranch)}
                       helperText={touched.selectedBranch && errors.selectedBranch}
                     />
                   </Grid>
                 )}
 
+                {/* {console.log("values", values)
+                }
+ */}
 
                 {/* Submit & Cancel Buttons */}
                 <Grid item xs={12} pt={2}>
