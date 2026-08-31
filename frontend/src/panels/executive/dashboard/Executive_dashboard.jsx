@@ -367,6 +367,7 @@ const ExecutiveDashboard = () => {
                   boxShadow: "0 4px 14px rgba(10,75,182,0.3)",
                   "&:hover": { bgcolor: "#003aa3" },
                 }}
+                data-testid="forms-button"
               >
                 Forms
               </Button>
