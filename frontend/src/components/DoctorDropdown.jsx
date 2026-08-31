@@ -115,6 +115,7 @@ export default function DoctorDropdown({
     <div className="doctor-dropdown-wrapper">
 
       <Autocomplete
+        data-testid='doctor-autocomplete'
         options={doctors}
         sx={{
           "& .MuiOutlinedInput-root": {

@@ -335,6 +335,8 @@ body {
   gap: 2px;
   width: 100%;
   min-width: 0;
+  position: relative;
+  padding-bottom: 18px;
 }
 
 .input-group label {
@@ -344,12 +346,22 @@ body {
   margin-bottom: 2px;
 }
 
+
 .required::after {
   content: "*";
   color: var(--danger);
   margin-left: 4px;
   font-size: 1.1em;
 }
+
+.error-text {
+  color: red;
+  font-size: 11px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
 
 .input-field,
 .select-field,

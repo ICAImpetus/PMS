@@ -1,5 +1,5 @@
 // templatesData.js
-export const REMARK_INBOUND_TEMPLATES = [
+export const REMARK_INBOUND_TEMPLATES_COPY = [
   {
     category: "Appointment",
     name: "Appointment Booked",
@@ -55,25 +55,25 @@ export const REMARK_INBOUND_TEMPLATES = [
     content: "Patient enquired about the admission process for [SurgeryName]. Admission requirements and available information were communicated. Patient was directed to [Department] [Admission Desk] for further assistance."
   },
   {
-    category: "Health Check Up",
+    category: "Health Checkup",
     name: "Checkup Enquiry",
     code: "/healthcheckup_enquiry",
     content: "Patient enquired about health checkup [PackageName]. Available details including tests/services and applicable price of ₹[Amount] were communicated."
   },
   {
-    category: "Health Check Up",
+    category: "Health Checkup",
     name: "Health Checkup Packages",
     code: "/healthcheckup_packages",
     content: "Patient enquired about available health checkup packages. Available options [PackageName] were explained based on the hospital package information."
   },
   {
-    category: "Health Check Up",
+    category: "Health Checkup",
     name: "Health Checkup Price",
     code: "/healthcheckup_price",
     content: "Patient enquired about the price of [PackageName]. Applicable price communicated: ₹[Amount]."
   },
   {
-    category: "Health Check Up",
+    category: "Health Checkup",
     name: "Health Checkup Booking",
     code: "/healthcheckup_booking",
     content: "Patient requested booking of [PackageName] for [DateAndTime]. Booking status: [Confirmed][Pending][NotBooked]."
@@ -115,13 +115,13 @@ export const REMARK_INBOUND_TEMPLATES = [
     content: "Patient requested the [TestName] report to be shared through [WhatsApp]. Asked patient to visit hospital an collect the report as These reports are only available for in-person collection at the hospital."
   },
   {
-    category: "Emergency",
+    category: "Emergency Query",
     name: "Emergency Visit",
     code: "/emergency_visit",
     content: "Caller enquired regarding an emergency situation involving [Brief Description]. Caller was advised to directly visit the hospital Emergency Department immediately. Emergency location/access instructions were provided, where required."
   },
   {
-    category: "Emergency",
+    category: "Emergency Query",
     name: "Emergency Enquiry",
     code: "/emergency_enquiry",
     content: "Caller contacted the hospital regarding an emergency situation involving [Remarks]. Available emergency-related information was provided and patient was asked to visit hospital."
@@ -145,43 +145,43 @@ export const REMARK_INBOUND_TEMPLATES = [
     content: "Caller enquired about ambulance charges. Call was transferred to the ambulance driver/team for further clarification."
   },
   {
-    category: "Complaint",
+    category: "Complaints",
     name: "General Complaint",
     code: "/complaint_general",
     content: "Patient/attendant reported a complaint regarding [Issue] related to [Department][Service]. Patient/attendant was asked to explain the issue in detail."
   },
   {
-    category: "Complaint",
+    category: "Complaints",
     name: "Staff Complaint",
     code: "/complaint_staff",
     content: "Patient/attendant reported a complaint regarding staff behaviour/service at [Department][Location]. [Document the issue (free test)]"
   },
   {
-    category: "Complaint",
+    category: "Complaints",
     name: "Doctor Complaint",
     code: "/complaint_doctor",
     content: "Patient/attendant reported a complaint regarding consultation/service provided by [DoctorName]. [Document the issue (free test)]"
   },
   {
-    category: "Complaint",
+    category: "Complaints",
     name: "Waiting Time Complaint",
     code: "/complaint_waiting",
     content: "Patient reported excessive waiting time at [Department][Location]. [Document the issue (free test)]"
   },
   {
-    category: "Complaint",
+    category: "Complaints",
     name: "Billing Complaint",
     code: "/complaint_billing",
     content: "Patient reported a billing-related complaint regarding [Issue]. [Document the issue (free test)]"
   },
   {
-    category: "Complaint",
+    category: "Complaints",
     name: "Cleanliness Complaint",
     code: "/complaint_cleanliness",
     content: "Patient reported a cleanliness/hygiene-related issue at [Location]. [Document the issue (free test)]"
   },
   {
-    category: "Complaint",
+    category: "Complaints",
     name: "Facility Complaint",
     code: "/complaint_facility",
     content: "Patient reported a facility/infrastructure issue at [Location] regarding [Issue]. [Document the issue (free test)]"
@@ -205,13 +205,13 @@ export const REMARK_INBOUND_TEMPLATES = [
     content: "Patient responded to [CampaignName] regarding health checkup package [PackageName]. Price/details were communicated."
   },
   {
-    category: "Job Enquiry",
+    category: "Job Related",
     name: "Job Enquiry",
     code: "/job_enquiry",
     content: "Caller enquired about employment opportunities for the position of [Position]. Available recruitment process/contact information was communicated."
   },
   {
-    category: "Job Enquiry",
+    category: "Job Related",
     name: "Job Application",
     code: "/job_application",
     content: "Caller enquired about the status/process of job application for [Position]. Available information was communicated and asked to mail resume on HR email or asked to contact HR, number shared."
@@ -223,6 +223,218 @@ export const REMARK_INBOUND_TEMPLATES = [
     content: "Caller wanted to know [Query], shared details."
   }
 ];
+export const REMARK_INBOUND_TEMPLATES = {
+  "Appointment": [
+    {
+      name: "Appointment Booked",
+      code: "/appointment_booked",
+      content: `Patient called for appointment with [DoctorName]. Appointment successfully booked on [DateAndTime]. Patient was informed about the appointment details and required instructions.`
+    },
+    {
+      name: "Appointment Cancellation",
+      code: "/appointment_cancellation",
+      content: "Patient called to cancel the appointment with [DoctorName] scheduled for [DateAndTime]. Cancellation reason: Reason. Appointment cancelled successfully."
+    },
+    {
+      name: "Appointment Reschedule",
+      code: "/appointment_reschedule",
+      content: "Patient requested rescheduling of the appointment with [DoctorName] from [DateAndTime] to [DateAndTime]. Appointment was Rescheduled/Not Rescheduled."
+    }
+  ],
+  "OPD Timings": [
+    {
+      name: "OPD Timing",
+      code: "/opd_timing",
+      content: `Patient enquired about OPD timings for [DoctorName] in [Department]. OPD timing of Time/Days was communicated to the patient.`
+    },
+    {
+      name: "Doctor Availability",
+      code: "/doctor_availability",
+      content: "Patient enquired about the availability of [DoctorName] on [DateAndTime]. Doctor availability was confirmed as [Available][Unavailable]. Alternative slot/doctor information was provided."
+    }
+  ],
+  "Surgery": [
+    {
+      name: "Surgery Enquiry",
+      code: "/surgery_enquiry",
+      content: "Patient enquired about [SurgeryName] under [Department] of [DoctorName] in [CategoryName]. Patient was advised to consult the concerned [DoctorName] in [Department] for clinical assessment and final treatment-related information."
+    },
+    {
+      name: "Surgery Cost",
+      code: "/surgery_cost",
+      content: "Patient enquired about the estimated cost of [SurgeryName]. Available pricing/package information of ₹[Amount/Range] was communicated. Patient was informed that final charges may vary based on clinical requirements and hospital billing."
+    },
+    {
+      name: "Surgery Cost Denied",
+      code: "/surgery_cost_denied",
+      content: "Patient enquired about the estimated cost of [SurgeryName]. Asked patient to visit and consult Doctor and estimate cost will be shared by Doctor only"
+    },
+    {
+      name: "Surgery Admission",
+      code: "/surgery_admission",
+      content: "Patient enquired about the admission process for [SurgeryName]. Admission requirements and available information were communicated. Patient was directed to [Department] [Admission Desk] for further assistance."
+    }
+  ],
+  "Health Checkup": [
+    {
+      name: "Checkup Enquiry",
+      code: "/healthcheckup_enquiry",
+      content: "Patient enquired about health checkup [PackageName]. Available details including tests/services and applicable price of ₹[Amount] were communicated."
+    },
+    {
+      name: "Health Checkup Packages",
+      code: "/healthcheckup_packages",
+      content: "Patient enquired about available health checkup packages. Available options [PackageName] were explained based on the hospital package information."
+    },
+    {
+      name: "Health Checkup Price",
+      code: "/healthcheckup_price",
+      content: "Patient enquired about the price of [PackageName]. Applicable price communicated: ₹[Amount]."
+    },
+    {
+      name: "Health Checkup Booking",
+      code: "/healthcheckup_booking",
+      content: "Patient requested booking of [PackageName] for [DateAndTime]. Booking status: [Confirmed][Pending][NotBooked]."
+    }
+  ],
+  "Diagnose & Test Price": [
+    {
+      name: "Diagnostic/Test Enquiry",
+      code: "/test_enquiry",
+      content: "Patient enquired about [TestName]. Information regarding availability, applicable charges and relevant instructions was [provided/referred to concerned department]."
+    },
+    {
+      name: "Test Price",
+      code: "/test_price",
+      content: "Patient enquired about the price of [TestName]. Applicable charge communicated: ₹[Amount]."
+    },
+    {
+      name: "Sample Collection",
+      code: "/home_sample_collection",
+      content: "Patient enquired about home sample collection for [TestName]. Informed patient that home collection service is not available at hospital."
+    }
+  ],
+  "Reports": [
+    {
+      name: "Report Status",
+      code: "/report_status",
+      content: "Patient enquired about the status of the [TestName] report conducted on [Date]. Current report status: [Available/Pending/Under Process]. Patient was informed accordingly."
+    },
+    {
+      name: "Report Sharing",
+      code: "/report_sharing",
+      content: "Patient requested the [TestName] report to be shared through [WhatsApp]. Shared the report and confirmed."
+    },
+    {
+      name: "Report Sharing Denied",
+      code: "/report_sharing_denied",
+      content: "Patient requested the [TestName] report to be shared through [WhatsApp]. Asked patient to visit hospital an collect the report as These reports are only available for in-person collection at the hospital."
+    }
+  ],
+  "Emergency Query": [
+    {
+      name: "Emergency Visit",
+      code: "/emergency_visit",
+      content: "Caller enquired regarding an emergency situation involving [Brief Description]. Caller was advised to directly visit the hospital Emergency Department immediately. Emergency location/access instructions were provided, where required."
+    },
+    {
+      name: "Emergency Enquiry",
+      code: "/emergency_enquiry",
+      content: "Caller contacted the hospital regarding an emergency situation involving [Remarks]. Available emergency-related information was provided and patient was asked to visit hospital."
+    }
+  ],
+  "Ambulance": [
+    {
+      name: "Ambulance Require",
+      code: "/ambulance_requirement_transfer",
+      content: "Caller requested ambulance service. Call was transferred to the ambulance driver/team for further coordination."
+    },
+    {
+      name: "Ambulance Number",
+      code: "/ambulance_requirement_number",
+      content: "Caller requested ambulance service. Ambulance driver/contact number was shared with the caller for further coordination."
+    },
+    {
+      name: "Ambulance Charges",
+      code: "/ambulance_charges_number",
+      content: "Caller enquired about ambulance charges. Call was transferred to the ambulance driver/team for further clarification."
+    }
+  ],
+  "Complaints": [
+    {
+      name: "General Complaint",
+      code: "/complaint_general",
+      content: "Patient/attendant reported a complaint regarding [Issue] related to [Department][Service]. Patient/attendant was asked to explain the issue in detail."
+    },
+    {
+      name: "Staff Complaint",
+      code: "/complaint_staff",
+      content: "Patient/attendant reported a complaint regarding staff behaviour/service at [Department][Location]. [Document the issue (free test)]"
+    },
+    {
+      name: "Doctor Complaint",
+      code: "/complaint_doctor",
+      content: "Patient/attendant reported a complaint regarding consultation/service provided by [DoctorName]. [Document the issue (free test)]"
+    },
+    {
+      name: "Waiting Time Complaint",
+      code: "/complaint_waiting",
+      content: "Patient reported excessive waiting time at [Department][Location]. [Document the issue (free test)]"
+    },
+    {
+      name: "Billing Complaint",
+      code: "/complaint_billing",
+      content: "Patient reported a billing-related complaint regarding [Issue]. [Document the issue (free test)]"
+    },
+    {
+      name: "Cleanliness Complaint",
+      code: "/complaint_cleanliness",
+      content: "Patient reported a cleanliness/hygiene-related issue at [Location]. [Document the issue (free test)]"
+    },
+    {
+      name: "Facility Complaint",
+      code: "/complaint_facility",
+      content: "Patient reported a facility/infrastructure issue at [Location] regarding [Issue]. [Document the issue (free test)]"
+    }
+  ],
+  "Marketing Campaign": [
+    {
+      name: "Campaign Enquiry",
+      code: "/campaign",
+      content: "Patient responded to [CampaignName] campaign and enquired about [Service/Offer]. Details were communicated."
+    },
+    {
+      name: "Campaign Offer",
+      code: "/campaign_offer",
+      content: "Patient enquired about promotional offer [OfferName] received through [SMS/WhatsApp/Social Media/Other]. Offer details and applicable conditions were communicated."
+    },
+    {
+      name: "Campaign Health Checkup",
+      code: "/campaign_healthcheck",
+      content: "Patient responded to [CampaignName] regarding health checkup package [PackageName]. Price/details were communicated."
+    }
+  ],
+  "Job Related": [
+    {
+      name: "Job Enquiry",
+      code: "/job_enquiry",
+      content: "Caller enquired about employment opportunities for the position of [Position]. Available recruitment process/contact information was communicated."
+    },
+    {
+      name: "Job Application",
+      code: "/job_application",
+      content: "Caller enquired about the status/process of job application for [Position]. Available information was communicated and asked to mail resume on HR email or asked to contact HR, number shared."
+    }
+  ],
+  "General Query": [
+    {
+      name: "General Query",
+      code: "/general_query",
+      content: "Caller wanted to know [Query], shared details."
+    }
+  ]
+};
+
 export const IndianStatesWithDistricts = {
   "Andhra Pradesh": [
     "Alluri Sitarama Raju",
