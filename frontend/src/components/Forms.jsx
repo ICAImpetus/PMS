@@ -62,7 +62,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 const PatientDiseaseInput = ({ value, onChange, isRequired = false, error = "" }) => {
   return (
     <div className="input-group">
-      <label className={isRequired ? "required" : ""}>Patient Disease</label>
+      <label className={isRequired ? "required" : ""}>Type of Disease</label>
       <input
         type="text"
         className="input-field"
