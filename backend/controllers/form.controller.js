@@ -964,6 +964,7 @@ export const getFilledForms = async (req, res) => {
       "followupStatus",
       "createdAt",
       "formData.appointmentSlot",
+      "formData.typeOfDisease",
       "formData.patientDetails",
       "formData.patientArrivalTime",
       "formData.remarks",
