@@ -48,7 +48,8 @@ import {
   IndianStatesWithDistricts, initialFormState, OUTBOUND_PURPOSE_OPTIONS,
   REFERENCE_OPTIONS, initialFormData,
   initialPatientDetails,
-  REMARK_INBOUND_TEMPLATES
+  REMARK_INBOUND_TEMPLATES,
+  REMARK_INBOUND_TEMPLATES_COPY
 } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
 import { FORMS_AVAILABLE_COLUMNS, getNestedValue, PatientCallHistory } from "../utils/exportUtils";
 import { PatientHistoryTableBody } from "./customComponents/PatientHistoryTableBody";
@@ -56,8 +57,24 @@ import { useLocation, useNavigate } from "react-router-dom";
 import CallReceivedIcon from "@mui/icons-material/CallReceived";
 import CallMadeIcon from "@mui/icons-material/CallMade";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 
+
+const PatientDiseaseInput = ({ value, onChange, isRequired = false, error = "" }) => {
+  return (
+    <div className="input-group">
+      <label className={isRequired ? "required" : ""}>Patient Disease</label>
+      <input
+        type="text"
+        className="input-field"
+        placeholder="e.g. Diabetes, Hypertension"
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        required={isRequired}
+      />
+      {error && <span className="error-text">{error}</span>}
+    </div>
+  );
+}
 
 function FormTypeToggleGroup({
   editMode,
@@ -631,8 +648,10 @@ const RenderRemarksComponents = ({ dynamicDepartments = [], message = "Remarks",
     }
   };
 
+  const template_option = REMARK_INBOUND_TEMPLATES[form.purpose] || REMARK_INBOUND_TEMPLATES_COPY;
+
   return (
-    <Box sx={{ width: "100%", my: 2 }}>
+    <Box sx={{ width: "100%", my: 2, borderRadius: "30px" }}>
       <Autocomplete
         componentsProps={{
           popper: {
@@ -650,7 +669,7 @@ const RenderRemarksComponents = ({ dynamicDepartments = [], message = "Remarks",
           if (form.formData.remarks?.includes("/")) setOpen(true);
         }}
         onClose={() => setOpen(false)}
-        options={REMARK_INBOUND_TEMPLATES}
+        options={template_option}
 
         // Ensures single selected value state
         value={null}
@@ -664,9 +683,9 @@ const RenderRemarksComponents = ({ dynamicDepartments = [], message = "Remarks",
           const query = state.inputValue.split("/").pop().toLowerCase();
           return options.filter(
             (opt) =>
-              opt.name.toLowerCase().includes(query) ||
-              opt.code.toLowerCase().includes(query) ||
-              opt.category.toLowerCase().includes(query)
+              opt.name?.toLowerCase()?.includes(query) ||
+              opt.code?.toLowerCase()?.includes(query) ||
+              opt.category?.toLowerCase()?.includes(query)
           );
         }}
         onChange={(event, newValue) => {
@@ -1360,6 +1379,7 @@ function Forms() {
   }, [form.department, form.purpose, form.formType, selectedBranch])
   useEffect(() => {
     handleChange("department", null)
+    handleChange("formData.remarks", '')
 
   }, [form.purpose])
 
@@ -1673,6 +1693,12 @@ function Forms() {
                   />
                 </LocalizationProvider>
               </div>
+              <PatientDiseaseInput
+                value={form.formData.typeOfDisease}
+                onChange={(val) => handleChange("formData.typeOfDisease", val)}
+                isRequired={false}
+              // error={errors?.typeOfDisease}
+              />
 
             </div >
 
@@ -1752,54 +1778,7 @@ function Forms() {
               <Typography
                 variant="subtitle1"
                 sx={{
-                  fontWeight: 600,
-                  mb: 1.5,
-                  "&::after": {
-                    content: '" *"',
-                    color: "error.main",
-                  },
-                }}
-              >
-                Patient Disease
-              </Typography>
 
-              <Grid container spacing={2}>
-                {/* Type of Disease Card (Optional Field) */}
-                <Grid item xs={12} sm={6} md={4}>
-                  <Card
-                    variant="outlined"
-                    sx={{
-                      height: "100%",
-                      borderRadius: 2,
-                      boxShadow: "none",
-                      transform: "none",
-                      "&:hover": {
-                        transform: "none",
-                        boxShadow: "none",
-                      },
-                    }}
-                  >
-                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
-                      <TextField
-                        fullWidth
-                        label="Type of Disease"
-                        placeholder="e.g. Diabetes, Hypertension"
-                        size="small"
-                        value={form.formData.typeOfDisease || ""}
-                        onChange={(e) =>
-                          handleChange("formData.typeOfDisease", e.target.value)
-                        }
-                      />
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-            </Box>
-            <Box sx={{ width: "100%", my: 2 }}>
-              {/* Required Header Label */}
-              <Typography
-                variant="subtitle1"
-                sx={{
                   fontWeight: 600,
                   mb: 1.5,
                   "&::after": {
@@ -1994,6 +1973,13 @@ function Forms() {
                     />
                   )} />
               </div>
+              <PatientDiseaseInput
+                value={form.formData.typeOfDisease}
+                onChange={(val) => handleChange("formData.typeOfDisease", val)}
+                isRequired={false}
+              // error={errors?.typeOfDisease}
+              />
+
             </div>
 
             <div className="input-row full-width-row">
@@ -2016,57 +2002,9 @@ function Forms() {
 
             {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
-            <Box sx={{ width: "100%", my: 2 }}>
-              {/* Required Header Label */}
-              <Typography
-                variant="subtitle1"
-                sx={{
-                  fontWeight: 600,
-                  mb: 1.5,
-                  "&::after": {
-                    content: '" *"',
-                    color: "error.main",
-                  },
-                }}
-              >
-                Patient Disease
-              </Typography>
-
-              <Grid container spacing={2}>
-                {/* Type of Disease Card (Optional Field) */}
-                <Grid item xs={12} sm={6} md={4}>
-                  <Card
-                    variant="outlined"
-                    sx={{
-                      height: "100%",
-                      borderRadius: 2,
-                      boxShadow: "none",
-                      transform: "none",
-                      "&:hover": {
-                        transform: "none",
-                        boxShadow: "none",
-                      },
-                    }}
-                  >
-                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
-                      <TextField
-                        fullWidth
-                        label="Type of Disease"
-                        placeholder="e.g. Diabetes, Hypertension"
-                        size="small"
-                        value={form.formData.typeOfDisease || ""}
-                        onChange={(e) =>
-                          handleChange("formData.typeOfDisease", e.target.value)
-                        }
-                      />
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-            </Box>
 
             <div className="input-row">
-              <div className="input-group">
+              <div className="input-group" style={{ marginTop: "10px" }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
                     type="checkbox"
@@ -2106,20 +2044,6 @@ function Forms() {
             <h3>Surgery Details</h3>
 
             <div className="input-row">
-              <div className="input-group">
-                <label className="required">Surgery Name</label>
-
-                <input
-                  type="text"
-                  className="input-field"
-                  value={form.formData.surgeryName}
-                  onChange={(e) =>
-                    handleChange("formData.surgeryName", e.target.value)
-                  }
-                  required
-                />
-              </div>
-
               <div className="input-group">
                 <label className="required">Department</label>
 
@@ -2177,6 +2101,28 @@ function Forms() {
                     />
                   )} />
               </div>
+              <div className="input-group">
+                <label className="required">Surgery Name</label>
+
+                <input
+                  type="text"
+                  className="input-field"
+                  value={form.formData.surgeryName}
+                  onChange={(e) =>
+                    handleChange("formData.surgeryName", e.target.value)
+                  }
+                  required
+                />
+              </div>
+
+
+              <PatientDiseaseInput
+                value={form.formData.typeOfDisease}
+                onChange={(val) => handleChange("formData.typeOfDisease", val)}
+                isRequired={false}
+              // error={errors?.typeOfDisease}
+              />
+
             </div>
 
             <div className="input-row full-width-row">
@@ -2194,54 +2140,7 @@ function Forms() {
             </div>
             {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
-            <Box sx={{ width: "100%", my: 2 }}>
-              {/* Required Header Label */}
-              <Typography
-                variant="subtitle1"
-                sx={{
-                  fontWeight: 600,
-                  mb: 1.5,
-                  "&::after": {
-                    content: '" *"',
-                    color: "error.main",
-                  },
-                }}
-              >
-                Patient Disease
-              </Typography>
 
-              <Grid container spacing={2}>
-                {/* Type of Disease Card (Optional Field) */}
-                <Grid item xs={12} sm={6} md={4}>
-                  <Card
-                    variant="outlined"
-                    sx={{
-                      height: "100%",
-                      borderRadius: 2,
-                      boxShadow: "none",
-                      transform: "none",
-                      "&:hover": {
-                        transform: "none",
-                        boxShadow: "none",
-                      },
-                    }}
-                  >
-                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
-                      <TextField
-                        fullWidth
-                        label="Type of Disease"
-                        placeholder="e.g. Diabetes, Hypertension"
-                        size="small"
-                        value={form.formData.typeOfDisease || ""}
-                        onChange={(e) =>
-                          handleChange("formData.typeOfDisease", e.target.value)
-                        }
-                      />
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-            </Box>
             <div className="input-row">
               <div className="input-group">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -2341,6 +2240,12 @@ function Forms() {
                     />
                   )} />
               </div>
+              <PatientDiseaseInput
+                value={form.formData.typeOfDisease}
+                onChange={(val) => handleChange("formData.typeOfDisease", val)}
+                isRequired={false}
+              // error={errors?.typeOfDisease}
+              />
             </div>
 
             <div className="input-row full-width-row">
@@ -2377,54 +2282,6 @@ function Forms() {
             </div>
             {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
-            <Box sx={{ width: "100%", my: 2 }}>
-              {/* Required Header Label */}
-              <Typography
-                variant="subtitle1"
-                sx={{
-                  fontWeight: 600,
-                  mb: 1.5,
-                  "&::after": {
-                    content: '" *"',
-                    color: "error.main",
-                  },
-                }}
-              >
-                Patient Disease
-              </Typography>
-
-              <Grid container spacing={2}>
-                {/* Type of Disease Card (Optional Field) */}
-                <Grid item xs={12} sm={6} md={4}>
-                  <Card
-                    variant="outlined"
-                    sx={{
-                      height: "100%",
-                      borderRadius: 2,
-                      boxShadow: "none",
-                      transform: "none",
-                      "&:hover": {
-                        transform: "none",
-                        boxShadow: "none",
-                      },
-                    }}
-                  >
-                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
-                      <TextField
-                        fullWidth
-                        label="Type of Disease"
-                        placeholder="e.g. Diabetes, Hypertension"
-                        size="small"
-                        value={form.formData.typeOfDisease || ""}
-                        onChange={(e) =>
-                          handleChange("formData.typeOfDisease", e.target.value)
-                        }
-                      />
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-            </Box>
             <div className="input-row">
               <div className="input-group">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -2523,6 +2380,12 @@ function Forms() {
                   )} />
 
               </div>
+              <PatientDiseaseInput
+                value={form.formData.typeOfDisease}
+                onChange={(val) => handleChange("formData.typeOfDisease", val)}
+                isRequired={false}
+              // error={errors?.typeOfDisease}
+              />
             </div>
 
             <div className="input-row full-width-row">
@@ -2556,54 +2419,7 @@ function Forms() {
               </div>
             </div>
 
-            <Box sx={{ width: "100%", my: 2 }}>
-              {/* Required Header Label */}
-              <Typography
-                variant="subtitle1"
-                sx={{
-                  fontWeight: 600,
-                  mb: 1.5,
-                  "&::after": {
-                    content: '" *"',
-                    color: "error.main",
-                  },
-                }}
-              >
-                Patient Disease
-              </Typography>
 
-              <Grid container spacing={2}>
-                {/* Type of Disease Card (Optional Field) */}
-                <Grid item xs={12} sm={6} md={4}>
-                  <Card
-                    variant="outlined"
-                    sx={{
-                      height: "100%",
-                      borderRadius: 2,
-                      boxShadow: "none",
-                      transform: "none",
-                      "&:hover": {
-                        transform: "none",
-                        boxShadow: "none",
-                      },
-                    }}
-                  >
-                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
-                      <TextField
-                        fullWidth
-                        label="Type of Disease"
-                        placeholder="e.g. Diabetes, Hypertension"
-                        size="small"
-                        value={form.formData.typeOfDisease || ""}
-                        onChange={(e) =>
-                          handleChange("formData.typeOfDisease", e.target.value)
-                        }
-                      />
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-            </Box>
             <div className="input-row">
               <div className="input-group">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -2858,8 +2674,8 @@ function Forms() {
               </div>
             </div>
             {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
-            <Box sx={{ width: "100%", my: 2 }}>
-              {/* Required Header Label */}
+            {/* <Box sx={{ width: "100%", my: 2 }}>
+  
               <Typography
                 variant="subtitle1"
                 sx={{
@@ -2875,7 +2691,7 @@ function Forms() {
               </Typography>
 
               <Grid container spacing={2}>
-                {/* Type of Disease Card (Optional Field) */}
+         
                 <Grid item xs={12} sm={6} md={4}>
                   <Card
                     variant="outlined"
@@ -2905,7 +2721,7 @@ function Forms() {
                   </Card>
                 </Grid>
               </Grid>
-            </Box>
+            </Box> */}
 
             <div className="input-row">
               <div className="input-group">
@@ -3002,6 +2818,12 @@ function Forms() {
                     />
                   )} />
               </div>
+              <PatientDiseaseInput
+                value={form.formData.typeOfDisease}
+                onChange={(val) => handleChange("formData.typeOfDisease", val)}
+                isRequired={false}
+              // error={errors?.typeOfDisease}
+              />
             </div>
 
             <div className="input-row full-width-row">
@@ -3020,54 +2842,7 @@ function Forms() {
             </div>
             {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
 
-            <Box sx={{ width: "100%", my: 2 }}>
-              {/* Required Header Label */}
-              <Typography
-                variant="subtitle1"
-                sx={{
-                  fontWeight: 600,
-                  mb: 1.5,
-                  "&::after": {
-                    content: '" *"',
-                    color: "error.main",
-                  },
-                }}
-              >
-                Patient Disease
-              </Typography>
 
-              <Grid container spacing={2}>
-                {/* Type of Disease Card (Optional Field) */}
-                <Grid item xs={12} sm={6} md={4}>
-                  <Card
-                    variant="outlined"
-                    sx={{
-                      height: "100%",
-                      borderRadius: 2,
-                      boxShadow: "none",
-                      transform: "none",
-                      "&:hover": {
-                        transform: "none",
-                        boxShadow: "none",
-                      },
-                    }}
-                  >
-                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
-                      <TextField
-                        fullWidth
-                        label="Type of Disease"
-                        placeholder="e.g. Diabetes, Hypertension"
-                        size="small"
-                        value={form.formData.typeOfDisease || ""}
-                        onChange={(e) =>
-                          handleChange("formData.typeOfDisease", e.target.value)
-                        }
-                      />
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-            </Box>
             <div className="input-row">
               <div className="input-group">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -3198,9 +2973,9 @@ function Forms() {
 
             </div>
             {selectedDoctor && <DoctorProfileCard hosId={selectedHostpital} doctor={selectedDoctor} />}
-
+            {/* 
             <Box sx={{ width: "100%", my: 2 }}>
-              {/* Required Header Label */}
+      
               <Typography
                 variant="subtitle1"
                 sx={{
@@ -3216,7 +2991,7 @@ function Forms() {
               </Typography>
 
               <Grid container spacing={2}>
-                {/* Type of Disease Card (Optional Field) */}
+         
                 <Grid item xs={12} sm={6} md={4}>
                   <Card
                     variant="outlined"
@@ -3246,7 +3021,7 @@ function Forms() {
                   </Card>
                 </Grid>
               </Grid>
-            </Box>
+            </Box> */}
             <div className="input-row">
               <div className="input-group">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -3615,7 +3390,6 @@ function Forms() {
                   required
                 />
               </div>
-
               <div className="input-group">
                 <label className="required">Number Shared?</label>
 
@@ -3641,6 +3415,12 @@ function Forms() {
                   </button>
                 </div>
               </div>
+              <PatientDiseaseInput
+                value={form.formData.typeOfDisease}
+                onChange={(val) => handleChange("formData.typeOfDisease", val)}
+                isRequired={false}
+              // error={errors?.typeOfDisease}
+              />
             </div>
 
             <div className="input-row">
@@ -4476,17 +4256,89 @@ function Forms() {
           </div>
         );
       case "Justdial":
-        return renderRemarksComponents();
+        return <div className="input-row">
+          <div className="input-group textarea-field-container">
+            <label className="required">Remarks</label>
+
+
+            <textarea
+              className="textarea-field"
+              value={form.formData.remarks}
+              onChange={(e) =>
+                handleChange(
+                  "formData.remarks",
+                  e.target.value,
+                )
+              }
+              required
+              rows="3"
+            />
+          </div>
+        </div>
 
       case "Practo":
-        return renderRemarksComponents();
+        return <div className="input-row">
+          <div className="input-group textarea-field-container">
+            <label className="required">Remarks</label>
+
+
+            <textarea
+              className="textarea-field"
+              value={form.formData.remarks}
+              onChange={(e) =>
+                handleChange(
+                  "formData.remarks",
+                  e.target.value,
+                )
+              }
+              required
+              rows="3"
+            />
+          </div>
+        </div>
 
       case "Whatsapp":
-        return renderRemarksComponents();
+        return <div className="input-row">
+          <div className="input-group textarea-field-container">
+            <label className="required">Remarks</label>
+
+
+            <textarea
+              className="textarea-field"
+              value={form.formData.remarks}
+              onChange={(e) =>
+                handleChange(
+                  "formData.remarks",
+                  e.target.value,
+                )
+              }
+              required
+              rows="3"
+            />
+          </div>
+        </div>
 
 
       case "Facebook":
-        return renderRemarksComponents();
+        return <div className="input-row">
+          <div className="input-group textarea-field-container">
+            <label className="required">Remarks</label>
+
+
+            <textarea
+              className="textarea-field"
+              value={form.formData.remarks}
+              onChange={(e) =>
+                handleChange(
+                  "formData.remarks",
+                  e.target.value,
+                )
+              }
+              required
+              rows="3"
+            />
+          </div>
+        </div>
 
       default:
         return null;
@@ -4539,11 +4391,9 @@ function Forms() {
                     </label>
 
                     <Autocomplete
-                      freeSolo
                       sx={{
                         width: "100%",
                         maxWidth: "100%",
-                        // fontSize: '12px',
                         "& .MuiOutlinedInput-root": {
                           height: 28,
                           minHeight: 28,
@@ -4551,12 +4401,10 @@ function Forms() {
                           borderRadius: "var(--radius)",
                           backgroundColor: "#fff",
                           fontSize: '12px',
-
                           "& fieldset": {
                             border: "none",
                           },
                         },
-
                         "& .MuiInputBase-input": {
                           fontSize: '12px',
                           padding: "0 14px",
@@ -4566,27 +4414,21 @@ function Forms() {
                       getOptionLabel={(option) =>
                         typeof option === "string"
                           ? option
-                          : option.label
+                          : option.label || ""
                       }
+                      isOptionEqualToValue={(option, value) => {
+                        const val = typeof value === "object" ? value?.value : value;
+                        return option.value === val;
+                      }}
                       value={
                         REFERENCE_OPTIONS.find(
-                          (item) =>
-                            item.value ===
-                            form.formData.referenceFrom
-                        ) || form.formData.referenceFrom
+                          (item) => item.value === form.formData.referenceFrom
+                        ) || null
                       }
                       onChange={(_, newValue) => {
                         handleChange(
                           "formData.referenceFrom",
-                          typeof newValue === "string"
-                            ? newValue
-                            : newValue?.value || ""
-                        );
-                      }}
-                      onInputChange={(_, newInputValue) => {
-                        handleChange(
-                          "formData.referenceFrom",
-                          newInputValue
+                          newValue ? newValue.value : ""
                         );
                       }}
                       renderInput={(params) => (
@@ -5522,7 +5364,7 @@ function Forms() {
               )}
             </div>
             <div className="input-group">
-              <label className="">Patient Name</label>
+              <label className="required">Patient Name</label>
 
               <input
                 type="text"
@@ -5533,7 +5375,9 @@ function Forms() {
                 }
                 required
               />
+              {/* <span className="error-text">Patient Name is Required</span> */}
             </div>
+
             <div className="input-group">
               <label className="required">Purpose</label>
 
@@ -5542,7 +5386,8 @@ function Forms() {
                   width: "100%",
 
                   "& .MuiOutlinedInput-root": {
-                    minHeight: 38,
+                    minHeight: 28,
+                    height: 28,
                     border: "1px solid var(--border-color)",
                     borderRadius: "var(--radius)",
                     backgroundColor: "#fff",

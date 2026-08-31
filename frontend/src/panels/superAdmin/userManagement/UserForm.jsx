@@ -26,8 +26,8 @@ import {
 import { toast } from "react-toastify";
 
 // Imports from your project structure
-import Header from "../../../components/Header";
-import { sendDataApiFunc } from "../../../utils/services";
+// import Header from "../../../components/Header";
+// import { sendDataApiFunc } from "../../../utils/services";
 import { UserContextHook } from "../../../contexts/UserContexts";
 import { useApi } from "../../../api/useApi";
 import { commonRoutes, superAdminRoutes } from "../../../api/apiService";
@@ -35,7 +35,7 @@ import MultiSelectDropdown from "../userManagement/components/MultiSelectDropdow
 import { getValidationSchema } from "../../Schemas/validation";
 
 const roles = {
-  "superadmin": ["admin", "supermanager", "teamleader", "executive"],
+  "superadmin": ["supermanager", "teamleader", "executive"],
   "admin": ["supermanager", "teamleader", "executive"],
   "supermanager": ["teamleader", "executive"],
   "teamleader": ["executive"],
@@ -79,18 +79,13 @@ const UserForm = ({
       email: initialState?.email ?? "",
       username: initialState?.username ?? "",
       password: "",
-      type: initialState?.type ?? "admin",
-      hospitalName: Array.isArray(initialState?.hospitals)
-        ? initialState.hospitals
-        : initialState?.hospitals
-          ? [initialState.hospitals]
-          : [],
-      selectedBranch: getBranchIds(initialState?.branches)
-      ,
-
+      // Agar isAdmin true hai toh direct "admin" Set hoga, nahi toh initialState se check karega
+      type: initialState?.type ?? "",
+      hospitalName: [hospitalId],
+      selectedBranch: getBranchIds(initialState?.branches),
       canDelete: initialState?.canDelete ?? false,
     }),
-    [initialState, isUpdateComp, hospitalId]
+    [initialState, isUpdateComp, hospitalId] // isAdmin ko dependencies array me zaroor add karein
   );
 
   // console.log("initialValues", initialValues);
@@ -126,6 +121,8 @@ const UserForm = ({
   const handleSubmitForm = async (values, { setSubmitting }) => {
     try {
       setSubmitting(true);
+      // console.log("click", click);
+
 
       // Deep Copy taaki console memory-reference bug na aaye
       let valuesToSubmit = JSON.parse(JSON.stringify(values));
@@ -295,6 +292,8 @@ const UserForm = ({
           setFieldTouched,
           setFieldValue,
         }) => {
+          // console.log("errors", errors);
+
           const customHandleChange = (event) => {
             const { name, value } = event.target;
             handleChange(event);
@@ -576,17 +575,22 @@ const UserForm = ({
                       "& .MuiInputLabel-root": { fontSize: "13px", color: "#64748B" },
                     }}
                   >
+
+
+                    {/* 2. Remaining roles render karenge (duplicate "admin" exclude karke) */}
                     {roles[role] && roles[role].length > 0 ? (
-                      roles[role].map((item) => (
-                        <MenuItem key={item} value={item}>
-                          {/* Capitalizes the first letter for display (e.g. "teamleader" -> "Teamleader") */}
-                          {item.charAt(0).toUpperCase() + item.slice(1)}
-                        </MenuItem>
-                      ))
+                      roles[role]
+                        .map((item) => (
+                          <MenuItem key={item} value={item}>
+                            {item.charAt(0).toUpperCase() + item.slice(1)}
+                          </MenuItem>
+                        ))
                     ) : (
+
                       <MenuItem value="" disabled>
                         No roles found
                       </MenuItem>
+
                     )}
                   </TextField>
                 </Grid>
@@ -640,7 +644,7 @@ const UserForm = ({
                 <Grid item xs={12} pt={2}>
                   <Box display="flex" justifyContent="flex-end" gap={1.5}>
                     <Button
-                    data-testid="canceluserbtn"
+                      data-testid="canceluserbtn"
                       type="button"
                       variant="outlined"
                       onClick={onClose}
@@ -658,6 +662,11 @@ const UserForm = ({
                     >
                       Cancel
                     </Button>
+                    {/* 
+                    {
+                      // console.log("userLoading", userLoading)
+                      console.log("userUpdateLoading", userUpdateLoading)
+                    } */}
 
                     <Button
                       disabled={userLoading || userUpdateLoading}
