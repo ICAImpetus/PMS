@@ -634,6 +634,7 @@ const RenderRemarksComponents = ({ dynamicDepartments = [], message = "Remarks",
   return (
     <Box sx={{ width: "100%", my: 2 }}>
       <Autocomplete
+        data-testid='remarks-autocomplete'
         componentsProps={{
           popper: {
             placement: "bottom-start",
@@ -735,6 +736,7 @@ const RenderRemarksComponents = ({ dynamicDepartments = [], message = "Remarks",
         )}
         renderInput={(params) => (
           <TextField
+            name='remarks-autocomplete'
             {...params}
             label={message}
             required
@@ -1573,7 +1575,6 @@ function Forms() {
                 <Autocomplete
                   sx={{
                     width: "100%",
-
                     "& .MuiOutlinedInput-root": {
                       minHeight: 28,
                       height: 28,
@@ -1622,6 +1623,7 @@ function Forms() {
                       required
                     />
                   )}
+                  data-testid='department-autocomplete'
                 />
               </div>
 
@@ -1632,6 +1634,8 @@ function Forms() {
 
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <DatePicker
+                    data-testid='appointment-date-picker'
+                    name="date-picker"
                     value={
                       form.formData.dateTime
                         ? dayjs(form.formData.dateTime)
@@ -1781,6 +1785,7 @@ function Forms() {
                   >
                     <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
                       <TextField
+                        name="typeOfDisease"
                         fullWidth
                         label="Type of Disease"
                         placeholder="e.g. Diabetes, Hypertension"
@@ -1839,6 +1844,7 @@ function Forms() {
                       <FormControlLabel
                         control={
                           <Checkbox
+                            data-testid="followup-checkbox"
                             checked={Boolean(form.useForFollowup)}
                             onChange={(e) =>
                               handleChange("useForFollowup", e.target.checked)
@@ -1872,6 +1878,7 @@ function Forms() {
                   >
                     <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
                       <TextField
+                        name="patientArrivalTime"
                         fullWidth
                         required
                         type="time"
@@ -4507,6 +4514,7 @@ function Forms() {
 
                 <div className="caller-type-buttons">
                   <button
+                    data-testid="caller-type-patient"
                     type="button"
                     className={`caller-btn ${form.formData.callerType === "Patient" ? "active" : ""}`}
                     onClick={() =>
@@ -4517,6 +4525,7 @@ function Forms() {
                   </button>
 
                   <button
+                    data-testid="caller-type-attendant"
                     type="button"
                     className={`caller-btn ${form.formData.callerType === "Attendant" ? "active" : ""}`}
                     onClick={() =>
@@ -4539,6 +4548,7 @@ function Forms() {
                     </label>
 
                     <Autocomplete
+                      data-testid='reference-from-autocomplete'
                       freeSolo
                       sx={{
                         width: "100%",
@@ -4779,6 +4789,7 @@ function Forms() {
                       minLength="10"
                       title="Enter 10 to 12 digit mobile number"
                       placeholder="10-12 digit number"
+                      name='patientMobile'
                     />
                     {patientList?.length > 0 && (
                       <Box sx={{ position: "relative", width: "100%" }}>
@@ -4878,6 +4889,7 @@ function Forms() {
                         handleChange("formData.patientDetails.patientName", e.target.value)
                       }
                       required={isRequired}
+                      name='name'
                     />
                   </div>
                   <div className="input-group">
@@ -4895,6 +4907,7 @@ function Forms() {
                       minLength="10"
                       title="Enter exactly 10-12 digit mobile number"
                       placeholder="10-12 digit number"
+                      name="altmobile"
                     />
                   </div>
                 </div>
@@ -4937,6 +4950,7 @@ function Forms() {
                           value
                         );
                       }}
+                      name='age'
                     />
                   </div>
 
@@ -4951,6 +4965,8 @@ function Forms() {
                   }
                 /> */}
                     <Autocomplete
+                      name='location-autocomplete'
+                      data-testid='location-autocomplete'
                       sx={{
                         width: 300,
                         // fontSize: '12px',
@@ -4999,6 +5015,7 @@ function Forms() {
                     <label className={isRequired ? "required" : ""}  >Gender</label>
                     <div className="gender-buttons">
                       <button
+                        data-testid="gender-male-button"
                         type="button"
                         className={`gender-btn ${form.formData.patientDetails.gender === "Male" ? "active" : ""}`}
                         onClick={() => handleChange("formData.patientDetails.gender", "Male")}
@@ -5006,6 +5023,7 @@ function Forms() {
                         Male
                       </button>
                       <button
+                        data-testid="gender-female-button"
                         type="button"
                         className={`gender-btn ${form.formData.patientDetails.gender === "Female" ? "active" : ""}`}
                         onClick={() => handleChange("formData.patientDetails.gender", "Female")}
@@ -5013,6 +5031,7 @@ function Forms() {
                         Female
                       </button>
                       <button
+                        data-testid="gender-transgender-button"
                         type="button"
                         className={`gender-btn ${form.formData.patientDetails.gender === "Transgender" ? "active" : ""}`}
                         onClick={() => handleChange("formData.patientDetails.gender", "Transgender")}
@@ -5020,6 +5039,7 @@ function Forms() {
                         Transgender
                       </button>
                       <button
+                        data-testid="gender-others-button"
                         type="button"
                         className={`gender-btn ${form.formData.patientDetails.gender === "Others" ? "active" : ""}`}
                         onClick={() => handleChange("formData.patientDetails.gender", "Others")}
@@ -5035,6 +5055,7 @@ function Forms() {
                     <label className={isRequired ? "required" : ""}>Status</label>
                     <div className="gender-buttons">
                       <button
+                        data-testid="status-new-button"
                         type="button"
                         className={`gender-btn ${form.formData.patientDetails.status === "New" ? "active" : ""}`}
                         onClick={() => handleChange("formData.patientDetails.status", "New")}
@@ -5042,6 +5063,7 @@ function Forms() {
                         New
                       </button>
                       <button
+                        data-testid="status-old-button"
                         type="button"
                         className={`gender-btn ${form.formData.patientDetails.status === "Old" ? "active" : ""}`}
                         onClick={() => handleChange("formData.patientDetails.status", "Old")}
@@ -5049,6 +5071,7 @@ function Forms() {
                         Old
                       </button>
                       <button
+                        data-testid="status-non-patient-button"
                         type="button"
                         className={`gender-btn ${form.formData.patientDetails.status === "Non-Patient" ? "active" : ""}`}
                         onClick={() =>
@@ -5062,6 +5085,7 @@ function Forms() {
                   <div className="input-group">
                     <label className={isRequired ? "required" : ""}>Category</label>
                     <Autocomplete
+                      data-testid='category-autocomplete'
                       sx={{
                         width: 300,
 
@@ -5111,6 +5135,7 @@ function Forms() {
                     <label className="required">Call Status</label>
                     <div className="connected-buttons">
                       <button
+                        data-testid="call-status-connected-button"
                         type="button"
                         className={`connected-btn ${form.callStatus === "connected" ? "active" : ""}`}
                         onClick={() => handleChange("callStatus", "connected")}
@@ -5118,6 +5143,7 @@ function Forms() {
                         Connected
                       </button>
                       <button
+                        data-testid="call-status-call-drop-button"
                         type="button"
                         className={`connected-btn ${form?.callStatus === "call-drop" ? "active" : ""}`}
                         onClick={() => {
@@ -5199,7 +5225,7 @@ function Forms() {
               <div className="input-group">
                 <label className="required">Purpose Of Call</label>
                 <Autocomplete
-
+                  data-testid='poc-autocomplete'
                   sx={{
                     width: "100%",
                     "& .MuiOutlinedInput-root": {
