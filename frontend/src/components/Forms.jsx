@@ -64,6 +64,7 @@ const PatientDiseaseInput = ({ value, onChange, isRequired = false, error = "" }
     <div className="input-group">
       <label className={isRequired ? "required" : ""}>Type of Disease</label>
       <input
+      data-testid='typeOfDisease'
         type="text"
         className="input-field"
         placeholder="e.g. Diabetes, Hypertension"
@@ -369,7 +370,6 @@ const AppointmentSlotsSelector = ({
 }) => {
   if (!doctorSlots?.length || !selectedDoctor) return null;
 
-
   const {
     request: updateBookedSlotsApi,
     error: updateBookedSlotError,
@@ -450,6 +450,9 @@ const AppointmentSlotsSelector = ({
             <Button
               key={slot._id}
               type="button"
+              data-testid="appointment-slot"
+              data-booked={isBooked}
+              data-past={isPast}
               variant={isSelected ? "contained" : "outlined"}
               disabled={isPast}
               onClick={handleSlotClick}
@@ -1927,6 +1930,7 @@ function Forms() {
                 <label className="">Department</label>
 
                 <Autocomplete
+                  data-testid='department-autocomplete'
                   sx={{
                     width: "100%",
 
@@ -2013,6 +2017,7 @@ function Forms() {
               <div className="input-group" style={{ marginTop: "10px" }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
+                  data-testid="followup-checkbox"
                     type="checkbox"
                     checked={form.useForFollowup}
                     onChange={(e) =>
@@ -4446,6 +4451,7 @@ function Forms() {
                           placeholder="Search or select reference"
                         />
                       )}
+                      data-testid="reference-from-autocomplete"
                     />
                   </div>
 
@@ -5204,6 +5210,7 @@ function Forms() {
           <div className="button-group">
             <Button
               disabled={editMode ? updateFormApiLoading : saveFilledFormLoading}
+              data-testid='clear-form-button'
               type="button"
               variant="outlined"
               onClick={() => {
@@ -5232,6 +5239,7 @@ function Forms() {
             </Button>
 
             <Button
+              data-testid="submit-form-button"
               type="submit"
               disabled={editMode ? updateFormApiLoading : saveFilledFormLoading}
               variant="contained"
