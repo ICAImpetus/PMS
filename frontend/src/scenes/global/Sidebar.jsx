@@ -281,6 +281,14 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                     setSelected={setSelected}
                     isCollapsed={isCollapsed}
                   />
+                  <CustomMenuItem
+                    title="whatsappConnect"
+                    to="/whatsapp-connect"
+                    icon={<ArticleOutlinedIcon fontSize="small" />}
+                    selected={selected}
+                    setSelected={setSelected}
+                    isCollapsed={isCollapsed}
+                  />
                 </>
               )}
 
@@ -294,6 +302,7 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                   setSelected={setSelected}
                   isCollapsed={isCollapsed}
                 />
+
               )}
 
               {/* TEAM LEADER SPECIFIC */}
