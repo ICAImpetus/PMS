@@ -596,3 +596,13 @@ export const superAdminRoutes = {
     return API.get(`/api/getAllUsers`, { params });
   }
 };
+
+
+export const whatsAppRoutes = {
+  connectWhatsApp: (code, hospitalId, wabaId, phoneNumberId) => {
+    return API.post("/api/whatsapp-connect", { code, hospitalId, wabaId, phoneNumberId });
+  },
+  // registerWhatsAppAccount: (hospitalId, wabaId, phoneNumberId, accessToken) => {
+  //   return API.post("/api/register", { hospitalId, wabaId, phoneNumberId, accessToken });
+  // }
+};

@@ -7,7 +7,7 @@ import apiFormRoutes from "./routes/form.routes.js";
 import apiHospitalRoutes from "./routes/hospital.routes.js";
 import apiUserRoutes from "./routes/user.routes.js";
 import apiPaymentRoutes from './routes/paymentRoutes.js'
-import publicRoutes from './routes/public_routes.js'
+import whatsAppRoute from './routes/whatsAppAccount.route.js'
 import errorHandler from "./middlewares/errorHandler.js";
 import "./crons/backupCron.js";
 
@@ -29,7 +29,7 @@ app.set("trust proxy", 1);
 // app.use(securityHeaders);
 
 // 2. MongoDB Injection Protection
-app.use(mongoSanitization);
+// app.use(mongoSanitization);
 
 // ===== PARSERS =====
 app.use(express.json());
@@ -76,11 +76,7 @@ app.use("/api", apiFormRoutes);
 app.use("/api", apiHospitalRoutes);
 app.use("/api", apiUserRoutes);
 app.use("/api", apiPaymentRoutes);
-
-// Public EndPoint 
-
-app.use("/api/v2", apiRateLimiter, publicRoutes);
-
+app.use("/api", whatsAppRoute);
 
 // Serve static files from frontend
 const __filename = fileURLToPath(import.meta.url);

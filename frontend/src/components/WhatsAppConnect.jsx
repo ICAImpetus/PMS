@@ -1,26 +1,38 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useContext, useState, useRef } from 'react';
 import { Button, Card, CardContent, Typography, Box, CircularProgress, Alert } from '@mui/material';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
-import axios from 'axios';
+import HospitalContext from "../contexts/HospitalContexts.jsx";
 
-const WhatsAppConnect = ({ hospitalId }) => {
+const WhatsAppConnect = () => {
     const [loading, setLoading] = useState(false);
     const [statusMessage, setStatusMessage] = useState(null);
     const [isConnected, setIsConnected] = useState(false);
 
+    const { whatsAppConnectMutation, selectedHostpital } = useContext(HospitalContext);
+    const { isPending: isWhatsAppLoading, mutateAsync: whatsAppConnect } = whatsAppConnectMutation;
+
+    // waba_id aur phone_number_id ko session storage/ref me preserve karne ke liye
+    const embeddedSignupDataRef = useRef({ wabaId: null, phoneNumberId: null });
+
     useEffect(() => {
         const handleSessionMessage = (event) => {
-            setLoading(false);
-            console.log("event", event);
-
             if (event.origin !== "https://www.facebook.com" && event.origin !== "https://web.facebook.com") return;
 
             try {
                 const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-                console.log("data", data);
 
-                if (data.type === 'WA_EMBEDDED_SIGNUP') {
-                    const { code, waba_id, phone_number_id } = data.data;
+                // Meta postMessage se waba_id aur phone_number_id capture karein
+                if (data.type === "WA_EMBEDDED_SIGNUP") {
+                    const { waba_id, phone_number_id, code } = data.data || {};
+
+                    if (waba_id && phone_number_id) {
+                        embeddedSignupDataRef.current = {
+                            wabaId: waba_id,
+                            phoneNumberId: phone_number_id
+                        };
+                    }
+
+                    // Agar rare case me window message se code aa jaye
                     if (code) {
                         sendCodeToBackend(code, waba_id, phone_number_id);
                     }
@@ -43,18 +55,28 @@ const WhatsAppConnect = ({ hospitalId }) => {
         setStatusMessage(null);
         setLoading(true);
 
-        // Env Variable se Config ID fetch karein
         const configId = import.meta.env.VITE_META_CONFIG_ID || '1573764420725733';
 
+        // Direct standard synchronous function (REMOVE ASYNC FROM HERE)
         window.FB.login(
             function (response) {
-                if (!response.authResponse) {
+
+                console.log('FB.login response:', response); // Debugging ke liye log karein
+                // OAuth Code hamesha response.authResponse.code me milta hai
+                if (response.authResponse && response.authResponse.code) {
+                    const oauthCode = response.authResponse.code;
+                    const { wabaId, phoneNumberId } = embeddedSignupDataRef.current;
+
+
+
+                    sendCodeToBackend(oauthCode, wabaId, phoneNumberId);
+                } else {
                     setLoading(false);
                     setStatusMessage({ type: 'error', text: 'User cancelled login or authorization failed.' });
                 }
             },
             {
-                config_id: String(configId), // Ensure string type
+                config_id: String(configId),
                 response_type: 'code',
                 override_default_response_type: true,
                 extras: {
@@ -66,8 +88,11 @@ const WhatsAppConnect = ({ hospitalId }) => {
 
     const sendCodeToBackend = async (code, wabaId, phoneNumberId) => {
         try {
-            const res = await axios.post('/api/whatsapp/connect-whatsapp', {
-                hospitalId,
+            setLoading(true);
+
+            // React Query Mutation ka upyog
+            const res = await whatsAppConnect({
+                hospitalId: selectedHostpital,
                 code,
                 wabaId,
                 phoneNumberId
@@ -75,12 +100,20 @@ const WhatsAppConnect = ({ hospitalId }) => {
 
             setLoading(false);
             setIsConnected(true);
-            setStatusMessage({ type: 'success', text: res.data.message });
+            setStatusMessage({
+                type: 'success',
+                text: res?.data?.message || res?.message || 'WhatsApp Business account connected successfully!'
+            });
         } catch (err) {
             setLoading(false);
-            setStatusMessage({ type: 'error', text: err.response?.data?.error || 'Connection failed' });
+            setStatusMessage({
+                type: 'error',
+                text: err.response?.data?.error || err.message || 'Connection failed'
+            });
         }
     };
+
+    const isLoadingState = loading || isWhatsAppLoading;
 
     return (
         <Card sx={{ maxWidth: 500, m: 2, p: 1 }}>
@@ -97,9 +130,15 @@ const WhatsAppConnect = ({ hospitalId }) => {
                         color="success"
                         startIcon={<WhatsAppIcon />}
                         onClick={launchWhatsAppSignup}
-                        disabled={loading || isConnected}
+                        disabled={isLoadingState || isConnected}
                     >
-                        {loading ? <CircularProgress size={24} color="inherit" /> : isConnected ? "Connected" : "Connect WhatsApp"}
+                        {isLoadingState ? (
+                            <CircularProgress size={24} color="inherit" />
+                        ) : isConnected ? (
+                            "Connected"
+                        ) : (
+                            "Connect WhatsApp"
+                        )}
                     </Button>
                 </Box>
             </CardContent>
