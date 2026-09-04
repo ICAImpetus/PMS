@@ -17,6 +17,8 @@ import { Suggestion } from "../models/master.models/suggestionsModel.js";
 import { AdminAgentSchema } from "../models/master.models/AdminAgentModel.js";
 import { PatientSchema } from "../models/teanants/PatientModel.js";
 import { whatsappAccountSchema } from "../models/teanants/WhatsAppAccount.js";
+import { patientStateSchema } from "../models/teanants/patientStateSchema.js";
+import { whatsappNodeSchema } from "../models/teanants/whatsappFlowModel.js";
 
 const connections = {};
 
@@ -111,6 +113,22 @@ export const getWhatsAppAccountModel = (conn) => {
         conn.model("whatsAppAccount", whatsappAccountSchema)
     );
 }
+
+export const getPatientStateModel = (conn) => {
+
+    if (!conn) {
+        throw new Error("DB Connection not found");
+    }
+
+    return (
+        conn.models.patientState ||
+        conn.model("patientState", patientStateSchema)
+    );
+}
+
+
+export const getWhatsAppFlowModel = (conn) => conn.model("whatsAppFlow", whatsappNodeSchema);
+
 export const getBranchModel = (conn) => {
     if (!conn) {
         throw new Error("DB Connection not found");
