@@ -64,7 +64,7 @@ const PatientDiseaseInput = ({ value, onChange, isRequired = false, error = "" }
     <div className="input-group">
       <label className={isRequired ? "required" : ""}>Type of Disease</label>
       <input
-      data-testid='typeOfDisease'
+        data-testid='typeOfDisease'
         type="text"
         className="input-field"
         placeholder="e.g. Diabetes, Hypertension"
@@ -150,6 +150,7 @@ function FormTypeToggleGroup({
         </ToggleButton>
 
         <ToggleButton
+          data-testid='outboundFormToggleButton'
           value="outbound"
           sx={{
             color: "#64748B",
@@ -2017,7 +2018,7 @@ function Forms() {
               <div className="input-group" style={{ marginTop: "10px" }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
-                  data-testid="followup-checkbox"
+                    data-testid="followup-checkbox"
                     type="checkbox"
                     checked={form.useForFollowup}
                     onChange={(e) =>
@@ -2827,7 +2828,9 @@ function Forms() {
                       placeholder="Select Department"
                       required
                     />
-                  )} />
+                  )}
+                  data-testid="department-autocomplete"
+                />
               </div>
               <PatientDiseaseInput
                 value={form.formData.typeOfDisease}
@@ -2858,6 +2861,7 @@ function Forms() {
               <div className="input-group">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
+                    data-testid="followup-checkbox"
                     type="checkbox"
                     checked={form.useForFollowup}
                     onChange={(e) =>
@@ -2898,6 +2902,7 @@ function Forms() {
                 <label className="required">Department</label>
 
                 <Autocomplete
+                  data-testid='department-autocomplete'
                   sx={{
                     width: "100%",
 
@@ -2954,6 +2959,7 @@ function Forms() {
                 <label className="required">Diagnose/Test Name</label>
 
                 <input
+                  name='diagnosis-test-name-input'
                   type="text"
                   className="input-field"
                   value={form.formData.diagnosisOrTestName}
@@ -3037,6 +3043,7 @@ function Forms() {
               <div className="input-group">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
+                    data-testid="followup-checkbox"
                     type="checkbox"
                     checked={form.useForFollowup}
                     onChange={(e) =>
@@ -3078,6 +3085,7 @@ function Forms() {
                 <label className="required">Test Report Name</label>
 
                 <input
+                  name="test-report-name-input"
                   type="text"
                   className="input-field"
                   value={form.formData.reportName}
@@ -3093,6 +3101,7 @@ function Forms() {
               <div className="input-group">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
+                    data-testid="followup-checkbox"
                     type="checkbox"
                     checked={form.useForFollowup}
                     onChange={(e) =>
@@ -3132,6 +3141,7 @@ function Forms() {
               <div className="input-group">
                 <label className="required">Department</label>
                 <Autocomplete
+                  data-testid="department-autocomplete"
                   sx={{
                     width: "100%",
 
@@ -3188,6 +3198,7 @@ function Forms() {
                 <label className="required">Health Scheme Name</label>
 
                 <input
+                  name="health-scheme-name-input"
                   type="text"
                   className="input-field"
                   value={form.formData.govertHealthSchemeName}
@@ -3220,6 +3231,7 @@ function Forms() {
               <div className="input-group">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
+                    data-testid="followup-checkbox"
                     type="checkbox"
                     checked={form.useForFollowup}
                     onChange={(e) =>
@@ -3655,6 +3667,7 @@ function Forms() {
                 <label className="required">Type</label>
 
                 <select
+                  data-testid="followup-type-select"
                   className="select-field"
                   value={form.formData.followupType}
                   onChange={(e) =>
@@ -3664,19 +3677,33 @@ function Forms() {
                 >
                   <option value="">Select</option>
 
-                  <option value="Appointment">Appointment</option>
+                  <option value="Appointment" data-testid="followup-type-appointment">
+                    Appointment
+                  </option>
 
-                  <option value="OPD Timing">OPD Timing</option>
+                  <option value="OPD Timing" data-testid="followup-type-opd-timing">
+                    OPD Timing
+                  </option>
 
-                  <option value="Diagnose and Test">Diagnose and Test</option>
+                  <option value="Diagnose and Test" data-testid="followup-type-diagnose-test">
+                    Diagnose and Test
+                  </option>
 
-                  <option value="Ambulance">Ambulance</option>
+                  <option value="Ambulance" data-testid="followup-type-ambulance">
+                    Ambulance
+                  </option>
 
-                  <option value="Emergency">Emergency</option>
+                  <option value="Emergency" data-testid="followup-type-emergency">
+                    Emergency
+                  </option>
 
-                  <option value="Health Checkup">Health Checkup</option>
+                  <option value="Health Checkup" data-testid="followup-type-health-checkup">
+                    Health Checkup
+                  </option>
 
-                  <option value="Surgery">Surgery</option>
+                  <option value="Surgery" data-testid="followup-type-surgery">
+                    Surgery
+                  </option>
                 </select>
               </div>
 
@@ -3684,6 +3711,7 @@ function Forms() {
                 <label className="required">Status</label>
 
                 <select
+                  data-testid="followup-status-select"
                   className="select-field"
                   value={form.formData.followupStatus}
                   onChange={(e) =>
@@ -3693,11 +3721,17 @@ function Forms() {
                 >
                   <option value="">Select</option>
 
-                  <option value="Visited">Visited</option>
+                  <option value="Visited" data-testid="followup-status-visited">
+                    Visited
+                  </option>
 
-                  <option value="Not Visited">Not Visited</option>
+                  <option value="Not Visited" data-testid="followup-status-not-visited">
+                    Not Visited
+                  </option>
 
-                  <option value="Yet to Visit">Yet to Visit</option>
+                  <option value="Yet to Visit" data-testid="followup-status-yet-to-visit">
+                    Yet to Visit
+                  </option>
                 </select>
               </div>
 
@@ -3705,6 +3739,7 @@ function Forms() {
                 <label className="required">Department</label>
 
                 <select
+                  data-testid="followup-department-select"
                   className="select-field"
                   value={form?.department || ""}
                   onChange={(e) => {
@@ -3741,7 +3776,7 @@ function Forms() {
                   onChange={handleDoctorSelect}
                   label="Select Doctor"
                   required={true}
-                // selectedDay={selectedDay}
+
                 />
               </div>
 
@@ -3752,6 +3787,7 @@ function Forms() {
               <label className="required">Remarks</label>
 
               <textarea
+                name="remarks"
                 className="textarea-field"
                 value={form.formData.remarks}
                 onChange={(e) =>
@@ -3904,12 +3940,13 @@ function Forms() {
                     handleChange("formData.feedback.feedbackType", e.target.value)
                   }
                   required
+                  data-testid="feedback-type-select"
                 >
                   <option value="">Select</option>
-                  <option value="ipd">IPD Feedback</option>
-                  <option value="opd">OPD Feedback</option>
-                  <option value="noFeedback">No Feedback</option>
-                  <option value="notConnected">Not Connected</option>
+                  <option value="ipd" data-testid="ipd-feedback">IPD Feedback</option>
+                  <option value="opd" data-testid="opd-feedback">OPD Feedback</option>
+                  <option value="noFeedback" data-testid="no-feedback">No Feedback</option>
+                  <option value="notConnected" data-testid="not-connected">Not Connected</option>
                 </select>
               </div>
             </div>
@@ -3920,6 +3957,7 @@ function Forms() {
                   <div className="input-group">
                     <label className="required">IPD Number</label>
                     <input
+                      name='ipd-number-input'
                       type="text"
                       className="input-field"
                       value={form.formData.feedback?.ipdNumber || ""}
@@ -3992,6 +4030,7 @@ function Forms() {
                   <div className="input-group textarea-field-container">
                     <label className="required">Remarks</label>
                     <textarea
+                      name='ipd-remarks-textarea'
                       className="textarea-field"
                       value={form.formData.remarks || ""}
                       onChange={(e) =>
@@ -4011,6 +4050,7 @@ function Forms() {
                   <div className="input-group">
                     <label className="">OPD Number</label>
                     <input
+                      name='opd-number-input'
                       type="text"
                       className="input-field"
                       value={form.formData.feedback?.opdNumber || ""}
@@ -4083,6 +4123,7 @@ function Forms() {
                   <div className="input-group textarea-field-container">
                     <label className="required">Remarks</label>
                     <textarea
+                      name="opd-remarks-textarea"
                       className="textarea-field"
                       value={form.formData.remarks || ""}
                       onChange={(e) =>
@@ -4171,6 +4212,7 @@ function Forms() {
                     <label className="required">Mobile Number</label>
 
                     <input
+                      name='mobile'
                       type="text"
                       className="input-field"
                       value={form.formData.patientDetails.mobileNumber}
@@ -4206,6 +4248,7 @@ function Forms() {
                     <label className="required">Age</label>
 
                     <input
+                      name='age'
                       type="number"
                       className="input-field"
                       value={form.formData.patientDetails.patientAge}
@@ -4227,6 +4270,7 @@ function Forms() {
                     <label className="required">Remarks</label>
 
                     <textarea
+                      name='remarks'
                       className="textarea-field"
                       value={form.formData.remarks}
                       onChange={(e) =>
@@ -4250,6 +4294,7 @@ function Forms() {
 
 
                   <textarea
+                    name='remarks'
                     className="textarea-field"
                     value={form.formData.remarks}
                     onChange={(e) =>
@@ -5308,6 +5353,7 @@ function Forms() {
                 minLength="10"
                 title="Enter exactly 10-12 digit mobile number"
                 placeholder="10-12 digit number"
+                name='mobile'
               />
               {patientList?.length > 0 && (
                 <Box sx={{ position: "relative", width: "100%" }}>
@@ -5399,6 +5445,7 @@ function Forms() {
               <label className="required">Patient Name</label>
 
               <input
+                name='name'
                 type="text"
                 className="input-field"
                 value={form.formData.patientDetails.patientName}
@@ -5414,6 +5461,7 @@ function Forms() {
               <label className="required">Purpose</label>
 
               <Autocomplete
+                data-testid="poc-autocomplete"
                 sx={{
                   width: "100%",
 
@@ -5489,6 +5537,7 @@ function Forms() {
           </button> */}
 
           <Button
+            data-testid='clear-form-button'
             disabled={saveFilledFormLoading}
             type="button"
             variant="outlined"
@@ -5518,6 +5567,7 @@ function Forms() {
           </Button>
 
           <Button
+            data-testid="submit-form-button"
             type="submit"
             disabled={editMode ? updateFormApiLoading : (saveFilledFormLoading || !form.purpose)}
             variant="contained"
