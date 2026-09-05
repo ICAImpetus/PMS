@@ -20,6 +20,13 @@ router.post(
     whatsController.handleWebhook,
 );
 
+
+// Bulk save/update flow nodes
+router.post("/hospital-nodes", whatsController.saveHospitalNodes);
+
+// Get all flow nodes for admin UI rendering
+router.get("/hospital-nodes", whatsController.getHospitalNodes);
+
 // router.post(
 //     "/register",
 //     auth,

@@ -7,14 +7,9 @@ import {
     getPatientStateModel, getConnection
 } from '../utils/db.manager.js';
 import mongoose from "mongoose";
-/**
- * @desc    Connect WhatsApp Account via Meta Embedded Signup Code
- * @route   POST /api/whatsapp/connect-whatsapp
- */
 
 const HospitalModel = getHospitalModel(MasterConn)
-import mongoose from 'mongoose';
-import axios from 'axios';
+
 
 export const connectWhatsApp = async (req, res) => {
     let session = null;
@@ -290,9 +285,9 @@ export const verifyWebhook = (req, res) => {
 // };
 
 
-// controllers/webhookController.js
 
 export const handleWebhook = async (req, res) => {
+    // 1. Meta Webhook Acknowledgment
     res.status(200).send("EVENT_RECEIVED");
 
     try {
@@ -303,23 +298,38 @@ export const handleWebhook = async (req, res) => {
         const recipientPhoneId = change.metadata.phone_number_id;
         const patientNumber = incomingMsg.from;
 
-        // 1. Fetch Hospital Tenant
-        const hospital = await HospitalModel.findOne({ whatsAppPhoneNumberId: recipientPhoneId }).lean();
-        if (!hospital) return;
+        console.log(`[Webhook] Incoming message from ${patientNumber} for Phone ID: ${recipientPhoneId}`);
 
+        // 2. Fetch Hospital Tenant
+        const hospital = await HospitalModel.findOne({
+            whatsAppPhoneNumberId: recipientPhoneId,
+            isDeleted: false
+        }).lean();
+
+        if (!hospital) {
+            console.error(`[Webhook Error] No hospital matched for phone ID: ${recipientPhoneId}`);
+            return;
+        }
+
+        // 3. Multi-tenant DB Models
         const conn = await getConnection(hospital.trimmedName);
-        const FlowModel = getWhatsAppFlowModel(conn);
+        const NodeModel = getWhatsAppFlowModel(conn);
         const StateModel = getPatientStateModel(conn);
         const WAAccountModel = getWhatsAppAccountModel(conn);
 
-        const [flowConfig, waAccount] = await Promise.all([
-            FlowModel.findOne({ hospitalId: hospital._id, isActive: true }).lean(),
-            WAAccountModel.findOne({ hospitalId: hospital._id, phoneNumberId: recipientPhoneId }).lean()
-        ]);
+        // Fetch WhatsApp Account credentials
+        const waAccount = await WAAccountModel.findOne({
+            hospitalId: hospital._id,
+            phoneNumberId: recipientPhoneId,
+            isConnected: true
+        }).lean();
 
-        if (!flowConfig || !waAccount) return;
+        if (!waAccount) {
+            console.error(`[Webhook Error] Active WhatsApp Account credentials not found for hospital: ${hospital.trimmedName}`);
+            return;
+        }
 
-        // Fetch / Init Patient Session
+        // 4. Fetch or Init Patient Session State
         let session = await StateModel.findOne({ patientPhoneNumber: patientNumber });
         if (!session) {
             session = await StateModel.create({
@@ -330,73 +340,164 @@ export const handleWebhook = async (req, res) => {
             });
         }
 
-        // 2. TRIGGER RESET (e.g., "hi", "menu", "start")
-        if (incomingMsg.type === "text" && incomingMsg.text.body.trim().toLowerCase() === flowConfig.triggerKeyword) {
+        // 5. TRIGGER MATCHING LOGIC
+        const userMessage = incomingMsg.type === "text" ? incomingMsg.text.body.trim().toLowerCase() : "";
+        const defaultTriggers = ["hi", "hii", "hello", "menu", "start", "namaste"];
+
+        if (incomingMsg.type === "text" && defaultTriggers.includes(userMessage)) {
+            console.log(`[Webhook] Trigger keyword '${userMessage}' matched. Resetting session to START_NODE.`);
+
+            // Session Reset
             session.currentNodeId = "START_NODE";
             session.context = new Map();
             await session.save();
 
-            // Render First Node dynamically
-            await renderNode({
-                nodeId: "START_NODE",
-                flowConfig,
-                waAccount,
-                recipientPhoneId,
-                patientNumber
-            });
+            // Fetch START_NODE document from Single Node Collection
+            const startNode = await NodeModel.findOne({
+                hospitalId: hospital._id,
+                nodeId: "START_NODE"
+            }).lean();
+
+            if (startNode) {
+                await renderNode({
+                    node: startNode,
+                    waAccount,
+                    recipientPhoneId,
+                    patientNumber
+                });
+            } else {
+                console.error(`[Webhook Error] START_NODE document not found in DB for hospital: ${hospital.trimmedName}`);
+            }
             return;
         }
 
-        // Fetch Current Active Node from Graph
-        const currentNode = flowConfig.nodes.find(n => n.nodeId === session.currentNodeId);
-        if (!currentNode) return;
+        // 6. FETCH CURRENT ACTIVE NODE
+        const currentNode = await NodeModel.findOne({
+            hospitalId: hospital._id,
+            nodeId: session.currentNodeId
+        }).lean();
+
+        if (!currentNode) {
+            console.error(`[Webhook Error] Current Node '${session.currentNodeId}' not found.`);
+            return;
+        }
 
         let targetNextNodeId = null;
 
-        // 3. CASE A: User selected option from Interactive Menu/Buttons
+        console.log(`[Webhook] Current Node:incomingMsg.type ${incomingMsg.type} ${currentNode.nodeId}, Type: ${currentNode.type}`);
+        // CASE A: Interactive List or Button Response
         if (incomingMsg.type === "interactive") {
             const selectedOptionId = incomingMsg.interactive.list_reply?.id || incomingMsg.interactive.button_reply?.id;
             const matchedOption = currentNode.options?.find(opt => opt.optionId === selectedOptionId);
 
+            console.log(`[Webhook] Matched Option: ${matchedOption?.matchedOption}`);
+            console.log(`[Webhook] Matched Option: ${JSON.stringify(incomingMsg.interactive)}`);
             if (matchedOption) {
-                // Save selected title into session context dynamically
                 session.context.set(currentNode.nodeId, matchedOption.title);
                 targetNextNodeId = matchedOption.nextNodeId;
             }
         }
-        // 4. CASE B: User provided Text Input (e.g., Date, Name, Symptoms)
+        // CASE B: User Text Input
         else if (incomingMsg.type === "text" && currentNode.type === "TEXT_INPUT") {
-            const userInput = incomingMsg.text.body.trim();
-
-            // Save input value to key name defined in DB Node
             if (currentNode.inputVariable) {
-                session.context.set(currentNode.inputVariable, userInput);
+                session.context.set(currentNode.inputVariable, incomingMsg.text.body.trim());
             }
             targetNextNodeId = currentNode.nextNodeId;
         }
 
-        // 5. EXECUTE NEXT NODE IN GRAPH
+        console.log("targetNextNodeId", targetNextNodeId);
+        // 7. EXECUTE NEXT TARGET NODE
         if (targetNextNodeId) {
             session.currentNodeId = targetNextNodeId;
             await session.save();
 
-            // Render Next Target Node
-            await renderNode({
-                nodeId: targetNextNodeId,
-                flowConfig,
-                waAccount,
-                recipientPhoneId,
-                patientNumber,
-                context: session.context
-            });
+            const nextNodeDoc = await NodeModel.findOne({
+                hospitalId: hospital._id,
+                nodeId: targetNextNodeId
+            }).lean();
+
+            console.log("nextNodeDoc", nextNodeDoc);
+
+            if (nextNodeDoc) {
+                await renderNode({
+                    node: nextNodeDoc,
+                    waAccount,
+                    recipientPhoneId,
+                    patientNumber,
+                    context: session.context
+                });
+            }
         }
 
     } catch (err) {
-        console.error("Scalable Engine Execution Error:", err.message);
+        console.error("Webhook Handling Exception:", err);
     }
 };
 
+/**
+ * Universal Node Render Helper (Meta API Post Request)
+ */
+async function renderNode({ node, waAccount, recipientPhoneId, patientNumber, context }) {
+    try {
+        let textBody = node.messageText;
 
+        // Variable Interpolation (e.g., {{appointment_date}})
+        if (context) {
+            for (const [key, val] of context.entries()) {
+                textBody = textBody.replace(new RegExp(`{{${key}}}`, 'g'), val);
+            }
+        }
+
+        if (node.type === "INTERACTIVE_LIST") {
+            await axios.post(
+                `https://graph.facebook.com/v20.0/${recipientPhoneId}/messages`,
+                {
+                    messaging_product: "whatsapp",
+                    recipient_type: "individual",
+                    to: patientNumber,
+                    type: "interactive",
+                    interactive: {
+                        type: "list",
+                        header: { type: "text", text: "Menu Options" },
+                        body: { text: textBody },
+                        footer: { text: "Select an option below" },
+                        action: {
+                            button: "Choose Option",
+                            sections: [
+                                {
+                                    title: "Options",
+                                    rows: node.options.map(opt => ({
+                                        id: opt.optionId,
+                                        title: opt.title,
+                                        description: opt.description || ""
+                                    }))
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    headers: { Authorization: `Bearer ${waAccount.accessToken}` }
+                }
+            );
+        } else if (node.type === "TEXT_INPUT" || node.type === "END") {
+            await axios.post(
+                `https://graph.facebook.com/v20.0/${recipientPhoneId}/messages`,
+                {
+                    messaging_product: "whatsapp",
+                    to: patientNumber,
+                    text: { body: textBody }
+                },
+                {
+                    headers: { Authorization: `Bearer ${waAccount.accessToken}` }
+                }
+            );
+        }
+        console.log(`[Webhook] Reply successfully sent to ${patientNumber}`);
+    } catch (apiError) {
+        console.error("[Meta API Send Error]:", apiError.response?.data || apiError.message);
+    }
+}
 export const sendInteractiveListMessage = async ({
     phoneNumberId,
     accessToken,
@@ -428,43 +529,74 @@ export const sendInteractiveListMessage = async ({
         }
     );
 };
-async function renderNode({ nodeId, flowConfig, waAccount, recipientPhoneId, patientNumber, context }) {
-    const node = flowConfig.nodes.find(n => n.nodeId === nodeId);
-    if (!node) return;
 
-    // Dynamic Variable Replacement (e.g. "Hello {{patient_name}}, choose date")
-    let renderedText = node.messageText;
-    if (context) {
-        for (const [key, val] of context.entries()) {
-            renderedText = renderedText.replace(new RegExp(`{{${key}}}`, 'g'), val);
+
+export const saveHospitalNodes = async (req, res) => {
+    const { hospitalId, nodes } = req.body;
+
+    if (!hospitalId || !Array.isArray(nodes)) {
+        return res.status(400).json({ error: "hospitalId and nodes array are required." });
+    }
+
+    try {
+        const hospital = await HospitalModel.findById("6a8d6e97049af6500e262fa7").select("trimmedName").lean();
+        console.log("Hospital Details:", hospital); // Debugging ke liye log karein
+        console.log("Hospital Details:", hospitalId); // Debugging ke liye log karein
+        if (!hospital) return res.status(404).json({ error: "Hospital not found." });
+
+        const conn = await getConnection(hospital.trimmedName);
+        const NodeModel = getWhatsAppFlowModel(conn);
+
+        // Prepare bulk operation array for high performance
+        const bulkOps = nodes.map((node) => ({
+            updateOne: {
+                filter: { hospitalId, nodeId: node.nodeId },
+                update: {
+                    $set: {
+                        ...node,
+                        hospitalId,
+                        isStartNode: node.nodeId === "START_NODE"
+                    }
+                },
+                upsert: true
+            }
+        }));
+
+        await NodeModel.bulkWrite(bulkOps);
+
+        return res.status(200).json({
+            success: true,
+            message: `Successfully saved/updated ${nodes.length} flow nodes for hospital.`
+        });
+    } catch (error) {
+        console.error("Save Nodes Error:", error.message);
+        return res.status(500).json({ error: "Failed to save flow nodes." });
+    }
+};
+
+export const getHospitalNodes = async (req, res) => {
+    const { hospitalId } = req.params;
+
+    try {
+        const hospital = await HospitalModel.findById(hospitalId)
+            .select("trimmedName")
+            .lean();
+
+        if (!hospital) {
+            return res.status(404).json({ success: false, error: "Hospital not found." });
         }
-    }
 
-    // Render Interactive List Node
-    if (node.type === "INTERACTIVE_LIST") {
-        await sendInteractiveListMessage({
-            phoneNumberId: recipientPhoneId,
-            accessToken: waAccount.accessToken,
-            recipientPhone: patientNumber,
-            welcomeText: renderedText,
-            buttonText: "Choose Option",
-            sections: [{
-                title: "Menu",
-                rows: node.options.map(opt => ({
-                    id: opt.optionId,
-                    title: opt.title,
-                    description: opt.description || ""
-                }))
-            }]
+        const conn = await getConnection(hospital.trimmedName);
+        const NodeModel = getWhatsAppNodeModel(conn);
+
+        const nodes = await NodeModel.find({ hospitalId }).lean();
+
+        return res.status(200).json({
+            success: true,
+            count: nodes.length,
+            nodes
         });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
     }
-    // Render Plain Text / Input Prompt Node
-    else if (node.type === "TEXT_INPUT" || node.type === "END") {
-        await sendTextMessage({
-            phoneNumberId: recipientPhoneId,
-            accessToken: waAccount.accessToken,
-            recipientPhone: patientNumber,
-            messageText: renderedText
-        });
-    }
-}
+};
