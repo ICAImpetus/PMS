@@ -825,6 +825,7 @@ const FilledFormsComponent = ({
               {dateFilterOpen && (
                 <Box display="flex" alignItems="center" gap={1}>
                   <TextField
+                    name='dateFilterFrom'
                     label="From"
                     type="date"
                     size="small"
@@ -841,6 +842,7 @@ const FilledFormsComponent = ({
                     }}
                   />
                   <TextField
+                    name='dateFilterTo'
                     label="To"
                     type="date"
                     size="small"
@@ -858,6 +860,7 @@ const FilledFormsComponent = ({
                   />
 
                   <Button
+                  data-testid="apply-filters-button"
                     variant="contained"
                     // startIcon={<DownloadIcon />}
                     disabled={getFilledFormsLoading}
@@ -1067,7 +1070,9 @@ const FilledFormsComponent = ({
               </Typography>
             </Box>
           ) : (
-            <Table size="small">
+            <Table size="small"
+            data-testid="filled-forms-table"
+            >
               <TableHead sx={{ bgcolor: "#F8FAFC" }}>
                 <TableRow>
                   {role && role === "teamleader" && (
@@ -1229,7 +1234,9 @@ const FilledFormsComponent = ({
           <Button onClick={handleCloseConfirm} sx={{ color: "#64748B" }}>
             Cancel
           </Button>
-          <Button onClick={handleConfirmEdit} variant="contained" sx={{ bgcolor: "#0256E8", color: "#ffffff", borderRadius: "12px" }}>
+          <Button onClick={handleConfirmEdit} variant="contained" sx={{ bgcolor: "#0256E8", color: "#ffffff", borderRadius: "12px" }}
+          data-testid="confirm-edit-button"
+          >
             Proceed to Edit
           </Button>
         </DialogActions>

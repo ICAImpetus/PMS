@@ -231,7 +231,9 @@ export const PatientHistoryRow = React.memo(({
                         />
                     ) : (
                         /* CASE 3: Agar koi Status nahi hai -> Plain Edit Button */
-                        <IconButton size="small" onClick={handleEditClick}>
+                        <IconButton size="small" onClick={handleEditClick}
+                        data-testid='edit-button'
+                        >
                             <EditIcon fontSize="small" />
                         </IconButton>
                     )}

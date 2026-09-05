@@ -689,6 +689,7 @@ const TeamDashboard = () => {
                 {/* Stat 2: FORMS */}
                 <Grid item xs={6} sx={{ display: "flex" }}>
                   <Paper elevation={0} onClick={() => { setFormsTypeFilter("all"); setFormsModalOpen("Forms"); }}
+                  data-testid="forms-stat-card"
                     sx={{
                       p: 2.5,
                       width: "100%",
