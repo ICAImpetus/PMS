@@ -58,6 +58,13 @@ export const HospitalSchema = new mongoose.Schema(
     email: { type: String, trim: true, lowercase: true },
     website: { type: String, trim: true },
 
+    whatsAppPhoneNumberId: {
+      type: String,
+      trim: true,
+      index: true,
+      sparse: true // Taaki bina WhatsApp wale hospitals ke null values par index duplicate issue na aaye
+    },
+
     ipAddresses: [
       {
         ip: {

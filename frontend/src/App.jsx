@@ -59,6 +59,7 @@ import { SInglePatientDetails } from "./scenes/global/Patient_Management/SIngleP
 import Subscription from "./panels/superManager/subscription_plan/Subscription";
 import WhatsAppConversations from "./components/WhatsAppAutomation/WhatsAppConversations";
 import WhatsAppFlowBuilder from "./components/WhatsAppAutomation/WhatsAppFlowBuilder";
+import WhatsAppConnect from "./components/WhatsAppConnect";
 
 
 const HospitalManagementLayout = () => {
@@ -97,6 +98,7 @@ function App() {
           <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
           <Route path="/user-management" element={<UserManagement />} />
           <Route path="/admin-audit-logs" element={<AuditLog />} />
+          <Route path="/whatsapp-connect" element={<WhatsAppConnect />} />
           <Route
             path="/whatsapp-conversations"
             element={<WhatsAppConversations />}
