@@ -1,9 +1,6 @@
 import cron from "node-cron";
 import { runBackup } from "../services/backupService.js";
 import { getConnection, getDepartmentModel, getDoctorModel, getFilledFormsModel, getHospitalModel, getPatientModel, MasterConn } from "../utils/db.manager.js";
-import csv from "csv-parser"
-import fs from "fs";
-import mongoose from "mongoose";
 import axios from "axios";
 
 const HospitalModel = getHospitalModel(MasterConn)
@@ -12,7 +9,7 @@ const HospitalModel = getHospitalModel(MasterConn)
 cron.schedule(
     "0 2 * * 0",
     async () => {
-        //console.log("Starting weekly backup...");
+        console.log("Starting weekly backup...");
         await runBackup();
     },
     {
@@ -20,25 +17,8 @@ cron.schedule(
     }
 );
 
-cron.schedule(
-    "0 2 * * 0",
-    async () => {
-        //console.log("Starting Weekly Medical Director Report...");
-
-        try {
-            await sendWeeklyMedicalDirectorReports();
-            //console.log("Weekly reports sent successfully.");
-        } catch (err) {
-            console.error(err);
-        }
-    },
-    {
-        timezone: "Asia/Kolkata",
-    }
-);
 
 
-// await runBackup();
 
 // const STATUSMAP = {
 //     "": "other",

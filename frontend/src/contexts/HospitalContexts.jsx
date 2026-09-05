@@ -5,7 +5,7 @@ import React, {
     useState
 } from "react";
 
-import { commonRoutes } from "../api/apiService";
+import { commonRoutes, whatsAppRoutes } from "../api/apiService";
 import { UserContextHook } from "./UserContexts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -638,6 +638,24 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             toast.error("Audit logs failed")
     });
 
+    const whatsAppConnectMutation = useMutation({
+        mutationFn: async ({ code, wabaId, phoneNumberId }) => {
+            return await whatsAppRoutes.connectWhatsApp(
+                code,
+                selectedHostpital,
+                wabaId,
+                phoneNumberId
+            );
+        },
+        onSuccess: (res) => {
+            toast.success("WhatsApp connected successfully!");
+            // queryClient.invalidateQueries(["dashboard", selectedHostpital, selectedBranch]);
+        },
+        onError: (err) => {
+            toast.error(err?.response?.data?.message || "Failed to connect WhatsApp");
+        },
+    });
+
     useEffect(() => {
 
         if (!auditLogsData) return;
@@ -809,6 +827,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         loading,
         errors,
 
+        whatsAppConnectMutation,
         updateFormStatusMutation,
         refetchDashboard,
         refetchHospital,
