@@ -4,8 +4,10 @@ import {
     getHospitalModel, MasterConn,
     getWhatsAppAccountModel,
     getWhatsAppFlowModel,
-    getPatientStateModel, getConnection
+    getPatientStateModel, getConnection,
+    getMessageModel
 } from '../utils/db.manager.js';
+import { getCachedNode, invalidateHospitalNodeCache, interpolateTemplate } from '../utils/nodeCache.js';
 import mongoose from "mongoose";
 
 const HospitalModel = getHospitalModel(MasterConn)
@@ -287,7 +289,7 @@ export const verifyWebhook = (req, res) => {
 
 
 export const handleWebhook = async (req, res) => {
-    // 1. Meta Webhook Acknowledgment
+    // 1. Meta Webhook Instant Acknowledgment
     res.status(200).send("EVENT_RECEIVED");
 
     try {
@@ -297,10 +299,11 @@ export const handleWebhook = async (req, res) => {
         const incomingMsg = change.messages[0];
         const recipientPhoneId = change.metadata.phone_number_id;
         const patientNumber = incomingMsg.from;
+        const metaMessageId = incomingMsg.id;
 
         console.log(`[Webhook] Incoming message from ${patientNumber} for Phone ID: ${recipientPhoneId}`);
 
-        // 2. Fetch Hospital Tenant
+        // 2. Fetch Tenant Hospital
         const hospital = await HospitalModel.findOne({
             whatsAppPhoneNumberId: recipientPhoneId,
             isDeleted: false
@@ -311,11 +314,38 @@ export const handleWebhook = async (req, res) => {
             return;
         }
 
-        // 3. Multi-tenant DB Models
+        // Get Multi-tenant DB Models
         const conn = await getConnection(hospital.trimmedName);
         const NodeModel = getWhatsAppFlowModel(conn);
         const StateModel = getPatientStateModel(conn);
         const WAAccountModel = getWhatsAppAccountModel(conn);
+
+        // Extract Inbound Content & Type
+        let inboundText = "";
+        const msgType = incomingMsg.type;
+
+        if (msgType === "text") {
+            inboundText = incomingMsg.text.body;
+        } else if (msgType === "interactive") {
+            inboundText = incomingMsg.interactive.list_reply?.title || incomingMsg.interactive.button_reply?.title || "Interactive Option Selected";
+        } else {
+            inboundText = `[Media Message: ${msgType}]`;
+        }
+
+        // =========================================================================
+        // STEP A: SAVE INBOUND MESSAGE FIRST (Guaranteed Storage)
+        // =========================================================================
+        await saveChatMessage({
+            tenantConnection: conn,
+            hospitalId: hospital._id,
+            phoneNumberId: recipientPhoneId,
+            patientPhoneNumber: patientNumber,
+            direction: "INBOUND",
+            messageType: msgType,
+            content: inboundText,
+            metaMessageId: metaMessageId,
+            status: "received"
+        });
 
         // Fetch WhatsApp Account credentials
         const waAccount = await WAAccountModel.findOne({
@@ -325,11 +355,11 @@ export const handleWebhook = async (req, res) => {
         }).lean();
 
         if (!waAccount) {
-            console.error(`[Webhook Error] Active WhatsApp Account credentials not found for hospital: ${hospital.trimmedName}`);
+            console.error(`[Webhook Error] Active WhatsApp Account credentials missing for: ${hospital.trimmedName}`);
             return;
         }
 
-        // 4. Fetch or Init Patient Session State
+        // 3. Fetch / Init Patient Session State
         let session = await StateModel.findOne({ patientPhoneNumber: patientNumber });
         if (!session) {
             session = await StateModel.create({
@@ -340,30 +370,27 @@ export const handleWebhook = async (req, res) => {
             });
         }
 
-        // 5. TRIGGER MATCHING LOGIC
-        const userMessage = incomingMsg.type === "text" ? incomingMsg.text.body.trim().toLowerCase() : "";
+        // 4. TRIGGER MATCHING LOGIC ("hi", "hello", "menu")
+        const userMessage = msgType === "text" ? incomingMsg.text.body.trim().toLowerCase() : "";
         const defaultTriggers = ["hi", "hii", "hello", "menu", "start", "namaste"];
 
-        if (incomingMsg.type === "text" && defaultTriggers.includes(userMessage)) {
+        if (msgType === "text" && defaultTriggers.includes(userMessage)) {
             console.log(`[Webhook] Trigger keyword '${userMessage}' matched. Resetting session to START_NODE.`);
 
-            // Session Reset
             session.currentNodeId = "START_NODE";
             session.context = new Map();
             await session.save();
 
-            // Fetch START_NODE document from Single Node Collection
-            const startNode = await NodeModel.findOne({
-                hospitalId: hospital._id,
-                nodeId: "START_NODE"
-            }).lean();
+            const startNode = await getCachedNode(NodeModel, hospital._id, "START_NODE");
 
             if (startNode) {
                 await renderNode({
                     node: startNode,
                     waAccount,
                     recipientPhoneId,
-                    patientNumber
+                    patientNumber,
+                    tenantConnection: conn,
+                    hospitalId: hospital._id
                 });
             } else {
                 console.error(`[Webhook Error] START_NODE document not found in DB for hospital: ${hospital.trimmedName}`);
@@ -371,11 +398,8 @@ export const handleWebhook = async (req, res) => {
             return;
         }
 
-        // 6. FETCH CURRENT ACTIVE NODE
-        const currentNode = await NodeModel.findOne({
-            hospitalId: hospital._id,
-            nodeId: session.currentNodeId
-        }).lean();
+        // 5. FETCH CURRENT ACTIVE NODE FROM CACHE
+        const currentNode = await getCachedNode(NodeModel, hospital._id, session.currentNodeId);
 
         if (!currentNode) {
             console.error(`[Webhook Error] Current Node '${session.currentNodeId}' not found.`);
@@ -384,39 +408,54 @@ export const handleWebhook = async (req, res) => {
 
         let targetNextNodeId = null;
 
-        console.log(`[Webhook] Current Node:incomingMsg.type ${incomingMsg.type} ${currentNode.nodeId}, Type: ${currentNode.type}`);
         // CASE A: Interactive List or Button Response
-        if (incomingMsg.type === "interactive") {
+        if (msgType === "interactive") {
             const selectedOptionId = incomingMsg.interactive.list_reply?.id || incomingMsg.interactive.button_reply?.id;
-            const matchedOption = currentNode.options?.find(opt => opt.optionId === selectedOptionId);
 
-            console.log(`[Webhook] Matched Option: ${matchedOption?.matchedOption}`);
-            console.log(`[Webhook] Matched Option: ${JSON.stringify(incomingMsg.interactive)}`);
+            let matchedOption = currentNode.options?.find(opt => opt.optionId === selectedOptionId);
+            let activeNode = currentNode;
+
+            // Fallback: Global search across all nodes if session out-of-sync
+            if (!matchedOption) {
+                const globalMatchedNode = await NodeModel.findOne({
+                    hospitalId: hospital._id,
+                    "options.optionId": selectedOptionId
+                }).lean();
+
+                if (globalMatchedNode) {
+                    activeNode = globalMatchedNode;
+                    matchedOption = globalMatchedNode.options.find(opt => opt.optionId === selectedOptionId);
+                    session.currentNodeId = globalMatchedNode.nodeId;
+                    console.log(`[Webhook Auto-Correct] Re-synced active node to: ${globalMatchedNode.nodeId}`);
+                }
+            }
+
             if (matchedOption) {
-                session.context.set(currentNode.nodeId, matchedOption.title);
+                session.context.set(activeNode.nodeId, matchedOption.title);
                 targetNextNodeId = matchedOption.nextNodeId;
+            } else {
+                console.warn(`[Webhook Warning] Option ID '${selectedOptionId}' not found in any registered node.`);
             }
         }
         // CASE B: User Text Input
-        else if (incomingMsg.type === "text" && currentNode.type === "TEXT_INPUT") {
+        else if (msgType === "text" && currentNode.type === "TEXT_INPUT") {
             if (currentNode.inputVariable) {
                 session.context.set(currentNode.inputVariable, incomingMsg.text.body.trim());
             }
             targetNextNodeId = currentNode.nextNodeId;
         }
 
+        console.log("msgType", msgType);
         console.log("targetNextNodeId", targetNextNodeId);
-        // 7. EXECUTE NEXT TARGET NODE
+
+        // 6. EXECUTE NEXT TARGET NODE
         if (targetNextNodeId) {
             session.currentNodeId = targetNextNodeId;
             await session.save();
 
-            const nextNodeDoc = await NodeModel.findOne({
-                hospitalId: hospital._id,
-                nodeId: targetNextNodeId
-            }).lean();
-
+            const nextNodeDoc = await getCachedNode(NodeModel, hospital._id, targetNextNodeId);
             console.log("nextNodeDoc", nextNodeDoc);
+            console.log("session.context", session.context);
 
             if (nextNodeDoc) {
                 await renderNode({
@@ -424,6 +463,8 @@ export const handleWebhook = async (req, res) => {
                     waAccount,
                     recipientPhoneId,
                     patientNumber,
+                    tenantConnection: conn,
+                    hospitalId: hospital._id,
                     context: session.context
                 });
             }
@@ -437,67 +478,159 @@ export const handleWebhook = async (req, res) => {
 /**
  * Universal Node Render Helper (Meta API Post Request)
  */
-async function renderNode({ node, waAccount, recipientPhoneId, patientNumber, context }) {
-    try {
-        let textBody = node.messageText;
+export async function renderNode({
+    node,
+    waAccount,
+    recipientPhoneId,
+    patientNumber,
+    tenantConnection,
+    hospitalId,
+    context
+}) {
+    // 1. String Interpolation
+    const textBody = interpolateTemplate(node.messageText, context);
 
-        // Variable Interpolation (e.g., {{appointment_date}})
-        if (context) {
-            for (const [key, val] of context.entries()) {
-                textBody = textBody.replace(new RegExp(`{{${key}}}`, 'g'), val);
-            }
-        }
+    // 2. Determine Message Type & Fallbacks
+    const optionsCount = node.options?.length || 0;
+    const isReplyButton = node.type === "REPLY_BUTTONS" && optionsCount > 0 && optionsCount <= 3;
+    const isInteractiveList = node.type === "INTERACTIVE_LIST" || (node.type === "REPLY_BUTTONS" && optionsCount > 3);
 
-        if (node.type === "INTERACTIVE_LIST") {
-            await axios.post(
-                `https://graph.facebook.com/v20.0/${recipientPhoneId}/messages`,
-                {
-                    messaging_product: "whatsapp",
-                    recipient_type: "individual",
-                    to: patientNumber,
-                    type: "interactive",
-                    interactive: {
-                        type: "list",
-                        header: { type: "text", text: "Menu Options" },
-                        body: { text: textBody },
-                        footer: { text: "Select an option below" },
-                        action: {
-                            button: "Choose Option",
-                            sections: [
-                                {
-                                    title: "Options",
-                                    rows: node.options.map(opt => ({
-                                        id: opt.optionId,
-                                        title: opt.title,
-                                        description: opt.description || ""
-                                    }))
-                                }
-                            ]
-                        }
+    // 3. Construct Meta Graph API Payload
+    let payload = {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: patientNumber
+    };
+
+    if (isInteractiveList) {
+        payload.type = "interactive";
+        payload.interactive = {
+            type: "list",
+            header: { type: "text", text: "Select Option" },
+            body: { text: textBody },
+            footer: { text: "Tap button below to select" },
+            action: {
+                button: "Choose Option",
+                sections: [
+                    {
+                        title: "Options",
+                        rows: node.options.map((opt) => ({
+                            id: opt.optionId,
+                            title: (opt.title || "").substring(0, 24),
+                            description: (opt.description || "").substring(0, 72)
+                        }))
                     }
+                ]
+            }
+        };
+    } else if (isReplyButton) {
+        payload.type = "interactive";
+        payload.interactive = {
+            type: "button",
+            body: { text: textBody },
+            action: {
+                buttons: node.options.slice(0, 3).map((opt) => ({
+                    type: "reply",
+                    reply: {
+                        id: opt.optionId,
+                        title: (opt.title || "").substring(0, 20)
+                    }
+                }))
+            }
+        };
+    } else {
+        payload.type = "text";
+        payload.text = { body: textBody };
+    }
+
+    try {
+        // 4. Dispatch Post Request to Meta Graph API
+        const metaResponse = await axios.post(
+            `https://graph.facebook.com/v20.0/${recipientPhoneId}/messages`,
+            payload,
+            {
+                headers: {
+                    Authorization: `Bearer ${waAccount.accessToken}`,
+                    "Content-Type": "application/json"
                 },
-                {
-                    headers: { Authorization: `Bearer ${waAccount.accessToken}` }
-                }
-            );
-        } else if (node.type === "TEXT_INPUT" || node.type === "END") {
-            await axios.post(
-                `https://graph.facebook.com/v20.0/${recipientPhoneId}/messages`,
-                {
-                    messaging_product: "whatsapp",
-                    to: patientNumber,
-                    text: { body: textBody }
-                },
-                {
-                    headers: { Authorization: `Bearer ${waAccount.accessToken}` }
-                }
-            );
-        }
-        console.log(`[Webhook] Reply successfully sent to ${patientNumber}`);
+                timeout: 5000 // 5-second strict timeout for outbound requests
+            }
+        );
+
+        const sentMetaId = metaResponse.data?.messages?.[0]?.id || null;
+
+        // 5. Asynchronous Non-Blocking Database Write Operation
+        setImmediate(() => {
+            saveChatMessage({
+                tenantConnection,
+                hospitalId,
+                phoneNumberId: recipientPhoneId,
+                patientPhoneNumber: patientNumber,
+                direction: "OUTBOUND",
+                messageType: isInteractiveList || isReplyButton ? "interactive" : "text",
+                content: textBody,
+                metaMessageId: sentMetaId,
+                status: "sent"
+            }).catch((dbErr) => {
+                console.error("[Async DB Store Error]:", dbErr.message);
+            });
+        });
+
     } catch (apiError) {
-        console.error("[Meta API Send Error]:", apiError.response?.data || apiError.message);
+        const errorDetails = apiError.response?.data || apiError.message;
+        console.error(`[Meta API Dispatch Error] Target: ${patientNumber} | Node: ${node.nodeId}`, errorDetails);
+
+        // Async Non-Blocking Failure Logging
+        setImmediate(() => {
+            saveChatMessage({
+                tenantConnection,
+                hospitalId,
+                phoneNumberId: recipientPhoneId,
+                patientPhoneNumber: patientNumber,
+                direction: "OUTBOUND",
+                messageType: "text",
+                content: `[FAILED TO SEND]: ${textBody}`,
+                status: "failed"
+            }).catch((dbErr) => {
+                console.error("[Async Failure DB Store Error]:", dbErr.message);
+            });
+        });
     }
 }
+
+const saveChatMessage = async ({
+    tenantConnection,
+    hospitalId,
+    phoneNumberId,
+    patientPhoneNumber,
+    direction,
+    messageType = "text",
+    content,
+    metaMessageId = null,
+    status = "received",
+    rawMediaUrl = null
+}) => {
+    try {
+        const MessageModel = getMessageModel(tenantConnection);
+
+        const newMessage = await MessageModel.create({
+            hospitalId,
+            phoneNumberId,
+            patientPhoneNumber,
+            direction, // 'INBOUND' or 'OUTBOUND'
+            messageType,
+            content,
+            metaMessageId,
+            status,
+            rawMediaUrl
+        });
+
+        return newMessage;
+    } catch (error) {
+        console.error(`[Message Store Error] Failed to save ${direction} message:`, error.message);
+        return null;
+    }
+};
 export const sendInteractiveListMessage = async ({
     phoneNumberId,
     accessToken,
@@ -563,6 +696,9 @@ export const saveHospitalNodes = async (req, res) => {
         }));
 
         await NodeModel.bulkWrite(bulkOps);
+
+
+        invalidateHospitalNodeCache(hospitalId);
 
         return res.status(200).json({
             success: true,

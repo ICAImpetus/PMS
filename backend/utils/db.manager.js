@@ -19,6 +19,7 @@ import { PatientSchema } from "../models/teanants/PatientModel.js";
 import { whatsappAccountSchema } from "../models/teanants/WhatsAppAccount.js";
 import { patientStateSchema } from "../models/teanants/patientStateSchema.js";
 import { whatsappNodeSchema } from "../models/teanants/whatsappFlowModel.js";
+import { messageSchema } from "../models/teanants/messageModel.js";
 
 const connections = {};
 
@@ -129,6 +130,7 @@ export const getPatientStateModel = (conn) => {
 
 export const getWhatsAppFlowModel = (conn) => conn.model("whatsAppFlow", whatsappNodeSchema);
 
+export const getMessageModel = (conn) => conn.model("message", messageSchema);
 export const getBranchModel = (conn) => {
     if (!conn) {
         throw new Error("DB Connection not found");
