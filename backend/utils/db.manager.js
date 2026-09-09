@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import env from "../config/env.js";
 import { CodeAlertsSchema } from "../models/teanants/CodeAlertsModel.js";
 import { CodeAnnouncementSchema } from "../models/teanants/CodeAnnouncement.js";
 import { DepartmentSchema } from "../models/teanants/departmentModel.js";
@@ -10,7 +11,6 @@ import { IPDAndDayCareSchema } from "../models/teanants/IPDAndDayCareModel.js";
 import { LabTestSchema } from "../models/teanants/LabTestModel.js";
 import { ProcedureSchema } from "../models/teanants/ProcedureSchema.js";
 import { BranchSchema } from "../models/teanants/branchModel.js";
-import env from "../config/env.js";
 import { HospitalSchema } from "../models/master.models/HospitalModel.js";
 import { AuditLogSchema } from "../models/master.models/Logs.js";
 import { Suggestion } from "../models/master.models/suggestionsModel.js";
@@ -20,6 +20,7 @@ import { whatsappAccountSchema } from "../models/teanants/WhatsAppAccount.js";
 import { patientStateSchema } from "../models/teanants/patientStateSchema.js";
 import { whatsappNodeSchema } from "../models/teanants/whatsappFlowModel.js";
 import { messageSchema } from "../models/teanants/messageModel.js";
+import { leadSchema } from "../models/teanants/leadModel.js";
 
 const connections = {};
 
@@ -128,9 +129,9 @@ export const getPatientStateModel = (conn) => {
 }
 
 
-export const getWhatsAppFlowModel = (conn) => conn.model("whatsAppFlow", whatsappNodeSchema);
-
+export const getWhatsAppNodeModel = (conn) => conn.model("whatsAppFlow", whatsappNodeSchema);
 export const getMessageModel = (conn) => conn.model("message", messageSchema);
+export const getLeadModel = (conn) => conn.model("leads", leadSchema);
 export const getBranchModel = (conn) => {
     if (!conn) {
         throw new Error("DB Connection not found");

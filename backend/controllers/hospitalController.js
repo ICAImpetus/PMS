@@ -454,7 +454,6 @@ export const updateHospitalById = async (req, res) => {
   const { id } = req.params;
   let hospitalData = sanitizeHospitalPayload(req.body || {});
 
-
   if (!id || !mongoose.isValidObjectId(id)) {
     return res.status(400).json({
       message: "Valid ID is required",
@@ -485,6 +484,14 @@ export const updateHospitalById = async (req, res) => {
       hospitalData.managementDetails = JSON.parse(hospitalData.managementDetails);
     }
 
+    if (typeof hospitalData.ipAddresses === "string") {
+      try {
+        hospitalData.ipAddresses = JSON.parse(hospitalData.ipAddresses);
+      } catch (err) {
+        hospitalData.ipAddresses = [];
+      }
+    }
+
     // =========================
     //  FIND EXISTING HOSPITAL
     // =========================
@@ -507,7 +514,7 @@ export const updateHospitalById = async (req, res) => {
       uploadedPublicId = req.publicId;
       uploadedImageUrl = req.imageUrl;
 
-      // delete old image using publicId (correct way)
+      // delete old image using publicId
       if (hospital?.hospitallogoPublicId) {
         await cloudinary.uploader.destroy(hospital.hospitallogoPublicId);
       }
@@ -1649,7 +1656,7 @@ export const addDoctor = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: "Internal Server Error",
+      message: error?.message || "Internal Server Error",
       error: error.message,
     });
   }

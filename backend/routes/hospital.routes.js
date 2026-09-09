@@ -212,9 +212,9 @@ router.get("/single-patient-history", auth, hospitalController.singlePatientHist
 
 // doctor routes 
 
-router.get("/doctor-appointments", auth, checkAdmin, hospitalController.getDoctorAppointment);
-router.get("/doctor-past-appointments", auth, checkAdmin, hospitalController.getPastDoctorAppointments);
-router.get("/doctor-dashboard-stats", auth, checkAdmin, hospitalController.getDoctorDashboardStats);
+router.get("/doctor-appointments", auth, hospitalController.getDoctorAppointment);
+router.get("/doctor-past-appointments", auth, hospitalController.getPastDoctorAppointments);
+router.get("/doctor-dashboard-stats", auth, hospitalController.getDoctorDashboardStats);
 
 
 

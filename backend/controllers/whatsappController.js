@@ -3,12 +3,15 @@ import axios from "axios";
 import {
     getHospitalModel, MasterConn,
     getWhatsAppAccountModel,
-    getWhatsAppFlowModel,
+    getWhatsAppNodeModel,
     getPatientStateModel, getConnection,
-    getMessageModel
+    getMessageModel,
+    getLeadModel,
+    getBranchModel
 } from '../utils/db.manager.js';
 import { getCachedNode, invalidateHospitalNodeCache, interpolateTemplate } from '../utils/nodeCache.js';
 import mongoose from "mongoose";
+import { fetchDepartmentsFromDb, fetchDoctorsFromDb, renderNode, resolveHospitalBranches, saveChatMessage } from "../utils/whatsAppHelperFuntions.js";
 
 const HospitalModel = getHospitalModel(MasterConn)
 
@@ -287,7 +290,6 @@ export const verifyWebhook = (req, res) => {
 // };
 
 
-
 export const handleWebhook = async (req, res) => {
     // 1. Meta Webhook Instant Acknowledgment
     res.status(200).send("EVENT_RECEIVED");
@@ -301,28 +303,42 @@ export const handleWebhook = async (req, res) => {
         const patientNumber = incomingMsg.from;
         const metaMessageId = incomingMsg.id;
 
-        console.log(`[Webhook] Incoming message from ${patientNumber} for Phone ID: ${recipientPhoneId}`);
+        console.log("\n==================== [WEBHOOK INCOMING EVENT] ====================");
+        console.log(`[Webhook] Phone ID: ${recipientPhoneId} | Sender: ${patientNumber} | Message ID: ${metaMessageId}`);
 
-        // 2. Fetch Tenant Hospital
+        // 2. Resolve Multi-tenant Hospital Tenant
         const hospital = await HospitalModel.findOne({
             whatsAppPhoneNumberId: recipientPhoneId,
             isDeleted: false
         }).lean();
 
         if (!hospital) {
-            console.error(`[Webhook Error] No hospital matched for phone ID: ${recipientPhoneId}`);
+            console.error(`[Webhook Debug Error] No hospital record found for Phone ID: ${recipientPhoneId}`);
             return;
         }
 
-        // Get Multi-tenant DB Models
+        console.log(`[Webhook Debug] Tenant Matched: ${hospital?.name} (${hospital.trimmedName}) | Hospital ID: ${hospital._id}`);
+
+        // Obtain Tenant Database Connection Models
         const conn = await getConnection(hospital.trimmedName);
-        const NodeModel = getWhatsAppFlowModel(conn);
+        const NodeModel = getWhatsAppNodeModel(conn);
         const StateModel = getPatientStateModel(conn);
         const WAAccountModel = getWhatsAppAccountModel(conn);
+        const LeadModel = getLeadModel(conn);
+        // const ExecutiveModel = getExecutiveModel(conn);
 
-        // Extract Inbound Content & Type
-        let inboundText = "";
+        // 3. Extract Message & Lead Source Tracking (Ads / Website / Direct)
         const msgType = incomingMsg.type;
+        let inboundText = "";
+        let leadSource = "WHATSAPP_DIRECT"; // Default Source// [cite: 2]
+
+        // Identify Meta Ad Referral Source
+        if (incomingMsg.referral) {
+            const refSource = incomingMsg.referral.source_type;
+            if (refSource === "AD") {
+                leadSource = incomingMsg.referral.headline?.includes("FB") ? "FACEBOOK_ADS" : "INSTAGRAM_ADS";// [cite: 2]
+            }
+        }
 
         if (msgType === "text") {
             inboundText = incomingMsg.text.body;
@@ -332,9 +348,9 @@ export const handleWebhook = async (req, res) => {
             inboundText = `[Media Message: ${msgType}]`;
         }
 
-        // =========================================================================
-        // STEP A: SAVE INBOUND MESSAGE FIRST (Guaranteed Storage)
-        // =========================================================================
+        console.log(`[Webhook Debug] Msg Type: '${msgType}' | Content: '${inboundText}' | Lead Source: '${leadSource}'`);
+
+        // 4. PERSIST INBOUND MESSAGE IMMEDIATELY
         await saveChatMessage({
             tenantConnection: conn,
             hospitalId: hospital._id,
@@ -347,7 +363,7 @@ export const handleWebhook = async (req, res) => {
             status: "received"
         });
 
-        // Fetch WhatsApp Account credentials
+        // Resolve Active WhatsApp Credentials
         const waAccount = await WAAccountModel.findOne({
             hospitalId: hospital._id,
             phoneNumberId: recipientPhoneId,
@@ -355,34 +371,38 @@ export const handleWebhook = async (req, res) => {
         }).lean();
 
         if (!waAccount) {
-            console.error(`[Webhook Error] Active WhatsApp Account credentials missing for: ${hospital.trimmedName}`);
+            console.error(`[Webhook Debug Error] Connected WA Account credentials missing for Hospital ID: ${hospital._id}`);
             return;
         }
 
-        // 3. Fetch / Init Patient Session State
+        // 5. Resolve or Initialize Patient Session State
         let session = await StateModel.findOne({ patientPhoneNumber: patientNumber });
         if (!session) {
+            console.log(`[Webhook Debug] Creating NEW Patient Session State for ${patientNumber}...`);
             session = await StateModel.create({
                 patientPhoneNumber: patientNumber,
                 hospitalId: hospital._id,
                 currentNodeId: "START_NODE",
-                context: {}
+                context: { source: leadSource } // Track Lead Source// [cite: 2]
             });
         }
 
-        // 4. TRIGGER MATCHING LOGIC ("hi", "hello", "menu")
-        const userMessage = msgType === "text" ? incomingMsg.text.body.trim().toLowerCase() : "";
+        // Debug Log Current Context
+        const currentContextObj = session.context instanceof Map ? Object.fromEntries(session.context) : session.context;
+        console.log(`[Webhook Debug] Active Session Node: '${session.currentNodeId}'`);
+        console.log(`[Webhook Debug] Current Session Context:`, JSON.stringify(currentContextObj, null, 2));
+
+        // 6. TRIGGER MATCHING LOGIC ("hi", "hello", "menu", "start")// [cite: 2]
+        const userText = msgType === "text" ? incomingMsg.text.body.trim().toLowerCase() : "";
         const defaultTriggers = ["hi", "hii", "hello", "menu", "start", "namaste"];
 
-        if (msgType === "text" && defaultTriggers.includes(userMessage)) {
-            console.log(`[Webhook] Trigger keyword '${userMessage}' matched. Resetting session to START_NODE.`);
-
+        if (msgType === "text" && defaultTriggers.includes(userText)) {
+            console.log(`[Webhook Debug] Trigger Keyword '${userText}' matched. Resetting Session to START_NODE.`);
             session.currentNodeId = "START_NODE";
-            session.context = new Map();
+            session.context = new Map([["source", leadSource]]);
             await session.save();
 
             const startNode = await getCachedNode(NodeModel, hospital._id, "START_NODE");
-
             if (startNode) {
                 await renderNode({
                     node: startNode,
@@ -393,276 +413,298 @@ export const handleWebhook = async (req, res) => {
                     hospitalId: hospital._id
                 });
             } else {
-                console.error(`[Webhook Error] START_NODE document not found in DB for hospital: ${hospital.trimmedName}`);
+                console.error(`[Webhook Debug Error] START_NODE not found in database for Hospital ID: ${hospital._id}`);
             }
             return;
         }
 
-        // 5. FETCH CURRENT ACTIVE NODE FROM CACHE
+        // 7. FETCH CURRENT ACTIVE NODE
         const currentNode = await getCachedNode(NodeModel, hospital._id, session.currentNodeId);
-
         if (!currentNode) {
-            console.error(`[Webhook Error] Current Node '${session.currentNodeId}' not found.`);
+            console.error(`[Webhook Debug Error] Current node document '${session.currentNodeId}' not found.`);
             return;
         }
 
         let targetNextNodeId = null;
 
-        // CASE A: Interactive List or Button Response
+        // =========================================================================
+        // CASE A: INTERACTIVE SELECTION (Buttons / List Reply)// [cite: 2]
+        // =========================================================================
         if (msgType === "interactive") {
             const selectedOptionId = incomingMsg.interactive.list_reply?.id || incomingMsg.interactive.button_reply?.id;
+            const selectedTitle = incomingMsg.interactive.list_reply?.title || incomingMsg.interactive.button_reply?.title;
 
-            let matchedOption = currentNode.options?.find(opt => opt.optionId === selectedOptionId);
-            let activeNode = currentNode;
+            console.log(`[Webhook Debug] Interactive Reply Received -> Option ID: '${selectedOptionId}' | Title: '${selectedTitle}'`);
 
-            // Fallback: Global search across all nodes if session out-of-sync
-            if (!matchedOption) {
-                const globalMatchedNode = await NodeModel.findOne({
-                    hospitalId: hospital._id,
-                    "options.optionId": selectedOptionId
-                }).lean();
+            // =========================================================================
+            // 1. DYNAMIC PREFIX MATCHING (Handles DB-Driven Dynamic List Options)
+            // =========================================================================
+            if (selectedOptionId.startsWith("BRANCH_")) {
+                const cleanBranchId = selectedOptionId.replace("BRANCH_", "").trim();
+                session.context.set("selected_branch_id", cleanBranchId);
+                session.context.set("selected_branch_name", selectedTitle);
+                session.context.set("NODE_SELECT_BRANCH", selectedTitle);
 
-                if (globalMatchedNode) {
-                    activeNode = globalMatchedNode;
-                    matchedOption = globalMatchedNode.options.find(opt => opt.optionId === selectedOptionId);
-                    session.currentNodeId = globalMatchedNode.nodeId;
-                    console.log(`[Webhook Auto-Correct] Re-synced active node to: ${globalMatchedNode.nodeId}`);
+                targetNextNodeId = "NODE_SELECT_DEPT";
+                console.log(`[Webhook Debug Dynamic] Branch Selected -> ID: '${cleanBranchId}' | Name: '${selectedTitle}' -> Next Node: '${targetNextNodeId}'`);
+            }
+            else if (selectedOptionId.startsWith("DEPT_")) {
+                const cleanDeptId = selectedOptionId.replace("DEPT_", "").trim();
+                session.context.set("selected_dept_id", cleanDeptId);
+                session.context.set("selected_dept_name", selectedTitle);
+                session.context.set("NODE_SELECT_DEPT", selectedTitle);
+
+                targetNextNodeId = "NODE_SELECT_DOC";
+                console.log(`[Webhook Debug Dynamic] Department Selected -> ID: '${cleanDeptId}' | Name: '${selectedTitle}' -> Next Node: '${targetNextNodeId}'`);
+            }
+            else if (selectedOptionId.startsWith("DOC_")) {
+                const cleanDocId = selectedOptionId.replace("DOC_", "").trim();
+                session.context.set("selected_doctor_id", cleanDocId);
+                session.context.set("selected_doctor_name", selectedTitle);
+                session.context.set("NODE_SELECT_DOC", selectedTitle);
+
+                targetNextNodeId = "NODE_ASK_PATIENT_NAME";
+                console.log(`[Webhook Debug Dynamic] Doctor Selected -> ID: '${cleanDocId}' | Name: '${selectedTitle}' -> Next Node: '${targetNextNodeId}'`);
+            }
+            else if (selectedOptionId.startsWith("SLOT_")) {
+                const cleanSlotId = selectedOptionId.replace("SLOT_", "").trim();
+                session.context.set("selected_slot_id", cleanSlotId);
+                session.context.set("NODE_FETCH_SLOTS", selectedTitle);
+
+                targetNextNodeId = "NODE_CONFIRMATION";
+                console.log(`[Webhook Debug Dynamic] Slot Selected -> ID: '${cleanSlotId}' | Time: '${selectedTitle}' -> Next Node: '${targetNextNodeId}'`);
+            }
+            // =========================================================================
+            // 2. STATIC OPTIONS MATCHING (Handles Nodes with hardcoded options in DB)
+            // =========================================================================
+            else {
+                let matchedOption = currentNode.options?.find(opt => opt.optionId === selectedOptionId);
+                let activeNode = currentNode;
+
+                // Global Node Sync Fallback
+                if (!matchedOption) {
+                    console.log(`[Webhook Debug] Option '${selectedOptionId}' not found in node '${currentNode.nodeId}'. Performing global query...`);
+                    const globalMatchedNode = await NodeModel.findOne({
+                        hospitalId: hospital._id,
+                        "options.optionId": selectedOptionId
+                    }).lean();
+
+                    if (globalMatchedNode) {
+                        activeNode = globalMatchedNode;
+                        matchedOption = globalMatchedNode.options.find(opt => opt.optionId === selectedOptionId);
+                        session.currentNodeId = globalMatchedNode.nodeId;
+                        console.log(`[Webhook Debug Auto-Correct] Synced session active node to '${globalMatchedNode.nodeId}'.`);
+                    }
+                }
+
+                if (matchedOption) {
+                    // Save context using Node ID as Key
+                    session.context.set(activeNode.nodeId, selectedTitle);
+                    console.log(`[Webhook Debug] Saved Context -> Key: '${activeNode.nodeId}' = Value: '${selectedTitle}'`);
+
+                    // --- BRANCH CHECK ROUTING (Before Dept Selection) ---
+                    if (selectedOptionId === "OPT_BOOK_APPOINTMENT") {
+                        console.log(`[Webhook Debug] Checking hospital branches...`);
+                        const branchData = await resolveHospitalBranches({ tenantConnection: conn, hospitalId: hospital._id });
+                        console.log(`[Webhook Debug] Branch Resolution Result:`, JSON.stringify(branchData, null, 2));
+
+                        if (branchData.isMultiBranch) {
+                            session.currentNodeId = "NODE_SELECT_BRANCH";
+                            await session.save();
+
+                            await renderNode({
+                                node: {
+                                    nodeId: "NODE_SELECT_BRANCH",
+                                    type: branchData.options.length <= 3 ? "REPLY_BUTTONS" : "INTERACTIVE_LIST",
+                                    messageText: "🏥 *Please select a hospital branch:*",
+                                    options: branchData.options
+                                },
+                                waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id, context: session.context
+                            });
+                            return;
+                        } else if (branchData.singleBranch) {
+                            session.context.set("selected_branch_name", branchData.singleBranch.branchName);
+                            session.context.set("selected_branch_id", branchData.singleBranch._id.toString());
+                            console.log(`[Webhook Debug] Auto-selected Single Branch: '${branchData.singleBranch.branchName}'`);
+                        }
+                    }
+
+                    targetNextNodeId = matchedOption.nextNodeId;
+                } else {
+                    console.warn(`[Webhook Debug Warning] Option ID '${selectedOptionId}' did not match any option across the workflow.`);
                 }
             }
 
-            if (matchedOption) {
-                session.context.set(activeNode.nodeId, matchedOption.title);
-                targetNextNodeId = matchedOption.nextNodeId;
-            } else {
-                console.warn(`[Webhook Warning] Option ID '${selectedOptionId}' not found in any registered node.`);
-            }
+            await session.save();
         }
-        // CASE B: User Text Input
+        // =========================================================================
+        // CASE B: TEXT INPUTS (Patient Name, Age, Date, Call Back Requirement)// [cite: 2]
+        // =========================================================================
         else if (msgType === "text" && currentNode.type === "TEXT_INPUT") {
+            const userInputValue = incomingMsg.text.body.trim();
             if (currentNode.inputVariable) {
-                session.context.set(currentNode.inputVariable, incomingMsg.text.body.trim());
+                session.context.set(currentNode.inputVariable, userInputValue);
+                console.log(`[Webhook Debug] Captured Text Input -> Variable: '${currentNode.inputVariable}' = Value: '${userInputValue}'`);
             }
             targetNextNodeId = currentNode.nextNodeId;
         }
 
-        console.log("msgType", msgType);
-        console.log("targetNextNodeId", targetNextNodeId);
+        console.log(`[Webhook Debug] Calculated Target Next Node ID: '${targetNextNodeId}'`);
 
-        // 6. EXECUTE NEXT TARGET NODE
+        // =========================================================================
+        // 8. TRANSITION & EXECUTE NEXT TARGET NODE
+        // =========================================================================
         if (targetNextNodeId) {
             session.currentNodeId = targetNextNodeId;
             await session.save();
 
             const nextNodeDoc = await getCachedNode(NodeModel, hospital._id, targetNextNodeId);
-            console.log("nextNodeDoc", nextNodeDoc);
-            console.log("session.context", session.context);
+            if (!nextNodeDoc) {
+                console.error(`[Webhook Debug Error] Target next node '${targetNextNodeId}' document not found in DB.`);
+                return;
+            }
 
-            if (nextNodeDoc) {
-                await renderNode({
-                    node: nextNodeDoc,
-                    waAccount,
-                    recipientPhoneId,
-                    patientNumber,
+            console.log(`[Webhook Debug] Executing Next Node -> ID: '${nextNodeDoc.nodeId}' | Type: '${nextNodeDoc.type}'`);
+
+            // --- TYPE 1: DYNAMIC DEPARTMENT LOOKUP FROM MONGO DB ---
+            if (nextNodeDoc.nodeId === "NODE_SELECT_DEPT") {
+                console.log("[Webhook Debug] Fetching Departments dynamically from DB...");
+                const { hasData, options } = await fetchDepartmentsFromDb({
                     tenantConnection: conn,
                     hospitalId: hospital._id,
                     context: session.context
                 });
+
+                console.log(`[Webhook Debug] Departments Fetched -> Has Data: ${hasData} | Count: ${options.length}`);
+
+                if (!hasData) {
+                    await renderNode({
+                        node: { type: "END", messageText: "⚠️ No departments available at the moment. Type *hi* to try again." },
+                        waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id
+                    });
+                    return;
+                }
+
+                await renderNode({
+                    node: { ...nextNodeDoc, type: options.length <= 3 ? "REPLY_BUTTONS" : "INTERACTIVE_LIST", options },
+                    waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id, context: session.context
+                });
+                return;
             }
-        }
 
-    } catch (err) {
-        console.error("Webhook Handling Exception:", err);
-    }
-};
+            // --- TYPE 2: DYNAMIC DOCTOR LOOKUP FROM MONGO DB ---
+            if (nextNodeDoc.nodeId === "NODE_SELECT_DOC") {
+                console.log("[Webhook Debug] Fetching Doctors dynamically from DB...");
+                const { hasData, options } = await fetchDoctorsFromDb({
+                    tenantConnection: conn,
+                    hospitalId: hospital?._id,
+                    context: session.context
+                });
 
-/**
- * Universal Node Render Helper (Meta API Post Request)
- */
-export async function renderNode({
-    node,
-    waAccount,
-    recipientPhoneId,
-    patientNumber,
-    tenantConnection,
-    hospitalId,
-    context
-}) {
-    // 1. String Interpolation
-    const textBody = interpolateTemplate(node.messageText, context);
+                console.log(`[Webhook Debug] Doctors Fetched -> Has Data: ${hasData} | Count: ${options.length}`);
 
-    // 2. Determine Message Type & Fallbacks
-    const optionsCount = node.options?.length || 0;
-    const isReplyButton = node.type === "REPLY_BUTTONS" && optionsCount > 0 && optionsCount <= 3;
-    const isInteractiveList = node.type === "INTERACTIVE_LIST" || (node.type === "REPLY_BUTTONS" && optionsCount > 3);
+                if (!hasData) {
+                    await renderNode({
+                        node: { type: "END", messageText: "⚠️ No doctors available for the selected department. Type *hi* to start over." },
+                        waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id
+                    });
+                    return;
+                }
 
-    // 3. Construct Meta Graph API Payload
-    let payload = {
-        messaging_product: "whatsapp",
-        recipient_type: "individual",
-        to: patientNumber
-    };
-
-    if (isInteractiveList) {
-        payload.type = "interactive";
-        payload.interactive = {
-            type: "list",
-            header: { type: "text", text: "Select Option" },
-            body: { text: textBody },
-            footer: { text: "Tap button below to select" },
-            action: {
-                button: "Choose Option",
-                sections: [
-                    {
-                        title: "Options",
-                        rows: node.options.map((opt) => ({
-                            id: opt.optionId,
-                            title: (opt.title || "").substring(0, 24),
-                            description: (opt.description || "").substring(0, 72)
-                        }))
-                    }
-                ]
+                await renderNode({
+                    node: { ...nextNodeDoc, type: options.length <= 3 ? "REPLY_BUTTONS" : "INTERACTIVE_LIST", options },
+                    waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id, context: session.context
+                });
+                return;
             }
-        };
-    } else if (isReplyButton) {
-        payload.type = "interactive";
-        payload.interactive = {
-            type: "button",
-            body: { text: textBody },
-            action: {
-                buttons: node.options.slice(0, 3).map((opt) => ({
-                    type: "reply",
-                    reply: {
-                        id: opt.optionId,
-                        title: (opt.title || "").substring(0, 20)
-                    }
-                }))
+
+            // --- TYPE 3: LOCAL MONGO DB SLOTS LOOKUP ---
+            if (nextNodeDoc.type === "DB_QUERY") {
+                console.log("[Webhook Debug] Querying Slots dynamically from DB...");
+                const { hasData, options } = await handleCentralizedDbSlots({
+                    tenantConnection: conn,
+                    hospitalId: hospital?._id,
+                    context: session.context
+                });
+
+                console.log(`[Webhook Debug] Slots Fetched -> Has Data: ${hasData} | Count: ${options.length}`);
+
+                if (!hasData) {
+                    await renderNode({
+                        node: { type: "END", messageText: "⚠️ No slots available for the selected doctor/date. Type *hi* to try again." },
+                        waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id
+                    });
+                    return;
+                }
+
+                await renderNode({
+                    node: { ...nextNodeDoc, type: options.length <= 3 ? "REPLY_BUTTONS" : "INTERACTIVE_LIST", options },
+                    waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id, context: session.context
+                });
+                return;
             }
-        };
-    } else {
-        payload.type = "text";
-        payload.text = { body: textBody };
-    }
 
-    try {
-        // 4. Dispatch Post Request to Meta Graph API
-        const metaResponse = await axios.post(
-            `https://graph.facebook.com/v20.0/${recipientPhoneId}/messages`,
-            payload,
-            {
-                headers: {
-                    Authorization: `Bearer ${waAccount.accessToken}`,
-                    "Content-Type": "application/json"
-                },
-                timeout: 5000 // 5-second strict timeout for outbound requests
-            }
-        );
+            // --- TYPE 4: FINAL CONFIRMATION & LEAD CREATION (END NODE) ---
+            if (nextNodeDoc.type === "END") {
+                const contextObj = session.context instanceof Map
+                    ? Object.fromEntries(session.context)
+                    : (session.context || {});
 
-        const sentMetaId = metaResponse.data?.messages?.[0]?.id || null;
+                console.log("[Webhook Debug] Executing END Node. Final Context State:", JSON.stringify(contextObj, null, 2));
 
-        // 5. Asynchronous Non-Blocking Database Write Operation
-        setImmediate(() => {
-            saveChatMessage({
-                tenantConnection,
-                hospitalId,
-                phoneNumberId: recipientPhoneId,
-                patientPhoneNumber: patientNumber,
-                direction: "OUTBOUND",
-                messageType: isInteractiveList || isReplyButton ? "interactive" : "text",
-                content: textBody,
-                metaMessageId: sentMetaId,
-                status: "sent"
-            }).catch((dbErr) => {
-                console.error("[Async DB Store Error]:", dbErr.message);
-            });
-        });
-
-    } catch (apiError) {
-        const errorDetails = apiError.response?.data || apiError.message;
-        console.error(`[Meta API Dispatch Error] Target: ${patientNumber} | Node: ${node.nodeId}`, errorDetails);
-
-        // Async Non-Blocking Failure Logging
-        setImmediate(() => {
-            saveChatMessage({
-                tenantConnection,
-                hospitalId,
-                phoneNumberId: recipientPhoneId,
-                patientPhoneNumber: patientNumber,
-                direction: "OUTBOUND",
-                messageType: "text",
-                content: `[FAILED TO SEND]: ${textBody}`,
-                status: "failed"
-            }).catch((dbErr) => {
-                console.error("[Async Failure DB Store Error]:", dbErr.message);
-            });
-        });
-    }
-}
-
-const saveChatMessage = async ({
-    tenantConnection,
-    hospitalId,
-    phoneNumberId,
-    patientPhoneNumber,
-    direction,
-    messageType = "text",
-    content,
-    metaMessageId = null,
-    status = "received",
-    rawMediaUrl = null
-}) => {
-    try {
-        const MessageModel = getMessageModel(tenantConnection);
-
-        const newMessage = await MessageModel.create({
-            hospitalId,
-            phoneNumberId,
-            patientPhoneNumber,
-            direction, // 'INBOUND' or 'OUTBOUND'
-            messageType,
-            content,
-            metaMessageId,
-            status,
-            rawMediaUrl
-        });
-
-        return newMessage;
-    } catch (error) {
-        console.error(`[Message Store Error] Failed to save ${direction} message:`, error.message);
-        return null;
-    }
-};
-export const sendInteractiveListMessage = async ({
-    phoneNumberId,
-    accessToken,
-    recipientPhone,
-    welcomeText,
-    buttonText,
-    sections
-}) => {
-    return await axios.post(
-        `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`,
-        {
-            messaging_product: "whatsapp",
-            recipient_type: "individual",
-            to: recipientPhone,
-            type: "interactive",
-            interactive: {
-                type: "list",
-                header: { type: "text", text: "Main Menu" },
-                body: { text: welcomeText },
-                footer: { text: "Tap button below to select" },
-                action: {
-                    button: buttonText,
-                    sections: sections
+                // A. APPOINTMENT BOOKING LEAD CREATION// [cite: 2]
+                if (session.context.get("START_NODE")?.includes("Appointment") || contextObj.appointment_date) {
+                    console.log("[Webhook Debug] Creating Lead Document: APPOINTMENT_BOOKING...");
+                    const createdLead = await LeadModel.create({
+                        hospitalId: hospital._id,
+                        patientName: contextObj.patient_name || "Patient",
+                        patientPhoneNumber: patientNumber,
+                        patientAge: contextObj.patient_age || "",
+                        leadType: "APPOINTMENT_BOOKING", // [cite: 2]
+                        departmentName: contextObj.selected_dept_name || contextObj.NODE_SELECT_DEPT || "",
+                        doctorName: contextObj.selected_doctor_name || contextObj.NODE_SELECT_DOC || "",
+                        appointmentDate: contextObj.appointment_date || "",
+                        appointmentSlot: contextObj.NODE_FETCH_SLOTS || "",
+                        branchName: contextObj.selected_branch_name || "",
+                        source: contextObj.source || "WHATSAPP_DIRECT", // [cite: 2]
+                        leadStatus: "NEW"// [cite: 2]
+                    });
+                    console.log(`[Webhook Debug Success] Appointment Lead Created ID: ${createdLead._id}`);
+                }
+                // B. CALLBACK SUPPORT LEAD CREATION & ROUND-ROBIN EXECUTIVE ASSIGNMENT// [cite: 2]
+                else if (session.context.get("START_NODE")?.includes("Callback")) {
+                    console.log("[Webhook Debug] Creating Lead Document: CALLBACK_REQUEST...");
+                    const newLead = await LeadModel.create({
+                        hospitalId: hospital._id,
+                        patientName: contextObj.patient_name || "Enquirer",
+                        patientPhoneNumber: patientNumber,
+                        leadType: "CALLBACK_REQUEST", // [cite: 2]
+                        source: contextObj.source || "WHATSAPP_DIRECT", // [cite: 2]
+                        leadStatus: "NEW"// [cite: 2]
+                    });
+                    console.log(`[Webhook Debug Success] Callback Lead Created ID: ${newLead._id}`);
                 }
             }
-        },
-        {
-            headers: { Authorization: `Bearer ${accessToken}` }
-        }
-    );
-};
 
+            // Render Standard Node (Interactive List, Buttons, Text Input, Confirmation)
+            console.log(`[Webhook Debug] Invoking renderNode for '${nextNodeDoc.nodeId}'...`);
+            await renderNode({
+                node: nextNodeDoc,
+                waAccount,
+                recipientPhoneId,
+                patientNumber,
+                tenantConnection: conn,
+                hospitalId: hospital._id,
+                context: session.context
+            });
+        }
+
+        console.log("==================== [WEBHOOK EVENT PROCESSED] ====================\n");
+
+    } catch (err) {
+        console.error("[Webhook Exception Caught]:", err);
+    }
+};
 
 export const saveHospitalNodes = async (req, res) => {
     const { hospitalId, nodes } = req.body;
@@ -678,7 +720,7 @@ export const saveHospitalNodes = async (req, res) => {
         if (!hospital) return res.status(404).json({ error: "Hospital not found." });
 
         const conn = await getConnection(hospital.trimmedName);
-        const NodeModel = getWhatsAppFlowModel(conn);
+        const NodeModel = getWhatsAppNodeModel(conn);
 
         // Prepare bulk operation array for high performance
         const bulkOps = nodes.map((node) => ({

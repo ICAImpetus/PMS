@@ -9,35 +9,34 @@ export const whatsappNodeSchema = new mongoose.Schema(
             required: true,
             index: true
         },
-        nodeId: {
-            type: String,
-            required: true,
-            trim: true
-        },
+        nodeId: { type: String, required: true, trim: true },
         type: {
             type: String,
-            enum: ["INTERACTIVE_LIST", "REPLY_BUTTONS", "TEXT_INPUT", "API_CALL", "END"],
+            enum: ["INTERACTIVE_LIST", "REPLY_BUTTONS", "TEXT_INPUT", "API_CALL", "DB_QUERY", "END"],
             required: true
         },
-        messageText: {
-            type: String,
-            required: true
-        },
+        messageText: { type: String, required: true },
+
+        // Static Options
         options: [
             {
                 optionId: { type: String, required: true },
                 title: { type: String, required: true },
                 description: { type: String, default: "" },
-                nextNodeId: { type: String, required: true } // Points to another Node document's nodeId
+                nextNodeId: { type: String, required: true }
             }
         ],
-        inputVariable: { type: String, default: null }, // e.g., "appointment_date"
-        nextNodeId: { type: String, default: null },    // Used for TEXT_INPUT or API_CALL
-        isStartNode: { type: Boolean, default: false }  // Marks "START_NODE"
+
+        // Used when type === "TEXT_INPUT"
+        inputVariable: { type: String, default: null }, // e.g. "patient_name", "patient_age"
+
+        // Target Node ID for TEXT_INPUT or API_CALL/DB_QUERY
+        nextNodeId: { type: String, default: null },
+
+        isStartNode: { type: Boolean, default: false }
     },
     { timestamps: true }
 );
 
-// Compound index for O(1) direct node lookup
-whatsappNodeSchema.index({ nodeId: 1 });
+whatsappNodeSchema.index({ nodeId: 1 }, { unique: true });
 

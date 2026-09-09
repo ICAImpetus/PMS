@@ -64,31 +64,32 @@ export const HospitalSchema = new mongoose.Schema(
       index: true,
       sparse: true // Taaki bina WhatsApp wale hospitals ke null values par index duplicate issue na aaye
     },
-
-    ipAddresses: [
-      {
-        ip: {
-          type: String,
-          required: true,
-          trim: true,
+    ipAddresses: {
+      type: [
+        {
+          ip: {
+            type: String,
+            required: true,
+            trim: true,
+          },
+          type: {
+            type: String,
+            enum: ["PUBLIC", "PRIVATE", "CIDR"],
+            default: "PUBLIC",
+          },
+          description: {
+            type: String,
+            trim: true,
+            default: "",
+          },
+          addedAt: {
+            type: Date,
+            default: Date.now, // Passed as a function reference
+          },
         },
-        type: {
-          type: String,
-          enum: ["PUBLIC", "PRIVATE", "CIDR"],
-          default: "PUBLIC",
-        },
-        description: {
-          type: String,
-          trim: true,
-          default: "",
-        },
-        addedAt: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
-
+      ],
+      default: [], // Placed on the outer configuration object
+    },
 
     isActive: { type: Boolean },
     isDeleted: { type: Boolean, default: false },
