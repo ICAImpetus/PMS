@@ -202,6 +202,7 @@ const TabHeader = ({
               textTransform: "none",
               width: { xs: "100%", sm: "auto" }
             }}
+            data-testid='add-button'
           >
             {btnText}
           </Button>
