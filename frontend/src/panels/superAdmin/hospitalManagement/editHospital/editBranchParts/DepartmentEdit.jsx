@@ -540,6 +540,7 @@ const AddDepartmentModal = ({
         }}
       >
         <Button
+          data-testid="cancel-department-button"
           onClick={onClose}
           variant="outlined"
           size="large"
@@ -564,6 +565,7 @@ const AddDepartmentModal = ({
           Cancel
         </Button>
         <Button
+          data-testid="save-department-button"
           onClick={handleSave}
           variant="contained"
           size="large"
