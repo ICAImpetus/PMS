@@ -19,7 +19,7 @@ import AssignmentIndOutlinedIcon from "@mui/icons-material/AssignmentIndOutlined
 import HealingOutlinedIcon from "@mui/icons-material/HealingOutlined";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import LogoutIcon from "@mui/icons-material/Logout";
-
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 // --- CUSTOM ITEM COMPONENT ---
 const CustomMenuItem = ({ title, to, icon, selected, setSelected, isCollapsed, testId }) => {
   const isActive = selected === to || (to !== "/" && selected.startsWith(to));
@@ -237,17 +237,27 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
               )}
 
               {/* EXECUTIVE ITEMS */}
+              {/* EXECUTIVE ITEMS */}
               {isExecutive && (
-                <CustomMenuItem
-                  title="Executive Forms"
-                  to="/executive-forms"
-                  icon={<AssignmentIndOutlinedIcon fontSize="small" />}
-                  selected={selected}
-                  setSelected={setSelected}
-                  isCollapsed={isCollapsed}
-                />
+                <>
+                  <CustomMenuItem
+                    title="WhatsApp Leads"
+                    to="/whatsapp-leads"
+                    icon={<WhatsAppIcon fontSize="small" sx={{ color: "#2563eb" }} />}
+                    selected={selected}
+                    setSelected={setSelected}
+                    isCollapsed={isCollapsed}
+                  />
+                  <CustomMenuItem
+                    title="Executive Forms"
+                    to="/executive-forms"
+                    icon={<AssignmentIndOutlinedIcon fontSize="small" />}
+                    selected={selected}
+                    setSelected={setSelected}
+                    isCollapsed={isCollapsed}
+                  />
+                </>
               )}
-
               {/* MANAGEMENT ITEMS */}
               {isManagement && (
                 <>

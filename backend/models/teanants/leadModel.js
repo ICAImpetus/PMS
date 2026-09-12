@@ -35,6 +35,17 @@ export const leadSchema = new mongoose.Schema(
             type: String,
             enum: ["WHATSAPP_DIRECT", "WEBSITE", "FACEBOOK_ADS", "INSTAGRAM_ADS"],
             default: "WHATSAPP_DIRECT"
+        },
+
+        // Delivery Tracking Fields
+        isSent: {
+            type: Boolean,
+            default: false,
+            index: true
+        },
+        sentAt: {
+            type: Date,
+            default: null
         }
     },
     { timestamps: true }

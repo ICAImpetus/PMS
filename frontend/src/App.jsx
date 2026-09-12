@@ -60,6 +60,7 @@ import Subscription from "./panels/superManager/subscription_plan/Subscription";
 import WhatsAppConversations from "./components/WhatsAppAutomation/WhatsAppConversations";
 import WhatsAppFlowBuilder from "./components/WhatsAppAutomation/WhatsAppFlowBuilder";
 import WhatsAppConnect from "./components/WhatsAppConnect";
+import WhatsAppLeads from "./panels/executive/WhatsAppLeads";
 
 
 const HospitalManagementLayout = () => {
@@ -183,8 +184,12 @@ function App() {
       ) : null}
 
       {userRole === "executive" && (
+        <>
+          <Route path="/executive-forms" element={<ExecutiveForms />} />
+          <Route path="/whatsapp-leads" element={<WhatsAppLeads />} />
+        </>
 
-        <Route path="/executive-forms" element={<ExecutiveForms />} />
+
       )}
     </>
   );
