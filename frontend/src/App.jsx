@@ -186,7 +186,7 @@ function App() {
       {userRole === "executive" && (
         <>
           <Route path="/executive-forms" element={<ExecutiveForms />} />
-          <Route path="/whatsapp-leads" element={<WhatsAppLeads />} />
+          {/* <Route path="/whatsapp-leads" element={<WhatsAppLeads />} /> */}
         </>
 
 

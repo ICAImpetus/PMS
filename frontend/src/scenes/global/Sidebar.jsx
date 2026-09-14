@@ -240,14 +240,14 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
               {/* EXECUTIVE ITEMS */}
               {isExecutive && (
                 <>
-                  <CustomMenuItem
+                  {/* <CustomMenuItem
                     title="WhatsApp Leads"
                     to="/whatsapp-leads"
                     icon={<WhatsAppIcon fontSize="small" sx={{ color: "#2563eb" }} />}
                     selected={selected}
                     setSelected={setSelected}
                     isCollapsed={isCollapsed}
-                  />
+                  /> */}
                   <CustomMenuItem
                     title="Executive Forms"
                     to="/executive-forms"
