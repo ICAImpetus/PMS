@@ -9,6 +9,7 @@ import apiUserRoutes from "./routes/user.routes.js";
 import apiPaymentRoutes from './routes/paymentRoutes.js'
 import whatsAppRoute from './routes/whatsAppAccount.route.js'
 import errorHandler from "./middlewares/errorHandler.js";
+import publicRoutes from './routes/public_routes.js'
 import "./crons/backupCron.js";
 
 // Security middleware
@@ -76,6 +77,7 @@ app.use("/api", apiFormRoutes);
 app.use("/api", apiHospitalRoutes);
 app.use("/api", apiUserRoutes);
 app.use("/api", apiPaymentRoutes);
+app.use("/api/v2", apiRateLimiter, publicRoutes);
 app.use("/api", whatsAppRoute);
 
 // Serve static files from frontend
