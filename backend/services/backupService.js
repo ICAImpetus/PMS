@@ -80,3 +80,5 @@ Error: ${error}
         console.error("Backup failed:", error);
     }
 };
+
+await runBackup()
