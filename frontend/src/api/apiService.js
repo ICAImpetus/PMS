@@ -366,6 +366,15 @@ export const commonRoutes = {
     })
 
   },
+  getLeads: (hospitalId, branchId) => {
+
+    return API.get(`api/leads`, {
+      params: {
+        hospitalId, branchId
+      }
+    })
+
+  },
   getFormEditChanges: (hospitalId) => {
     return API.get(`api/edit-changes`, {
       params: {

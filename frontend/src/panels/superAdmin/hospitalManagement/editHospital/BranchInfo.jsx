@@ -1287,6 +1287,7 @@ const BranchInfo = () => {
         error?.response?.data?.error ||
         error?.message;
     }
+    toast.error(backendMsg || "Internal Server Error")
   };
 
   const handleRemove = async () => {
@@ -1906,7 +1907,7 @@ const BranchInfo = () => {
                 },
               }}
             >
-              <Tab label="OVERVIEW"  />
+              <Tab label="OVERVIEW" />
               <Tab label="DEPARTMENTS" data-testid='departments-tab' />
               <Tab label="DOCTORS" data-testid='doctors-tab' />
               <Tab label="EMPANELMENT" data-testid='empanelment-tab' />

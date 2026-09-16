@@ -325,7 +325,9 @@ export async function renderNode({
     patientNumber,
     tenantConnection,
     hospitalId,
-    context
+    context,
+    hospitalName = 'Support'
+
 }) {
     // 1. String Interpolation
     const textBody = interpolateTemplate(node.messageText, context);
@@ -368,7 +370,7 @@ export async function renderNode({
             type: "list",
             header: { type: "text", text: "Select Option" },
             body: { text: textBody },
-            footer: { text: "Sr Kalla Hospital Support" },
+            footer: { text: hospitalName },
             action: {
                 button: "Choose Option",
                 sections: [

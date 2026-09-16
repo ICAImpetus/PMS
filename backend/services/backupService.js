@@ -81,4 +81,4 @@ Error: ${error}
     }
 };
 
-await runBackup()
+// await runBackup()

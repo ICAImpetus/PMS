@@ -17,7 +17,7 @@ const HospitalModel = getHospitalModel(MasterConn)
 
 
 export const connectWhatsApp = async (req, res) => {
-    let session = null;
+    // Session variables ki zaroorat nahi hai multi-tenant connection me
     const { hospitalId, code, wabaId, phoneNumberId } = req.body;
 
     if (!hospitalId || !code || !wabaId || !phoneNumberId) {
@@ -69,7 +69,8 @@ export const connectWhatsApp = async (req, res) => {
                 client_id: process.env.META_APP_ID,
                 client_secret: process.env.META_APP_SECRET,
                 code: code
-            }
+            },
+            timeout: 15000, // 15 seconds instead of 5000ms
         });
 
         const accessToken = tokenResponse.data.access_token;
@@ -78,6 +79,7 @@ export const connectWhatsApp = async (req, res) => {
         const phoneDetailsResponse = await axios.get(
             `https://graph.facebook.com/v20.0/${phoneNumberId}`,
             {
+                timeout: 15000, // 15 seconds instead of 5000ms
                 headers: { Authorization: `Bearer ${accessToken}` },
                 params: { fields: 'display_phone_number,verified_name,quality_rating' }
             }
@@ -91,8 +93,10 @@ export const connectWhatsApp = async (req, res) => {
         let profileData = {};
         try {
             const profileResponse = await axios.get(
+
                 `https://graph.facebook.com/v20.0/${phoneNumberId}/whatsapp_business_profile`,
                 {
+                    timeout: 15000, // 15 seconds instead of 5000ms
                     headers: { Authorization: `Bearer ${accessToken}` },
                     params: { fields: 'about,address,description,email,profile_picture_url,websites,vertical' }
                 }
@@ -117,7 +121,9 @@ export const connectWhatsApp = async (req, res) => {
         await axios.post(
             `https://graph.facebook.com/v20.0/${wabaId}/subscribed_apps`,
             {},
+
             {
+                timeout: 15000, // 15 seconds instead of 5000ms
                 headers: { Authorization: `Bearer ${accessToken}` }
             }
         );
@@ -131,6 +137,7 @@ export const connectWhatsApp = async (req, res) => {
                     pin: '123456'
                 },
                 {
+                    timeout: 15000, // 15 seconds instead of 5000ms
                     headers: { Authorization: `Bearer ${accessToken}` }
                 }
             );
@@ -140,19 +147,16 @@ export const connectWhatsApp = async (req, res) => {
         }
 
         // ==========================================
-        // 9. START DATABASE TRANSACTION FOR ATOMIC SAVES
+        // 9. DIRECT DATABASE SAVES (WITHOUT SESSION BUFFERING)
         // ==========================================
-        session = await mongoose.startSession();
-        session.startTransaction();
 
-        // Central Model DB Update (Pass session)
+        // Central Model DB Update
         await HospitalModel.findByIdAndUpdate(
             hospitalId,
-            { whatsAppPhoneNumberId: phoneNumberId },
-            { session }
+            { whatsAppPhoneNumberId: phoneNumberId }
         );
 
-        // Tenant Model DB Update (Pass session)
+        // Tenant Model DB Update
         const whatsappAccount = await whatsAppAccountModel.findOneAndUpdate(
             { hospitalId },
             {
@@ -166,12 +170,8 @@ export const connectWhatsApp = async (req, res) => {
                 profile: profileData,
                 isConnected: true
             },
-            { upsert: true, new: true, runValidators: true, session }
+            { upsert: true, new: true, runValidators: true }
         );
-
-        // Commit transaction if both DB updates succeeded
-        await session.commitTransaction();
-        session.endSession();
 
         return res.status(200).json({
             success: true,
@@ -180,12 +180,6 @@ export const connectWhatsApp = async (req, res) => {
         });
 
     } catch (error) {
-        // Rollback DB changes if session active
-        if (session) {
-            await session.abortTransaction();
-            session.endSession();
-        }
-
         console.error('Connect WhatsApp Error:', error.response?.data || error.message);
         return res.status(500).json({
             success: false,
@@ -409,7 +403,8 @@ export const handleWebhook = async (req, res) => {
                     recipientPhoneId,
                     patientNumber,
                     tenantConnection: conn,
-                    hospitalId: hospital._id
+                    hospitalId: hospital._id,
+                    hospitalName: hospital?.name
                 });
             } else {
                 console.error(`[Webhook Debug Error] START_NODE not found in database for Hospital ID: ${hospital._id}`);
@@ -460,7 +455,8 @@ export const handleWebhook = async (req, res) => {
                         type: "END",
                         messageText: "📞 *CALLBACK REQUEST RECEIVED*\n───────────────────────────\nHamari patient support team ke executive jald hi aap se is number par sampark karenge.\n\nThank you for contacting *Sr Kalla Hospital*! 🙏"
                     },
-                    waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id, context: session.context
+                    waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id, context: session.context,
+                    hospitalName: hospital?.name
                 });
                 return;
             }
@@ -552,7 +548,8 @@ export const handleWebhook = async (req, res) => {
                                     messageText: "📍 *SELECT HOSPITAL BRANCH*\n───────────────────────────\nAap kis branch me consultation chahte hain?\n\nNeeche button par click karke branch chunein 👇",
                                     options: branchData.options
                                 },
-                                waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id, context: session.context
+                                waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id, context: session.context,
+                                hospitalName: hospital?.name
                             });
                             return;
                         } else if (branchData.singleBranch) {
@@ -613,14 +610,16 @@ export const handleWebhook = async (req, res) => {
                 if (!hasData) {
                     await renderNode({
                         node: { type: "END", messageText: "⚠️ Abhi koi department available nahi hai. Reset karne ke liye *hi* type karein." },
-                        waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id
+                        waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id,
+                        hospitalName: hospital?.name
                     });
                     return;
                 }
 
                 await renderNode({
                     node: { ...nextNodeDoc, type: options.length <= 3 ? "REPLY_BUTTONS" : "INTERACTIVE_LIST", options },
-                    waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id, context: session.context
+                    waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id, context: session.context,
+                    hospitalName: hospital?.name
                 });
                 return;
             }
@@ -639,14 +638,16 @@ export const handleWebhook = async (req, res) => {
                 if (!hasData) {
                     await renderNode({
                         node: { type: "END", messageText: "⚠️ Selected department ke liye koi doctor available nahi hai. Wapas start karne ke liye *hi* type karein." },
-                        waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id
+                        waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id,
+                        hospitalName: hospital?.name
                     });
                     return;
                 }
 
                 await renderNode({
                     node: { ...nextNodeDoc, type: options.length <= 3 ? "REPLY_BUTTONS" : "INTERACTIVE_LIST", options },
-                    waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id, context: session.context
+                    waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id, context: session.context,
+                    hospitalName: hospital?.name
                 });
                 return;
             }
@@ -658,7 +659,8 @@ export const handleWebhook = async (req, res) => {
 
                 await renderNode({
                     node: { ...nextNodeDoc, type: "INTERACTIVE_LIST", options: dateOptions },
-                    waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id, context: session.context
+                    waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id, context: session.context,
+                    hospitalName: hospital?.name
                 });
                 return;
             }
@@ -677,14 +679,16 @@ export const handleWebhook = async (req, res) => {
                 if (!hasData) {
                     await renderNode({
                         node: { type: "END", messageText: "⚠️ Selected doctor/date par koi slot available nahi hai. Reset karne ke liye *hi* type karein." },
-                        waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id
+                        waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id,
+                        hospitalName: hospital?.name
                     });
                     return;
                 }
 
                 await renderNode({
                     node: { ...nextNodeDoc, type: options.length <= 3 ? "REPLY_BUTTONS" : "INTERACTIVE_LIST", options },
-                    waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id, context: session.context
+                    waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id, context: session.context,
+                    hospitalName: hospital?.name
                 });
                 return;
             }
@@ -706,8 +710,8 @@ export const handleWebhook = async (req, res) => {
                         patientPhoneNumber: patientNumber,
                         patientAge: contextObj.patient_age || "",
                         leadType: "APPOINTMENT_BOOKING",
-                        departmentName: contextObj.selected_dept_name || contextObj.NODE_SELECT_DEPT || "",
-                        doctorName: contextObj.selected_doctor_name || contextObj.NODE_SELECT_DOC || "",
+                        departmentName: contextObj.selected_dept_id || contextObj.NODE_SELECT_DEPT || "",
+                        doctorName: contextObj.selected_doctor_id || contextObj.NODE_SELECT_DOC || "",
                         appointmentDate: contextObj.appointment_date || "",
                         appointmentSlot: contextObj.NODE_FETCH_SLOTS || "",
                         branchName: contextObj.selected_branch_name || "",
@@ -740,7 +744,8 @@ export const handleWebhook = async (req, res) => {
                 patientNumber,
                 tenantConnection: conn,
                 hospitalId: hospital._id,
-                context: session.context
+                context: session.context,
+                hospitalName: hospital?.name
             });
         }
 
@@ -759,7 +764,7 @@ export const saveHospitalNodes = async (req, res) => {
     }
 
     try {
-        const hospital = await HospitalModel.findById("6a8d6e97049af6500e262fa7").select("trimmedName").lean();
+        const hospital = await HospitalModel.findById(hospitalId).select("trimmedName").lean();
         console.log("Hospital Details:", hospital); // Debugging ke liye log karein
         console.log("Hospital Details:", hospitalId); // Debugging ke liye log karein
         if (!hospital) return res.status(404).json({ error: "Hospital not found." });
@@ -821,5 +826,153 @@ export const getHospitalNodes = async (req, res) => {
         });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+
+//  ************** Do not remove becuase he is sample for making flow chart 
+
+// {
+//   "hospitalId": "6a8d6e97049af6500e262fa7",
+//   "nodes": [
+//     {
+//       "nodeId": "START_NODE",
+//       "type": "REPLY_BUTTONS",
+//       "messageText": "🏥 *WELCOME TO SR KALLA HOSPITAL*\n───────────────────────────\nNamaste! Aaj hum aapki kis tarah help kar sakte hain?\n\nKripya neeche diye gaye option me se select karein 👇",
+//       "options": [
+//         {
+//           "optionId": "OPT_BOOK_APPOINTMENT",
+//           "title": "📅 Book Appointment",
+//           "nextNodeId": "NODE_SELECT_DEPT"
+//         },
+//         {
+//           "optionId": "OPT_REQUEST_CALLBACK",
+//           "title": "📞 Call Executive",
+//           "nextNodeId": "NODE_CALLBACK_CONFIRMATION"
+//         }
+//       ],
+//       "isStartNode": true
+//     },
+//     {
+//       "nodeId": "NODE_SELECT_BRANCH",
+//       "type": "INTERACTIVE_LIST",
+//       "messageText": "📍 *SELECT HOSPITAL BRANCH*\n───────────────────────────\nAap kis branch me consultation chahte hain? \n\nNeeche button par click karke branch chunein 👇",
+//       "options": [],
+//       "nextNodeId": "NODE_SELECT_DEPT"
+//     },
+//     {
+//       "nodeId": "NODE_SELECT_DEPT",
+//       "type": "INTERACTIVE_LIST",
+//       "messageText": "🩺 *SELECT MEDICAL DEPARTMENT*\n───────────────────────────\nAapko kis specialist department me dikhana hai?\n\nKripya department select karein 👇",
+//       "options": [],
+//       "nextNodeId": "NODE_SELECT_DOC"
+//     },
+//     {
+//       "nodeId": "NODE_SELECT_DOC",
+//       "type": "INTERACTIVE_LIST",
+//       "messageText": "👨‍⚕️ *SELECT CONSULTANT DOCTOR*\n───────────────────────────\nSelected department ke available doctors ki list neeche di gayi hai.\n\nApne Doctor choose karein 👇",
+//       "options": [],
+//       "nextNodeId": "NODE_ASK_PATIENT_NAME"
+//     },
+//     {
+//       "nodeId": "NODE_ASK_PATIENT_NAME",
+//       "type": "TEXT_INPUT",
+//       "messageText": "✍️ *PATIENT DETAILS (1/2)*\n───────────────────────────\nKripya patient ka **Full Name** (Pura Naam) type karke message bhejein 💬",
+//       "inputVariable": "patient_name",
+//       "nextNodeId": "NODE_ASK_PATIENT_AGE"
+//     },
+//     {
+//       "nodeId": "NODE_ASK_PATIENT_AGE",
+//       "type": "TEXT_INPUT",
+//       "messageText": "🔢 *PATIENT DETAILS (2/2)*\n───────────────────────────\nKripya patient ki **Umar (Age in years)** type karke reply karein 💬",
+//       "inputVariable": "patient_age",
+//       "nextNodeId": "NODE_SELECT_DATE"
+//     },
+//     {
+//       "nodeId": "NODE_SELECT_DATE",
+//       "type": "INTERACTIVE_LIST",
+//       "messageText": "📅 *SELECT APPOINTMENT DATE*\n───────────────────────────\nAap kis din consultation ke liye aana chahte hain?\n\nAgle 7 dino me se apni preferred date chunein 👇",
+//       "options": [],
+//       "nextNodeId": "NODE_FETCH_SLOTS"
+//     },
+//     {
+//       "nodeId": "NODE_FETCH_SLOTS",
+//       "type": "DB_QUERY",
+//       "messageText": "⏰ *SELECT TIME SLOT*\n───────────────────────────\nSelected date par available consultation slots.\n\nApna convenient time slot select karein 👇",
+//       "options": [],
+//       "nextNodeId": "NODE_CONFIRMATION"
+//     },
+//     {
+//       "nodeId": "NODE_CONFIRMATION",
+//       "type": "END",
+//       "messageText": "✨ *APPOINTMENT CONFIRMATION REQUEST*\n───────────────────────────\n\n👤 *Patient Name:* {{patient_name}}\n🎂 *Age:* {{patient_age}} Years\n📍 *Branch:* {{selected_branch_name}}\n🩺 *Department:* {{selected_dept_name}}\n👨‍⚕️ *Doctor:* {{selected_doctor_name}}\n📅 *Date:* {{appointment_date}}\n⏰ *Time Slot:* {{NODE_FETCH_SLOTS}}\n\n───────────────────────────\n📞 *Note:* Hamari reception desk jald hi aapko token confirmation ke liye call karegi.\n\nThank you for choosing *Sr Kalla Hospital*! 🙏"
+//     },
+//     {
+//       "nodeId": "NODE_CALLBACK_CONFIRMATION",
+//       "type": "END",
+//       "messageText": "📞 *CALLBACK REQUEST RECEIVED*\n───────────────────────────\nHamari patient support team ke executive jald hi aap se is number par sampark karenge.\n\n───────────────────────────\nEmergency assistance ke liye hospital direct helpline par call karein.\n\nThank you for contacting *Sr Kalla Hospital*! 🙏"
+//     }
+//   ]
+// }
+
+
+export const getLeads = async (req, res) => {
+    try {
+        const { hospitalId } = req.params;
+        const { page = 1, limit = 10, status, leadType, search } = req.query;
+
+        if (!hospitalId) {
+            return res.status(400).json({ success: false, message: "Hospital ID is required" });
+        }
+
+        // 1. Fetch Hospital to get trimmedName for Tenant DB Connection
+        const hospital = await HospitalModel.findById(hospitalId).select("trimmedName").lean();
+        if (!hospital) {
+            return res.status(404).json({ success: false, message: "Hospital not found" });
+        }
+
+        // 2. Connect to Tenant DB
+        const conn = await getConnection(hospital.trimmedName);
+        const LeadModel = getLeadModel(conn);
+
+        // 3. Build Query Filters
+        const query = { hospitalId };
+
+        if (status) query.leadStatus = status;
+        if (leadType) query.leadType = leadType;
+
+        if (search) {
+            query.$or = [
+                { patientName: { $regex: search, $options: "i" } },
+                { patientPhoneNumber: { $regex: search, $options: "i" } },
+                { departmentName: { $regex: search, $options: "i" } },
+                { doctorName: { $regex: search, $options: "i" } }
+            ];
+        }
+
+        // 4. Execute Paginated Fetch
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        const leads = await LeadModel.find(query)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(parseInt(limit))
+            .lean();
+
+        const totalLeads = await LeadModel.countDocuments(query);
+
+        return res.status(200).json({
+            success: true,
+            totalLeads,
+            totalPages: Math.ceil(totalLeads / limit),
+            currentPage: parseInt(page),
+            data: leads
+        });
+    } catch (error) {
+        console.error("Get Leads Error:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to fetch leads",
+            error: error.message
+        });
     }
 };

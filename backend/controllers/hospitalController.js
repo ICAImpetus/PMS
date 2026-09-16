@@ -316,8 +316,13 @@ export const AddHospital = async (req, res) => {
     // =========================
     //  GENERATE DB NAME
     // =========================
-    const trimmedName = hospitalData.name.replace(/\s/g, "").toLowerCase();
-    const dbName = `${trimmedName}-${hospitalData.hospitalCode}`;
+    const cleanName = hospitalData.name.replace(/\s/g, "").slice(0, 3).toLowerCase();
+
+    // HospitalCode me se / aur baaki special characters hata kar (only _ and - allowed) pehle 3 characters
+    const cleanCode = hospitalData.hospitalCode.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 3);
+
+    // Total 6 length ka combined name
+    const dbName = `${cleanName}${cleanCode}`;
 
     // =========================
     //  STEP 1: CREATE HOSPITAL (MASTER DB)
@@ -1480,19 +1485,25 @@ export const addDoctor = async (req, res) => {
       if (!departmentExists) depId = null;
     }
 
-    if (!body.name || !body.username || !body.password) {
+    if (!body.name) {
       await session.abortTransaction();
       await session.endSession();
       return res.status(401).json({
         success: false,
-        message: "Name, username and password are required",
+        message: "Name are required",
       });
     }
 
-    const checkUsername = await AdminAndAgentModel.findOne({
-      username: body.username,
-      isDeleted: false,
-    }).lean();
+    let checkUsername = ""
+    let flag = false
+
+    if (body.username) {
+      checkUsername = await AdminAndAgentModel.findOne({
+        username: body.username,
+        isDeleted: false,
+      }).lean();
+
+    }
 
     if (checkUsername) {
       await session.abortTransaction();
@@ -1503,7 +1514,10 @@ export const addDoctor = async (req, res) => {
       });
     }
 
-    const hashPassword = await bcrypt.hash(body?.password, 10);
+    let hashPassword = null;
+    if (body?.password) {
+      hashPassword = await bcrypt.hash(body?.password, 10);
+    }
 
     const doctorData = {
       hospital: branch.hospital,
@@ -1597,20 +1611,26 @@ export const addDoctor = async (req, res) => {
       );
     }
 
-    const adminAgent = await AdminAndAgentModel.create({
-      name: doctorData.name,
-      username: doctorData.username,
-      password: doctorData.password,
-      type: "doctor",
-      branches: [{ branchId }],
-      hospitals: [
-        {
-          hospitalId: hospital._id,
-          name: hospital.name,
-        },
-      ],
-      refId: doctor._id,
-    });
+    let adminAgent = null;
+    if (body.username && body.password) {
+      adminAgent = await AdminAndAgentModel.create({
+        name: doctorData.name,
+        username: doctorData.username,
+        password: doctorData.password,
+        type: "doctor",
+        branches: [{ branchId }],
+        hospitals: [
+          {
+            hospitalId: hospital._id,
+            name: hospital.name,
+          },
+        ],
+        refId: doctor._id,
+      });
+    }
+
+
+
 
     await session.commitTransaction();
     await session.endSession();
@@ -1633,9 +1653,10 @@ export const addDoctor = async (req, res) => {
       });
     }
 
-    return res.status(301).json({
+    return res.status(201).json({
       success: false,
-      message: "Error to Create Doctor Panel . Please try again.",
+      status: 200,
+      message: "Doctor added successfully",
     });
 
   } catch (error) {

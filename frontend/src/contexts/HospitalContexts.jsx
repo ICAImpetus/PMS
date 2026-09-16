@@ -325,6 +325,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
 
 
+
+
     const {
         data: codeAlertsData,
         error: codeAlertsDataError,
@@ -339,6 +341,36 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         queryFn: async () => {
 
             const res = await commonRoutes.getCodeAlerts(
+                selectedHostpital,
+                selectedBranch
+            );
+
+            return res?.data?.data || [];
+        },
+        enabled:
+            !!selectedHostpital &&
+            !!selectedBranch &&
+            isExecutive,
+
+        onError: () =>
+            toast.error("Failed to fetch Hospital Code")
+    });
+
+
+    const {
+        data: leadsData,
+        error: leadsDataError,
+        isFetching: leadsDataRefetchLoader,
+        refetch: refetchleadsData
+    } = useQuery({
+        queryKey: [
+            "leadsData",
+            selectedHostpital,
+            selectedBranch
+        ],
+        queryFn: async () => {
+
+            const res = await commonRoutes.getLeads(
                 selectedHostpital,
                 selectedBranch
             );

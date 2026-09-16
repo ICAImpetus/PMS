@@ -27,11 +27,13 @@ router.post("/hospital-nodes", whatsController.saveHospitalNodes);
 // Get all flow nodes for admin UI rendering
 router.get("/hospital-nodes", whatsController.getHospitalNodes);
 
-// router.post(
-//     "/register",
-//     auth,
-//     restrictTo("superadmin", "admin", "supermanager", "teamLeader", "teamleader"),
-//     whatsController.registerWhatsAppAccount,
-// );
+router.post(
+    "/register",
+    auth,
+    restrictTo("superadmin", "admin", "supermanager", "teamLeader", "teamleader"),
+    whatsController.registerWhatsAppAccount,
+);
+
+router.get("/leads", auth, whatsController.getLeads);
 
 export default router;
