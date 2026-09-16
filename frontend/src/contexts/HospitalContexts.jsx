@@ -476,6 +476,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
 
 
+
+
     const {
         data: adminsData,
         isFetching: adminsLoading,
@@ -837,8 +839,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         filterOptions,
         tabValue,
         doctorStats,
-
-
+        leadsData,
         setTabValue,
         setDateFilter,
         setSelectedHostpital,
@@ -881,6 +882,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         metrics,
         forms,
         codeAlerts,
+        leadsData,
         branchFollowups,
         codeAlertsData,
         formEditChanges,

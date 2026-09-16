@@ -20,8 +20,10 @@ export const leadSchema = new mongoose.Schema(
         },
 
         // Dynamic Booking Details
-        departmentName: { type: String, default: "" },
-        doctorName: { type: String, default: "" },
+        departmentName: { type: mongoose.Schema.Types.ObjectId, ref: "Department", default: null },
+        doctorName: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor", default: null },
+        // departmentName: { type: String, default: "" },
+        // doctorName: { type: String, default: "" },
         appointmentDate: { type: String, default: "" },
         appointmentSlot: { type: String, default: "" },
         branchName: { type: String, default: "" },

@@ -7,7 +7,9 @@ import {
     getPatientStateModel, getConnection,
     getMessageModel,
     getLeadModel,
-    getBranchModel
+    getBranchModel,
+    getDoctorModel,
+    getDepartmentModel
 } from '../utils/db.manager.js';
 import { getCachedNode, invalidateHospitalNodeCache, interpolateTemplate } from '../utils/nodeCache.js';
 import mongoose from "mongoose";
@@ -283,7 +285,9 @@ export const verifyWebhook = (req, res) => {
 //     }
 // };
 
-
+const toValidObjectId = (id) => {
+    return mongoose.isValidObjectId(id) ? new mongoose.Types.ObjectId(id) : null;
+};
 export const handleWebhook = async (req, res) => {
     // 1. Meta Webhook Instant Acknowledgment
     res.status(200).send("EVENT_RECEIVED");
@@ -710,8 +714,10 @@ export const handleWebhook = async (req, res) => {
                         patientPhoneNumber: patientNumber,
                         patientAge: contextObj.patient_age || "",
                         leadType: "APPOINTMENT_BOOKING",
-                        departmentName: contextObj.selected_dept_id || contextObj.NODE_SELECT_DEPT || "",
-                        doctorName: contextObj.selected_doctor_id || contextObj.NODE_SELECT_DOC || "",
+                        // departmentName: contextObj.selected_dept_id ? mongoose.Schema.ObjectId(contextObj.selected_dept_id) || contextObj.NODE_SELECT_DEPT || "",
+                        // doctorName: contextObj.selected_doctor_id || contextObj.NODE_SELECT_DOC || "",
+                        departmentName: toValidObjectId(contextObj.selected_dept_id),
+                        doctorName: toValidObjectId(contextObj.selected_doctor_id),
                         appointmentDate: contextObj.appointment_date || "",
                         appointmentSlot: contextObj.NODE_FETCH_SLOTS || "",
                         branchName: contextObj.selected_branch_name || "",
@@ -918,8 +924,12 @@ export const getHospitalNodes = async (req, res) => {
 
 export const getLeads = async (req, res) => {
     try {
-        const { hospitalId } = req.params;
-        const { page = 1, limit = 10, status, leadType, search } = req.query;
+        // const { hospitalId } = req.params;
+        const { page = 1, limit = 10, status, leadType, search, hospitalId } = req.query;
+
+        console.log("req.paramas", req.params);
+        console.log("req.paramas", req.query);
+
 
         if (!hospitalId) {
             return res.status(400).json({ success: false, message: "Hospital ID is required" });
@@ -934,6 +944,8 @@ export const getLeads = async (req, res) => {
         // 2. Connect to Tenant DB
         const conn = await getConnection(hospital.trimmedName);
         const LeadModel = getLeadModel(conn);
+        const DoctorModel = getDoctorModel(conn)
+        const DepartmentModel = getDepartmentModel(conn)
 
         // 3. Build Query Filters
         const query = { hospitalId };
@@ -954,6 +966,18 @@ export const getLeads = async (req, res) => {
         const skip = (parseInt(page) - 1) * parseInt(limit);
         const leads = await LeadModel.find(query)
             .sort({ createdAt: -1 })
+            .populate({
+                path: "doctorName",
+                model: getDoctorModel(conn), // Multi-tenant Doctor Model
+                select: "name",
+                match: { _id: { $exists: true } }
+            })
+            .populate({
+                path: "departmentName",
+                model: getDepartmentModel(conn), // Multi-tenant Department Model
+                select: "name",
+                match: { _id: { $exists: true } }
+            })
             .skip(skip)
             .limit(parseInt(limit))
             .lean();

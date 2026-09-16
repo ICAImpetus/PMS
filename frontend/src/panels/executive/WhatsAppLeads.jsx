@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import {
     Box,
     Container,
@@ -36,6 +36,7 @@ import {
     CheckCircle as CheckCircleIcon,
 } from "@mui/icons-material";
 import moment from "moment";
+import HospitalContext from "../../contexts/HospitalContexts";
 
 // MongoDB Compass Schema Mapping ke aadhar par Dummy Data
 const DUMMY_LEADS_DATA = [
@@ -74,7 +75,7 @@ const DUMMY_LEADS_DATA = [
 ];
 
 const WhatsAppLeads = () => {
-    const [leads, setLeads] = useState(DUMMY_LEADS_DATA);
+    // const [leads, setLeads] = useState(DUMMY_LEADS_DATA);
     const [searchTerm, setSearchTerm] = useState("");
     const [leadTypeFilter, setLeadTypeFilter] = useState("ALL");
     const [statusFilter, setStatusFilter] = useState("ALL");
@@ -82,6 +83,11 @@ const WhatsAppLeads = () => {
     // Action Modal State
     const [selectedLead, setSelectedLead] = useState(null);
     const [openModal, setOpenModal] = useState(false);
+
+    const { leadsData } = useContext(HospitalContext)
+
+    console.log("leadsData", leadsData);
+
 
     // Backend Integration Point: Uncomment when API ready
     /*
@@ -106,16 +112,16 @@ const WhatsAppLeads = () => {
 
     const handleConfirmAction = () => {
         // API Call to Update Lead Status in Backend
-        setLeads((prev) =>
-            prev.map((item) =>
-                item._id === selectedLead._id ? { ...item, leadStatus: "CONFIRMED" } : item
-            )
-        );
+        // setLeads((prev) =>
+        //     prev.map((item) =>
+        //         item._id === selectedLead._id ? { ...item, leadStatus: "CONFIRMED" } : item
+        //     )
+        // );
         setOpenModal(false);
     };
 
     // Filter Logic
-    const filteredLeads = leads.filter((lead) => {
+    const filteredLeads = (leadsData || [])?.filter((lead) => {
         const matchesSearch =
             lead.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
             lead.patientPhoneNumber.includes(searchTerm);
@@ -151,7 +157,7 @@ const WhatsAppLeads = () => {
                                 </Typography>
                             </Box>
                             <Typography variant="h3" fontWeight={800} color="#0f172a" mt={2}>
-                                {leads.length}
+                                {leadsData?.length}
                             </Typography>
                         </Paper>
                     </Grid>
@@ -175,7 +181,7 @@ const WhatsAppLeads = () => {
                                 </Typography>
                             </Box>
                             <Typography variant="h3" fontWeight={800} color="#0f172a" mt={2}>
-                                {leads.filter((l) => l.leadType === "APPOINTMENT_BOOKING").length}
+                                {leadsData?.filter((l) => l.leadType === "APPOINTMENT_BOOKING").length}
                             </Typography>
                         </Paper>
                     </Grid>
@@ -199,7 +205,7 @@ const WhatsAppLeads = () => {
                                 </Typography>
                             </Box>
                             <Typography variant="h3" fontWeight={800} color="#0f172a" mt={2}>
-                                {leads.filter((l) => l.leadType === "CALLBACK_REQUEST").length}
+                                {leadsData?.filter((l) => l.leadType === "CALLBACK_REQUEST").length}
                             </Typography>
                         </Paper>
                     </Grid>
