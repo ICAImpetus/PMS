@@ -1614,6 +1614,7 @@ const AddDoctorModal = ({
                         </Grid> */}
                       <Grid item xs={12} sm={6}>
                         <Autocomplete
+                          data-testid="department-autocomplete"
                           freeSolo
                           options={(() => {
                             const unique = [];
@@ -1931,6 +1932,7 @@ const AddDoctorModal = ({
                       }}
                     >
                       <Autocomplete
+                        data-testid="country-code-autocomplete"
                         sx={{ width: "150px" }}
                         options={countryCodes}
                         getOptionLabel={(option) =>
@@ -2109,6 +2111,7 @@ const AddDoctorModal = ({
                   </Typography>
                   <Stack spacing={0.5}>
                     <Autocomplete
+                      data-testid="specialties-autocomplete"
                       multiple
                       fullWidth
                       size="small"
@@ -2180,6 +2183,7 @@ const AddDoctorModal = ({
                 <Stack spacing={2}>
                   <Stack spacing={0.5}>
                     <Autocomplete
+                      data-testid="surgeries-autocomplete"
                       multiple
                       fullWidth
                       size="small"
@@ -2297,6 +2301,7 @@ const AddDoctorModal = ({
                     <Grid container spacing={2}>
                       <Grid item xs={6}>
                         <TimePicker
+                          name='morningFrom'
                           label="From"
                           ampm
                           ampmInClock
@@ -2330,6 +2335,7 @@ const AddDoctorModal = ({
 
                       <Grid item xs={6}>
                         <TimePicker
+                          name='morningTo'
                           label="To"
                           ampm
                           ampmInClock
@@ -2395,6 +2401,7 @@ const AddDoctorModal = ({
                       {/* FROM */}
                       <Grid item xs={6}>
                         <TimePicker
+                          name='eveningFrom'
                           label="From"
                           ampm
                           ampmInClock
@@ -2436,6 +2443,7 @@ const AddDoctorModal = ({
                       {/* TO */}
                       <Grid item xs={6}>
                         <TimePicker
+                          name='eveningTo'
                           label="To"
                           ampm
                           ampmInClock
@@ -2512,6 +2520,7 @@ const AddDoctorModal = ({
                       {/* FROM */}
                       <Grid item xs={6}>
                         <TimePicker
+                          name='customFrom'
                           label="From"
                           ampm
                           ampmInClock
@@ -2611,6 +2620,7 @@ const AddDoctorModal = ({
                       {/* TO */}
                       <Grid item xs={6}>
                         <TimePicker
+                          name='customTo'
                           label="To"
                           ampm
                           ampmInClock
@@ -2737,6 +2747,7 @@ const AddDoctorModal = ({
                                 const isSelected = selectedDays.includes(day);
                                 return (
                                   <Chip
+                                    data-testid='opd-day'
                                     key={day}
                                     label={day.slice(0, 3)}
                                     onClick={() => {
@@ -3059,6 +3070,7 @@ const AddDoctorModal = ({
                       <Grid item xs={12} sm={6}>
                         <LocalizationProvider dateAdapter={AdapterDayjs}>
                           <TimePicker
+                            name='videoConsultationStartTime'
                             label="From Time"
                             value={currentDoctor.videoConsultation.startTime}
                             onChange={(newValue) => {
@@ -3095,6 +3107,7 @@ const AddDoctorModal = ({
                       <Grid item xs={12} sm={6}>
                         <LocalizationProvider dateAdapter={AdapterDayjs}>
                           <TimePicker
+                            name='videoConsultationEndTime'
                             label="To Time"
                             value={currentDoctor.videoConsultation.endTime}
                             onChange={(newValue) => {
@@ -3185,6 +3198,7 @@ const AddDoctorModal = ({
                                     selectedDays.includes(day);
                                   return (
                                     <Chip
+                                      data-testid='video-consultation-day'
                                       key={day}
                                       label={day.slice(0, 3)}
                                       onClick={() => {
@@ -3272,6 +3286,7 @@ const AddDoctorModal = ({
         }}
       >
         <Button
+          data-testid='cancel-doctor-button'
           onClick={onClose}
           variant="outlined"
           size="large"
@@ -3280,6 +3295,7 @@ const AddDoctorModal = ({
           Cancel
         </Button>
         <Button
+          data-testid='save-doctor-button'
           onClick={handleSave}
           variant="contained"
           color="primary"
