@@ -557,7 +557,7 @@ export const handleWebhook = async (req, res) => {
                             });
                             return;
                         } else if (branchData.singleBranch) {
-                            session.context.set("selected_branch_name", branchData.singleBranch.branchName);
+                            session.context.set("selected_branch_name", branchData.singleBranch?.name);
                             session.context.set("selected_branch_id", branchData.singleBranch._id.toString());
                             console.log(`[Webhook Debug] Auto-selected Single Branch: '${branchData.singleBranch.branchName}'`);
                         }

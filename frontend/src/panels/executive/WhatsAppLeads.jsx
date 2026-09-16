@@ -35,44 +35,45 @@ import {
     Person as PersonIcon,
     CheckCircle as CheckCircleIcon,
 } from "@mui/icons-material";
+
 import moment from "moment";
 import HospitalContext from "../../contexts/HospitalContexts";
 
 // MongoDB Compass Schema Mapping ke aadhar par Dummy Data
-const DUMMY_LEADS_DATA = [
-    {
-        _id: "6aa503d00a85d3f9a6350511",
-        hospitalId: "6a8d6e97049af6500e262fa7",
-        patientName: "qwerty",
-        patientPhoneNumber: "917340479570",
-        patientAge: "22",
-        leadType: "APPOINTMENT_BOOKING",
-        departmentName: "Test Department",
-        doctorName: "Kunal",
-        appointmentDate: "13/09/2026",
-        appointmentSlot: "10:31 AM - 10:41 AM",
-        branchName: "demo branch",
-        leadStatus: "NEW",
-        source: "WHATSAPP_DIRECT",
-        createdAt: "2026-09-12T07:48:32.040+00:00",
-    },
-    {
-        _id: "6aa504190a85d3f9a6350524",
-        hospitalId: "6a8d6e97049af6500e262fa7",
-        patientName: "Enquirer",
-        patientPhoneNumber: "917340479570",
-        patientAge: "",
-        leadType: "CALLBACK_REQUEST",
-        departmentName: "",
-        doctorName: "",
-        appointmentDate: "",
-        appointmentSlot: "",
-        branchName: "",
-        leadStatus: "NEW",
-        source: "WHATSAPP_DIRECT",
-        createdAt: "2026-09-12T07:49:45.255+00:00",
-    },
-];
+// const DUMMY_LEADS_DATA = [
+//     {
+//         _id: "6aa503d00a85d3f9a6350511",
+//         hospitalId: "6a8d6e97049af6500e262fa7",
+//         patientName: "qwerty",
+//         patientPhoneNumber: "917340479570",
+//         patientAge: "22",
+//         leadType: "APPOINTMENT_BOOKING",
+//         departmentName.name: "Test Department",
+//         doctorName: "Kunal",
+//         appointmentDate: "13/09/2026",
+//         appointmentSlot: "10:31 AM - 10:41 AM",
+//         branchName: "demo branch",
+//         leadStatus: "NEW",
+//         source: "WHATSAPP_DIRECT",
+//         createdAt: "2026-09-12T07:48:32.040+00:00",
+//     },
+//     {
+//         _id: "6aa504190a85d3f9a6350524",
+//         hospitalId: "6a8d6e97049af6500e262fa7",
+//         patientName: "Enquirer",
+//         patientPhoneNumber: "917340479570",
+//         patientAge: "",
+//         leadType: "CALLBACK_REQUEST",
+//         departmentName?.name: "",
+//         doctorName: "",
+//         appointmentDate: "",
+//         appointmentSlot: "",
+//         branchName: "",
+//         leadStatus: "NEW",
+//         source: "WHATSAPP_DIRECT",
+//         createdAt: "2026-09-12T07:49:45.255+00:00",
+//     },
+// ];
 
 const WhatsAppLeads = () => {
     // const [leads, setLeads] = useState(DUMMY_LEADS_DATA);
@@ -84,7 +85,7 @@ const WhatsAppLeads = () => {
     const [selectedLead, setSelectedLead] = useState(null);
     const [openModal, setOpenModal] = useState(false);
 
-    const { leadsData } = useContext(HospitalContext)
+    const { leadsData, refetchleadsData } = useContext(HospitalContext)
 
     console.log("leadsData", leadsData);
 
@@ -231,6 +232,28 @@ const WhatsAppLeads = () => {
                         </Box>
 
                         <Stack direction="row" spacing={2} flexWrap="wrap">
+
+                            <Button
+                                size="small"
+                                onClick={async () => { await refetchleadsData(); }}
+                                startIcon={<RefreshIcon sx={{ fontSize: 16 }} />}
+                                sx={{
+                                    borderRadius: "50px",
+                                    bgcolor: "#fff",
+                                    color: "#334155",
+                                    border: "1px solid #e2e8f0",
+                                    textTransform: "none",
+                                    fontWeight: 700,
+                                    fontSize: "0.78rem",
+                                    px: 1.8,
+                                    py: 0.6,
+                                    whiteSpace: "nowrap",
+                                    boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                                    "&:hover": { bgcolor: "#f8fafc" },
+                                }}
+                            >
+                                Refresh
+                            </Button>
                             <TextField
                                 size="small"
                                 placeholder="Search Patient Name / Mobile..."
@@ -339,10 +362,10 @@ const WhatsAppLeads = () => {
                                             {/* Doctor / Dept */}
                                             <TableCell>
                                                 <Typography variant="body2" fontWeight={600} color="#334155">
-                                                    {row.doctorName ? `Dr. ${row.doctorName}` : "N/A"}
+                                                    {row?.doctorName?.name ? `${row.doctorName?.name}` : "N/A"}
                                                 </Typography>
                                                 <Typography variant="caption" color="#94a3b8">
-                                                    {row.departmentName || "General Inquiry"}
+                                                    {row?.departmentName?.name || "General Inquiry"}
                                                 </Typography>
                                             </TableCell>
 

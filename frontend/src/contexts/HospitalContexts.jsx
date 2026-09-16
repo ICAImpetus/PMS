@@ -840,6 +840,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         tabValue,
         doctorStats,
         leadsData,
+
         setTabValue,
         setDateFilter,
         setSelectedHostpital,
@@ -867,6 +868,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         refetchAdmins,
         refetchUsers,
         refetchAppointments,
+        refetchleadsData,
         dateRangeFilter,
         handleFilterChange
 
@@ -900,6 +902,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         loading,
         errors,
         dateRange,
+        refetchleadsData,
         handleFilterChange
     ]);
     return (
