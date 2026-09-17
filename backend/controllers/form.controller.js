@@ -1070,8 +1070,12 @@ export const getFilledForms = async (req, res) => {
 
     // 1. Handle Patient Search Filter
     if (isSearchActive) {
+      const sanitizedSearch = searchName.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const patient = await PatientModel.findOne({
-        patientName: new RegExp(searchName.trim(), "i"),
+        $or: [
+          { patientName: new RegExp(sanitizedSearch, "i") },
+          { patientMobile: new RegExp(sanitizedSearch, "i") },
+        ],
       }).select("_id");
 
       if (patient) {

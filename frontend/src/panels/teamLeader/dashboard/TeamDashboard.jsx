@@ -63,6 +63,11 @@ const TeamDashboard = () => {
   const openAssignModal = () => setIsModalOpen(true);
   const closeAssignModal = () => setIsModalOpen(false);
 
+  const handleFloatingNotificationClick = (notification) => {
+    setFormsTypeFilter("all");
+    setFormsModalOpen(notification.type === "TODAY'S APPOINTMENT" ? "Appointments" : "Followups");
+  };
+
   const handleAssignTask = (e) => {
     e.preventDefault();
     toast.success("Task assigned successfully");
@@ -900,7 +905,7 @@ const TeamDashboard = () => {
         />
       )}
 
-      <FloatingNewsNotifications />
+      <FloatingNewsNotifications onNotificationClick={handleFloatingNotificationClick} />
     </>
   );
 };

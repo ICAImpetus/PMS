@@ -86,6 +86,7 @@ const FloatingNewsNotifications = ({
   interval = DISPLAY_INTERVAL_MS,
   duration = DISPLAY_DURATION_MS,
   maxVisible = MAX_VISIBLE,
+  onNotificationClick,
 }) => {
   const { selectedHostpital, selectedBranch, branches, analytics } = useContext(HospitalContext);
 
@@ -162,12 +163,13 @@ const FloatingNewsNotifications = ({
     const notifications = [];
     const seenKeys = new Set();
 
-    const pushNotification = (config, message, key) => {
+    const pushNotification = (config, message, key, details = {}) => {
       if (seenKeys.has(key)) return;
       seenKeys.add(key);
       notifications.push({
         ...config,
         message,
+        ...details,
       });
     };
 
@@ -244,7 +246,8 @@ const FloatingNewsNotifications = ({
         pushNotification(
           APPOINTMENT_CONFIG,
           `${patientName}${doctorName ? ` → Dr. ${doctorName}` : ""}${agentTag}${timeStr ? ` at ${timeStr}` : ""}`,
-          `apt-${patientName}-${rawDate}`
+          `apt-${patientName}-${rawDate}`,
+          { appointmentTime: timeStr }
         );
       }
 
@@ -280,7 +283,8 @@ const FloatingNewsNotifications = ({
           pushNotification(
             APPOINTMENT_CONFIG,
             `${patientName}${doctorName ? ` → Dr. ${doctorName}` : ""}${agentTag}${timeStr ? ` at ${timeStr}` : ""}`,
-            `apt-${patientName}-${rawDate}`
+            `apt-${patientName}-${rawDate}`,
+            { appointmentTime: timeStr }
           );
         }
       });
@@ -431,6 +435,7 @@ const FloatingNewsNotifications = ({
             elevation={10}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
+            onClick={() => onNotificationClick?.(item)}
             sx={{
               position: "fixed",
               right: 24,
@@ -547,7 +552,7 @@ const FloatingNewsNotifications = ({
                   color: "#6b7280",
                 }}
               >
-                {moment().format("hh:mm A")}
+                {item.appointmentTime || moment().format("hh:mm A")}
               </Typography>
             </Box>
 

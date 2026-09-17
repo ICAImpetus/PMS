@@ -71,6 +71,11 @@ const ExecutiveDashboard = () => {
 
   const { request: toggleAlertStatus } = useApi(commonRoutes.toggleCodeAlertStatus);
 
+  const handleFloatingNotificationClick = (notification) => {
+    setFormsTypeFilter("all");
+    setFormsModalOpen(notification.type === "TODAY'S APPOINTMENT" ? "Appointments" : "Followups");
+  };
+
   // ── HOURLY CHART DATA PROCESSING ──
   const hourlyChartData = useMemo(() => {
     const data = analytics?.hourlyStats || [];
@@ -220,7 +225,7 @@ const ExecutiveDashboard = () => {
 
   return (
     <>
-      < FloatingNewsNotifications />
+      <FloatingNewsNotifications onNotificationClick={handleFloatingNotificationClick} />
       {formsModalOpen ? (
         <FilledFormsComponent
           selectedBranch={selectedBranch}

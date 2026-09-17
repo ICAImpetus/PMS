@@ -970,6 +970,7 @@ const FilledFormsComponent = ({
                             sx={{
                               color: "#94A3B8",
                               "&.Mui-checked": { color: "#0256E8" },
+                              // display: 'flex'
                             }}
                           />
                         }
@@ -978,7 +979,7 @@ const FilledFormsComponent = ({
                             {col.label}
                           </Typography>
                         }
-                        sx={{ display: "block", my: 0.2 }}
+                        sx={{ display: "flex", my: 0.2 }}
                       />
                     ))}
                   </Box>
