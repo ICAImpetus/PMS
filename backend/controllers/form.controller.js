@@ -220,6 +220,13 @@ export const createFilledForm = async (req, res) => {
     // Create form payload
     // =========================
 
+    if (!data?.doctor || data?.doctor === '' || data?.doctor === null) {
+      res.status(401).json({
+        success: false,
+        message: 'Please select a doctor!'
+      })
+    }
+
     const filledFormPayload = {
       formType: data.formType,
 
