@@ -394,6 +394,7 @@ const AddDayCareDetailsModal = ({
                       }}
                     /> */}
                     <Autocomplete
+                      data-testid='categoryAutocomplete'
                       fullWidth
                       freeSolo
                       options={
@@ -462,6 +463,7 @@ const AddDayCareDetailsModal = ({
                         Service Type
                       </InputLabel>
                       <Select
+
                         labelId="select-service-type-label"
                         id="select-service-type"
                         name="serviceType"
@@ -569,6 +571,7 @@ const AddDayCareDetailsModal = ({
           Cancel
         </Button>
         <Button
+          data-testid='saveButton'
           onClick={handleSave}
           variant="contained"
           size="large"

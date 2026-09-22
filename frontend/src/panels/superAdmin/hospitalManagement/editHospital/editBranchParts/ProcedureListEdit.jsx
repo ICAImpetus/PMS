@@ -430,6 +430,7 @@ const AddProcedureModal = ({
                       )}
                     </FormControl> */}
                     <Autocomplete
+                      data-testid='categoryAutocomplete'
                       fullWidth
                       freeSolo
                       options={
@@ -788,6 +789,7 @@ const AddProcedureModal = ({
                     </FormControl> */}
                     <Autocomplete
                       multiple
+                      data-testid='empanelmentTypeAutocomplete'
                       fullWidth
                       options={
                         empanelmentType?.map((item) => ({
@@ -981,6 +983,7 @@ const AddProcedureModal = ({
           Cancel
         </Button>
         <Button
+          data-testid='saveButton'
           onClick={handleSave}
           variant="contained"
           size="large"

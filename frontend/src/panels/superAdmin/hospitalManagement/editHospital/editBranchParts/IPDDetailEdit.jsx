@@ -378,6 +378,7 @@ const AddIpdDetailsModal = ({ open, onClose, onSave, ipdData = null, departments
                       }}
                     /> */}
                     <Autocomplete
+                      data-testid='categoryAutocomplete'
                       fullWidth
                       freeSolo
                       options={
@@ -545,6 +546,7 @@ const AddIpdDetailsModal = ({ open, onClose, onSave, ipdData = null, departments
           Cancel
         </Button>
         <Button
+          data-testid='saveButton'
           onClick={handleSave}
           variant="contained"
           size="large"

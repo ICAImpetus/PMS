@@ -469,6 +469,7 @@ const AddDepartmentInchargeModal = ({
                 <Grid container spacing={3}>
                   <Grid item xs={12} sm={6}>
                     <Autocomplete
+                      data-testid='departmentAutocomplete'
                       fullWidth
                       freeSolo
                       options={
@@ -513,6 +514,7 @@ const AddDepartmentInchargeModal = ({
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <Autocomplete
+                      data-testid='serviceTypeAutocomplete'
                       fullWidth
                       freeSolo
                       options={
@@ -590,6 +592,7 @@ const AddDepartmentInchargeModal = ({
                 <Grid container spacing={3}>
                   <Grid item xs={12} sm={6}>
                     <TimePicker
+                      name="timeFrom"
                       label="From"
                       value={currentIncharge.timeSlot.from}
                       onChange={(newValue) =>
@@ -616,6 +619,7 @@ const AddDepartmentInchargeModal = ({
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <TimePicker
+                      name="timeTo"
                       label="To"
                       value={currentIncharge.timeSlot.to}
                       onChange={(newValue) =>
@@ -685,6 +689,7 @@ const AddDepartmentInchargeModal = ({
           Cancel
         </Button>
         <Button
+          data-testid='saveButton'
           onClick={handleSave}
           variant="contained"
           size="large"
