@@ -515,6 +515,7 @@ const AddEmpanelmentListModal = ({
                     <FormControl fullWidth>
                       <InputLabel>Types of Services</InputLabel>
                       <Select
+                        data-testid='typeOfServiceSelect'
                         label="Types of Services"
                         value={selectedService}
                         onChange={(e) => {
@@ -538,6 +539,7 @@ const AddEmpanelmentListModal = ({
                     <FormControl fullWidth>
                       <InputLabel>Select Department</InputLabel>
                       <Select
+                        data-testid='departmentSelect'
                         value={selectedDepartment}
                         onChange={(e) => {
                           const deptId = e.target.value;
@@ -578,6 +580,7 @@ const AddEmpanelmentListModal = ({
                           }
                         }}
                         label="Select Doctor"
+                        data-testid='doctorSelect'
                       >
                         <MenuItem value="">
                           <em>None</em>
@@ -594,6 +597,7 @@ const AddEmpanelmentListModal = ({
                   <Grid item xs={12} sm={12} height={80}>
                     <Stack spacing={0.5}>
                       <Autocomplete
+                        data-testid='spaciality-autocomplete'
                         multiple
                         freeSolo
                         fullWidth
@@ -679,6 +683,7 @@ const AddEmpanelmentListModal = ({
                   {/* Add Coverage Button */}
                   <Grid item xs={12}>
                     <Button
+                      data-testid='addCoverageOptionButton'
                       variant="contained"
                       onClick={handleAddCoverage}
                       disabled={!selectedDoctorId}
@@ -887,6 +892,7 @@ const AddEmpanelmentListModal = ({
         </Button>
         <Button
           onClick={handleSave}
+          data-testid='saveButton'
           variant="contained"
           size="large"
           disabled={loading}

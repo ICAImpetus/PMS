@@ -593,6 +593,7 @@ const AddTestLabModal = ({
                       ))}
                     </TextField> */}
                     <Autocomplete
+                    data-testid='serviceGroupAutocomplete'
                       fullWidth
                       freeSolo
                       options={
@@ -962,6 +963,7 @@ const AddTestLabModal = ({
                         <Grid container spacing={2} alignItems="flex-end">
                           <Grid item xs={10}>
                             <TextField
+                            name="outsourcingRemark"
                               fullWidth
                               label="Enter outsourcing remarks..."
                               value={sourceRemarks.outsourcing}
@@ -979,6 +981,7 @@ const AddTestLabModal = ({
                           </Grid>
                           <Grid item xs={2}>
                             <Button
+                            data-testId='addButton'
                               variant="contained"
                               onClick={() =>
                                 handleAddSourceRemarks("outsourcing")
