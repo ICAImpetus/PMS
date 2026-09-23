@@ -538,6 +538,7 @@ const AddCodeAnnouncementModal = ({
                     </Typography>
                   </Box>
                   <Button
+                    data-testid='addStaff'
                     variant="contained"
                     startIcon={<AddIcon />}
                     onClick={handleAddStaff}
@@ -658,6 +659,7 @@ const AddCodeAnnouncementModal = ({
                               <TextField
                                 fullWidth
                                 label="Staff Name"
+                                id='staffName'
                                 name="name"
                                 value={staffMember.name}
                                 onChange={(e) => handleStaffChange(index, e)}
@@ -782,6 +784,7 @@ const AddCodeAnnouncementModal = ({
           Cancel
         </Button>
         <Button
+          data-testid='addButton'
           onClick={handleSave}
           variant="contained"
           size="large"

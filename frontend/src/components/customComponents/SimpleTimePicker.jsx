@@ -70,7 +70,7 @@ const SimpleTimePicker = ({
       fullWidth
       label={label}
       value={value || ""}
-      onChange={() => {}} // Dummy onChange
+      onChange={() => { }} // Dummy onChange
       error={!!error}
       helperText={helperText}
       disabled={disabled}
@@ -100,6 +100,7 @@ const SimpleTimePicker = ({
           >
             <FormControl variant="standard" sx={{ minWidth: 70, flex: 1 }}>
               <Select
+                data-testid='hourpicker'
                 value={getCurrentHour()}
                 onChange={handleHourChange}
                 disabled={disabled}
@@ -126,6 +127,7 @@ const SimpleTimePicker = ({
 
             <FormControl variant="standard" sx={{ minWidth: 70, flex: 1 }}>
               <Select
+                data-testid='minutepicker'
                 value={getCurrentMinute()}
                 onChange={handleMinuteChange}
                 disabled={disabled}
@@ -148,6 +150,7 @@ const SimpleTimePicker = ({
 
             <FormControl variant="standard" sx={{ minWidth: 70, flex: 1 }}>
               <Select
+                data-testid='periodpicker'
                 value={getCurrentPeriod()}
                 onChange={handlePeriodChange}
                 disabled={disabled}
@@ -172,7 +175,7 @@ const SimpleTimePicker = ({
       }}
     />
   );
-  
+
 };
 
 export default SimpleTimePicker;

@@ -346,6 +346,7 @@ function AdminManagement() {
                     </Box>
 
                     <Button
+                        data-testid='adduserbtn'
                         variant="contained"
                         startIcon={<PersonAddAlt1Icon />}
                         onClick={handleAddUserModel}

@@ -274,6 +274,7 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                   {isSuperAdmin && (
                     <CustomMenuItem
                       title="Admin Management"
+                      testId="adminmanagementtestid"
                       to="/admin-management"
                       icon={<AdminPanelSettingsOutlinedIcon fontSize="small" />}
                       selected={selected}
