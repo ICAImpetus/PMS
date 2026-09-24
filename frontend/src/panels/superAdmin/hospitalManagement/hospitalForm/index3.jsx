@@ -154,6 +154,7 @@ const CustomHospitalCard = ({ hospital, role, onEdit, onManageBranches }) => {
                 onEdit(hospital);
               }}
               sx={{ py: 1, px: 2 }}
+              data-testid='edithospitaloptionbtn'
             >
               <ListItemIcon sx={{ color: "#475569" }}>
                 <EditOutlinedIcon fontSize="small" />

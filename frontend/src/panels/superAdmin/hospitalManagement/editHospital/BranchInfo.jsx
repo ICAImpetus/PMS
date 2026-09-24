@@ -2025,6 +2025,7 @@ const BranchInfo = () => {
                             color="primary"
                             onClick={() => handleOpenModal("department", row)}
                             size="small"
+                            name='edit'
                           >
                             <EditIcon fontSize="small" />
                           </IconButton>
@@ -2210,6 +2211,7 @@ const BranchInfo = () => {
                                   onClick={() => handleOpenModal("doctor", row)}
                                   size="small"
                                   title="Edit Doctor"
+                                  name='edit'
                                 >
                                   <EditIcon fontSize="small" />
                                 </IconButton>
@@ -2351,6 +2353,7 @@ const BranchInfo = () => {
                                   color="primary"
                                   onClick={() => handleOpenModal("empanelment", row)}
                                   size="small"
+                                  name='edit'
                                 >
                                   <EditIcon fontSize="small" />
                                 </IconButton>
@@ -2468,6 +2471,7 @@ const BranchInfo = () => {
                                 color="primary"
                                 onClick={() => handleOpenModal("testLab", row)}
                                 size="small"
+                                name='edit'
                               >
                                 <EditIcon fontSize="small" />
                               </IconButton>
@@ -2583,6 +2587,7 @@ const BranchInfo = () => {
                                 color="primary"
                                 onClick={() => handleOpenModal("ipd", row)}
                                 size="small"
+                                name='edit'
                               >
                                 <EditIcon fontSize="small" />
                               </IconButton>
@@ -2698,6 +2703,7 @@ const BranchInfo = () => {
                                 color="primary"
                                 onClick={() => handleOpenModal("dayCare", row)}
                                 size="small"
+                                name='edit'
                               >
                                 <EditIcon fontSize="small" />
                               </IconButton>
@@ -2734,6 +2740,7 @@ const BranchInfo = () => {
             </>
           )}
         </CustomTabPanel>
+
         {/* 7. Procedures */}
         <CustomTabPanel value={tabValue} index={7}>
           {modalOpen.procedure ? (
@@ -2811,6 +2818,7 @@ const BranchInfo = () => {
                                 color="primary"
                                 onClick={() => handleOpenModal("procedure", row)}
                                 size="small"
+                                name='edit'
                               >
                                 <EditIcon fontSize="small" />
                               </IconButton>
@@ -2926,6 +2934,7 @@ const BranchInfo = () => {
                                 color="primary"
                                 onClick={() => handleOpenModal("incharge", row)}
                                 size="small"
+                                name='edit'
                               >
                                 <EditIcon fontSize="small" />
                               </IconButton>
@@ -3040,6 +3049,7 @@ const BranchInfo = () => {
                           <TableCell align="center">
                             {canEdit && (
                               <IconButton
+                                name='edit'
                                 color="primary"
                                 onClick={() => handleOpenModal("codeAlert", row)}
                                 size="small"
