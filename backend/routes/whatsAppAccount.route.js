@@ -35,5 +35,6 @@ router.get("/hospital-nodes", whatsController.getHospitalNodes);
 // );
 
 router.get("/leads", auth, whatsController.getLeads);
+router.put("/update-lead-status", whatsController.updateLeadStatus);
 
 export default router;

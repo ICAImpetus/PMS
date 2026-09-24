@@ -288,6 +288,7 @@ export const verifyWebhook = (req, res) => {
 const toValidObjectId = (id) => {
     return mongoose.isValidObjectId(id) ? new mongoose.Types.ObjectId(id) : null;
 };
+
 export const handleWebhook = async (req, res) => {
     // 1. Meta Webhook Instant Acknowledgment
     res.status(200).send("EVENT_RECEIVED");
@@ -324,12 +325,11 @@ export const handleWebhook = async (req, res) => {
         const WAAccountModel = getWhatsAppAccountModel(conn);
         const LeadModel = getLeadModel(conn);
 
-        // 3. Extract Message & Lead Source Tracking (Ads / Website / Direct)
+        // 3. Extract Message & Lead Source Tracking
         const msgType = incomingMsg.type;
         let inboundText = "";
-        let leadSource = "WHATSAPP_DIRECT"; // Default Source
+        let leadSource = "WHATSAPP_DIRECT";
 
-        // Identify Meta Ad Referral Source
         if (incomingMsg.referral) {
             const refSource = incomingMsg.referral.source_type;
             if (refSource === "AD") {
@@ -384,7 +384,6 @@ export const handleWebhook = async (req, res) => {
             });
         }
 
-        // Debug Log Current Context
         const currentContextObj = session.context instanceof Map ? Object.fromEntries(session.context) : session.context;
         console.log(`[Webhook Debug] Active Session Node: '${session.currentNodeId}'`);
         console.log(`[Webhook Debug] Current Session Context:`, JSON.stringify(currentContextObj, null, 2));
@@ -434,7 +433,7 @@ export const handleWebhook = async (req, res) => {
 
             console.log(`[Webhook Debug] Interactive Reply Received -> Option ID: '${selectedOptionId}' | Title: '${selectedTitle}'`);
 
-            // 0. GLOBAL CALLBACK ESCAPE INTERCEPTOR (Mid-Flow Call Executive Support)
+            // 0. GLOBAL CALLBACK ESCAPE INTERCEPTOR
             if (selectedOptionId === "OPT_REQUEST_CALLBACK" || selectedOptionId === "OPT_CALL_EXECUTIVE") {
                 console.log(`[Webhook Debug Global] Patient requested mid-flow Callback Support!`);
 
@@ -449,15 +448,17 @@ export const handleWebhook = async (req, res) => {
                     hospitalId: hospital._id,
                     patientName: contextObj.patient_name || "Enquirer",
                     patientPhoneNumber: patientNumber,
+                    patientLocation: contextObj.patient_location || "",
+                    illnessDescription: contextObj.illness_description || "",
                     leadType: "CALLBACK_REQUEST",
                     source: contextObj.source || "WHATSAPP_DIRECT",
-                    leadStatus: "NEW"
+                    patientStatus: "NEW"
                 });
 
                 await renderNode({
                     node: callbackNode || {
                         type: "END",
-                        messageText: "📞 *CALLBACK REQUEST RECEIVED*\n───────────────────────────\nHamari patient support team ke executive jald hi aap se is number par sampark karenge.\n\nThank you for contacting *Sr Kalla Hospital*! 🙏"
+                        messageText: "📞 *CALLBACK REQUEST RECEIVED*\n───────────────────────────\nHamari patient support team ke executive jald hi aap se is number par sampark karenge.\n\nThank you for contacting *Medisky Hospital*! 🙏"
                     },
                     waAccount, recipientPhoneId, patientNumber, tenantConnection: conn, hospitalId: hospital._id, context: session.context,
                     hospitalName: hospital?.name
@@ -465,7 +466,7 @@ export const handleWebhook = async (req, res) => {
                 return;
             }
 
-            // 1. DYNAMIC PREFIX MATCHING (Handles DB-Driven Options & Dynamic Dates)
+            // 1. DYNAMIC PREFIX MATCHING
             if (selectedOptionId.startsWith("BRANCH_")) {
                 const cleanBranchId = selectedOptionId.replace("BRANCH_", "").trim();
                 session.context.set("selected_branch_id", cleanBranchId);
@@ -473,7 +474,6 @@ export const handleWebhook = async (req, res) => {
                 session.context.set("NODE_SELECT_BRANCH", selectedTitle);
 
                 targetNextNodeId = "NODE_SELECT_DEPT";
-                console.log(`[Webhook Debug Dynamic] Branch Selected -> ID: '${cleanBranchId}' | Name: '${selectedTitle}' -> Next Node: '${targetNextNodeId}'`);
             }
             else if (selectedOptionId.startsWith("DEPT_")) {
                 const cleanDeptId = selectedOptionId.replace("DEPT_", "").trim();
@@ -482,7 +482,6 @@ export const handleWebhook = async (req, res) => {
                 session.context.set("NODE_SELECT_DEPT", selectedTitle);
 
                 targetNextNodeId = "NODE_SELECT_DOC";
-                console.log(`[Webhook Debug Dynamic] Department Selected -> ID: '${cleanDeptId}' | Name: '${selectedTitle}' -> Next Node: '${targetNextNodeId}'`);
             }
             else if (selectedOptionId.startsWith("DOC_")) {
                 const cleanDocId = selectedOptionId.replace("DOC_", "").trim();
@@ -491,7 +490,13 @@ export const handleWebhook = async (req, res) => {
                 session.context.set("NODE_SELECT_DOC", selectedTitle);
 
                 targetNextNodeId = "NODE_ASK_PATIENT_NAME";
-                console.log(`[Webhook Debug Dynamic] Doctor Selected -> ID: '${cleanDocId}' | Name: '${selectedTitle}' -> Next Node: '${targetNextNodeId}'`);
+            }
+            else if (selectedOptionId.startsWith("GENDER_")) {
+                const cleanGender = selectedTitle.replace(/[^\w\s]/gi, '').trim();
+                session.context.set("patient_gender", cleanGender);
+                session.context.set("NODE_ASK_PATIENT_GENDER", cleanGender);
+
+                targetNextNodeId = "NODE_ASK_PATIENT_LOCATION";
             }
             else if (selectedOptionId.startsWith("DATE_")) {
                 const cleanDate = selectedOptionId.replace("DATE_", "").trim();
@@ -499,7 +504,6 @@ export const handleWebhook = async (req, res) => {
                 session.context.set("NODE_SELECT_DATE", selectedTitle);
 
                 targetNextNodeId = "NODE_FETCH_SLOTS";
-                console.log(`[Webhook Debug Dynamic] Date Selected -> Date: '${cleanDate}' | Label: '${selectedTitle}' -> Next Node: '${targetNextNodeId}'`);
             }
             else if (selectedOptionId.startsWith("SLOT_")) {
                 const cleanSlotId = selectedOptionId.replace("SLOT_", "").trim();
@@ -507,16 +511,13 @@ export const handleWebhook = async (req, res) => {
                 session.context.set("NODE_FETCH_SLOTS", selectedTitle);
 
                 targetNextNodeId = "NODE_CONFIRMATION";
-                console.log(`[Webhook Debug Dynamic] Slot Selected -> ID: '${cleanSlotId}' | Time: '${selectedTitle}' -> Next Node: '${targetNextNodeId}'`);
             }
-            // 2. STATIC OPTIONS MATCHING (Handles Nodes with hardcoded options in DB)
+            // 2. STATIC OPTIONS MATCHING
             else {
                 let matchedOption = currentNode.options?.find(opt => opt.optionId === selectedOptionId);
                 let activeNode = currentNode;
 
-                // Global Node Sync Fallback
                 if (!matchedOption) {
-                    console.log(`[Webhook Debug] Option '${selectedOptionId}' not found in node '${currentNode.nodeId}'. Performing global query...`);
                     const globalMatchedNode = await NodeModel.findOne({
                         hospitalId: hospital._id,
                         "options.optionId": selectedOptionId
@@ -526,20 +527,14 @@ export const handleWebhook = async (req, res) => {
                         activeNode = globalMatchedNode;
                         matchedOption = globalMatchedNode.options.find(opt => opt.optionId === selectedOptionId);
                         session.currentNodeId = globalMatchedNode.nodeId;
-                        console.log(`[Webhook Debug Auto-Correct] Synced session active node to '${globalMatchedNode.nodeId}'.`);
                     }
                 }
 
                 if (matchedOption) {
-                    // Save context using Node ID as Key
                     session.context.set(activeNode.nodeId, selectedTitle);
-                    console.log(`[Webhook Debug] Saved Context -> Key: '${activeNode.nodeId}' = Value: '${selectedTitle}'`);
 
-                    // --- BRANCH CHECK ROUTING (Before Dept Selection) ---
                     if (selectedOptionId === "OPT_BOOK_APPOINTMENT") {
-                        console.log(`[Webhook Debug] Checking hospital branches...`);
                         const branchData = await resolveHospitalBranches({ tenantConnection: conn, hospitalId: hospital._id });
-                        console.log(`[Webhook Debug] Branch Resolution Result:`, JSON.stringify(branchData, null, 2));
 
                         if (branchData.isMultiBranch) {
                             session.currentNodeId = "NODE_SELECT_BRANCH";
@@ -557,9 +552,8 @@ export const handleWebhook = async (req, res) => {
                             });
                             return;
                         } else if (branchData.singleBranch) {
-                            session.context.set("selected_branch_name", branchData.singleBranch?.name);
+                            session.context.set("selected_branch_name", branchData.singleBranch?.name || branchData.singleBranch?.branchName);
                             session.context.set("selected_branch_id", branchData.singleBranch._id.toString());
-                            console.log(`[Webhook Debug] Auto-selected Single Branch: '${branchData.singleBranch.branchName}'`);
                         }
                     }
 
@@ -572,15 +566,54 @@ export const handleWebhook = async (req, res) => {
             await session.save();
         }
         // =========================================================================
-        // CASE B: TEXT INPUTS (Patient Name, Age)
+        // CASE B: TEXT INPUTS (Captured Data or Incorrect Text Interceptor)
         // =========================================================================
-        else if (msgType === "text" && currentNode.type === "TEXT_INPUT") {
+        else if (msgType === "text") {
             const userInputValue = incomingMsg.text.body.trim();
-            if (currentNode.inputVariable) {
-                session.context.set(currentNode.inputVariable, userInputValue);
-                console.log(`[Webhook Debug] Captured Text Input -> Variable: '${currentNode.inputVariable}' = Value: '${userInputValue}'`);
+
+            if (currentNode.type === "TEXT_INPUT") {
+                if (currentNode.inputVariable) {
+                    session.context.set(currentNode.inputVariable, userInputValue);
+                    console.log(`[Webhook Debug] Captured Text Input -> Variable: '${currentNode.inputVariable}' = Value: '${userInputValue}'`);
+                    await session.save();
+                }
+                targetNextNodeId = currentNode.nextNodeId;
+            } else {
+                // WRONG INPUT INTERCEPTOR: User typed text during an interactive button/list node
+                console.warn(`[Webhook Warning] Text received on interactive node '${currentNode.nodeId}'. Re-rendering same node...`);
+
+                let renderOptions = currentNode.options || [];
+
+                // Fetch dynamic options if user typed text during dynamic list nodes
+                if (currentNode.nodeId === "NODE_SELECT_DEPT") {
+                    const deptRes = await fetchDepartmentsFromDb({ tenantConnection: conn, hospitalId: hospital._id, context: session.context });
+                    renderOptions = deptRes.options;
+                } else if (currentNode.nodeId === "NODE_SELECT_DOC") {
+                    const docRes = await fetchDoctorsFromDb({ tenantConnection: conn, hospitalId: hospital._id, context: session.context });
+                    renderOptions = docRes.options;
+                } else if (currentNode.nodeId === "NODE_SELECT_DATE") {
+                    renderOptions = generateNext7DaysOptions();
+                } else if (currentNode.type === "DB_QUERY") {
+                    const slotRes = await handleCentralizedDbSlots({ tenantConnection: conn, hospitalId: hospital._id, context: session.context });
+                    renderOptions = slotRes.options;
+                }
+
+                await renderNode({
+                    node: {
+                        ...currentNode,
+                        messageText: `⚠️ *Kripya option button par click karke select karein!*\n\n${currentNode.messageText}`,
+                        options: renderOptions
+                    },
+                    waAccount,
+                    recipientPhoneId,
+                    patientNumber,
+                    tenantConnection: conn,
+                    hospitalId: hospital._id,
+                    context: session.context,
+                    hospitalName: hospital?.name
+                });
+                return;
             }
-            targetNextNodeId = currentNode.nextNodeId;
         }
 
         console.log(`[Webhook Debug] Calculated Target Next Node ID: '${targetNextNodeId}'`);
@@ -600,7 +633,7 @@ export const handleWebhook = async (req, res) => {
 
             console.log(`[Webhook Debug] Executing Next Node -> ID: '${nextNodeDoc.nodeId}' | Type: '${nextNodeDoc.type}'`);
 
-            // --- TYPE 1: DYNAMIC DEPARTMENT LOOKUP FROM MONGO DB ---
+            // --- TYPE 1: DYNAMIC DEPARTMENT LOOKUP WITH GEMINI AI SUGGESTIONS ---
             if (nextNodeDoc.nodeId === "NODE_SELECT_DEPT") {
                 console.log("[Webhook Debug] Fetching Departments dynamically from DB...");
                 const { hasData, options } = await fetchDepartmentsFromDb({
@@ -608,8 +641,6 @@ export const handleWebhook = async (req, res) => {
                     hospitalId: hospital._id,
                     context: session.context
                 });
-
-                console.log(`[Webhook Debug] Departments Fetched -> Has Data: ${hasData} | Count: ${options.length}`);
 
                 if (!hasData) {
                     await renderNode({
@@ -628,7 +659,7 @@ export const handleWebhook = async (req, res) => {
                 return;
             }
 
-            // --- TYPE 2: DYNAMIC DOCTOR LOOKUP FROM MONGO DB ---
+            // --- TYPE 2: DYNAMIC DOCTOR LOOKUP ---
             if (nextNodeDoc.nodeId === "NODE_SELECT_DOC") {
                 console.log("[Webhook Debug] Fetching Doctors dynamically from DB...");
                 const { hasData, options } = await fetchDoctorsFromDb({
@@ -636,8 +667,6 @@ export const handleWebhook = async (req, res) => {
                     hospitalId: hospital?._id,
                     context: session.context
                 });
-
-                console.log(`[Webhook Debug] Doctors Fetched -> Has Data: ${hasData} | Count: ${options.length}`);
 
                 if (!hasData) {
                     await renderNode({
@@ -678,8 +707,6 @@ export const handleWebhook = async (req, res) => {
                     context: session.context
                 });
 
-                console.log(`[Webhook Debug] Slots Fetched -> Has Data: ${hasData} | Count: ${options.length}`);
-
                 if (!hasData) {
                     await renderNode({
                         node: { type: "END", messageText: "⚠️ Selected doctor/date par koi slot available nahi hai. Reset karne ke liye *hi* type karein." },
@@ -705,7 +732,6 @@ export const handleWebhook = async (req, res) => {
 
                 console.log("[Webhook Debug] Executing END Node. Final Context State:", JSON.stringify(contextObj, null, 2));
 
-                // A. APPOINTMENT BOOKING LEAD CREATION
                 if (session.context.get("START_NODE")?.includes("Appointment") || contextObj.appointment_date) {
                     console.log("[Webhook Debug] Creating Lead Document: APPOINTMENT_BOOKING...");
                     const createdLead = await LeadModel.create({
@@ -713,35 +739,36 @@ export const handleWebhook = async (req, res) => {
                         patientName: contextObj.patient_name || "Patient",
                         patientPhoneNumber: patientNumber,
                         patientAge: contextObj.patient_age || "",
+                        patientGender: contextObj.patient_gender || "",
+                        patientLocation: contextObj.patient_location || "",
+                        illnessDescription: contextObj.illness_description || "",
                         leadType: "APPOINTMENT_BOOKING",
-                        // departmentName: contextObj.selected_dept_id ? mongoose.Schema.ObjectId(contextObj.selected_dept_id) || contextObj.NODE_SELECT_DEPT || "",
-                        // doctorName: contextObj.selected_doctor_id || contextObj.NODE_SELECT_DOC || "",
                         departmentName: toValidObjectId(contextObj.selected_dept_id),
                         doctorName: toValidObjectId(contextObj.selected_doctor_id),
                         appointmentDate: contextObj.appointment_date || "",
                         appointmentSlot: contextObj.NODE_FETCH_SLOTS || "",
                         branchName: contextObj.selected_branch_name || "",
                         source: contextObj.source || "WHATSAPP_DIRECT",
-                        leadStatus: "NEW"
+                        patientStatus: "NEW"
                     });
                     console.log(`[Webhook Debug Success] Appointment Lead Created ID: ${createdLead._id}`);
                 }
-                // B. CALLBACK SUPPORT LEAD CREATION
                 else if (session.context.get("START_NODE")?.includes("Callback")) {
                     console.log("[Webhook Debug] Creating Lead Document: CALLBACK_REQUEST...");
                     const newLead = await LeadModel.create({
                         hospitalId: hospital._id,
                         patientName: contextObj.patient_name || "Enquirer",
                         patientPhoneNumber: patientNumber,
+                        patientLocation: contextObj.patient_location || "",
+                        illnessDescription: contextObj.illness_description || "",
                         leadType: "CALLBACK_REQUEST",
                         source: contextObj.source || "WHATSAPP_DIRECT",
-                        leadStatus: "NEW"
+                        patientStatus: "NEW"
                     });
                     console.log(`[Webhook Debug Success] Callback Lead Created ID: ${newLead._id}`);
                 }
             }
 
-            // Render Standard Node (Interactive List, Buttons, Text Input, Confirmation)
             console.log(`[Webhook Debug] Invoking renderNode for '${nextNodeDoc.nodeId}'...`);
             await renderNode({
                 node: nextNodeDoc,
@@ -944,11 +971,11 @@ export const getLeads = async (req, res) => {
         // 2. Connect to Tenant DB
         const conn = await getConnection(hospital.trimmedName);
         const LeadModel = getLeadModel(conn);
-        const DoctorModel = getDoctorModel(conn)
-        const DepartmentModel = getDepartmentModel(conn)
+        // const DoctorModel = getDoctorModel(conn)
+        // const DepartmentModel = getDepartmentModel(conn)
 
         // 3. Build Query Filters
-        const query = { hospitalId };
+        const query = {};
 
         if (status) query.leadStatus = status;
         if (leadType) query.leadType = leadType;
@@ -996,6 +1023,109 @@ export const getLeads = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Failed to fetch leads",
+            error: error.message
+        });
+    }
+};
+
+export const updateLeadStatus = async (req, res) => {
+    try {
+        const { leadId, hospitalId } = req.query;
+        const { leadStatus, rejectReason } = req.body;
+
+        console.log("aa", req.body);
+        console.log("aa", req.params);
+        console.log("aa", req.query);
+
+        // 1. Basic Parameter Validation
+        if (!leadId || !hospitalId || !leadStatus) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing required fields: leadId, hospitalId, and leadStatus are required."
+            });
+        }
+
+        // 2. Validate MongoDB ObjectIds
+        if (!mongoose.isValidObjectId(leadId) || !mongoose.isValidObjectId(hospitalId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid leadId or hospitalId format."
+            });
+        }
+
+        // 3. Validate Allowed Enum Values for leadStatus
+        const allowedStatuses = ["NEW", "CONTACTED", "CONFIRMED", "CANCELLED"];
+        const normalizedStatus = leadStatus.toUpperCase().trim();
+
+        if (!allowedStatuses.includes(normalizedStatus)) {
+            return res.status(400).json({
+                success: false,
+                message: `Invalid leadStatus value. Must be one of: ${allowedStatuses.join(", ")}`
+            });
+        }
+
+        // 4. Resolve Tenant Hospital Record
+        const hospital = await HospitalModel.findOne({
+            _id: hospitalId,
+            isDeleted: false
+        }).lean();
+
+        if (!hospital) {
+            return res.status(404).json({
+                success: false,
+                message: "Hospital tenant record not found."
+            });
+        }
+
+        // 5. Connect to Multi-tenant Database Connection
+        const tenantConnection = await getConnection(hospital.trimmedName);
+        const LeadModel = getLeadModel(tenantConnection);
+
+        let updatePayload = {
+            leadStatus: normalizedStatus
+        };
+
+        // Add rejectReason to update payload if present
+        if (rejectReason && rejectReason.trim() !== "") {
+            updatePayload.rejectionReason = rejectReason.trim();
+        }
+
+        // 2. Find and Update Lead Status using hospitalId scoping for multi-tenancy
+        const updatedLead = await LeadModel.findOneAndUpdate(
+            {
+                _id: new mongoose.Types.ObjectId(leadId),
+                hospitalId: new mongoose.Types.ObjectId(hospitalId)
+            },
+            {
+                $set: updatePayload
+            },
+            { new: true, runValidators: true }
+        )
+            // .populate({ path: "departmentName", select: "name" })
+            // .populate({ path: "doctorName", select: "name specialization" })
+            .lean();
+
+        if (!updatedLead) {
+            return res.status(404).json({
+                success: false,
+                message: "Lead record not found for the given hospitalId."
+            });
+        }
+
+        console.log(`[Lead Status Updated] Lead ID: ${leadId} | New Status: ${normalizedStatus} | Hospital: ${hospital.trimmedName}`);
+
+        // 7. Send Success Response
+        return res.status(200).json({
+            success: true,
+            message: `Lead status successfully updated to ${normalizedStatus}`,
+            data: updatedLead
+        });
+
+    } catch (error) {
+        console.error("[updateLeadStatus Error]:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error while updating lead status.",
             error: error.message
         });
     }

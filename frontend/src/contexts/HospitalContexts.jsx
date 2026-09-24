@@ -386,6 +386,25 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             toast.error("Failed to fetch Hospital Code")
     });
 
+    const leadMutation = useMutation({
+        mutationFn: async ({ leadId, leadStatus, rejectReason }) => {
+            console.log("Updating lead:", { leadId, leadStatus, rejectReason });
+
+            return await commonRoutes.updateLeadStatus(
+                selectedHostpital,
+                leadId,
+                leadStatus,
+                rejectReason
+            );
+        },
+        onSuccess: (data) => {
+            toast.success("Lead status updated successfully!");
+            queryClient.invalidateQueries({ queryKey: ["leadsData"] });
+        },
+        onError: (error) => {
+            console.error("Error updating lead status:", error);
+        }
+    });
     const {
         data: formEditChanges,
         error: formEditChangesError,
@@ -840,6 +859,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         tabValue,
         doctorStats,
         leadsData,
+        leadMutation,
 
         setTabValue,
         setDateFilter,
@@ -885,6 +905,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         forms,
         codeAlerts,
         leadsData,
+        leadMutation,
         branchFollowups,
         codeAlertsData,
         formEditChanges,

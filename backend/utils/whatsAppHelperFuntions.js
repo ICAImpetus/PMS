@@ -2,7 +2,71 @@ import axios from "axios";
 import { getBranchModel, getDepartmentModel, getDoctorModel, getFilledFormsModel, getMessageModel } from "./db.manager.js";
 import { interpolateTemplate } from "./nodeCache.js";
 import mongoose from "mongoose";
+import { GoogleGenAI } from "@google/genai";
 
+// Initialize Gemini Client
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+
+export async function predictDepartmentWithGemini(illnessText, availableDepartments, maxRetries = 3) {
+    if (!illnessText || !Array.isArray(availableDepartments) || availableDepartments.length === 0) {
+        console.log("[Gemini AI] Skipped prediction: Missing illness text or empty department list.");
+        return null;
+    }
+
+    const deptListStr = availableDepartments
+        .map((d) => `ID: ${d._id.toString()} | Name: ${d.name || d.departmentName}`)
+        .join("\n");
+
+    const prompt = `
+You are a medical triage assistant for a hospital. 
+A patient described their health issue/illness as: "${illnessText}".
+
+Here is the list of available departments in the hospital:
+${deptListStr}
+
+Task: Choose the MOST suitable department ID from the provided list for this patient's illness.
+Output Rule: Return ONLY the exact department ID string from the list. Do NOT write any explanations, markdown, or extra text.
+`;
+
+    // RETRY LOOP LOGIC
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(`[Gemini AI] Attempt ${attempt} of ${maxRetries} to predict department...`);
+
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt
+            });
+
+            const suggestedId = response.text ? response.text.trim() : null;
+            const isValid = availableDepartments.some((d) => d._id.toString() === suggestedId);
+
+            if (isValid) {
+                console.log(`[Gemini AI Success] Matched Dept ID on Attempt ${attempt}: '${suggestedId}'`);
+                return suggestedId;
+            } else {
+                console.warn(`[Gemini AI Warning Attempt ${attempt}] Returned ID '${suggestedId}' not found in active departments.`);
+            }
+
+        } catch (error) {
+            console.error(`[Gemini AI Error Attempt ${attempt}/${maxRetries}]:`, error?.message || error);
+
+            // Agar maximum retries exhaustion tak error aaye:
+            if (attempt === maxRetries) {
+                console.error("[Gemini AI Failed] All retry attempts exhausted. Falling back to return ALL departments.");
+                return null; // Fallback to all departments
+            }
+
+            // Exponential backoff delay: 1st retry = 1s, 2nd retry = 2s
+            const delayMs = attempt * 1000;
+            console.log(`[Gemini AI Retry] Waiting ${delayMs}ms before retrying...`);
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
+    }
+
+    return null; // Safety fallback
+}
 
 export function generateNext7DaysOptions() {
     const options = [];
@@ -98,43 +162,63 @@ export async function resolveHospitalBranches({ tenantConnection, hospitalId }) 
 export async function fetchDepartmentsFromDb({ tenantConnection, hospitalId, context }) {
     try {
         const DeptModel = getDepartmentModel(tenantConnection);
-        console.log("---------------- [DEBUG: fetchDepartmentsFromDb] ----------------");
-        console.log("Raw context type:", context instanceof Map ? "Map" : typeof context);
 
-        // Map Object ko plain JavaScript Object me print karne ke liye
-        const debugContextObj = context instanceof Map ? Object.fromEntries(context) : context;
         const raw_branch = context.get ? context.get("selected_branch_id") || context.get("NODE_SELECT_BRANCH") : context?.selected_branch_id || context?.NODE_SELECT_BRANCH;
-        console.log("Parsed Context Variables:", JSON.stringify(debugContextObj, null, 2));
+        const illnessDescription = context.get ? context.get("illness_description") : context?.illness_description;
 
-        // 2. String.prototype.replace() use karke exact ObjectId nikalein
         const branchId = typeof raw_branch === "string" ? raw_branch.replace("BRANCH_", "").trim() : null;
 
         console.log("---------------- [DEBUG: fetchDepartmentsFromDb] ----------------");
         console.log("Raw Branch Context:", raw_branch);
         console.log("Cleaned ObjectId branchId:", branchId);
+        console.log("Illness Description Context:", illnessDescription);
 
         const query = { isDeleted: false };
         if (branchId) query.branch = branchId;
 
-        console.log("MongoDB Query Payload:", JSON.stringify(query, null, 2));
-
         const departments = await DeptModel.find(query).lean();
 
         console.log("Fetched Departments Count:", departments?.length || 0);
-        console.log("Fetched Departments List:", departments);
 
+        // 1. If NO departments exist in the DB for this hospital/branch at all
         if (!departments || departments.length === 0) {
+            console.warn("[fetchDepartmentsFromDb Warning] Zero departments found in database.");
             return { hasData: false, options: [] };
         }
 
-        const options = departments.slice(0, 10).map((d) => ({
-            optionId: `DEPT_${d?._id.toString()}`,
-            title: d?.name.substring(0, 24),
-            description: "Department",
-            nextNodeId: "NODE_SELECT_DOC"
-        }));
+        // 2. Ask Gemini AI to predict the best matching department based on illness description
+        let suggestedDeptId = null;
+        if (illnessDescription) {
+            suggestedDeptId = await predictDepartmentWithGemini(illnessDescription, departments);
+            console.log(`[AI Prediction] Suggested Dept ID: ${suggestedDeptId} for Illness: '${illnessDescription}'`);
+        }
+
+        // 3. FALLBACK & SORTING LOGIC:
+        // If Gemini finds a valid match -> place suggested department at the TOP (Index 0).
+        // If Gemini finds NO match (or errors out) -> 'departments' array remains in default DB order (ALL departments returned).
+        if (suggestedDeptId) {
+            departments.sort((a, b) => {
+                if (a._id.toString() === suggestedDeptId) return -1;
+                if (b._id.toString() === suggestedDeptId) return 1;
+                return 0;
+            });
+        } else {
+            console.log("[AI Prediction Fallback] No specific match found or AI bypassed. Returning ALL available departments.");
+        }
+
+        // 4. Map ALL departments to Meta Interactive List Options
+        const options = departments.slice(0, 10).map((d) => {
+            const isSuggested = suggestedDeptId && d._id.toString() === suggestedDeptId;
+            return {
+                optionId: `DEPT_${d._id.toString()}`,
+                title: `${isSuggested ? "⭐ " : "🩺 "}${d.name}`.substring(0, 24),
+                description: isSuggested ? "Recommended for your symptoms" : "Department Consultation",
+                nextNodeId: "NODE_SELECT_DOC"
+            };
+        });
 
         return { hasData: true, options };
+
     } catch (error) {
         console.error("[fetchDepartmentsFromDb Error]:", error.message);
         return { hasData: false, options: [] };
@@ -343,7 +427,7 @@ export async function renderNode({
         if (!hasCallback) {
             optionsToRender.push({
                 optionId: "OPT_REQUEST_CALLBACK",
-                title: "📞 Call Executive",
+                title: "📞 Request a Callback",
                 description: "Request direct callback from executive",
                 nextNodeId: "NODE_CALLBACK_CONFIRMATION"
             });

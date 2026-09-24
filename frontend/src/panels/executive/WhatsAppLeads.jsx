@@ -35,10 +35,10 @@ import {
     Person as PersonIcon,
     CheckCircle as CheckCircleIcon,
 } from "@mui/icons-material";
-
-import moment from "moment";
+import CancelIcon from "@mui/icons-material/Cancel";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import HospitalContext from "../../contexts/HospitalContexts";
-
+import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 // MongoDB Compass Schema Mapping ke aadhar par Dummy Data
 // const DUMMY_LEADS_DATA = [
 //     {
@@ -84,40 +84,53 @@ const WhatsAppLeads = () => {
     // Action Modal State
     const [selectedLead, setSelectedLead] = useState(null);
     const [openModal, setOpenModal] = useState(false);
-
-    const { leadsData, refetchleadsData } = useContext(HospitalContext)
-
-    console.log("leadsData", leadsData);
+    const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+    const [rejectReason, setRejectReason] = useState("");
 
 
-    // Backend Integration Point: Uncomment when API ready
-    /*
-    useEffect(() => {
-      fetchWhatsAppLeads();
-    }, []);
-  
-    const fetchWhatsAppLeads = async () => {
-      try {
-        const res = await axios.get('/api/leads?source=WHATSAPP_DIRECT');
-        setLeads(res.data);
-      } catch (err) {
-        console.error("Error fetching leads:", err);
-      }
+    const { leadMutation, leadsData, refetchleadsData } = useContext(HospitalContext)
+
+    const {
+        mutate: updateLeadStatus, // Mutation function
+        isPending: isUpdatingLead, // Loading boolean state (formerly isLoading)
+        error: leadUpdateError,    // Error object
+        isError                    // Boolean error indicator
+    } = leadMutation;
+
+    const handleOpenRejectModal = (row) => {
+        setSelectedLead(row);
+        setRejectReason("");
+        setRejectDialogOpen(true);
     };
-    */
+
+    const handleConfirmReject = async () => {
+        if (!rejectReason.trim()) return;
+        // Call mutate by passing a SINGLE object containing all fields
+        updateLeadStatus({
+            leadId: selectedLead?._id,
+            leadStatus: "CANCELLED",
+            rejectReason: rejectReason
+        });
+        await refetchleadsData()
+        setRejectDialogOpen(false);
+
+    };
+
 
     const handleActionClick = (lead) => {
         setSelectedLead(lead);
         setOpenModal(true);
     };
 
-    const handleConfirmAction = () => {
-        // API Call to Update Lead Status in Backend
-        // setLeads((prev) =>
-        //     prev.map((item) =>
-        //         item._id === selectedLead._id ? { ...item, leadStatus: "CONFIRMED" } : item
-        //     )
-        // );
+    const handleConfirmAction = async () => {
+
+        updateLeadStatus({
+            leadId: selectedLead?._id,
+            leadStatus: "CONFIRMED",
+            // rejectReason: rejectReason
+        });
+
+        await refetchleadsData()
         setOpenModal(false);
     };
 
@@ -390,11 +403,11 @@ const WhatsAppLeads = () => {
                                             {/* Status */}
                                             <TableCell>
                                                 <Chip
-                                                    label={row.leadStatus}
+                                                    label={row?.patientStatus || "NEW"}
                                                     size="small"
                                                     sx={{
-                                                        backgroundColor: row.leadStatus === "CONFIRMED" ? "#f0fdf4" : "#fef3c7",
-                                                        color: row.leadStatus === "CONFIRMED" ? "#16a34a" : "#d97706",
+                                                        backgroundColor: row.patientStatus === "NEW" ? "#f0fdf4" : "#fef3c7",
+                                                        color: row.patientStatus === "NEW" ? "#16a34a" : "#d97706",
                                                         fontWeight: 800,
                                                         fontSize: "0.65rem",
                                                         borderRadius: "6px",
@@ -404,30 +417,73 @@ const WhatsAppLeads = () => {
 
                                             {/* DYNAMIC ACTION BUTTON */}
                                             <TableCell align="right">
-                                                <Button
-                                                    variant="contained"
-                                                    disableElevation
-                                                    size="small"
-                                                    onClick={() => handleActionClick(row)}
-                                                    startIcon={
-                                                        isAppointment ? <EventAvailableIcon fontSize="small" /> : <PhoneCallbackIcon fontSize="small" />
-                                                    }
-                                                    sx={{
-                                                        backgroundColor: isAppointment ? "#2563eb" : "#16a34a",
-                                                        color: "#ffffff",
-                                                        fontWeight: 700,
-                                                        fontSize: "0.7rem",
-                                                        borderRadius: "8px",
-                                                        textTransform: "uppercase",
-                                                        px: 1.8,
-                                                        py: 0.8,
-                                                        "&:hover": {
-                                                            backgroundColor: isAppointment ? "#1d4ed8" : "#15803d",
-                                                        },
-                                                    }}
-                                                >
-                                                    {isAppointment ? "Confirm Appointment" : "Confirm Callback"}
-                                                </Button>
+                                                {["CONFIRMED", "CANCELLED", "CANCELD"].includes(row?.leadStatus) ? (
+                                                    <Chip
+                                                        size="small"
+                                                        icon={
+                                                            row?.leadStatus === "CONFIRMED" ? (
+                                                                <CheckCircleOutlineIcon style={{ color: "#15803d" }} fontSize="small" />
+                                                            ) : (
+                                                                <HighlightOffIcon style={{ color: "#b91c1c" }} fontSize="small" />
+                                                            )
+                                                        }
+                                                        label={row?.leadStatus}
+                                                        sx={{
+                                                            fontWeight: 700,
+                                                            fontSize: "0.68rem",
+                                                            textTransform: "uppercase",
+                                                            px: 1,
+                                                            backgroundColor: row?.leadStatus === "CONFIRMED" ? "#dcfce7" : "#fee2e2",
+                                                            color: row?.leadStatus === "CONFIRMED" ? "#15803d" : "#b91c1c",
+                                                            border: "1px solid",
+                                                            borderColor: row?.leadStatus === "CONFIRMED" ? "#86efac" : "#fca5a5",
+                                                            borderRadius: "6px"
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <Stack direction="row" spacing={1} justifyContent="flex-end">
+                                                        {/* Confirm Button */}
+                                                        <Button
+                                                            variant="contained"
+                                                            disableElevation
+                                                            size="small"
+                                                            onClick={() => handleActionClick(row)}
+                                                            startIcon={isAppointment ? <EventAvailableIcon fontSize="small" /> : <PhoneCallbackIcon fontSize="small" />}
+                                                            sx={{
+                                                                backgroundColor: isAppointment ? "#2563eb" : "#16a34a",
+                                                                color: "#ffffff",
+                                                                fontWeight: 700,
+                                                                fontSize: "0.7rem",
+                                                                borderRadius: "8px",
+                                                                textTransform: "uppercase",
+                                                                px: 1.5,
+                                                                py: 0.6,
+                                                                "&:hover": { backgroundColor: isAppointment ? "#1d4ed8" : "#15803d" },
+                                                            }}
+                                                        >
+                                                            Confirm
+                                                        </Button>
+
+                                                        {/* Reject Button */}
+                                                        <Button
+                                                            variant="outlined"
+                                                            size="small"
+                                                            color="error"
+                                                            onClick={() => handleOpenRejectModal(row)}
+                                                            startIcon={<CancelIcon fontSize="small" />}
+                                                            sx={{
+                                                                fontWeight: 700,
+                                                                fontSize: "0.7rem",
+                                                                borderRadius: "8px",
+                                                                textTransform: "uppercase",
+                                                                px: 1.5,
+                                                                py: 0.6,
+                                                            }}
+                                                        >
+                                                            Reject
+                                                        </Button>
+                                                    </Stack>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     );
@@ -450,13 +506,15 @@ const WhatsAppLeads = () => {
                         Are you sure you want to proceed for <strong>{selectedLead?.patientName}</strong> (+{selectedLead?.patientPhoneNumber})?
                     </Typography>
 
+                    {/* {console.log("ttht", selectedLead)
+                    } */}
                     {selectedLead?.leadType === "APPOINTMENT_BOOKING" && (
                         <Box sx={{ backgroundColor: "#f8fafc", p: 2, borderRadius: "12px", border: "1px solid #e2e8f0" }}>
                             <Typography variant="caption" color="#94a3b8" display="block">
                                 SLOT DETAILS
                             </Typography>
                             <Typography variant="body2" fontWeight={700} color="#1e293b">
-                                Dr. {selectedLead?.doctorName} ({selectedLead?.departmentName})
+                                {selectedLead?.doctorName?.name} ({selectedLead?.departmentName?.name})
                             </Typography>
                             <Typography variant="caption" color="#2563eb" fontWeight={700}>
                                 {selectedLead?.appointmentDate} | {selectedLead?.appointmentSlot}
@@ -480,6 +538,35 @@ const WhatsAppLeads = () => {
                         }}
                     >
                         Confirm Now
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)} maxWidth="xs" fullWidth>
+                <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+                    Reject {selectedLead?.leadType === "APPOINTMENT_BOOKING" ? "Appointment" : "Callback"}
+                </DialogTitle>
+                <DialogContent>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        label="Reason for Rejection"
+                        type="text"
+                        fullWidth
+                        multiline
+                        rows={3}
+                        variant="outlined"
+                        value={rejectReason}
+                        onChange={(e) => setRejectReason(e.target.value)}
+                        placeholder="e.g. Doctor unavailable, Patient canceled, Incorrect number..."
+                    />
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={() => setRejectDialogOpen(false)} color="inherit" size="small">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleConfirmReject} color="error" variant="contained" size="small" disabled={!rejectReason.trim()}>
+                        Confirm Reject
                     </Button>
                 </DialogActions>
             </Dialog>

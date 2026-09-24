@@ -375,6 +375,21 @@ export const commonRoutes = {
     })
 
   },
+  updateLeadStatus: (hospitalId, leadId, leadStatus = "", rejectReason = "") => {
+    console.log("leadStatus", leadStatus);
+
+    return API.put(`api/update-lead-status`, {
+      leadStatus,
+      rejectReason
+    }, {
+      params: {
+        hospitalId,
+        leadId
+
+      }
+    })
+
+  },
   getFormEditChanges: (hospitalId) => {
     return API.get(`api/edit-changes`, {
       params: {
