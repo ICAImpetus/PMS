@@ -23,7 +23,7 @@ import { messageSchema } from "../models/teanants/messageModel.js";
 import { leadSchema } from "../models/teanants/leadModel.js";
 
 const connections = {};
-
+const tenantNameCache = new Map();
 let masterConnection = null;
 
 export const getMasterConnection = async () => {
@@ -69,6 +69,26 @@ export const getConnection = async (dbName) => {
 
     return conn;
 };
+
+export async function getTenantDbName(hospitalId) {
+    // 1. Agar cache mein already hai, direct return karo (0 ms DB delay)
+    if (tenantNameCache.has(hospitalId)) {
+        return tenantNameCache.get(hospitalId);
+    }
+
+
+    const HospitalModel = getHospitalModel(MasterConn)
+    // 2. Agar cache mein nahi hai, tabhi Mongo query chalao
+    const hospital = await HospitalModel.findById(hospitalId).select("trimmedName").lean();
+    if (!hospital) {
+        return null;
+    }
+
+    // 3. Cache mein store kar lo future requests ke liye
+    tenantNameCache.set(hospitalId, hospital.trimmedName);
+    return hospital.trimmedName;
+}
+
 
 export const getAdminAgentModel = (conn) => {
     if (!conn) {

@@ -15,14 +15,10 @@ const HospitalModel = getHospitalModel(MasterConn)
 export const createFilledForm = async (req, res) => {
   let session;
   let isNewPatient = false;
-  // //console.log("req.body", req.body?.formData?.feedback?.questions);
-
 
   try {
     const { hosId, branchId } = req.query;
-
     const user = req.user;
-
     const data = req.body;
 
     if (
@@ -33,19 +29,16 @@ export const createFilledForm = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message:
-          "Valid hospitalId and branchId are required",
+        message: "Valid hospitalId and branchId are required",
       });
     }
 
-    const mobile =
-      data?.formData?.patientDetails?.patientMobile?.trim();
+    const mobile = data?.formData?.patientDetails?.patientMobile?.trim();
 
     if (!mobile) {
       return res.status(400).json({
         success: false,
-        message:
-          "Patient mobile number is required",
+        message: "Patient mobile number is required",
       });
     }
 
@@ -56,9 +49,15 @@ export const createFilledForm = async (req, res) => {
       });
     }
 
-    const hospital = await HospitalModel.findById(
-      hosId
-    )
+    // FIXED: Added missing return statement
+    if (!data?.doctor || data?.doctor === '' || data?.doctor === null) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please select a doctor!'
+      });
+    }
+
+    const hospital = await HospitalModel.findById(hosId)
       .select("trimmedName name")
       .lean();
 
@@ -69,23 +68,18 @@ export const createFilledForm = async (req, res) => {
       });
     }
 
-    const conn = await getConnection(
-      hospital.trimmedName
-    );
+    const conn = await getConnection(hospital.trimmedName);
 
     const FilledFormsModel = getFilledFormsModel(conn);
     const PatientModel = getPatientModel(conn);
     const DoctorModel = getDoctorModel(conn);
-    const DepartmentModel = getDepartmentModel(conn)
-    const BranchModel = getBranchModel(conn)
-
+    const DepartmentModel = getDepartmentModel(conn);
+    const BranchModel = getBranchModel(conn);
 
     session = await conn.startSession();
-
     session.startTransaction();
 
     data.agentId = user.id;
-
     data.agentName = user.name;
 
     // =========================
@@ -93,20 +87,13 @@ export const createFilledForm = async (req, res) => {
     // =========================
 
     if (data?.formData?.dateTime) {
-      data.formData.dateTime = new Date(
-        data.formData.dateTime
-      );
+      data.formData.dateTime = new Date(data.formData.dateTime);
     }
 
-    if (
-      data?.formData?.patientDetails
-        ?.patientAge
-    ) {
-      data.formData.patientDetails.patientAge =
-        Number(
-          data.formData.patientDetails
-            .patientAge
-        );
+    if (data?.formData?.patientDetails?.patientAge) {
+      data.formData.patientDetails.patientAge = Number(
+        data.formData.patientDetails.patientAge
+      );
     }
 
     // =========================
@@ -118,57 +105,23 @@ export const createFilledForm = async (req, res) => {
       branchId: branchId
     }).session(session);
 
-    if (!patient) {
+    if (!patient || (patient && patient?.patientName !== data.formData.patientDetails?.patientName)) {
       isNewPatient = true;
 
       const patientPayload = {
         ...data.formData.patientDetails,
-
         branchId,
-
         hospitalId: {
           hospitalId: hosId,
           name: hospital.name,
         },
-
         agentDetails: {
           agentId: user.id,
           name: user.name,
         },
       };
 
-      patient = await PatientModel.create(
-        [patientPayload],
-        { session }
-      );
-
-      patient = patient[0];
-    }
-
-    else if (patient && patient?.patientName !== data.formData.patientDetails.patientName) {
-      isNewPatient = true;
-
-      const patientPayload = {
-        ...data.formData.patientDetails,
-
-        branchId,
-
-        hospitalId: {
-          hospitalId: hosId,
-          name: hospital.name,
-        },
-
-        agentDetails: {
-          agentId: user.id,
-          name: user.name,
-        },
-      };
-
-      patient = await PatientModel.create(
-        [patientPayload],
-        { session }
-      );
-
+      patient = await PatientModel.create([patientPayload], { session });
       patient = patient[0];
     }
 
@@ -178,29 +131,22 @@ export const createFilledForm = async (req, res) => {
 
     const isFollowupCall =
       data.formType === "outbound" &&
-      data?.purpose?.toLowerCase() ===
-      "followup" &&
-      data?.callStatus?.toLowerCase() !==
-      "call-drop";
+      data?.purpose?.toLowerCase() === "followup" &&
+      data?.callStatus?.toLowerCase() !== "call-drop";
 
     if (isFollowupCall) {
       await FilledFormsModel.findOneAndUpdate(
         {
-          "formData.patientDetails":
-            patient._id,
-
+          "formData.patientDetails": patient._id,
           followupStatus: "pending",
         },
-
         {
           $set: {
             followupStatus: "completed",
           },
         },
-
         {
           sort: { createdAt: -1 },
-
           session,
         }
       );
@@ -211,57 +157,33 @@ export const createFilledForm = async (req, res) => {
     // =========================
 
     const followupStatus =
-      data?.formData?.useForFollowup ===
-        true
-        ? "pending"
-        : null;
+      data?.formData?.useForFollowup === true ? "pending" : null;
 
     // =========================
     // Create form payload
     // =========================
 
-    if (!data?.doctor || data?.doctor === '' || data?.doctor === null) {
-      res.status(401).json({
-        success: false,
-        message: 'Please select a doctor!'
-      })
-    }
-
     const filledFormPayload = {
       formType: data.formType,
-
       hospitalId: hosId,
-
       branchId,
-
       callStatus: data.callStatus,
-
       agentId: user.id,
-
       agentName: user.name,
-
       doctor: data.doctor,
       useForFollowup: data.useForFollowup,
-
       department: data.department,
-
       purpose: data.purpose,
-
       ...(data.purpose?.toLowerCase() === "appointment" && {
         status: "pending",
       }),
-
       formData: {
         ...data.formData,
-
         patientDetails: patient._id,
-
         appointmentSlot: data.formData.appointmentSlot
           ? {
             ...data.formData.appointmentSlot,
-            date: new Date(
-              data.formData.appointmentSlot.date
-            ),
+            date: new Date(data.formData.appointmentSlot.date),
           }
           : null,
       },
@@ -271,33 +193,23 @@ export const createFilledForm = async (req, res) => {
     // Create filled form
     // =========================
 
-    const [filledForm] =
-      await FilledFormsModel.create(
-        [filledFormPayload],
-        { session }
-      );
+    const [filledForm] = await FilledFormsModel.create(
+      [filledFormPayload],
+      { session }
+    );
 
     // =========================
     // Update patient visit
     // =========================
 
     await PatientModel.updateOne(
+      { _id: patient._id },
       {
-        _id: patient._id,
-      },
-
-      {
-        $inc: {
-          totalVisit: 1,
-        },
-
-        $set: {
+        $inc: { totalVisit: 1 }, $set: {
           lastVisit: filledForm._id,
-
           lastVisitAt: new Date(),
         },
       },
-
       { session }
     );
 
@@ -305,68 +217,44 @@ export const createFilledForm = async (req, res) => {
     // Book appointment slot
     // =========================
 
-    // //console.log("filledForm", filledForm);
-
     if (
       filledForm?.formType?.toLowerCase() === "inbound" &&
-      filledForm?.purpose?.toLowerCase() ===
-      "appointment"
-
+      filledForm?.purpose?.toLowerCase() === "appointment"
     ) {
-      // //console.log("call");
-
       if (data?.formData?.appointmentSlot?._id) {
-        const updatedDoctor =
-          await DoctorModel.findOneAndUpdate(
-            {
-              _id: filledForm?.doctor,
-
-              "slots._id":
-                data.formData
-                  .appointmentSlot._id,
-
-              "slots.isBooked": false,
-            },
-
-            {
-              $inc: {
-                totalBookedPatients: 1,
-              },
-
-              $set: {
-                "slots.$.isBooked": true,
-              },
-            },
-
-            {
-              new: true,
-
-              session,
-            }
-          ).lean()
+        const updatedDoctor = await DoctorModel.findOneAndUpdate(
+          {
+            _id: filledForm?.doctor,
+            "slots._id": data.formData.appointmentSlot._id,
+            "slots.isBooked": false,
+          },
+          {
+            $inc: { totalBookedPatients: 1 },
+            $set: { "slots.$.isBooked": true },
+          },
+          {
+            new: true,
+            session,
+          }
+        ).lean();
 
         if (!updatedDoctor) {
-          throw new Error(
-            "Slot already booked or doctor not found"
-          );
+          throw new Error("Slot already booked or doctor not found");
         }
-      }
+      } else {
+        const updatedDoctor = await DoctorModel.findById(filledForm?.doctor)
+          .populate({
+            model: DepartmentModel,
+            path: "department",
+            select: "name"
+          })
+          .populate({
+            model: BranchModel,
+            path: "branch",
+            select: "name location"
+          })
+          .lean();
 
-      else {
-        const updatedDoctor =
-          await DoctorModel.findById
-            (
-              filledForm?.doctor,
-            ).populate({
-              model: DepartmentModel,
-              path: "department",
-              select: "name"
-            }).
-            populate({
-              model: BranchModel,
-              path: "branch",
-              select: "name location"
-            }).lean()
         sendWhatsAppInBackground({
           Patient_Name: patient?.patientName || "UnKnown Patient",
           Patient_Age: patient?.patientAge || 0,
@@ -383,8 +271,6 @@ export const createFilledForm = async (req, res) => {
           Message_type: 1,
         });
       }
-
-
     }
 
     // =========================
@@ -393,66 +279,48 @@ export const createFilledForm = async (req, res) => {
 
     await session.commitTransaction();
 
-    await session.endSession();
-
-    // =========================
     // Audit log
-    // =========================
-
     setImmediate(() => {
       auditLog({
         action: `NEW_${data.formType.toUpperCase()}_FORM_INSERT`,
-
         event: "ADD",
-
         module: "FORM_SUBMISSION",
-
         role: user?.type || "Unknown",
-
-        customMessage: `${user?.type || "User"
-          } "${user?.name}" created a new ${data.formType.toUpperCase()} form.`,
-
+        customMessage: `${user?.type || "User"} "${user?.name}" created a new ${data.formType.toUpperCase()} form.`,
         name: user?.name,
-
         userId: user?.id,
-
         newData: filledForm,
-
         ip: req.userIp,
-
-        userAgent:
-          req.headers["user-agent"],
+        userAgent: req.headers["user-agent"],
       });
     });
 
     return res.status(201).json({
       success: true,
-
-      message:
-        "Form submitted successfully",
-
+      message: "Form submitted successfully",
       data: filledForm,
     });
   } catch (error) {
-    console.error(
-      "Error creating filled form:",
-      error
-    );
+    console.error("Error creating filled form:", error);
 
-    if (session) {
+    // FIXED: Safely check if transaction is active before aborting
+    if (session && session.inTransaction()) {
       await session.abortTransaction();
-
-      await session.endSession();
     }
 
-    return res.status(500).json({
-      success: false,
-
-      message: error.message ||
-        "Internal server error",
-
-      error: error.message,
-    });
+    // FIXED: Only send response if headers haven't been sent yet
+    if (!res.headersSent) {
+      return res.status(500).json({
+        success: false,
+        message: error.message || "Internal server error",
+        error: error.message,
+      });
+    }
+  } finally {
+    // FIXED: End session in a single place
+    if (session) {
+      session.endSession();
+    }
   }
 };
 

@@ -9,7 +9,8 @@ import {
     getLeadModel,
     getBranchModel,
     getDoctorModel,
-    getDepartmentModel
+    getDepartmentModel,
+    getTenantDbName
 } from '../utils/db.manager.js';
 import { getCachedNode, invalidateHospitalNodeCache, interpolateTemplate } from '../utils/nodeCache.js';
 import mongoose from "mongoose";
@@ -35,19 +36,25 @@ export const connectWhatsApp = async (req, res) => {
 
     try {
         // 1. Get hospital tenant details
-        const hospital = await HospitalModel.findById(hospitalId)
-            .select("trimmedName")
-            .lean();
+        // const hospital = await HospitalModel.findById(hospitalId)
+        //     .select("trimmedName")
+        //     .lean();
 
-        if (!hospital) {
-            return res.status(404).json({
-                success: false,
-                message: "Hospital not found",
-            });
+        // if (!hospital) {
+        //     return res.status(404).json({
+        //         success: false,
+        //         message: "Hospital not found",
+        //     });
+        // }
+
+        const trimmedName = await getTenantDbName(hospitalId);
+
+        if (!trimmedName) {
+            return res.status(404).json({ success: false, message: "Hospital not found" });
         }
 
         // 2. Get Multi-tenant database connection
-        const conn = await getConnection(hospital.trimmedName);
+        const conn = await getConnection(trimmedName);
         const whatsAppAccountModel = getWhatsAppAccountModel(conn);
 
         // 3. CHECK IF ALREADY CONNECTED IN DB
@@ -797,12 +804,14 @@ export const saveHospitalNodes = async (req, res) => {
     }
 
     try {
-        const hospital = await HospitalModel.findById(hospitalId).select("trimmedName").lean();
-        console.log("Hospital Details:", hospital); // Debugging ke liye log karein
-        console.log("Hospital Details:", hospitalId); // Debugging ke liye log karein
-        if (!hospital) return res.status(404).json({ error: "Hospital not found." });
+        const trimmedName = await getTenantDbName(hospitalId);
 
-        const conn = await getConnection(hospital.trimmedName);
+        if (!trimmedName) {
+            return res.status(404).json({ success: false, message: "Hospital not found" });
+        }
+
+        // 2. Get Multi-tenant database connection
+        const conn = await getConnection(trimmedName);
         const NodeModel = getWhatsAppNodeModel(conn);
 
         // Prepare bulk operation array for high performance
@@ -839,15 +848,14 @@ export const getHospitalNodes = async (req, res) => {
     const { hospitalId } = req.params;
 
     try {
-        const hospital = await HospitalModel.findById(hospitalId)
-            .select("trimmedName")
-            .lean();
+        const trimmedName = await getTenantDbName(hospitalId);
 
-        if (!hospital) {
-            return res.status(404).json({ success: false, error: "Hospital not found." });
+        if (!trimmedName) {
+            return res.status(404).json({ success: false, message: "Hospital not found" });
         }
 
-        const conn = await getConnection(hospital.trimmedName);
+        // 2. Get Multi-tenant database connection
+        const conn = await getConnection(trimmedName);
         const NodeModel = getWhatsAppNodeModel(conn);
 
         const nodes = await NodeModel.find({ hospitalId }).lean();
@@ -961,15 +969,14 @@ export const getLeads = async (req, res) => {
         if (!hospitalId) {
             return res.status(400).json({ success: false, message: "Hospital ID is required" });
         }
+        const trimmedName = await getTenantDbName(hospitalId);
 
-        // 1. Fetch Hospital to get trimmedName for Tenant DB Connection
-        const hospital = await HospitalModel.findById(hospitalId).select("trimmedName").lean();
-        if (!hospital) {
+        if (!trimmedName) {
             return res.status(404).json({ success: false, message: "Hospital not found" });
         }
 
-        // 2. Connect to Tenant DB
-        const conn = await getConnection(hospital.trimmedName);
+        // 2. Get Multi-tenant database connection
+        const conn = await getConnection(trimmedName);
         const LeadModel = getLeadModel(conn);
         // const DoctorModel = getDoctorModel(conn)
         // const DepartmentModel = getDepartmentModel(conn)
@@ -1065,21 +1072,15 @@ export const updateLeadStatus = async (req, res) => {
         }
 
         // 4. Resolve Tenant Hospital Record
-        const hospital = await HospitalModel.findOne({
-            _id: hospitalId,
-            isDeleted: false
-        }).lean();
+        const trimmedName = await getTenantDbName(hospitalId);
 
-        if (!hospital) {
-            return res.status(404).json({
-                success: false,
-                message: "Hospital tenant record not found."
-            });
+        if (!trimmedName) {
+            return res.status(404).json({ success: false, message: "Hospital not found" });
         }
 
-        // 5. Connect to Multi-tenant Database Connection
-        const tenantConnection = await getConnection(hospital.trimmedName);
-        const LeadModel = getLeadModel(tenantConnection);
+        // 2. Get Multi-tenant database connection
+        const conn = await getConnection(trimmedName);
+        const LeadModel = getLeadModel(conn);
 
         let updatePayload = {
             leadStatus: normalizedStatus
