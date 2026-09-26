@@ -32,10 +32,7 @@ import {
   ListItem,
   Divider,
   ListItemText,
-  TableRow,
-  TableCell,
-  Link,
-  Rating,
+
   ToggleButton, ToggleButtonGroup,
   Chip,
   Tooltip,
