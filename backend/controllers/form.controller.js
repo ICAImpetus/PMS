@@ -14,7 +14,34 @@ const HospitalModel = getHospitalModel(MasterConn)
 
 export const createFilledForm = async (req, res) => {
   let session;
-  let isNewPatient = false;
+  // let isNewPatient = false;
+
+  const DoctorMandate = [
+    // Inbound values
+    "Appointment",
+    "General Query",
+    "Surgery",
+    "Health Checkup",
+    "Emergency Query",
+    // "Marketing Campaign",
+    "Complaints",
+    "OPD Timings",
+    "Diagnose or Test Price",
+    // "Test_Reports",
+    // "Ambulance",
+    // "Junk",
+    // "Job Related",
+    // Outbound unique values
+    "Followup",
+    // "Informative",
+    // "Marketing",
+    // "Feedback",
+    // "Missed",
+    // "Justdial",
+    // "Practo",
+    // "Whatsapp",
+    // "Facebook",
+  ];
 
   try {
     const { hosId, branchId } = req.query;
@@ -49,11 +76,23 @@ export const createFilledForm = async (req, res) => {
       });
     }
 
-    // FIXED: Added missing return statement
-    if (!data?.doctor || data?.doctor === '' || data?.doctor === null) {
+    if (!data?.purpose) {
       return res.status(400).json({
         success: false,
-        message: 'Please select a doctor!'
+        message: "Please Select a Pupose",
+      });
+    }
+
+
+
+    // FIXED: Added missing return statement
+    if (
+      DoctorMandate.includes(data?.purpose) &&
+      (!data?.doctor || !mongoose.isValidObjectId(data?.doctor) || data?.doctor.trim() === '')
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please select a doctor!',
       });
     }
 
