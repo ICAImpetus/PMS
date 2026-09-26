@@ -76,12 +76,12 @@ export const createFilledForm = async (req, res) => {
       });
     }
 
-    if (!data?.purpose) {
-      return res.status(400).json({
-        success: false,
-        message: "Please Select a Pupose",
-      });
-    }
+    // if (!data?.purpose) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Please Select a Pupose",
+    //   });
+    // }
 
 
 
