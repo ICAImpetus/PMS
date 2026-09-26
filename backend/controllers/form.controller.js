@@ -14,7 +14,7 @@ const HospitalModel = getHospitalModel(MasterConn)
 
 export const createFilledForm = async (req, res) => {
   let session;
-  // let isNewPatient = false;
+  let isNewPatient = false;
 
   const DoctorMandate = [
     // Inbound values
