@@ -1188,8 +1188,10 @@ function Forms() {
       ...initialFormState,
       branchId: form.branchId, // Preserve IDs
       // hospitalId: form.hospitalId,
+      formType: form.formType,
       formData: {
         ...initialFormData,
+
         dateTime: getCurrentDateTime() // Refresh time on reset
       }
     });

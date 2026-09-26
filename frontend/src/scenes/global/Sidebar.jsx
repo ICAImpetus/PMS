@@ -292,14 +292,14 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                     setSelected={setSelected}
                     isCollapsed={isCollapsed}
                   />
-                  <CustomMenuItem
+                  {/* <CustomMenuItem
                     title="whatsappConnect"
                     to="/whatsapp-connect"
                     icon={<ArticleOutlinedIcon fontSize="small" />}
                     selected={selected}
                     setSelected={setSelected}
                     isCollapsed={isCollapsed}
-                  />
+                  /> */}
                 </>
               )}
 
