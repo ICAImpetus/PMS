@@ -19,7 +19,7 @@ export const createFilledForm = async (req, res) => {
   const DoctorMandate = [
     // Inbound values
     "Appointment",
-    "General Query",
+    // "General Query",
     "Surgery",
     "Health Checkup",
     "Emergency Query",
