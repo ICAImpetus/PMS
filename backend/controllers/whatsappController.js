@@ -1095,7 +1095,7 @@ export const updateLeadStatus = async (req, res) => {
         const updatedLead = await LeadModel.findOneAndUpdate(
             {
                 _id: new mongoose.Types.ObjectId(leadId),
-                hospitalId: new mongoose.Types.ObjectId(hospitalId)
+                // hospitalId: new mongoose.Types.ObjectId(hospitalId)
             },
             {
                 $set: updatePayload
@@ -1113,7 +1113,7 @@ export const updateLeadStatus = async (req, res) => {
             });
         }
 
-        console.log(`[Lead Status Updated] Lead ID: ${leadId} | New Status: ${normalizedStatus} | Hospital: ${hospital.trimmedName}`);
+        console.log(`[Lead Status Updated] Lead ID: ${leadId} | New Status: ${normalizedStatus} | Hospital: ${trimmedName}`);
 
         // 7. Send Success Response
         return res.status(200).json({

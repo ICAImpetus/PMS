@@ -23,6 +23,7 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
+    CircularProgress,
 } from "@mui/material";
 import {
     Search as SearchIcon,
@@ -88,7 +89,7 @@ const WhatsAppLeads = () => {
     const [rejectReason, setRejectReason] = useState("");
 
 
-    const { leadMutation, leadsData, refetchleadsData } = useContext(HospitalContext)
+    const { leadMutation, leadsData, refetchleadsData, leadsDataRefetchLoader } = useContext(HospitalContext)
 
     const {
         mutate: updateLeadStatus, // Mutation function
@@ -248,6 +249,7 @@ const WhatsAppLeads = () => {
 
                             <Button
                                 size="small"
+                                disabled={leadsDataRefetchLoader}
                                 onClick={async () => { await refetchleadsData(); }}
                                 startIcon={<RefreshIcon sx={{ fontSize: 16 }} />}
                                 sx={{
@@ -265,7 +267,9 @@ const WhatsAppLeads = () => {
                                     "&:hover": { bgcolor: "#f8fafc" },
                                 }}
                             >
-                                Refresh
+                                {leadsDataRefetchLoader ? <CircularProgress size={22} /> : "Refresh"}
+
+
                             </Button>
                             <TextField
                                 size="small"
@@ -523,13 +527,16 @@ const WhatsAppLeads = () => {
                     )}
                 </DialogContent>
                 <DialogActions sx={{ p: 2.5 }}>
-                    <Button onClick={() => setOpenModal(false)} sx={{ color: "#64748b", fontWeight: 700 }}>
+                    <Button
+                        disabled={isUpdatingLead}
+                        onClick={() => setOpenModal(false)} sx={{ color: "#64748b", fontWeight: 700 }}>
                         Cancel
                     </Button>
                     <Button
                         onClick={handleConfirmAction}
                         variant="contained"
                         disableElevation
+                        disabled={isUpdatingLead}
                         sx={{
                             backgroundColor: "#2563eb",
                             color: "#ffffff",
@@ -537,7 +544,7 @@ const WhatsAppLeads = () => {
                             borderRadius: "8px",
                         }}
                     >
-                        Confirm Now
+                        {isUpdatingLead ? <CircularProgress size={22} /> : "Confirm Now"}
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -562,11 +569,12 @@ const WhatsAppLeads = () => {
                     />
                 </DialogContent>
                 <DialogActions sx={{ p: 2 }}>
-                    <Button onClick={() => setRejectDialogOpen(false)} color="inherit" size="small">
+                    <Button disabled={isUpdatingLead} onClick={() => setRejectDialogOpen(false)} color="inherit" size="small">
                         Cancel
                     </Button>
-                    <Button onClick={handleConfirmReject} color="error" variant="contained" size="small" disabled={!rejectReason.trim()}>
-                        Confirm Reject
+                    <Button onClick={handleConfirmReject} color="error" variant="contained" size="small" disabled={!rejectReason.trim() || isUpdatingLead}>
+
+                        {isUpdatingLead ? <CircularProgress size={22} /> : "Confirm Reject"}
                     </Button>
                 </DialogActions>
             </Dialog>

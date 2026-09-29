@@ -881,6 +881,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         loading,
         errors,
 
+        leadsDataRefetchLoader,
         whatsAppConnectMutation,
         updateFormStatusMutation,
         refetchDashboard,
@@ -923,6 +924,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         loading,
         errors,
         dateRange,
+        leadsDataRefetchLoader,
         refetchleadsData,
         handleFilterChange
     ]);
