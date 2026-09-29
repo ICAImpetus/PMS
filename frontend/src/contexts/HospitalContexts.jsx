@@ -380,7 +380,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         enabled:
             !!selectedHostpital &&
             !!selectedBranch &&
-            isExecutive,
+            (isExecutive || isAdmin),
 
         onError: () =>
             toast.error("Failed to fetch Hospital Code")

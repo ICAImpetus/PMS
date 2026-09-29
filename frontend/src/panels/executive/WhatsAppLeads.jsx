@@ -24,6 +24,8 @@ import {
     DialogContent,
     DialogActions,
     CircularProgress,
+    FormControl,
+    Select
 } from "@mui/material";
 import {
     Search as SearchIcon,
@@ -89,7 +91,13 @@ const WhatsAppLeads = () => {
     const [rejectReason, setRejectReason] = useState("");
 
 
-    const { leadMutation, leadsData, refetchleadsData, leadsDataRefetchLoader } = useContext(HospitalContext)
+    const { leadMutation, leadsData, refetchleadsData, leadsDataRefetchLoader
+        , hospitals,
+        loading,
+        selectedHostpital,
+        setSelectedHostpital,
+        isAdmin,
+    } = useContext(HospitalContext)
 
     const {
         mutate: updateLeadStatus, // Mutation function
@@ -271,6 +279,38 @@ const WhatsAppLeads = () => {
 
 
                             </Button>
+                            {isAdmin && (
+                                <FormControl size="small" sx={{ minWidth: 160 }}>
+                                    <Select
+                                        value={selectedHostpital || ""}
+                                        onChange={(e) => setSelectedHostpital(e.target.value)}
+                                        disabled={loading?.hospitalsLoading}
+                                        displayEmpty
+                                        sx={{
+                                            borderRadius: "20px",
+                                            fontSize: "12px",
+                                            fontWeight: 600,
+                                            backgroundColor: "#F8FAFC",
+                                            "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E2E8F0" },
+                                        }}
+                                    >
+                                        {loading?.hospitalsLoading ? (
+                                            <MenuItem value="">
+                                                <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
+                                            </MenuItem>
+                                        ) : hospitals?.length > 0 ? (
+                                            hospitals.map((hospital) => (
+                                                <MenuItem key={hospital._id} value={hospital._id}>
+                                                    {hospital.name}
+                                                </MenuItem>
+                                            ))
+                                        ) : (
+                                            <MenuItem value="">No Facilities Found</MenuItem>
+                                        )}
+                                    </Select>
+                                </FormControl>
+                            )}
+
                             <TextField
                                 size="small"
                                 placeholder="Search Patient Name / Mobile..."
@@ -339,7 +379,15 @@ const WhatsAppLeads = () => {
                             </TableHead>
 
                             <TableBody>
-                                {filteredLeads.map((row) => {
+                                {filteredLeads && filteredLeads?.length === 0 && (
+                                    <TableRow sx={{ "& td": { borderBottom: "1px solid #f8fafc", py: 2 } }}>
+                                        {/* Patient Info */}
+                                        <TableCell>
+                                            No Leads Are Found
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                                {filteredLeads && filteredLeads?.length && filteredLeads.map((row) => {
                                     const isAppointment = row.leadType === "APPOINTMENT_BOOKING";
 
                                     return (

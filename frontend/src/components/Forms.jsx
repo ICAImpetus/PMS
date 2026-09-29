@@ -1325,6 +1325,9 @@ function Forms() {
         }
       }
       else {
+
+        // console.log("form", form);
+
         const res = await saveFilledForm(selectedHostpital, selectedBranch, form);
         if (res?.success) {
           resetForm();
@@ -1357,6 +1360,7 @@ function Forms() {
     setfilteredDoctors((prev) => [...prev]);
 
     handleChange("doctor", null);
+    setSelectedDoctor(null)
 
   }, [form?.formData.dateTime]);
 

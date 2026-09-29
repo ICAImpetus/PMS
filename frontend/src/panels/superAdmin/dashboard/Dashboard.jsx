@@ -507,7 +507,7 @@ const SuperAdminDashboard = () => {
           {/* --- KPI METRIC STRIP --- */}
           {/* --- KPI METRIC STRIP --- */}
           <Grid container spacing={2.5} alignItems="stretch" sx={{ mb: 3 }}>
-            <Grid item xs={12} sm={6} md={3} sx={{ display: "flex" }}>
+            <Grid item xs={12} sm={6} md={2.4} sx={{ display: "flex" }}>
               <UsersCard
                 label="USERS"
                 count={analytics?.totalUsers ?? 0}
@@ -520,7 +520,7 @@ const SuperAdminDashboard = () => {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3} sx={{ display: "flex" }}>
+            <Grid item xs={12} sm={6} md={2.4} sx={{ display: "flex" }}>
               <UsersCard
                 label="BRANCHES"
                 count={analytics?.totalBranches ?? 0}
@@ -546,7 +546,7 @@ const SuperAdminDashboard = () => {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3} sx={{ display: "flex" }}>
+            <Grid item xs={12} sm={6} md={2.4} sx={{ display: "flex" }}>
               <UsersCard
                 label="APPOINTMENTS FLOW"
                 count={analytics?.appointments?.total ?? 0}
@@ -557,11 +557,12 @@ const SuperAdminDashboard = () => {
                 option={{
                   inbound: analytics?.appointments?.inbound ?? 0,
                   outbound: analytics?.appointments?.outbound ?? 0,
+
                 }}
               />
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3} sx={{ display: "flex" }}>
+            <Grid item xs={12} sm={6} md={2.4} sx={{ display: "flex" }}>
               <UsersCard
                 label="FORMS"
                 count={analytics?.forms?.total ?? 0}
@@ -575,6 +576,37 @@ const SuperAdminDashboard = () => {
                 }}
               />
             </Grid>
+
+            <Grid item xs={12} sm={6} md={2.4} sx={{ display: "flex" }}>
+              <UsersCard
+                option={{
+                  Confirmed: analytics?.leadsMetrices?.confirmedLeads ?? 0,
+                  Cancelled: analytics?.leadsMetrices?.cancelledLeads ?? 0,
+                }}
+                label="WHATSAPP-LEADS"
+                count={analytics?.leadsMetrices?.totalLeads ?? 0}
+                onClick={() => {
+                  // const selectedHospitalData = hospitals.find(
+                  //   (h) => h._id === selectedHostpital
+                  // );
+                  navigate(
+                    `/whatsapp-leads`,
+                    // {
+                    //   replace: true,
+                    //   state: {
+                    //     hospital: {
+                    //       name: selectedHospitalData?.name,
+                    //       hospitalCode: selectedHospitalData?.hospitalCode,
+                    //       contact: selectedHospitalData?.contact,
+                    //       hospitallogo: selectedHospitalData?.hospitallogo,
+                    //     },
+                    //   },
+                    // }
+                  );
+                }}
+              />
+            </Grid>
+
           </Grid>
 
           {/* --- MIDDLE SECTION: HOSPITAL ACTIVITY & PURPOSE BREAKDOWN --- */}
@@ -770,6 +802,8 @@ const SuperAdminDashboard = () => {
               </Stack>
             </Grid>
           </Grid>
+
+
 
           {/* --- PATIENT ANALYTICS TABLE --- */}
           <Card

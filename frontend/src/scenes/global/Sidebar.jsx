@@ -224,6 +224,19 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                 />
               )}
 
+              {console.log(`${isExecutive}-${isSuperAdmin}-${isAdmin}`)
+              }
+              {(isExecutive || isSuperAdmin || isAdmin) && (
+                <CustomMenuItem
+                  title="WhatsApp Leads"
+                  to="/whatsapp-leads"
+                  icon={<WhatsAppIcon fontSize="small" sx={{ color: "#2563eb" }} />}
+                  selected={selected}
+                  setSelected={setSelected}
+                  isCollapsed={isCollapsed}
+                />
+              )}
+
               {/* DOCTOR ITEMS */}
               {isDoctor && (
                 <CustomMenuItem
@@ -240,14 +253,7 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
               {/* EXECUTIVE ITEMS */}
               {isExecutive && (
                 <>
-                  <CustomMenuItem
-                    title="WhatsApp Leads"
-                    to="/whatsapp-leads"
-                    icon={<WhatsAppIcon fontSize="small" sx={{ color: "#2563eb" }} />}
-                    selected={selected}
-                    setSelected={setSelected}
-                    isCollapsed={isCollapsed}
-                  />
+
                   <CustomMenuItem
                     title="Executive Forms"
                     to="/executive-forms"
@@ -305,14 +311,26 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
 
               {/* SUPERADMIN & ADMIN */}
               {(isSuperAdmin || isAdmin) && (
-                <CustomMenuItem
-                  title="Audit Logs"
-                  to="/admin-audit-logs"
-                  icon={<ArticleOutlinedIcon fontSize="small" />}
-                  selected={selected}
-                  setSelected={setSelected}
-                  isCollapsed={isCollapsed}
-                />
+
+                <>
+                  {/* <CustomMenuItem
+                    title="WhatsApp Leads"
+                    to="/whatsapp-leads"
+                    icon={<WhatsAppIcon fontSize="small" sx={{ color: "#2563eb" }} />}
+                    selected={selected}
+                    setSelected={setSelected}
+                    isCollapsed={isCollapsed}
+                  /> */}
+                  <CustomMenuItem
+                    title="Audit Logs"
+                    to="/admin-audit-logs"
+                    icon={<ArticleOutlinedIcon fontSize="small" />}
+                    selected={selected}
+                    setSelected={setSelected}
+                    isCollapsed={isCollapsed}
+                  />
+                </>
+
 
               )}
 

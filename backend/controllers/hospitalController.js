@@ -7,7 +7,7 @@ import {
   getDoctorModel, getEmpanelmentModel,
   getFilledFormsModel, getHospitalModel,
   getInchargeModel, getIPDAndDayCareModel,
-  getLabTestModel, getPatientModel, getProcedureModel,
+  getLabTestModel, getLeadModel, getPatientModel, getProcedureModel,
   getSuggestionsModel, MasterConn
 } from "../utils/db.manager.js";
 import { auditLog } from "../middlewares/apiLogger.middleware.js";
@@ -7125,6 +7125,7 @@ export const superAdminDashboardService = async (
     const FilledFormsModel = getFilledFormsModel(conn);
     const BranchModel = getBranchModel(conn);
     const PatientModel = getPatientModel(conn);
+    const LeadModel = getLeadModel(conn)
 
     const profile = await AdminAndAgentModel.findById(user.id)
       .select("type")
@@ -7195,6 +7196,7 @@ export const superAdminDashboardService = async (
       recentActivity,
       dashboardAgg,
       patientData,
+      leadsData
     ] = await Promise.all([
 
       AdminAndAgentModel.countDocuments(userQuery),
@@ -7466,7 +7468,31 @@ export const superAdminDashboardService = async (
           },
         },
       ]).allowDiskUse(true),
+
+      LeadModel.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalLeads: { $sum: 1 },
+            confirmedLeads: {
+              $sum: { $cond: [{ $eq: ["$leadStatus", "CONFIRMED"] }, 1, 0] }
+            },
+            cancelledLeads: {
+              $sum: { $cond: [{ $eq: ["$leadStatus", "CANCELLED"] }, 1, 0] }
+            },
+            // appointmentBookings: {
+            //   $sum: { $cond: [{ $eq: ["$leadType", "APPOINTMENT_BOOKING"] }, 1, 0] }
+            // },
+            // callbackRequests: {
+            //   $sum: { $cond: [{ $eq: ["$leadType", "CALLBACK_REQUEST"] }, 1, 0] }
+            // }
+          }
+        }
+      ])
+
     ]);
+
+
 
     // //console.log(JSON.stringify(patientData, null, 2));
 
@@ -7507,19 +7533,21 @@ export const superAdminDashboardService = async (
 
     // transform chart data
     const analytics = dashboardAgg?.[0] || {};
-    const callCategorization = {
-      appointment: analytics.callCategorization || [],
-      newPatient: formattedPatientData
-    };
-    // callCategorization.newPatient.push({
-    //   month: item._id,
-    //   count: item.newPatient,
-    // });
 
-    // callCategorization.oldPatient.push({
-    //   month: item._id,
-    //   count: item.oldPatient,
-    // });
+    const leadsMetrices = leadsData[0] || {};
+    // const callCategorization = {
+    //   appointment: analytics.callCategorization || [],
+    //   newPatient: formattedPatientData
+    // };
+    // // callCategorization.newPatient.push({
+    // //   month: item._id,
+    // //   count: item.newPatient,
+    // // });
+
+    // // callCategorization.oldPatient.push({
+    // //   month: item._id,
+    // //   count: item.oldPatient,
+    // // });
 
     const totalInbound = analytics?.inboundCount?.[0]?.count || 0;
     const totalOutbound = analytics?.outboundCount?.[0]?.count || 0;
@@ -7541,6 +7569,14 @@ export const superAdminDashboardService = async (
           inbound: apptInbound,             // Fixed: Mapping to correct key
           outbound: apptOutbound            // Fixed: Mapping to correct key
         },
+
+        leadsMetrices: {
+          totalLeads: leadsMetrices?.totalLeads || 0,
+          confirmedLeads: leadsMetrices?.confirmedLeads || 0,
+          cancelledLeads: leadsMetrices?.cancelledLeads || 0,
+          // appointmentBookings: leadsMetrices?.appointmentBookings || 0,
+          // callbackRequests: leadsMetrices?.callbackRequests || 0
+        },
         topInboundPurpose:
           analytics.topInboundPurpose || [],
 
@@ -7550,7 +7586,7 @@ export const superAdminDashboardService = async (
         teamOverview:
           analytics.teamOverview || [],
 
-        callCategorization,
+        // callCategorization,
 
         recentActivity,
       },

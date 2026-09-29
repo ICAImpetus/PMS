@@ -99,6 +99,7 @@ function App() {
           <Route path="/single-patient-history/:id" element={<SInglePatientDetails />} />
           <Route path="/user-management" element={<UserManagement />} />
           <Route path="/admin-audit-logs" element={<AuditLog />} />
+          <Route path="/whatsapp-leads" element={<WhatsAppLeads />} />
           {/* <Route path="/whatsapp-connect" element={<WhatsAppConnect />} /> */}
           {/* <Route
             path="/whatsapp-conversations"
