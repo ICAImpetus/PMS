@@ -661,6 +661,10 @@ const FilledFormsComponent = ({
               val = moment(val).format("DD MMM YYYY hh:mm A");
             }
 
+            if (c.key === "formData.followupDateTime" && val !== "-" && moment(val).isValid()) {
+              val = moment(val).format("DD MMM YYYY hh:mm A");
+            }
+
             if (val && Array.isArray(val)) {
               val = val
                 .map((q) => {
@@ -860,7 +864,7 @@ const FilledFormsComponent = ({
                   />
 
                   <Button
-                  data-testid="apply-filters-button"
+                    data-testid="apply-filters-button"
                     variant="contained"
                     // startIcon={<DownloadIcon />}
                     disabled={getFilledFormsLoading}
@@ -1072,7 +1076,7 @@ const FilledFormsComponent = ({
             </Box>
           ) : (
             <Table size="small"
-            data-testid="filled-forms-table"
+              data-testid="filled-forms-table"
             >
               <TableHead sx={{ bgcolor: "#F8FAFC" }}>
                 <TableRow>
@@ -1236,7 +1240,7 @@ const FilledFormsComponent = ({
             Cancel
           </Button>
           <Button onClick={handleConfirmEdit} variant="contained" sx={{ bgcolor: "#0256E8", color: "#ffffff", borderRadius: "12px" }}
-          data-testid="confirm-edit-button"
+            data-testid="confirm-edit-button"
           >
             Proceed to Edit
           </Button>

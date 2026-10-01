@@ -144,6 +144,10 @@ const getFormattedCellValue = (key, col, row, rawValue) => {
         return moment(displayValue).format("DD MMM YYYY, hh:mm A");
     }
 
+    if (key === "formData.followupDateTime" && displayValue && moment(displayValue).isValid()) {
+        return moment(displayValue).format("DD MMM YYYY, hh:mm A");
+    }
+
     // 3. Format Date Objects
     if (displayValue instanceof Date) {
         return moment(displayValue).format("DD/MM/YYYY hh:mm A");
@@ -232,7 +236,7 @@ export const PatientHistoryRow = React.memo(({
                     ) : (
                         /* CASE 3: Agar koi Status nahi hai -> Plain Edit Button */
                         <IconButton size="small" onClick={handleEditClick}
-                        data-testid='edit-button'
+                            data-testid='edit-button'
                         >
                             <EditIcon fontSize="small" />
                         </IconButton>
@@ -270,7 +274,16 @@ export const PatientHistoryRow = React.memo(({
                 if (key === "formData.remarks") {
                     return (
                         <TableCell key={cellKey} sx={{ maxWidth: 250 }}>
-                            <ExpandableText text={rawValue} limit={60} />
+                            <ExpandableText text={rawValue} limit={10} />
+                        </TableCell>
+                    );
+                }
+
+                if (key === "branchId.name") {
+                    console.log("branchId.name", key);
+                    return (
+                        <TableCell key={cellKey} sx={{ maxWidth: 250 }}>
+                            <ExpandableText text={rawValue} limit={10} />
                         </TableCell>
                     );
                 }
