@@ -420,7 +420,7 @@ body {
 
 .gender-buttons,
 .connected-buttons {
-  width: 100%;
+  width: 50%;
 }
 
 .gender-buttons button,
@@ -516,7 +516,7 @@ body {
 
 /* Special styling for call status buttons */
 .connected-buttons {
-  gap: 4px;
+  gap: 2px;
 }
 
 .caller-btn {

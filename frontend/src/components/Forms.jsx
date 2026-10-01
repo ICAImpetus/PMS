@@ -46,9 +46,10 @@ import {
   REFERENCE_OPTIONS, initialFormData,
   initialPatientDetails,
   REMARK_INBOUND_TEMPLATES,
-  REMARK_INBOUND_TEMPLATES_COPY
+  REMARK_INBOUND_TEMPLATES_COPY,
+  validateForm
 } from "../panels/superAdmin/hospitalManagement/hospitalForm/components/State";
-import { FORMS_AVAILABLE_COLUMNS, getNestedValue, PatientCallHistory } from "../utils/exportUtils";
+import { FORMS_AVAILABLE_COLUMNS } from "../utils/exportUtils";
 import { PatientHistoryTableBody } from "./customComponents/PatientHistoryTableBody";
 import { useLocation, useNavigate } from "react-router-dom";
 import CallReceivedIcon from "@mui/icons-material/CallReceived";
@@ -73,6 +74,8 @@ const PatientDiseaseInput = ({ value, onChange, isRequired = false, error = "" }
     </div>
   );
 }
+
+
 
 function FormTypeToggleGroup({
   editMode,
@@ -175,24 +178,24 @@ function FormTypeToggleGroup({
   );
 }
 
-const getPatientArrivalDateTime = (
-  appointmentSlot,
-  selectedDate
-) => {
+// const getPatientArrivalDateTime = (
+//   appointmentSlot,
+//   selectedDate
+// ) => {
 
-  if (!appointmentSlot || !selectedDate) {
-    return null;
-  }
+//   if (!appointmentSlot || !selectedDate) {
+//     return null;
+//   }
 
-  // Extract only date
-  const onlyDate =
-    selectedDate.split("T")[0];
+//   // Extract only date
+//   const onlyDate =
+//     selectedDate.split("T")[0];
 
-  const fullDateTime =
-    `${onlyDate}T${appointmentSlot.start}:00`;
+//   const fullDateTime =
+//     `${onlyDate}T${appointmentSlot.start}:00`;
 
-  return new Date(fullDateTime);
-};
+//   return new Date(fullDateTime);
+// };
 
 
 const getSession = (timeString) => {
@@ -233,48 +236,48 @@ const getSession = (timeString) => {
   return "Evening";
 };
 
-const getSlotStyles = ({
-  isPast,
-  isBooked,
-  isSelected,
-}) => ({
-  padding: "4px 8px",
+// const getSlotStyles = ({
+//   isPast,
+//   isBooked,
+//   isSelected,
+// }) => ({
+//   padding: "4px 8px",
 
-  cursor:
-    isPast ? "not-allowed" : "pointer",
+//   cursor:
+//     isPast ? "not-allowed" : "pointer",
 
-  border: "1px solid #ddd",
+//   border: "1px solid #ddd",
 
-  borderRadius: "4px",
+//   borderRadius: "4px",
 
-  backgroundColor: isPast
-    ? "#ececec"
-    : isBooked
-      ? "#a0afbc"
-      : isSelected
-        ? "#1976d2"
-        : "#f5f5f5",
+//   backgroundColor: isPast
+//     ? "#ececec"
+//     : isBooked
+//       ? "#a0afbc"
+//       : isSelected
+//         ? "#1976d2"
+//         : "#f5f5f5",
 
-  color: isSelected
-    ? "white"
-    : isBooked
-      ? "#d32f2f"
-      : isPast
-        ? "#888"
-        : "#333",
+//   color: isSelected
+//     ? "white"
+//     : isBooked
+//       ? "#d32f2f"
+//       : isPast
+//         ? "#888"
+//         : "#333",
 
-  fontSize: "11px",
+//   fontSize: "11px",
 
-  fontWeight: isSelected
-    ? "bold"
-    : "normal",
+//   fontWeight: isSelected
+//     ? "bold"
+//     : "normal",
 
-  opacity: isPast ? 0.7 : 1,
+//   opacity: isPast ? 0.7 : 1,
 
-  transition: "all 0.2s ease",
+//   transition: "all 0.2s ease",
 
-  textAlign: "left",
-});
+//   textAlign: "left",
+// });
 
 
 const getRemainingTime = (
@@ -616,7 +619,7 @@ const RenderRemarksComponents = ({ dynamicDepartments = [], message = "Remarks",
   const replaceDynamicFields = (rawText) => {
     const data = form.formData || {};
     const formattedDateTime = data?.dateTime
-      ? moment(data.dateTime).format("MMM DD, YYYY, h:mm A")
+      ? moment(data.dateTime).format("MMM DD, YYYY") + " " + (data?.appointmentSlot?.start || "") + " - " + (data?.appointmentSlot?.end || "")
       : getCurrentDateTime();
 
     const departmentName = docProfile?.department
@@ -788,7 +791,7 @@ function Forms() {
   const [latestVisits, setLatestVisits] = useState([]);
   const [latestCallHistory, setLatestCallHistory] = useState([]);
   const [patientProfile, setPatient] = useState(null);
-  const [selctedPatientId, setSelectedPatientId] = useState(null);
+  // const [selctedPatientId, setSelectedPatientId] = useState(null);
   const [patientList, setPatientList] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showLatestVisitsPanel, setShowLatestVisitsPanel] = useState(true);
@@ -802,9 +805,18 @@ function Forms() {
   const doctorDepartmentChangeFromSelect = useRef(false);
   const [bookedSlotAction, setBookedSlotAction] = useState("");
   const [cancelReason, setCancelReason] = useState("");
-  const [selectedQuestions, setSelectedQuestions] = useState(null);
+  // const [selectedQuestions, setSelectedQuestions] = useState(null);
   const [docProfile, setDocProfile] = useState(null);
 
+  const [validations, setValidations] = useState({});
+
+  const clearError = (fieldKey) => {
+    setValidations((prev) => {
+      const updated = { ...prev };
+      delete updated[fieldKey];
+      return updated;
+    });
+  };
   const { request: getSingleBranch, error: getSingleBranchError, loading: getSingleBranchLoading } = useApi(commonRoutes.getBranchByIdForForms)
   const { request: saveFilledForm, error: saveFilledFormError, loading: saveFilledFormLoading } = useApi(commonRoutes.saveFilledForm)
   // const { request: updateform, error: updateFormError, loading: updateFormApiLoading } = useApi(commonRoutes.updateFilledForm)
@@ -1302,6 +1314,17 @@ function Forms() {
       toast.error("No Branch Is Found");
       return;
     }
+
+    const validationErrors = validateForm(form);
+
+    if (Object.keys(validationErrors).length > 0) {
+      setValidations(validationErrors);
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+
+    // Clear errors if valid
+    setValidations({});
     try {
       if (editMode) {
         const updatedForm = {
@@ -4161,6 +4184,191 @@ function Forms() {
           </div>
         );
 
+      case "LegacyData":
+        return (
+          <div className="sub-section">
+            <h3>Legacy Data</h3>
+
+            <div className="input-row">
+              <div className="input-group">
+                <label className="required">Connection Status</label>
+
+                <select
+                  className="select-field"
+                  value={form.formData.missedConnectionStatus}
+                  onChange={(e) => {
+
+                    handleChange(
+                      "formData.missedConnectionStatus",
+                      e.target.value
+
+                    )
+
+                    if (e.target.value === "NotConnected") {
+                      handleChange("formData.leadGeneration", "")
+                      handleChange("formData.followupmade", "")
+                      handleChange("formData.followupDateTime", "")
+
+                    }
+
+                  }
+
+
+
+                  }
+                  required
+                >
+                  <option value="">Select</option>
+
+                  <option value="Connected">Connected</option>
+
+                  <option value="NotConnected">Not Connected</option>
+                </select>
+              </div>
+            </div>
+
+            {
+              form.formData.missedConnectionStatus === "Connected" && (
+                <>
+                  <div className="input-row">
+                    <div className="input-group">
+                      <label className="required">Lead Generation</label>
+
+                      <div className="connected-buttons">
+                        <button
+                          type="button"
+                          className={`callback-btn ${form.formData.leadGeneration === "Yes" ? "active" : ""}`}
+                          onClick={() => handleChange("formData.leadGeneration", "Yes")}
+                        >
+                          Yes
+                        </button>
+
+                        <button
+                          type="button"
+                          className={`callback-btn ${form.formData.leadGeneration === "No" ? "active" : ""}`}
+                          onClick={() => {
+                            handleChange("formData.leadGeneration", "No")
+                            handleChange("formData.followupmade", "")
+                            handleChange("formData.followupDateTime", "")
+
+                          }
+                          }
+                        >
+                          No
+                        </button>
+                      </div>
+                    </div>
+                    {form.formData.leadGeneration === "Yes" && (
+
+                      <div className="input-group">
+                        <label className="required">follow Up</label>
+
+                        <div className="connected-buttons">
+                          <button
+                            type="button"
+                            className={`connected-btn ${form.formData.followupmade === "Yes" ? "active" : ""}`}
+                            onClick={() => handleChange("formData.followupmade", "Yes")}
+                          >
+                            Yes
+                          </button>
+
+                          <button
+                            type="button"
+                            className={`connected-btn ${form.formData.followupmade === "No" ? "active" : ""}`}
+                            onClick={() => {
+                              handleChange("formData.followupmade", "No")
+                              handleChange("formData.followupDateTime", "")
+                            }}
+                          >
+                            No
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {form.formData.followupmade === "Yes" && (
+                      <div className="input-group">
+                        <label className="required">
+                          FollowUp Date
+                        </label>
+
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                          <DatePicker
+                            required
+                            data-testid='appointment-date-picker'
+                            name="date-picker"
+                            value={
+                              form.formData.followupDateTime
+                                ? dayjs(form.formData.followupDateTime)
+                                : null
+                            }
+                            onChange={(newValue) => {
+                              handleChange(
+                                "formData.followupDateTime",
+                                newValue
+                                  ? dayjs(newValue).format("YYYY-MM-DD")
+                                  : ""
+                              );
+                              clearError("followupDateTime");
+                            }}
+                            minDate={dayjs()}
+                            // maxDate={dayjs().add(7, "day")}
+                            format="DD/MM/YYYY"
+                            slotProps={{
+                              textField: {
+                                fullWidth: true,
+                                size: "small",
+                                className: "input-field",
+                                sx: {
+                                  "& .MuiOutlinedInput-root": {
+                                    height: 28,
+                                    minHeight: 28,
+                                    border: "1px solid var(--border-color)",
+                                    borderRadius: "var(--radius)",
+                                    backgroundColor: "#fff",
+                                    fontSize: "12px",
+                                  },
+
+                                  "& .MuiInputBase-input": {
+                                    fontSize: "12px",
+                                    padding: "0 14px",
+                                  },
+                                }
+                              },
+                            }}
+                          />
+                        </LocalizationProvider>
+                        {validations?.followupDateTime && <span className="error-text">{validations?.followupDateTime}</span>}
+                      </div>
+
+                    )}
+                  </div>
+                </>
+              )
+            }
+
+            <div className="input-row">
+              <div className="input-group textarea-field-container">
+                <label className="required">Remarks</label>
+
+
+                <textarea
+                  name='remarks'
+                  className="textarea-field"
+                  value={form.formData.remarks}
+                  onChange={(e) =>
+                    handleChange(
+                      "formData.remarks",
+                      e.target.value,
+                    )
+                  }
+                  required
+                  rows="3"
+                />
+              </div>
+            </div>
+          </div >
+        );
+
       case "Missed":
         return (
           <div className="sub-section">
@@ -4186,7 +4394,7 @@ function Forms() {
 
                   <option value="Connected">Connected</option>
 
-                  <option value="Not Connected">Not Connected</option>
+                  <option value="NotConnected">Not Connected</option>
                 </select>
               </div>
             </div>
@@ -4290,7 +4498,7 @@ function Forms() {
               </>
             )}
 
-            {form.formData.missedConnectionStatus === "Not Connected" && (
+            {form.formData.missedConnectionStatus === "NotConnected" && (
               <div className="input-row">
                 <div className="input-group textarea-field-container">
                   <label className="required">Remarks</label>

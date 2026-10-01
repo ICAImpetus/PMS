@@ -1536,6 +1536,10 @@ export const OUTBOUND_PURPOSE_OPTIONS = [
   },
 
   {
+    label: "Legacy Data",
+    value: "LegacyData"
+  },
+  {
     label: "Informative",
     value: "Informative",
   },
@@ -1672,6 +1676,9 @@ export const initialFormData = {
   marketingDetailsShared: "",
   remarks: "",
   callBack: "",
+  leadGeneration: "Yes",
+  followupmade: "No",
+  followupDateTime: '',
   callDropReason: "",
   connected: "",
   disconnectionReason: "",
@@ -1703,4 +1710,46 @@ export const initialFormState = {
   callStatus: "",
   useForFollowup: false,
   formData: initialFormData
+};
+
+export const validateForm = (formState) => {
+  const newErrors = {};
+  const { purpose, formData } = formState;
+
+  // Basic/Required validations across all forms
+  if (!formState.purpose) {
+    newErrors.purpose = "Please select a call purpose.";
+  }
+
+  if (!formData.patientDetails?.patientName?.trim()) {
+    newErrors["patientDetails.patientName"] = "Patient name is required.";
+  }
+
+  const mobileRegex = /^[6-9]\d{9}$/;
+  if (!formData.patientDetails?.patientMobile) {
+    newErrors["patientDetails.patientMobile"] = "Mobile number is required.";
+  } else if (!mobileRegex.test(formData.patientDetails.patientMobile)) {
+    newErrors["patientDetails.patientMobile"] = "Enter a valid 10-digit mobile number.";
+  }
+
+  // Conditional Validations based on Purpose / Call Status
+  if (purpose === "Appointment") {
+    if (!formState.department) {
+      newErrors.department = "Department selection is required.";
+    }
+    if (!formState.doctor) {
+      newErrors.doctor = "Doctor selection is required.";
+    }
+    // if (!formData.appointmentSlot) {
+    //   newErrors.appointmentSlot = "Please select an appointment slot.";
+    // }
+  }
+
+  if (formData.leadGeneration === "Yes" && formData.followupmade === "Yes") {
+    if (!formData.followupDateTime) {
+      newErrors.followupDateTime = "Follow-up date and time is required.";
+    }
+  }
+
+  return newErrors;
 };

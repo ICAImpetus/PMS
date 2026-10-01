@@ -127,6 +127,9 @@ export const FilledFormSchema = new mongoose.Schema(
       refHospitalName: String,
       refHospitalLocation: String,
       location: String,
+      leadGeneration: String,
+      followupmade: String,
+      followupDateTime: Date,
 
 
       bookSlot: {
