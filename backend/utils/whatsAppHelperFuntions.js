@@ -427,7 +427,7 @@ export async function renderNode({
         if (!hasCallback) {
             optionsToRender.push({
                 optionId: "OPT_REQUEST_CALLBACK",
-                title: "📞 Request a Callback",
+                title: "Request a Callback",
                 description: "Request direct callback from executive",
                 nextNodeId: "NODE_CALLBACK_CONFIRMATION"
             });
@@ -499,7 +499,7 @@ export async function renderNode({
                     Authorization: `Bearer ${waAccount.accessToken}`,
                     "Content-Type": "application/json"
                 },
-                timeout: 5000 // 5-second strict timeout for outbound requests
+                timeout: 15000 // 15-second strict timeout for outbound requests
             }
         );
 
