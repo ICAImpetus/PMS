@@ -1717,9 +1717,9 @@ export const validateForm = (formState) => {
   const { purpose, formData } = formState;
 
   // Basic/Required validations across all forms
-  if (!formState.purpose) {
-    newErrors.purpose = "Please select a call purpose.";
-  }
+  // if (!formState.purpose && !formData.purpose) {
+  //   newErrors.purpose = "Please select a call purpose.";
+  // }
 
   if (!formData.patientDetails?.patientName?.trim()) {
     newErrors["patientDetails.patientName"] = "Patient name is required.";

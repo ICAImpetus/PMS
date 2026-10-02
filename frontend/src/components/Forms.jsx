@@ -1317,6 +1317,8 @@ function Forms() {
 
     const validationErrors = validateForm(form);
 
+    console.log("validationErrors", validationErrors);
+
     if (Object.keys(validationErrors).length > 0) {
       setValidations(validationErrors);
       toast.error("Please fill in all required fields.");
