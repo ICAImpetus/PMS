@@ -993,9 +993,15 @@ export const getFilledForms = async (req, res) => {
         ],
       }).select("_id");
 
+
+
       if (patient) {
         matchStage["formData.patientDetails"] = patient._id;
-      } else {
+      }
+      else if (sanitizedSearch) {
+        matchStage["purpose"] = new RegExp(sanitizedSearch, "i");
+      }
+      else {
         // If patient search yields no result, force matchStage to return empty results
         matchStage["formData.patientDetails"] = null;
       }

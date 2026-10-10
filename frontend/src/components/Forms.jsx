@@ -1317,7 +1317,7 @@ function Forms() {
 
     const validationErrors = validateForm(form);
 
-    console.log("validationErrors", validationErrors);
+    // console.log("validationErrors", validationErrors);
 
     if (Object.keys(validationErrors).length > 0) {
       setValidations(validationErrors);
@@ -1408,9 +1408,16 @@ function Forms() {
     }
 
     handleChange("doctor", null)
+    handleChange("formData.remarks", null)
+
     // handleChange("purpose", "")
     setSelectedDoctor(null)
   }, [form.department, form.purpose, form.formType, selectedBranch])
+
+
+  useEffect(() => {
+    handleChange("formData.remarks", null)
+  }, [form.doctor])
   useEffect(() => {
     handleChange("department", null)
     handleChange("formData.remarks", '')
@@ -4437,6 +4444,9 @@ function Forms() {
                       }
                       required
                     />
+                    {console.log(validations)
+                    }
+                    {validations?.patientDetails?.patientMobile && <span className="error-text">{validations?.patientDetails?.patientMobile}</span>}
                   </div>
 
                   <div className="input-group">
@@ -4894,6 +4904,10 @@ function Forms() {
                       placeholder="10-12 digit number"
                       name='patientMobile'
                     />
+
+                    {/* {console.log(validations)
+                    }
+                    {validations?.patientDetails?.patientMobile && <span className="error-text">{validations?.patientDetails?.patientMobile}</span>} */}
                     {patientList?.length > 0 && (
                       <Box sx={{ position: "relative", width: "100%" }}>
 

@@ -20,7 +20,6 @@ import {
   sanitizeInput,
 } from "./middlewares/security.middleware.js";
 import requestLogger from "./middlewares/apiLogger.middleware.js";
-import { checkHospitalIPAccess } from "./middlewares/ipCheck.middleware.js";
 
 const app = express();
 
