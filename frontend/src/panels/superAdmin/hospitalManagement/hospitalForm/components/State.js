@@ -1725,14 +1725,16 @@ export const validateForm = (formState) => {
     newErrors["patientDetails.patientName"] = "Patient name is required.";
   }
 
-  const mobileRegex = /^[6-9]\d{9}$/;
-  if (!formData.patientDetails?.patientMobile) {
-    newErrors["patientDetails.patientMobile"] = "Mobile number is required.";
-  } else if (!mobileRegex.test(formData.patientDetails.patientMobile)) {
-    newErrors["patientDetails.patientMobile"] = "Enter a valid 10-digit mobile number.";
-  }
+  // const remarksRegex = ;
+  // if (!formData.patientDetails?.patientMobile) {
+  //   newErrors["patientDetails.patientMobile"] = "Mobile number is required.";
+  // }
+  //  else if (!mobileRegex.test(formData.patientDetails.patientMobile)) {
+  //   newErrors["patientDetails.patientMobile"] = "Enter a valid 10-digit mobile number.";
+  // }
 
   // Conditional Validations based on Purpose / Call Status
+
   if (purpose === "Appointment") {
     if (!formState.department) {
       newErrors.department = "Department selection is required.";
@@ -1750,6 +1752,13 @@ export const validateForm = (formState) => {
       newErrors.followupDateTime = "Follow-up date and time is required.";
     }
   }
+  // if (formData?.remarks?.length > 500) {
+  //   newErrors.remarks = "Remarks cannot exceed 500 characters.";
+  // }
+
+  // if (formData?.remarks?.) {
+  //   newErrors.remarks = "Remarks cannot exceed 500 characters.";
+  // }
 
   return newErrors;
 };
