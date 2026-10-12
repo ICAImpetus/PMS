@@ -63,6 +63,7 @@ const PatientDiseaseInput = ({ value, onChange, isRequired = false, error = "" }
       <label className={isRequired ? "required" : ""}>Type of Disease</label>
       <input
         data-testid='typeOfDisease'
+        name='typeOfDisease'
         type="text"
         className="input-field"
         placeholder="e.g. Diabetes, Hypertension"
