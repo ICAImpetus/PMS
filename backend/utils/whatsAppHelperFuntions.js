@@ -211,7 +211,7 @@ export async function fetchDepartmentsFromDb({ tenantConnection, hospitalId, con
             const isSuggested = suggestedDeptId && d._id.toString() === suggestedDeptId;
             return {
                 optionId: `DEPT_${d._id.toString()}`,
-                title: `${isSuggested ? "⭐ " : "🩺 "}${d.name}`.substring(0, 24),
+                title: `${d.name}`.substring(0, 24),
                 description: isSuggested ? "Recommended for your symptoms" : "Department Consultation",
                 nextNodeId: "NODE_SELECT_DOC"
             };
@@ -240,7 +240,10 @@ export async function fetchDoctorsFromDb({ tenantConnection, hospitalId, context
 
         const options = doctors.slice(0, 10).map((doc) => ({
             optionId: `DOC_${doc._id.toString()}`,
-            title: doc?.name.substring(0, 24),
+            title: `${doc?.title
+                ? doc.title.charAt(0).toUpperCase() + doc.title.slice(1).toLowerCase()
+                : "Dr"
+                }. ${doc?.name?.substring(0, 24) || ""}`,
             description: (doc.specialization || "Consultant").substring(0, 72),
             nextNodeId: "NODE_ASK_DATE"
         }));
@@ -402,6 +405,7 @@ export async function handleCentralizedDbSlots({ tenantConnection, hospitalId, c
         return { hasData: false, options: [] };
     }
 }
+
 export async function renderNode({
     node,
     waAccount,
@@ -409,11 +413,10 @@ export async function renderNode({
     patientNumber,
     tenantConnection,
     hospitalId,
-    context,
+    context = {},
     hospitalName = 'Support'
-
 }) {
-    // 1. String Interpolation
+    // 1. Dynamic String Interpolation (Replaces {{selected_doctor_name}}, {{opd_days}}, etc.)
     const textBody = interpolateTemplate(node.messageText, context);
 
     // 2. Clone Options & Inject Default "Call Executive" Option for Interactive Nodes
@@ -425,6 +428,11 @@ export async function renderNode({
         );
 
         if (!hasCallback) {
+            // Meta List Max Limit is 10. If list has 10 items, remove 1 to fit callback
+            if (optionsToRender.length >= 10) {
+                optionsToRender = optionsToRender.slice(0, 9);
+            }
+
             optionsToRender.push({
                 optionId: "OPT_REQUEST_CALLBACK",
                 title: "Request a Callback",
@@ -448,7 +456,7 @@ export async function renderNode({
         to: patientNumber
     };
 
-    if (isInteractiveList) {
+    if (isInteractiveList && optionsCount > 0) {
         payload.type = "interactive";
         payload.interactive = {
             type: "list",
@@ -462,7 +470,7 @@ export async function renderNode({
                         title: "Available Options",
                         rows: optionsToRender.slice(0, 10).map((opt) => ({
                             id: opt.optionId,
-                            title: (opt.title || "").substring(0, 24),
+                            title: (opt.title || "Select Option").substring(0, 24),
                             description: (opt.description || "").substring(0, 72)
                         }))
                     }
@@ -479,7 +487,7 @@ export async function renderNode({
                     type: "reply",
                     reply: {
                         id: opt.optionId,
-                        title: (opt.title || "").substring(0, 20)
+                        title: (opt.title || "Option").substring(0, 20)
                     }
                 }))
             }
@@ -525,8 +533,7 @@ export async function renderNode({
     } catch (apiError) {
         const errorDetails = apiError.response?.data || apiError.message;
 
-        console.log("apiError", apiError);
-        console.error(`[Meta API Dispatch Error] Target: ${patientNumber} | Node: ${node.nodeId}`, errorDetails);
+        console.error(`[Meta API Dispatch Error] Target: ${patientNumber} | Node: ${node?.nodeId}`, errorDetails);
 
         // Async Non-Blocking Failure Logging
         setImmediate(() => {

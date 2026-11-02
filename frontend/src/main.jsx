@@ -37,8 +37,8 @@ function Root() {
                 <App />
 
                 <ToastContainer
-                  position="top-right"
-                  autoClose={3000}
+                  position="bottom-left"
+                  autoClose={1000}
                   hideProgressBar={false}
                   newestOnTop
                   closeOnClick

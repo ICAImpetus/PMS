@@ -1,70 +1,123 @@
 import { LRUCache } from "lru-cache";
 
-// Cache config: Holds max 5000 nodes in memory for 10 minutes
-const nodeCache = new LRUCache({
-    max: 5000,
-    ttl: 1000 * 60 * 10 // 10 minutes
+// 1. Hospital Tenant Cache (TTL: 30 mins)
+export const hospitalCache = new LRUCache({
+    max: 1000,
+    ttl: 1000 * 60 * 30
 });
 
-// Cache compiled regular expression patterns to minimize CPU overhead in high-throughput loops
-// Stores max 1,000 regex objects in memory
-const regexCache = new LRUCache({ max: 1000 });
+// 2. WhatsApp Account Credentials Cache (TTL: 30 mins)
+export const waAccountCache = new LRUCache({
+    max: 1000,
+    ttl: 1000 * 60 * 30
+});
+
+// 3. Workflow Nodes Cache (TTL: 15 mins)
+export const nodeCache = new LRUCache({
+    max: 5000,
+    ttl: 1000 * 60 * 15
+});
+
+// 4. Doctor Profile & Timings Cache (TTL: 10 mins)
+export const doctorCache = new LRUCache({
+    max: 2000,
+    ttl: 1000 * 60 * 10
+});
+
+// 5. Dynamic Dropdown Lists (Departments / Doctors list) (TTL: 5 mins)
+export const dynamicOptionsCache = new LRUCache({
+    max: 1000,
+    ttl: 1000 * 60 * 5
+});
+
+// ======================= HELPER METHODS ======================= //
 
 /**
- * Helper to interpolate dynamic variables in string template: {{key}} -> value
+ * Cache-First Hospital Tenant Resolver
  */
-export const interpolateTemplate = (template = "", context) => {
-    if (!template || !context) return template;
-
-    const entries = context instanceof Map ? Array.from(context.entries()) : Object.entries(context);
-    let result = template;
-
-    for (const [key, val] of entries) {
-        if (!key) continue;
-
-        let pattern = regexCache.get(key);
-        if (!pattern) {
-            // Escape special regex characters in keys before pattern compilation
-            const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-            pattern = new RegExp(`{{${escapedKey}}}`, "g");
-            regexCache.set(key, pattern);
-        }
-
-        result = result.replace(pattern, val != null ? String(val) : "");
+export const getCachedHospital = async (HospitalModel, phoneNumberId) => {
+    const cacheKey = `hospital:${phoneNumberId}`;
+    if (hospitalCache.has(cacheKey)) {
+        return hospitalCache.get(cacheKey);
     }
+    const hospital = await HospitalModel.findOne({
+        whatsAppPhoneNumberId: phoneNumberId,
+        isDeleted: false
+    }).lean();
 
-    return result;
-}
+    if (hospital) hospitalCache.set(cacheKey, hospital);
+    return hospital;
+};
 
 /**
- * Fetch a Node document using Cache-First pattern
+ * Cache-First WhatsApp Account Credentials Resolver
+ */
+export const getCachedWAAccount = async (WAAccountModel, hospitalId, phoneNumberId) => {
+    const cacheKey = `waAccount:${hospitalId.toString()}:${phoneNumberId}`;
+    if (waAccountCache.has(cacheKey)) {
+        return waAccountCache.get(cacheKey);
+    }
+    const waAccount = await WAAccountModel.findOne({
+        hospitalId,
+        phoneNumberId,
+        isConnected: true
+    }).lean();
+
+    if (waAccount) waAccountCache.set(cacheKey, waAccount);
+    return waAccount;
+};
+
+/**
+ * Cache-First Doctor Details Resolver
+ */
+export const getCachedDoctor = async (DoctorModel, docId) => {
+    const cacheKey = `doc:${docId.toString()}`;
+    if (doctorCache.has(cacheKey)) {
+        return doctorCache.get(cacheKey);
+    }
+    const doc = await DoctorModel.findById(docId).lean();
+    if (doc) doctorCache.set(cacheKey, doc);
+    return doc;
+};
+
+/**
+ * Cache-First Workflow Node Resolver
  */
 export const getCachedNode = async (NodeModel, hospitalId, nodeId) => {
     const cacheKey = `node:${hospitalId.toString()}:${nodeId}`;
-
-    // 1. Check in-memory cache first (0ms latency)
     if (nodeCache.has(cacheKey)) {
         return nodeCache.get(cacheKey);
     }
-
-    // 2. Fallback to MongoDB lookup if cache missed
     const nodeDoc = await NodeModel.findOne({ hospitalId, nodeId }).lean();
-
-    // 3. Save to cache for subsequent requests
-    if (nodeDoc) {
-        nodeCache.set(cacheKey, nodeDoc);
-    }
-
+    if (nodeDoc) nodeCache.set(cacheKey, nodeDoc);
     return nodeDoc;
 };
 
 /**
- * Clear cache when Admin updates nodes via saveHospitalNodes API
+ * High-speed single-pass template interpolator (O(N) replacement)
+ * Loops se bachta hai aur direct regex replacement karta hai
  */
-export const invalidateHospitalNodeCache = (hospitalId) => {
+export const interpolateTemplate = (template = "", context) => {
+    if (!template || !context) return template;
+
+    const ctx = context instanceof Map ? Object.fromEntries(context) : context;
+    return template.replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (_, key) => {
+        return ctx[key] !== undefined && ctx[key] !== null ? String(ctx[key]) : "";
+    });
+};
+
+/**
+ * Cache Invalidation (Admin update hone par call karein)
+ */
+export const invalidateHospitalCache = (hospitalId) => {
+    const hid = hospitalId.toString();
     for (const key of nodeCache.keys()) {
-        if (key.startsWith(`node:${hospitalId.toString()}`)) {
-            nodeCache.delete(key);
-        }
+        if (key.includes(hid)) nodeCache.delete(key);
+    }
+    for (const key of dynamicOptionsCache.keys()) {
+        if (key.includes(hid)) dynamicOptionsCache.delete(key);
+    }
+    for (const key of waAccountCache.keys()) {
+        if (key.includes(hid)) waAccountCache.delete(key);
     }
 };

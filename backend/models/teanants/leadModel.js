@@ -24,7 +24,7 @@ export const leadSchema = new mongoose.Schema(
 
         leadType: {
             type: String,
-            enum: ["APPOINTMENT_BOOKING", "CALLBACK_REQUEST"],
+            // enum: ["APPOINTMENT_BOOKING", "CALLBACK_REQUEST"],
             required: true
         },
 
