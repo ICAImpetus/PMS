@@ -27,7 +27,7 @@ const drive = google.drive({ version: 'v3', auth });
 
 // Parent Backup Folder ID (Root folder inside Shared Drive or Google Workspace)
 const DRIVE_FOLDER_ID = '0AIMyuMXRdrLUUk9PVA';
-const MONGO_BASE_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
+const MONGO_BASE_URI = process.env.MONGO_URL || 'mongodb://localhost:27017';
 
 /**
  * Helper function to find or create a date subfolder (e.g., "2026-10-22")

@@ -1,6 +1,12 @@
 {
   "name": "pms",
   "version": "1.0.1",
+  "modules": {
+    "whatsapp": {
+      "whatsappAutomation": "1.0.0",
+      "description": "WhatsApp Automation Module for PMS"
+    }
+  },
   "description": "Express.js backend API with MongoDB",
   "main": "index.js",
   "scripts": {
