@@ -1,6 +1,6 @@
 {
   "name": "pms",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "modules": {
     "whatsapp": {
       "whatsappAutomation": "1.0.0",
