@@ -1,495 +1,169 @@
-import cron from "node-cron";
-import { runBackup } from "../services/backupService.js";
-import { getConnection, getDepartmentModel, getDoctorModel, getFilledFormsModel, getHospitalModel, getPatientModel, MasterConn } from "../utils/db.manager.js";
-import axios from "axios";
-
-const HospitalModel = getHospitalModel(MasterConn)
-
-// Every Sunday 2 AM
-cron.schedule(
-    "0 2 * * 0",
-    async () => {
-        console.log("Starting weekly backup...");
-        await runBackup();
-    },
-    {
-        timezone: "Asia/Kolkata",
-    }
-);
-
-
-
-
-// const STATUSMAP = {
-//     "": "other",
-//     "New Patient": "new",
-//     "Old Patient": "old",
-//     "Non-Patient": "other"
-// };
-
-// const STATUSMAP = {
-//     "Prefer not to say": "Other",
-//     "New Patient": "new",
-//     "Old Patient": "old",
-// };
-
-// export const uploadDatabaseBackup = async (req, res) => {
-//     try {
-//         //console.log("Starting database backup...");
-
-
-//         const { hosId, branchId } = req.query;
-//         const { type } = req.body;
-
-//         const file = req.files?.csv?.[0];
-
-//         if (!file) {
-//             return res.status(400).json({ message: "CSV file required" });
-//         }
-
-//         if (!type) {
-//             return res.status(400).json({ message: "Type is required" });
-//         }
-
-//         if (
-//             !hosId ||
-//             !branchId ||
-//             !mongoose.Types.ObjectId.isValid(hosId) ||
-//             !mongoose.Types.ObjectId.isValid(branchId)
-//         ) {
-//             return res.status(400).json({ message: "Invalid IDs" });
-//         }
-
-//         const hospital = await HospitalModel.findById(hosId).lean();
-//         if (!hospital) {
-//             return res.status(404).json({ message: "Hospital not found" });
-//         }
-
-//         const conn = await getConnection(hospital.trimmedName);
-
-//         //  Start Transaction
-//         session = await conn.startSession();
-//         session.startTransaction();
-
-//         if (!req.csvFilePath) {
-//             return res.status(400).json({ message: "CSV file path not found" });
-//         }
-
-//         //Read CSV
-//         const rows = [];
-
-//         await new Promise((resolve, reject) => {
-//             fs.createReadStream(req.csvFilePath)
-//                 .pipe(csv())
-//                 .on("data", (data) => {
-//                     //  Clean row
-//                     const cleanedRow = {};
-
-//                     Object.keys(data).forEach((key) => {
-//                         let value = data[key];
-
-//                         // 
-//                         if (value === null || value === undefined) {
-//                             cleanedRow[key] = "";
-//                         } else {
-//                             // trim + remove extra spaces
-//                             cleanedRow[key] = value.toString().trim();
-//                         }
-//                     });
-
-//                     // 
-//                     const isEmpty = Object.values(cleanedRow).every(
-//                         (val) => val === ""
-//                     );
-
-//                     if (!isEmpty) {
-//                         rows.push(cleanedRow);
-//                     }
-//                 })
-//                 .on("end", resolve)
-//                 .on("error", reject);
-//         });
-//         const normalize = (val) => val?.trim();
-
-//         let result; // uploadBranchCSV FIX (let instead of const)
-
-//         //console.log("CSV Rows:", rows);
-
-//         //console.log("type", type);
-
-
-//         const conn = await getConnection(hospital.trimmedName);
-
-//         const FilledFormsModel = getFilledFormsModel(conn);
-//         const PatientModel = getPatientModel(conn);
-//         const DoctorModel = getDoctorModel(conn);
-//         const DepartmentModel = getDepartmentModel(conn)
-
-//         const results = [];
-//         const processedRows = new Set();
-//         let count = 0;
-
-//         const stream = fs
-//             .createReadStream("backend/crons/in.csv")
-//             .pipe(csv());
-
-//         for await (const data of stream) {
-//             // if (count >= 3500) break;
-
-//             const mobile = String(data.patientMobile || "").trim();
-//             if (!mobile) continue;
-
-//             const rowKey = `${mobile}-${data.purpose}-${data.formType}`;
-
-//             if (processedRows.has(rowKey)) continue;
-//             processedRows.add(rowKey);
-
-//             // ======================
-//             // PATIENT (NO SESSION)
-//             // ======================
-//             let patient = await PatientModel.findOne({
-//                 patientMobile: mobile,
-//             });
-
-
-//             //console.log("patient", data)
-//             if (!patient) {
-//                 patient = await PatientModel.create({
-//                     hospitalId: {
-//                         hospitalId: hospital._id,
-//                         name: hospital.name,
-//                     },
-//                     branchId: new mongoose.Types.ObjectId(
-//                         "6a2270606f164344a2644a8f"
-//                     ),
-//                     gender: data.gender || "Other",
-//                     patientName: data.patientName,
-//                     status: STATUSMAP[data.status] || "",
-//                     patientMobile: mobile,
-//                     patientAge: parseInt(data.patientAge, 10) || 0,
-//                     location: data.location,
-//                     category: data.category,
-
-//                 });
-//             }
-
-//             //console.log("patient", patient)
-
-
-//             // ======================
-//             // DOCTOR VALIDATION
-//             // ======================
-//             let doctor = null;
-//             let department = null;
-//             if (
-//                 data.doctor &&
-//                 mongoose.Types.ObjectId.isValid(data.doctor)
-//             ) {
-//                 doctor = await DoctorModel.findById(
-//                     data.doctor
-//                 ).lean();
-//                 // continue;
-//             }
-
-//             if (
-//                 data.department &&
-//                 mongoose.Types.ObjectId.isValid(data.department)
-//             ) {
-//                 department = await DepartmentModel.findById(
-//                     data.department
-//                 ).lean();
-//                 // continue;
-//             }
-
-
-
-
-
-
-//             // if (!doctor) {
-//             //     throw new Error(
-//             //         `Doctor not found: ${data.doctor}`
-//             //     );
-//             // }
-
-//             // ======================
-//             // FORM BUILD
-//             // ======================
-//             results.push({
-//                 formType: data.formType?.toLowerCase(),
-//                 agentName: "Sandeep",
-//                 branchId: new mongoose.Types.ObjectId(
-//                     "6a2270606f164344a2644a8f"
-//                 ),
-//                 agentId: new mongoose.Types.ObjectId(
-//                     "64a1c9e5f0c2b8b1d9e7c456"
-//                 ),
-//                 callStatus: "connected",
-//                 doctor: doctor ? doctor._id : null,
-//                 department: department ? (department?._id || doctor.department) : null,
-//                 formData: {
-//                     referenceFrom: data.referenceFrom,
-//                     callerType: data.callerType,
-//                     patientDetails: patient._id,
-//                     remarks: data.remarks,
-//                 },
-//                 purpose: data.purpose,
-//             });
-
-//             count++;
-
-//             if (count % 100 === 0) {
-//                 //console.log(
-//                     `Processed: ${count}, Forms Ready: ${results.length}`
-//                 );
-//             }
-//         }
-
-//         //console.log(
-//             `Preparing to insert ${results.length} forms`
-//         );
-
-//         if (results.length > 0) {
-//             await FilledFormsModel.insertMany(results, {
-//                 ordered: true, // IMPORTANT: stop on error
-//             });
-//         }
-
-//         //console.log(
-//             `Successfully inserted ${results.length} forms`
-//         );
-//     } catch (error) {
-//         console.error(" MIGRATION FAILED:");
-//         console.error(error);
-//     }
-// };
-
-
-// await uploadDatabaseBackup()
-
-// export const changePatienStatus = async () => {
-//     try {
-//         let count = 0;
-//         //console.log("Starting update...");
-
-//         const hospital = await HospitalModel.findById(
-//             "6a22705f6f164344a2644a8a"
-//         );
-
-//         if (!hospital) {
-//             throw new Error("Hospital not found");
-//         }
-
-//         const conn = await getConnection(hospital.trimmedName);        // const PatientModel = getPatientModel(conn);
-
-//         const FilledFormsModel = getFilledFormsModel(conn);
-//         // const PatientModel = getPatientModel(conn);
-
-//         await FilledFormsModel.updateMany(
-//             {},
-//             {
-//                 $set: {
-//                     createdAt: new Date("2026-06-08T13:18:08.460+00:00"),
-//                 },
-//             },
-//             {
-//                 timestamps: false,
-//             }
-//         );
-//         // const patients = await PatientModel.find();
-
-//         // //console.log("statging");
-
-//         // for (const patient of patients) {
-//         //     const lastForm = await FilledFormsModel
-//         //         .findOne({
-//         //             "formData.patientDetails": patient._id,
-//         //         })
-//         //         .sort({ createdAt: -1 });
-
-//         //     if (lastForm) {
-//         //         await PatientModel.findByIdAndUpdate(
-//         //             patient._id,
-//         //             {
-//         //                 $set: {
-//         //                     lastVisit: lastForm._id,
-//         //                 },
-//         //             }
-//         //         );
-//         //     }
-//         //     count++;
-//         //     //console.log("process", count);
-//         // }
-
-//         //console.log("Done");
-//     } catch (error) {
-//         console.error(error);
-//     }
-// };
-
-// changePatienStatus()
-// uploadDatabaseBackup();
-
-
-
-
-export const sendWeeklyMedicalDirectorReports = async () => {
+import { google } from 'googleapis';
+import { exec } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import util from 'util';
+import { MasterConn, getHospitalModel } from '../utils/db.manager.js';
+import cron from 'node-cron';
+
+import { sendEmail } from '../utils/mailer.js';
+const execPromise = util.promisify(exec);
+
+// Path setup for ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Google Drive Auth Setup
+const KEY_FILE = path.join(__dirname, '../service-account.json');
+const SCOPES = ['https://www.googleapis.com/auth/drive'];
+
+const auth = new google.auth.GoogleAuth({
+    keyFile: KEY_FILE,
+    scopes: SCOPES,
+});
+
+const drive = google.drive({ version: 'v3', auth });
+
+// Parent Backup Folder ID (Root folder inside Shared Drive or Google Workspace)
+const DRIVE_FOLDER_ID = '0AIMyuMXRdrLUUk9PVA';
+const MONGO_BASE_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
+
+/**
+ * Helper function to find or create a date subfolder (e.g., "2026-10-22")
+ */
+async function getOrCreateDateFolder(parentFolderId, folderName) {
     try {
-        const hospitals = await HospitalModel.find({
-            isDeleted: false,
-            isActive: true,
-        }).lean();
+        // Check if the folder already exists
+        const query = `'${parentFolderId}' in parents and name = '${folderName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
+        const response = await drive.files.list({
+            q: query,
+            fields: 'files(id, name)',
+            supportsAllDrives: true,
+            includeItemsFromAllDrives: true,
+        });
 
-        for (const hospital of hospitals) {
-            try {
-                await processHospitalReport(hospital);
-            } catch (err) {
-                console.error(
-                    `Failed for hospital ${hospital.name}`,
-                    err.message
-                );
-            }
+        if (response.data.files.length > 0) {
+            return response.data.files[0].id;
         }
-    } catch (err) {
-        console.error(err);
-    }
-};
 
-const processHospitalReport = async (hospital) => {
-
-    const conn = await getConnection(hospital.trimmedName);
-
-    // Calculate last week's report
-    const report = await generateWeeklyReport(conn);
-
-    // Find Medical Director
-    const medicalDirector = hospital.managementDetails.find(
-        (member) =>
-            member.memberType?.toLowerCase() === "medical director"
-    );
-
-    if (!medicalDirector) {
-        //console.log(`${hospital.name} has no Medical Director`);
-        return;
-    }
-
-    const payload = {
-        type: "1",
-
-        reportDate: report.reportDate,
-
-        hospitalName: hospital.name,
-
-        branchName: hospital.name,
-
-        summary: report.summary,
-
-        receiver: {
-            name: medicalDirector.name,
-            phone: medicalDirector.phoneNumber
-        }
-    };
-
-    await axios.post(
-        process.env.WHATSAPP_AUTOMATION_URL,
-        payload
-    );
-
-    //console.log(`Report sent to ${medicalDirector.name}`);
-};
-
-export const generateWeeklyReport = async (conn) => {
-    try {
-        const FilledFormsModel = getFilledFormsModel(conn);
-
-        // Previous week (Monday - Sunday)
-        const startDate = moment()
-            .subtract(1, "week")
-            .startOf("isoWeek")
-            .startOf("day")
-            .toDate();
-
-        const endDate = moment()
-            .subtract(1, "week")
-            .endOf("isoWeek")
-            .endOf("day")
-            .toDate();
-
-        // Total Leads
-        const totalNewLeadsReceived = await FilledFormsModel.countDocuments({
-            createdAt: {
-                $gte: startDate,
-                $lte: endDate,
-            },
-        });
-
-        // Contacted Leads
-        const contactedLeads = await FilledFormsModel.countDocuments({
-            createdAt: {
-                $gte: startDate,
-                $lte: endDate,
-            },
-            status: {
-                $in: [
-                    "Contacted",
-                    "Converted",
-                    "Follow Up",
-                    "Not Interested",
-                ],
-            },
-        });
-
-        // Converted Patients
-        const convertedToPatients = await FilledFormsModel.countDocuments({
-            createdAt: {
-                $gte: startDate,
-                $lte: endDate,
-            },
-            status: "Converted",
-        });
-
-        // Pending Follow Ups
-        const pendingFollowUps = await FilledFormsModel.countDocuments({
-            createdAt: {
-                $gte: startDate,
-                $lte: endDate,
-            },
-            status: "Follow Up",
-        });
-
-        // Not Interested
-        const notInterested = await FilledFormsModel.countDocuments({
-            createdAt: {
-                $gte: startDate,
-                $lte: endDate,
-            },
-            status: "Not Interested",
-        });
-
-        const conversionRate =
-            totalNewLeadsReceived === 0
-                ? 0
-                : Number(
-                    (
-                        (convertedToPatients / totalNewLeadsReceived) *
-                        100
-                    ).toFixed(2)
-                );
-
-        return {
-            reportDate: moment(endDate).format("DD/MM/YYYY"),
-
-            summary: {
-                totalNewLeadsReceived,
-                contactedLeads,
-                convertedToPatients,
-                pendingFollowUps,
-                notInterested,
-                conversionRate,
-            },
+        // Create the subfolder if it does not exist
+        const folderMetadata = {
+            name: folderName,
+            mimeType: 'application/vnd.google-apps.folder',
+            parents: [parentFolderId],
         };
+
+        const folder = await drive.files.create({
+            requestBody: folderMetadata,
+            supportsAllDrives: true,
+            fields: 'id',
+        });
+
+        console.log(`Created date folder: ${folderName} (ID: ${folder.data.id})`);
+        return folder.data.id;
     } catch (error) {
-        console.error("Weekly Report Error:", error);
+        console.error('Error creating date folder:', error.message);
         throw error;
     }
+}
+
+export const runBackup = async () => {
+    try {
+        const HospitalModel = getHospitalModel(MasterConn);
+
+        // Fetch active tenant hospitals
+        const hospitals = await HospitalModel.find({ isDeleted: false }).lean();
+
+        if (!hospitals || hospitals.length === 0) {
+            console.log('No active tenant hospitals found for backup.');
+            return;
+        }
+
+        // Generate folder name based on current date (YYYY-MM-DD)
+        const dateFolder = new Date().toISOString().split('T')[0];
+        const targetFolderId = await getOrCreateDateFolder(DRIVE_FOLDER_ID, dateFolder);
+
+        const timeStamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+        for (const hospital of hospitals) {
+            const dbName = hospital.trimmedName;
+            if (!dbName) continue;
+
+            const backupFileName = `${dbName}-backup-${timeStamp}.archive`;
+            const localFilePath = path.join(__dirname, `../${backupFileName}`);
+
+            console.log(`Starting backup for tenant database: ${dbName}...`);
+
+            // Construct MongoDB URI for specific tenant DB
+            const tenantMongoUri = `${MONGO_BASE_URI}/${dbName}`;
+            const dumpCommand = `mongodump --uri="${tenantMongoUri}" --archive="${localFilePath}" --gzip`;
+
+            try {
+                // Step 1: Create local MongoDB dump
+                await execPromise(dumpCommand);
+
+                // Step 2: Upload to Google Drive inside the Date Subfolder
+                const fileMetadata = {
+                    name: backupFileName,
+                    parents: [targetFolderId],
+                };
+
+                const media = {
+                    mimeType: 'application/gzip',
+                    body: fs.createReadStream(localFilePath),
+                };
+
+                const uploadResponse = await drive.files.create({
+                    requestBody: fileMetadata,
+                    media: media,
+                    supportsAllDrives: true,
+                    supportsTeamDrives: true,
+                    enforceSingleParent: true,
+                    fields: 'id, name, size',
+                });
+
+                console.log(`Backup completed for ${dbName}. Drive File ID: ${uploadResponse.data.id}`);
+
+
+
+            } catch (tenantErr) {
+                console.error(`Backup failed for database ${dbName}:`, tenantErr.message);
+            } finally {
+                // Step 3: Cleanup local archive file if it exists
+                if (fs.existsSync(localFilePath)) {
+                    fs.unlinkSync(localFilePath);
+                }
+            }
+        }
+        return 'https://drive.google.com/drive/folders/0AIMyuMXRdrLUUk9PVA'
+    } catch (error) {
+        console.error('Multi-tenant backup runner error:', error);
+    }
 };
+
+// await runBackup();
+
+cron.schedule(
+    '0 2 * * 0',
+    // '* * * * *',
+    async () => {
+        try {
+            console.log('Starting multi-tenant backup cron job...');
+
+            const url = await runBackup();
+
+            await sendEmail({
+                subject: 'PMS Backup Completed',
+                text: `The multi-tenant backup cron job has completed successfully.\nLinks to the backups can be found in the Google Drive folder: ${url}`,
+            });
+
+            console.log('Multi-tenant backup cron job completed.');
+        } catch (error) {
+            console.error('Error during scheduled backup job:', error.message);
+        }
+    },
+    {
+        timezone: 'Asia/Kolkata',
+    }
+);
