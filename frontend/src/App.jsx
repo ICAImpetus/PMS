@@ -61,6 +61,7 @@ import WhatsAppConversations from "./components/WhatsAppAutomation/WhatsAppConve
 import WhatsAppFlowBuilder from "./components/WhatsAppAutomation/WhatsAppFlowBuilder";
 import WhatsAppConnect from "./components/WhatsAppConnect";
 import WhatsAppLeads from "./panels/executive/WhatsAppLeads";
+import LMSPortal from "./components/LMSPortal";
 
 
 const HospitalManagementLayout = () => {
@@ -188,6 +189,7 @@ function App() {
         <>
           <Route path="/executive-forms" element={<ExecutiveForms />} />
           <Route path="/whatsapp-leads" element={<WhatsAppLeads />} />
+          <Route path="/lms-portal" element={<LMSPortal />} />
         </>
 
 

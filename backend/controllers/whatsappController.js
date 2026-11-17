@@ -940,10 +940,6 @@ export const getLeads = async (req, res) => {
         // const { hospitalId } = req.params;
         const { page = 1, limit = 10, status, leadType, search, hospitalId } = req.query;
 
-        console.log("req.paramas", req.params);
-        console.log("req.paramas", req.query);
-
-
         if (!hospitalId) {
             return res.status(400).json({ success: false, message: "Hospital ID is required" });
         }

@@ -8,6 +8,7 @@ import { UserContextHook } from "../../contexts/UserContexts";
 import { logoutApi } from "../../utils/services";
 
 // --- ICONS ---
+import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import SpaceDashboardOutlinedIcon from "@mui/icons-material/SpaceDashboardOutlined";
 import HistoryIcon from "@mui/icons-material/History";
@@ -223,9 +224,6 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                   isCollapsed={isCollapsed}
                 />
               )}
-
-              {console.log(`${isExecutive}-${isSuperAdmin}-${isAdmin}`)
-              }
               {(isExecutive || isSuperAdmin || isAdmin) && (
                 <CustomMenuItem
                   title="WhatsApp Leads"
@@ -252,7 +250,10 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
               {/* EXECUTIVE ITEMS */}
               {/* EXECUTIVE ITEMS */}
               {isExecutive && (
+
                 <>
+
+
 
                   <CustomMenuItem
                     title="Executive Forms"
@@ -262,8 +263,19 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                     setSelected={setSelected}
                     isCollapsed={isCollapsed}
                   />
+
+                  <CustomMenuItem
+                    title="LMS PORTAL"
+                    to="/lms-portal"
+                    icon={<SchoolOutlinedIcon fontSize="small" />}
+                    selected={selected}
+                    setSelected={setSelected}
+                    isCollapsed={isCollapsed}
+                  />
                 </>
               )}
+
+
               {/* MANAGEMENT ITEMS */}
               {isManagement && (
                 <>
