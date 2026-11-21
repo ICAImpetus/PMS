@@ -7,7 +7,7 @@ import React, {
 
 import { commonRoutes, whatsAppRoutes } from "../api/apiService";
 import { UserContextHook } from "./UserContexts";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
 export const HospitalContext = createContext();
@@ -43,7 +43,8 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     const isSuperAdmin = role === "superadmin";
     const isSuperManager = role === "supermanager";
     const isExecutive = role === "executive";
-    const isDoctor = role === "doctor"
+    const isDoctor = role === "doctor";
+    const isNurse = role === "nursingstaff";
     const isAdmin = ["superadmin", "admin"].includes(role);
     const isNonAdmin = ["teamleader", "supermanager", "executive", "doctor"].includes(role);
 
@@ -246,7 +247,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             const res = await commonRoutes.getAllHospital();
             return res.data;
         },
-        enabled: !isExecutive && !isDoctor,
+        enabled: !isExecutive && !isDoctor && !isNurse,
         onError: () => toast.error("Failed to fetch hospitals")
     });
 
@@ -689,8 +690,42 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
         onError: () =>
             toast.error("Audit logs failed")
+    })
+        ;
+
+    const { data: doctors = [], isLoading: isDoctorsLoading } = useQuery({
+        queryKey: ["doctors", selectedHostpital],
+        queryFn: async () => {
+            const res = await commonRoutes.getDoctors(selectedHostpital);
+            return res.data;
+        },
+        enabled: Boolean(isNurse && selectedHostpital),
     });
 
+    // 2. Fetch Camp Data List (GET)
+    const { data: campData = [], isLoading: isCampLoading } = useQuery({
+        queryKey: ["campData", selectedHostpital],
+        queryFn: async () => {
+            const res = await commonRoutes.getCampData(selectedHostpital);
+            return res.data;
+        },
+        enabled: Boolean(false && selectedHostpital),
+    });
+
+    // 3. Save / Add Camp Data (POST) -> Use 'useMutation'
+    const { mutate: addCampData, isPending: isSavingCamp } = useMutation({
+        mutationFn: async (payload) => {
+            const res = await commonRoutes.addCampData(payload);
+            return res.data;
+        },
+        onSuccess: () => {
+            // Save hone ke baad campData table/list ko automatically refresh karega
+            queryClient.invalidateQueries({ queryKey: ["campData", selectedHostpital] });
+        },
+        onError: (error) => {
+            console.error("Failed to save camp data:", error);
+        },
+    });
     const whatsAppConnectMutation = useMutation({
         mutationFn: async ({ code, wabaId, phoneNumberId }) => {
             return await whatsAppRoutes.connectWhatsApp(
@@ -841,6 +876,14 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         branchFollowups,
         codeAlertsData,
         formEditChanges,
+        addCampData,
+        isSavingCamp,
+
+        campData,
+        isCampLoading,
+
+        doctors,
+        isDoctorsLoading,
 
         dateFilter,
 
@@ -926,7 +969,15 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         dateRange,
         leadsDataRefetchLoader,
         refetchleadsData,
-        handleFilterChange
+        handleFilterChange,
+        addCampData,
+        isSavingCamp,
+
+        campData,
+        isCampLoading,
+
+        doctors,
+        isDoctorsLoading,
     ]);
     return (
         <HospitalContext.Provider value={contextValue}>

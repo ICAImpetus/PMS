@@ -7,6 +7,9 @@ export const commonRoutes = {
   login: (data) => API.post("api/login", data),
   getMe: () => API.get("/api/getMe"),
 
+  addCampData: (data) => API.post("api/v2/camp-feed", data),
+  getCampData: (data) => API.get("api/v2/get-camp-feed", data),
+
   updateUserPassword: (username, newPassword) => {
     return API.put("/api/updatePassword", { username, newPassword })
   },
@@ -98,7 +101,9 @@ export const commonRoutes = {
     }),
 
   getDoctors: (hosId, branchId, depId) =>
-    API.get(`api/get-doctors/${hosId}/${branchId}/${depId}`),
+    API.get(`api/v2//get-doctors/${hosId}/${branchId}/${depId}`),
+
+
 
 
 

@@ -57,6 +57,7 @@ export const AdminAgentSchema = new mongoose.Schema(
           "executive",
           "supermanager",
           "doctor",
+          "nursingstaff",
         ],
         message: "{VALUE} is not a valid user type",
       },
