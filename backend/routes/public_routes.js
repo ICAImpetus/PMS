@@ -10,8 +10,4 @@ const router = express.Router();
 
 router.get("/patient/status", publicController.checkPatientIsNewOrOld);
 
-router.post("/camp-feed", auth, publicController.saveCampFeedData);
-router.get("/get-camp-feed", auth, publicController.getCampFeedData);
-router.get("/get-doctors", auth, publicController.getDoctors);
-
 export default router

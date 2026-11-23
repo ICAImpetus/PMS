@@ -76,8 +76,6 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
   const isExecutive = userType === "executive";
   const isHospital = userType === "hospital";
   const isDoctor = userType === "doctor";
-  const isNursingStaff = userType === "nursingstaff";
-
 
   const [isCollapsed, setIsCollapsed] = useState(
     isExecutive || isDoctor ? false : true
@@ -207,16 +205,16 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
           <Menu iconShape="square">
             <Box>
               {/* DASHBOARD (Visible to All) */}
-              {!isNursingStaff && <CustomMenuItem
+              <CustomMenuItem
                 title="Dashboard"
                 to="/"
                 icon={<SpaceDashboardOutlinedIcon fontSize="small" />}
                 selected={selected}
                 setSelected={setSelected}
                 isCollapsed={isCollapsed}
-              />}
+              />
 
-              {!isDoctor && !isNursingStaff && (
+              {!isDoctor && (
                 <CustomMenuItem
                   title="Patient History"
                   to="/patient-history"
@@ -335,8 +333,6 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                     setSelected={setSelected}
                     isCollapsed={isCollapsed}
                   /> */}
-
-
                   <CustomMenuItem
                     title="Audit Logs"
                     to="/admin-audit-logs"
@@ -349,20 +345,6 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
 
 
               )}
-
-              {isNursingStaff && (
-                <CustomMenuItem
-                  title="Patient Registration"
-                  to="/"
-                  icon={<AssignmentIndOutlinedIcon fontSize="small" />
-                  }
-                  selected={selected}
-                  setSelected={setSelected}
-                  isCollapsed={isCollapsed}
-                />
-              )
-
-              }
 
               {/* TEAM LEADER SPECIFIC */}
               {isTeamLeader && (

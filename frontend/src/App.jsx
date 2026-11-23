@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import "./model.css";
+import Topbar from "./scenes/global/Topbar";
 import Sidebar from "./scenes/global/Sidebar";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { ColorModeContext, useMode } from "./theme";
 import { GlobalHospitalContextProvider } from "./contexts/HospitalContexts";
 import Login from "./components/Login/Login";
 import { UserContextHook } from "./contexts/UserContexts";
+// Toaster moved to `main.jsx` so it's mounted before app-level providers
 import GlobalLoader from "./components/GlobalLoader";
 import { Outlet } from "react-router-dom";
 
@@ -23,6 +25,8 @@ import {
 } from "./panels/superAdmin";
 
 import {
+  AdminDashboard,
+  UserManagementAdmin,
   UserManagement as AdminUserManagement,
   RolesPermissions,
   AuditLog,
@@ -35,6 +39,7 @@ import {
 
 import {
   TeamDashboard,
+  UserManagementTeamLeader,
 } from "./panels/teamLeader";
 
 import {
@@ -47,12 +52,14 @@ import {
   DoctorProfile,
 } from "./panels/doctor";
 
-import { NursingStaffsForms } from "./scenes/global/NurseStaff/NursingStaffsForms.jsx";
-
 import AdminManagement from "./panels/superAdmin/adminManagement/AdminManagement";
 import { PatientHistory } from "./scenes/global/Patient_Management/PatientHistory";
 import { PatientHistory as PatientHistoryForNonAdmins } from "./scenes/global/Patient_Management/PatientHistoryForNonAdmins";
 import { SInglePatientDetails } from "./scenes/global/Patient_Management/SInglePatientDetails";
+import Subscription from "./panels/superManager/subscription_plan/Subscription";
+import WhatsAppConversations from "./components/WhatsAppAutomation/WhatsAppConversations";
+import WhatsAppFlowBuilder from "./components/WhatsAppAutomation/WhatsAppFlowBuilder";
+import WhatsAppConnect from "./components/WhatsAppConnect";
 import WhatsAppLeads from "./panels/executive/WhatsAppLeads";
 import LMSPortal from "./components/LMSPortal";
 
@@ -72,6 +79,7 @@ function App() {
   const [isSidebar, setIsSidebar] = useState(true);
   const [toggled, setIsToggled] = useState(false);
   const [refresh, setRefresh] = useState(false);
+  const isLoggedIn = !!currentUser;
 
   const userRole = currentUser?.type;
   const hasAdminPrivileges = [
@@ -186,17 +194,6 @@ function App() {
 
 
       )}
-
-      {userRole === "nursingstaff" && (
-
-        <Route path="/" element={<NursingStaffsForms />} />
-
-      )}
-
-
-
-
-
     </>
   );
 
