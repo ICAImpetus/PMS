@@ -46,6 +46,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
     const isDoctor = role === "doctor"
     const isAdmin = ["superadmin", "admin"].includes(role);
     const isNonAdmin = ["teamleader", "supermanager", "executive", "doctor"].includes(role);
+    const isNurse = role === "nursingstaff";
 
 
 
@@ -235,6 +236,40 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
 
 
+
+    const { data: doctors = [], isLoading: isDoctorsLoading } = useQuery({
+        queryKey: ["doctors", selectedHostpital],
+        queryFn: async () => {
+            const res = await commonRoutes.getDoctors(selectedHostpital);
+            return res.data?.data || [];
+        },
+        enabled: Boolean(isNurse && selectedHostpital),
+    });
+
+    const { mutate: addCampData, isPending: isSavingCamp } = useMutation({
+        mutationFn: async (payload) => {
+            const res = await commonRoutes.addCampData(selectedHostpital, payload);
+            return res.data;
+        },
+        onSuccess: () => {
+            // Save hone ke baad campData table/list ko automatically refresh karega
+            queryClient.invalidateQueries({ queryKey: ["campData", selectedHostpital] });
+        },
+        onError: (error) => {
+            console.error("Failed to save camp data:", error);
+        },
+    });
+
+    const { data: campData = [], isLoading: isCampLoading, refetch: fetchCampData } = useQuery({
+        queryKey: ["campData", selectedHostpital],
+        queryFn: async () => {
+            const res = await commonRoutes.getCampData(selectedHostpital);
+            return res.data;
+        },
+        enabled: Boolean(isExecutive && selectedHostpital),
+    });
+
+
     const {
         data: hospitalsData,
         isFetching: hospitalsLoading,
@@ -246,7 +281,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
             const res = await commonRoutes.getAllHospital();
             return res.data;
         },
-        enabled: !isExecutive && !isDoctor,
+        enabled: !isExecutive && !isDoctor && !isNurse,
         onError: () => toast.error("Failed to fetch hospitals")
     });
 
@@ -273,7 +308,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
             return res.data;
         },
-        enabled: !!selectedHostpital && !isDoctor,
+        enabled: !!selectedHostpital && !isDoctor && !isNurse,
         onError: () => toast.error("Failed to fetch branches")
     });
 
@@ -471,7 +506,7 @@ export const GlobalHospitalContextProvider = ({ children }) => {
 
             return res.data;
         },
-        enabled: !!selectedHostpital && !isExecutive && !isDoctor,
+        enabled: !!selectedHostpital && !isExecutive && !isDoctor && !isNurse,
         keepPreviousData: true,
         onError: () => toast.error("Users fetch failed")
     });
@@ -833,6 +868,16 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         admins,
         allLogs,
         branchCount,
+        doctors,
+        isDoctorsLoading,
+        addCampData,
+        isSavingCamp,
+        fetchCampData,
+
+        campData,
+        isCampLoading,
+
+
 
         analytics,
         metrics,
@@ -920,6 +965,14 @@ export const GlobalHospitalContextProvider = ({ children }) => {
         isSuperAdmin,
         isAdmin,
         isNonAdmin,
+        doctors,
+        isDoctorsLoading,
+        addCampData,
+        isSavingCamp,
+        fetchCampData,
+        campData,
+        isCampLoading,
+
         role,
         loading,
         errors,

@@ -10,6 +10,7 @@ import { logoutApi } from "../../utils/services";
 // --- ICONS ---
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import SpaceDashboardOutlinedIcon from "@mui/icons-material/SpaceDashboardOutlined";
 import HistoryIcon from "@mui/icons-material/History";
 import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
@@ -76,6 +77,7 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
   const isExecutive = userType === "executive";
   const isHospital = userType === "hospital";
   const isDoctor = userType === "doctor";
+  const isNurse = userType === "nursingstaff";
 
   const [isCollapsed, setIsCollapsed] = useState(
     isExecutive || isDoctor ? false : true
@@ -205,16 +207,33 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
           <Menu iconShape="square">
             <Box>
               {/* DASHBOARD (Visible to All) */}
-              <CustomMenuItem
+
+              {isNurse && (
+
+                <>
+                  <CustomMenuItem
+                    title="Camp Feed Data"
+                    to="/"
+                    icon={<SpaceDashboardOutlinedIcon fontSize="small" />}
+                    selected={selected}
+                    setSelected={setSelected}
+                    isCollapsed={isCollapsed}
+                  />
+
+
+                </>
+
+              )}
+              {!isNurse && (<CustomMenuItem
                 title="Dashboard"
                 to="/"
                 icon={<SpaceDashboardOutlinedIcon fontSize="small" />}
                 selected={selected}
                 setSelected={setSelected}
                 isCollapsed={isCollapsed}
-              />
+              />)}
 
-              {!isDoctor && (
+              {!isDoctor && !isNurse && (
                 <CustomMenuItem
                   title="Patient History"
                   to="/patient-history"
@@ -259,6 +278,15 @@ const Sidebar = ({ isSidebar, toggled, setIsToggled }) => {
                     title="Executive Forms"
                     to="/executive-forms"
                     icon={<AssignmentIndOutlinedIcon fontSize="small" />}
+                    selected={selected}
+                    setSelected={setSelected}
+                    isCollapsed={isCollapsed}
+                  />
+
+                  <CustomMenuItem
+                    title="Camp Data"
+                    to="/camp-data"
+                    icon={<MedicalServicesIcon fontSize="small" />}
                     selected={selected}
                     setSelected={setSelected}
                     isCollapsed={isCollapsed}
