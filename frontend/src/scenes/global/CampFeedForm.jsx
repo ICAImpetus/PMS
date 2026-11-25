@@ -63,10 +63,25 @@ export const CampFeedForm = () => {
 
     } = useContext(HospitalContext);
     useEffect(() => {
+        const formatDoctorName = (rawName = "") => {
+            // 1. Pehle se lage "DR.", "Dr", "dr." aur extra spaces ko hatayein
+            const cleanName = rawName.replace(/^dr\.?\s*/i, "").trim();
+
+            // 2. Har word ke pehle letter ko Capital aur baaki ko small (Title Case) karein
+            const titleCaseName = cleanName
+                .toLowerCase()
+                .split(/\s+/)
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(" ");
+
+            // 3. Sabke aage uniform "Dr. " add karein
+            return titleCaseName ? `Dr. ${titleCaseName}` : "";
+        };
+
         if (doctors?.length) {
             const updatedDoctors = doctors.map((doc) => ({
                 _id: doc?._id,
-                name: `${doc?.name} (${doc?.department?.name || "N/A"})`,
+                name: `${formatDoctorName(doc?.name)} (${doc?.department?.name || "N/A"})`,
             }));
             setFDoctors(updatedDoctors);
         } else {
@@ -99,10 +114,12 @@ export const CampFeedForm = () => {
 
         // 3. City Validation (Naya 'if' block)
         const city = forms.patientAddress?.trim() || "";
+        console.log("");
+
         if (!city) {
-            tempErrors.City = "City / District is required";
+            tempErrors.patientAddress = "City / District is required";
         } else if (city.length < 3) {
-            tempErrors.City = "Enter a valid city name (min length is 3 characters)";
+            tempErrors.patientAddress = "Enter a valid city name (min length is 3 characters)";
         }
 
         setErrors(tempErrors);
@@ -360,11 +377,22 @@ export const CampFeedForm = () => {
                             options={rajasthanDistricts}
                             value={forms.patientAddress}
                             onChange={(event, newValue) => {
+                                console.log("newValue", newValue);
+
                                 setForms((prev) => ({
                                     ...prev,
                                     patientAddress: newValue
                                 }));
                             }}
+                            onInputChange={(e, value, reason) => {
+                                if (reason === "input") {
+                                    setForms((prev) => ({
+                                        ...prev,
+                                        patientAddress: value
+                                    }));
+                                }
+                            }}
+
                             renderInput={(params) => (
                                 <TextField
                                     {...params}
