@@ -717,7 +717,7 @@ export const PatientHistory = () => {
                                                             {patient?.patientName || "Arthur Pendleton"}
                                                         </Typography>
                                                         <Typography variant="caption" color="#94A3B8" fontSize="10px">
-                                                            +1 {patient?.patientMobile || "(555) 0192-341"}
+                                                            +91 {patient?.patientMobile || "+91 xxxxxxxxxx"}
                                                         </Typography>
                                                     </Box>
                                                 </Box>
