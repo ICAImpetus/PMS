@@ -21,6 +21,7 @@ import { patientStateSchema } from "../models/teanants/patientStateSchema.js";
 import { whatsappNodeSchema } from "../models/teanants/whatsappFlowModel.js";
 import { messageSchema } from "../models/teanants/messageModel.js";
 import { leadSchema } from "../models/teanants/leadModel.js";
+import { campFeedSchema } from "../models/teanants/campfeedModel.js";
 
 const connections = {};
 const tenantNameCache = new Map();
@@ -95,6 +96,14 @@ export const getAdminAgentModel = (conn) => {
         throw new Error("DB Connection not found");
     }
     return conn.models.AdminAgentSchema || conn.model("AdminAgentSchema", AdminAgentSchema);
+};
+
+
+export const getCampFeedDataModel = (conn) => {
+    if (!conn) {
+        throw new Error("DB Connection not found");
+    }
+    return conn.models.CampFeedModel || conn.model("CampFeedModel", campFeedSchema);
 };
 
 export const getHospitalModel = (conn) => {

@@ -7,6 +7,24 @@ export const commonRoutes = {
   login: (data) => API.post("api/login", data),
   getMe: () => API.get("/api/getMe"),
 
+
+  getDoctors: (selectedHostpital) => API.get("/api/v2/get-doctors", {
+    params: {
+      hosId: selectedHostpital
+    }
+  }),
+  getCampData: (selectedHostpital) => API.get("/api/v2/get-camp-feed", {
+    params: {
+      hosId: selectedHostpital
+    }
+  }),
+
+  addCampData: (selectedHostpital, payload) => API.post("/api/v2/camp-feed", payload, {
+    params: {
+      hosId: selectedHostpital
+    }
+  }),
+
   updateUserPassword: (username, newPassword) => {
     return API.put("/api/updatePassword", { username, newPassword })
   },
@@ -96,11 +114,6 @@ export const commonRoutes = {
         currentStatus
       }
     }),
-
-  getDoctors: (hosId, branchId, depId) =>
-    API.get(`api/get-doctors/${hosId}/${branchId}/${depId}`),
-
-
 
   addUsers: (data) =>
     API.post(`api/addUsers`, data),

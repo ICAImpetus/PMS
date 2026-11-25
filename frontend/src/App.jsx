@@ -61,6 +61,9 @@ import WhatsAppConversations from "./components/WhatsAppAutomation/WhatsAppConve
 import WhatsAppFlowBuilder from "./components/WhatsAppAutomation/WhatsAppFlowBuilder";
 import WhatsAppConnect from "./components/WhatsAppConnect";
 import WhatsAppLeads from "./panels/executive/WhatsAppLeads";
+import LMSPortal from "./components/LMSPortal";
+import { CampFeedForm } from "./scenes/global/CampFeedForm";
+import { CampData } from "./scenes/global/CampData";
 
 
 const HospitalManagementLayout = () => {
@@ -188,6 +191,15 @@ function App() {
         <>
           <Route path="/executive-forms" element={<ExecutiveForms />} />
           <Route path="/whatsapp-leads" element={<WhatsAppLeads />} />
+          <Route path="/camp-data" element={<CampData />} />
+          <Route path="/lms-portal" element={<LMSPortal />} />
+        </>
+
+      )}
+      {userRole === "nursingstaff" && (
+        <>
+          <Route path="/" element={<CampFeedForm />} />
+
         </>
 
 
